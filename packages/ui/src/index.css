@@ -74,3 +74,20 @@
 html, body {
   margin: 0;
 }
+
+html, body, #root {
+  min-height: 100dvh;
+}
+
+#root {
+  position: relative;
+  height: 1px;
+}
+
+#privy-dialog-backdrop {
+  display: none;
+}
+
+#headlessui-dialog-panel-\:r3\:, #privy-modal-content {
+  box-shadow: none;
+}
