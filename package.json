@@ -13,6 +13,7 @@
 	"scripts": {
 		"dev": "bun --filter 'ui' dev & bun --filter 'server' dev",
 		"format": "bunx @biomejs/biome format --write .",
-		"start": "bun --filter 'server' start"
+		"start": "bun --filter 'server' start",
+		"build": "bun --filter 'ui' build"
 	}
 }
