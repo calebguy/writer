@@ -1,15 +1,20 @@
 import { usePrivy } from "@privy-io/react-auth";
+import { useState } from "react";
 import { cn } from "../utils/cn";
-import { Blob } from "./Blob";
 import { Button, ButtonVariant } from "./Button";
+import { Drawer } from "./Drawer";
+import { Blob } from "./icons/Blob";
+import { Plus } from "./icons/Plus";
 
 export function Header() {
 	const { ready, authenticated, login, logout } = usePrivy();
 	const isLoggedIn = ready && authenticated;
 
+	const [open, setOpen] = useState(false);
+
 	return (
 		<div className="flex">
-			<div className="flex flex-col justify-center">
+			<div className="flex flex-col justify-center items-center">
 				<Button
 					className={cn(
 						"active:-translate-x-[1px]",
@@ -25,15 +30,12 @@ export function Header() {
 					}}
 				>
 					<Blob
-						className={cn("h-10", {
+						className={cn("h-9", {
 							"text-lime": isLoggedIn,
 							"text-neutral-500": !isLoggedIn,
 						})}
 					/>
 				</Button>
-				{/* <div className="text-xxs" style={{ fontSize: 8 }}>
-					{isLoggedIn ? "ON" : "OFF"}
-				</div> */}
 			</div>
 
 			<div className="flex flex-col grow">
@@ -46,6 +48,24 @@ export function Header() {
 					Writer
 				</h1>
 			</div>
+
+			{authenticated && (
+				<>
+					<Button
+						onClick={() => setOpen(true)}
+						className={cn(
+							"active:-translate-x-[1px]",
+							"active:translate-y-[1px]",
+						)}
+						variant={ButtonVariant.Empty}
+					>
+						<Plus className="w-3 text-lime" />
+					</Button>
+					<Drawer title="Create" open={open} setOpen={setOpen}>
+						<div>testing testing</div>
+					</Drawer>
+				</>
+			)}
 		</div>
 	);
 }

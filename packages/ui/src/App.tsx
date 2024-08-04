@@ -21,7 +21,7 @@ function App() {
 		<div className="h-full flex flex-col">
 			<Header />
 			<div className="grow flex items-center justify-center border-dashed border border-neutral-500 my-6">
-				<div>body</div>
+				{/* <div>yeehaw</div> */}
 			</div>
 			<Footer />
 		</div>

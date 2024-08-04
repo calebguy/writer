@@ -1,6 +1,6 @@
-interface Props extends React.SVGProps<SVGSVGElement> {}
+import type { SvgProps } from ".";
 
-export function Blob(props: Props) {
+export function Blob(props: SvgProps) {
 	return (
 		<svg
 			xmlns="http://www.w3.org/2000/svg"

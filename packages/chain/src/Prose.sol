@@ -5,7 +5,8 @@ import {AccessControl} from "oz/access/AccessControl.sol";
 
 contract Prose is AccessControl {
     struct Entry {
-        uint256 block;
+        uint256 createdAtBlock;
+        uint256 updatedAtBlock;
         string content;
         bool exists;
     }
@@ -20,21 +21,27 @@ contract Prose is AccessControl {
     uint256[] public entryIds;
     mapping(uint256 => Entry) public entries;
 
-    constructor(address _admin) {
+    constructor(address _admin, string memory _firstEntryContent) {
         _grantRole(DEFAULT_ADMIN_ROLE, _admin);
         _grantRole(MANAGER_ROLE, _admin);
+        _create(_firstEntryContent);
     }
 
-    function create(string calldata content) public onlyRole(MANAGER_ROLE) {
+    function _create(string memory content) internal {
         entryCount++;
-        entries[entryCount] = Entry(block.number, content, true);
+        entries[entryCount] = Entry(block.number, block.number, content, true);
         entryIds.push(entryCount);
         emit EntryCreated(entryCount, content);
     }
 
-    function update(uint256 id, string calldata content) public onlyRole(MANAGER_ROLE) {
+    function create(string memory content) public onlyRole(MANAGER_ROLE) {
+        _create(content);
+    }
+
+    function update(uint256 id, string memory content) public onlyRole(MANAGER_ROLE) {
         require(entries[id].exists, "Entry does not exist");
         entries[id].content = content;
+        entries[id].updatedAtBlock = block.number;
         emit EntryUpdated(id, content);
     }
 

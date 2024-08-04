@@ -1,15 +1,16 @@
 {
-	"name": "server",
-	"version": "0.0.0",
-	"type": "module",
-	"scripts": {
-		"dev": "bun run --hot src/index.ts",
-		"start": "bun run src/index.ts"
-	},
-	"dependencies": {
-		"hono": "^4.4.2"
-	},
-	"devDependencies": {
-		"@types/bun": "latest"
-	}
+  "name": "server",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --hot src/index.ts",
+    "start": "bun run src/index.ts"
+  },
+  "dependencies": {
+    "hono": "^4.4.2",
+    "viem": "^2.18.8"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
 }
