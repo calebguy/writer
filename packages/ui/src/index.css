@@ -91,3 +91,7 @@ html, body, #root {
 #headlessui-dialog-panel-\:r3\:, #privy-modal-content {
   box-shadow: none;
 }
+
+[vaul-drawer][vaul-drawer-direction=bottom]::after {
+  display: none;
+}
