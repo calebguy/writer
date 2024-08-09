@@ -16,10 +16,7 @@ export function Header() {
 		<div className="flex">
 			<div className="flex flex-col justify-center items-center">
 				<Button
-					className={cn(
-						"active:-translate-x-[1px]",
-						"active:translate-y-[1px]",
-					)}
+					bounce
 					variant={ButtonVariant.Empty}
 					onClick={() => {
 						if (isLoggedIn) {
@@ -52,11 +49,8 @@ export function Header() {
 			{authenticated && (
 				<>
 					<Button
+						bounce
 						onClick={() => setOpen(true)}
-						className={cn(
-							"active:-translate-x-[1px]",
-							"active:translate-y-[1px]",
-						)}
 						variant={ButtonVariant.Empty}
 					>
 						<Plus className="w-3 text-lime" />

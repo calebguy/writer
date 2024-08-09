@@ -8,14 +8,18 @@ import {ProseFactory} from "../src/ProseFactory.sol";
 contract ProseFactoryTest is Test {
     ProseFactory public proseFactory;
 
+    address[] managers = [address(0x1)];
+
     function setUp() public {
         proseFactory = new ProseFactory();
     }
 
     function test_Create() public {
-        address proseAddress = proseFactory.create("Hello, World!");
-        Prose prose = Prose(proseAddress);
-        assertEq(prose.getEntryCount(), 1);
-        assertEq(prose.getEntry(1).content, "Hello, World!");
+        Prose prose = Prose(proseFactory.create(managers));
+        assertEq(prose.getEntryCount(), 0);
+
+        address[] memory proseAddresses = proseFactory.getCreations(address(this));
+        assertEq(proseAddresses.length, 1);
+        assertEq(proseAddresses[0], address(prose));
     }
 }

@@ -9,6 +9,7 @@ export enum ButtonVariant {
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 	variant?: ButtonVariant;
+	bounce?: boolean;
 }
 
 const baseStyles = cn("inline", "px-2", "py-1", "outline-none");
@@ -25,10 +26,16 @@ const className = {
 
 export function Button({
 	variant = ButtonVariant.Primary,
+	bounce,
 	...props
 }: ButtonProps) {
 	return (
-		<button {...props} className={cn(className[variant], props.className)} />
+		<button
+			{...props}
+			className={cn(className[variant], props.className, {
+				"active:-translate-x-[1px] active:translate-y-[1px]": bounce,
+			})}
+		/>
 	);
 }
 
