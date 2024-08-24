@@ -7,3 +7,5 @@ assets/
 lib
 assets
 .env
+dev
+notes.md

@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: writer-db
+    environment:
+      POSTGRES_USER: writer
+      POSTGRES_PASSWORD: writer
+      POSTGRES_DB: writer
+    ports:
+      - "5432:5432"
+    volumes:
+      - writer-pg-data:/var/lib/postgresql/data
+
+volumes:
+  writer-pg-data:
