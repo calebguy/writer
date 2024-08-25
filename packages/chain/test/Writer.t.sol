@@ -274,40 +274,123 @@ contract WriterWithSigTest is TestBase {
         entryEq(entry, expectedEntry);
     }
 
-    // function test_UpdateWithSig() public {
-    //     string memory content = "Hi";
-    //     uint256 nonce = 0;
-    //     bytes memory signature =
-    //         _sign(managerPrivateKey, address(prose), keccak256(abi.encode(prose.CREATE_TYPEHASH(), nonce, content)));
-    //     prose.createwithSig(signature, nonce, content);
-    //     assertEq(prose.getEntry(0).content, content);
+    function test_UpdateWithSig() public {
+        uint256 nonce = 0;
+        uint256 size = 1;
+        uint256 entryId = 0;
+        bytes memory signature =
+            _sign(userPrivateKey, address(writer), keccak256(abi.encode(writer.CREATE_TYPEHASH(), nonce, size)));
 
-    //     uint256 entryId = 0;
-    //     string memory newContent = "Oh";
-    //     signature = _sign(
-    //         managerPrivateKey,
-    //         address(prose),
-    //         keccak256(abi.encode(prose.UPDATE_TYPEHASH(), nonce, entryId, newContent))
-    //     );
-    //     prose.updateWithSig(signature, nonce, entryId, newContent);
-    //     assertEq(prose.getEntryCount(), 1);
-    //     assertEq(prose.getEntry(entryId).content, newContent);
-    // }
+        vm.expectEmit();
+        emit WriterStorage.EntryCreated(entryId, user.addr);
+        writer.createwithSig(signature, nonce, size);
 
-    // function test_RemoveWithSig() public {
-    //     string memory content = "Hello, World!";
-    //     uint256 nonce = 0;
-    //     bytes memory signature =
-    //         _sign(managerPrivateKey, address(prose), keccak256(abi.encode(prose.CREATE_TYPEHASH(), nonce, content)));
-    //     prose.createwithSig(signature, nonce, content);
-    //     assertEq(prose.getEntryCount(), 1);
+        string memory content = "Writer";
+        uint256 chunkIndex1 = 0;
+        signature = _sign(
+            userPrivateKey,
+            address(writer),
+            keccak256(abi.encode(writer.ADD_CHUNK_TYPEHASH(), nonce, entryId, chunkIndex1, content))
+        );
 
-    //     uint256 entryId = 0;
-    //     signature =
-    //         _sign(managerPrivateKey, address(prose), keccak256(abi.encode(prose.REMOVE_TYPEHASH(), nonce, entryId)));
-    //     prose.removeWithSig(signature, nonce, entryId);
-    //     assertEq(prose.getEntryCount(), 0);
-    // }
+        vm.expectEmit();
+        emit WriterStorage.ChunkReceived(entryId, chunkIndex1, content, user.addr);
+        emit WriterStorage.EntryUpdated(entryId, user.addr);
+        writer.addChunkWithSig(signature, nonce, entryId, chunkIndex1, content);
+
+        WriterStorage.Entry memory entry = writer.getEntry(0);
+        string[] memory expectedChunks = new string[](size);
+        expectedChunks[0] = content;
+        WriterStorage.Entry memory expectedEntry = WriterStorage.Entry({
+            createdAtBlock: block.number,
+            updatedAtBlock: block.number,
+            totalChunks: size,
+            receivedChunks: size,
+            exists: true,
+            chunks: expectedChunks
+        });
+        entryEq(entry, expectedEntry);
+
+        string memory newContent = "WRITER";
+        uint256 chunkIndex = 0;
+        signature = _sign(
+            userPrivateKey,
+            address(writer),
+            keccak256(abi.encode(writer.UPDATE_TYPEHASH(), nonce, entryId, chunkIndex, newContent))
+        );
+
+        vm.expectEmit();
+        emit WriterStorage.ChunkReceived(entryId, chunkIndex, newContent, user.addr);
+        emit WriterStorage.EntryUpdated(entryId, user.addr);
+        writer.updateWithSig(signature, nonce, entryId, chunkIndex, newContent);
+
+        entry = writer.getEntry(0);
+        expectedChunks[0] = newContent;
+        expectedEntry = WriterStorage.Entry({
+            createdAtBlock: block.number,
+            updatedAtBlock: block.number,
+            totalChunks: size,
+            receivedChunks: size,
+            exists: true,
+            chunks: expectedChunks
+        });
+        entryEq(entry, expectedEntry);
+    }
+
+    function test_RemoveWithSig() public {
+        uint256 nonce = 0;
+        uint256 size = 2;
+        uint256 entryId = 0;
+        bytes memory signature =
+            _sign(userPrivateKey, address(writer), keccak256(abi.encode(writer.CREATE_TYPEHASH(), nonce, size)));
+
+        vm.expectEmit();
+        emit WriterStorage.EntryCreated(entryId, user.addr);
+        writer.createwithSig(signature, nonce, size);
+
+        string memory content1 = "Hello";
+        uint256 chunkIndex1 = 0;
+        signature = _sign(
+            userPrivateKey,
+            address(writer),
+            keccak256(abi.encode(writer.ADD_CHUNK_TYPEHASH(), nonce, entryId, chunkIndex1, content1))
+        );
+
+        vm.expectEmit();
+        emit WriterStorage.ChunkReceived(entryId, chunkIndex1, content1, user.addr);
+        emit WriterStorage.EntryUpdated(entryId, user.addr);
+        writer.addChunkWithSig(signature, nonce, entryId, chunkIndex1, content1);
+
+        string memory content2 = "World";
+        uint256 chunkIndex2 = 1;
+        signature = _sign(
+            userPrivateKey,
+            address(writer),
+            keccak256(abi.encode(writer.ADD_CHUNK_TYPEHASH(), nonce, entryId, chunkIndex2, content2))
+        );
+
+        vm.expectEmit();
+        emit WriterStorage.ChunkReceived(entryId, chunkIndex2, content2, user.addr);
+        emit WriterStorage.EntryCompleted(entryId, user.addr);
+        writer.addChunkWithSig(signature, nonce, entryId, chunkIndex2, content2);
+
+        signature =
+            _sign(userPrivateKey, address(writer), keccak256(abi.encode(writer.REMOVE_TYPEHASH(), nonce, entryId)));
+        vm.expectEmit();
+        emit WriterStorage.EntryRemoved(entryId, user.addr);
+        writer.removeWithSig(signature, nonce, entryId);
+
+        WriterStorage.Entry memory entry = writer.getEntry(entryId);
+        WriterStorage.Entry memory expectedEntry = WriterStorage.Entry({
+            createdAtBlock: 0,
+            updatedAtBlock: 0,
+            totalChunks: 0,
+            receivedChunks: 0,
+            exists: false,
+            chunks: new string[](0)
+        });
+        entryEq(entry, expectedEntry);
+    }
 
     function _sign(uint256 signerPrivateKey, address verifyingContract, bytes32 hashStruct)
         internal
