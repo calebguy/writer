@@ -91,6 +91,9 @@ contract WriterDirectCallerTest is TestBase {
             chunks: expectedChunks
         });
         entryEq(entry, expectedEntry);
+
+        string memory content = writer.getEntryContent(0);
+        assertEq(content, "Hello World");
     }
 
     function test_UpdateChunk() public {
@@ -118,6 +121,9 @@ contract WriterDirectCallerTest is TestBase {
             chunks: expectedChunks
         });
         entryEq(entry, expectedEntry);
+
+        string memory totalContent = writer.getEntryContent(entryId);
+        assertEq(totalContent, "Writer is here");
 
         vm.expectEmit();
         emit WriterStorage.EntryUpdated(0, user);

@@ -5,9 +5,11 @@ import {Writer} from "./Writer.sol";
 import {WriterStorage} from "./WriterStorage.sol";
 
 contract WriterFactory {
-    mapping(address => address[]) public authorToWriter;
+    mapping(address => address[]) internal authorToWriter;
 
-    event WriterCreated(address indexed writerAddress, address indexed author, address[] writers);
+    event WriterCreated(
+        address indexed writerAddress, address indexed storeAddress, address indexed author, address[] writers
+    );
 
     function create(address admin, address[] memory managers) external returns (address) {
         WriterStorage store = new WriterStorage();
@@ -16,7 +18,7 @@ contract WriterFactory {
         store.setNewAdmin(admin);
 
         authorToWriter[admin].push(address(writer));
-        emit WriterCreated(address(writer), admin, managers);
+        emit WriterCreated(address(writer), address(store), admin, managers);
         return address(writer);
     }
 

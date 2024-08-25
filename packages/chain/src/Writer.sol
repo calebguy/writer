@@ -61,6 +61,21 @@ contract Writer is AccessControl, VerifyTypedData {
         return store.getEntry(id);
     }
 
+    function getEntryContent(uint256 id) external view returns (string memory) {
+        WriterStorage.Entry memory entry = store.getEntry(id);
+        string memory content = "";
+        uint256 length = entry.chunks.length;
+        for (uint256 i = 0; i < length; i++) {
+            string memory chunk = entry.chunks[i];
+            if (i == 0) {
+                content = chunk;
+            } else {
+                content = string(abi.encodePacked(content, " ", chunk));
+            }
+        }
+        return content;
+    }
+
     function create(uint256 totalChunks) external onlyRole(WRITER_ROLE) {
         _create(totalChunks, msg.sender);
     }
