@@ -119,10 +119,10 @@ contract Writer is AccessControl, VerifyTypedData {
         string calldata chunkContent
     )
         external
-        authedBySig(signature, keccak256(abi.encode(REMOVE_TYPEHASH, nonce, entryId, chunkIndex, chunkContent)))
+        authedBySig(signature, keccak256(abi.encode(ADD_CHUNK_TYPEHASH, nonce, entryId, chunkIndex, chunkContent)))
     {
         address signer =
-            getSigner(signature, keccak256(abi.encode(REMOVE_TYPEHASH, nonce, entryId, chunkIndex, chunkContent)));
+            getSigner(signature, keccak256(abi.encode(ADD_CHUNK_TYPEHASH, nonce, entryId, chunkIndex, chunkContent)));
         _addChunk(entryId, chunkIndex, chunkContent, signer);
     }
 

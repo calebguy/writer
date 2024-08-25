@@ -7,7 +7,21 @@ import {WriterStorage} from "../src/WriterStorage.sol";
 
 import "forge-std/console.sol";
 
-contract WriterDirectCallerTest is Test {
+contract TestBase is Test {
+    function entryEq(WriterStorage.Entry memory entry, WriterStorage.Entry memory expectedEntry) internal pure {
+        assertEq(entry.createdAtBlock, expectedEntry.createdAtBlock);
+        assertEq(entry.updatedAtBlock, expectedEntry.updatedAtBlock);
+        assertEq(entry.totalChunks, expectedEntry.totalChunks);
+        assertEq(entry.receivedChunks, expectedEntry.receivedChunks);
+        assertEq(entry.exists, expectedEntry.exists);
+        assertEq(entry.chunks.length, expectedEntry.chunks.length);
+        for (uint256 i = 0; i < entry.chunks.length; i++) {
+            assertEq(entry.chunks[i], expectedEntry.chunks[i]);
+        }
+    }
+}
+
+contract WriterDirectCallerTest is TestBase {
     WriterStorage public store;
     Writer public writer;
     address user = address(0x1);
@@ -19,18 +33,6 @@ contract WriterDirectCallerTest is Test {
         store = new WriterStorage();
         writer = new Writer(address(store), user, writers);
         store.setLogic(address(writer));
-    }
-
-    function entryEq(WriterStorage.Entry memory entry, WriterStorage.Entry memory expectedEntry) internal pure {
-        assertEq(entry.createdAtBlock, expectedEntry.createdAtBlock);
-        assertEq(entry.updatedAtBlock, expectedEntry.updatedAtBlock);
-        assertEq(entry.totalChunks, expectedEntry.totalChunks);
-        assertEq(entry.receivedChunks, expectedEntry.receivedChunks);
-        assertEq(entry.exists, expectedEntry.exists);
-        assertEq(entry.chunks.length, expectedEntry.chunks.length);
-        for (uint256 i = 0; i < entry.chunks.length; i++) {
-            assertEq(entry.chunks[i], expectedEntry.chunks[i]);
-        }
     }
 
     function test_Create() public {
@@ -60,7 +62,7 @@ contract WriterDirectCallerTest is Test {
         assertEq(writer.getEntryIds(), expectedEntryIds);
     }
 
-    function test_CreateWithChunks() public {
+    function test_CreateAndAddChunks() public {
         vm.startPrank(user);
         uint256 size = 2;
         writer.create(size);
@@ -136,125 +138,193 @@ contract WriterDirectCallerTest is Test {
         entryEq(entry, expectedEntry);
     }
 
-    // function test_Remove() public {
-    //     vm.startPrank(manager);
-    //     writer.create("Hello, World!");
-    //     writer.remove(0);
-    //     vm.stopPrank();
-    //     assertEq(writer.getEntryCount(), 0);
-    // }
+    function test_Remove() public {
+        vm.startPrank(user);
+        writer.create(2);
+        writer.addChunk(0, 0, "Hello");
+        writer.addChunk(0, 1, "World");
 
-    // function test_GetEntryAfterRemoved() public {
-    //     vm.startPrank(manager);
-    //     writer.create("World!");
-    //     writer.create("Universe!");
-    //     writer.create("Multiverse!");
-    //     writer.remove(2);
-    //     vm.stopPrank();
+        uint256 entryId = 0;
 
-    //     WriterStorage.Entry memory entry = writer.getEntry(2);
-    //     assertEq(entry.createdAtBlock, 0);
-    //     assertEq(entry.content, "");
-    //     assertFalse(entry.exists);
-    // }
+        vm.expectEmit();
+        emit WriterStorage.EntryRemoved(entryId, user);
+        writer.remove(entryId);
+        vm.stopPrank();
 
-    // @note: Tests for setting new adming & setWriterStorage
+        WriterStorage.Entry memory entry = writer.getEntry(entryId);
+        WriterStorage.Entry memory expectedEntry = WriterStorage.Entry({
+            createdAtBlock: 0,
+            updatedAtBlock: 0,
+            totalChunks: 0,
+            receivedChunks: 0,
+            exists: false,
+            chunks: new string[](0)
+        });
+        entryEq(entry, expectedEntry);
+
+        uint256[] memory expectedEntryIds = new uint256[](0);
+        assertEq(writer.getEntryIds(), expectedEntryIds);
+    }
+
+    function test_SetNewAuthorizedWriter() public {
+        address newUser = makeAddr("newUser");
+        bytes32 writerRole = writer.WRITER_ROLE();
+        vm.prank(user);
+        writer.grantRole(writerRole, newUser);
+
+        assertEq(writer.hasRole(writer.WRITER_ROLE(), newUser), true);
+
+        vm.expectEmit();
+        emit WriterStorage.EntryCreated(0, newUser);
+
+        vm.prank(newUser);
+        writer.create(1);
+    }
+
+    function test_SetNewWriterStorage() public {
+        WriterStorage newStore = new WriterStorage();
+        vm.prank(user);
+        writer.setStorage(address(newStore));
+
+        assertEq(address(writer.store()), address(newStore));
+    }
 }
 
-// contract WriterWithSigTest is Test {
-//     Vm.Wallet public admin;
-//     Vm.Wallet public manager;
+contract WriterWithSigTest is TestBase {
+    Vm.Wallet public user;
+    uint256 internal userPrivateKey;
 
-//     Prose public prose;
-//     WriterStorage public store;
-//     uint256 internal managerPrivateKey;
+    Writer public writer;
+    WriterStorage public store;
 
-//     function setUp() public {
-//         // set signer private key
-//         admin = vm.createWallet(uint256(keccak256(abi.encodePacked("ADMIN_PRIVATE_KEY"))));
-//         managerPrivateKey = uint256(keccak256(abi.encodePacked("MANAGER_PRIVATE_KEY")));
-//         manager = vm.createWallet(managerPrivateKey);
+    function setUp() public {
+        // set signer private key
+        userPrivateKey = uint256(keccak256(abi.encodePacked("USER_PRIVATE_KEY")));
+        user = vm.createWallet(userPrivateKey);
 
-//         address[] memory managers = new address[](1);
-//         managers[0] = manager.addr;
-//         console.log("Manager", manager.addr);
-//         store = new WriterStorage();
-//         prose = new Prose(address(store), admin.addr, managers);
-//         store.setLogic(address(prose));
-//     }
+        address[] memory managers = new address[](1);
+        managers[0] = user.addr;
+        store = new WriterStorage();
+        writer = new Writer(address(store), user.addr, managers);
+        store.setLogic(address(writer));
+    }
 
-//     function test_ManagerHasRole() public view {
-//         assertEq(prose.hasRole(prose.MANAGER_ROLE(), manager.addr), true);
-//     }
+    function test_CreateWithSig() public {
+        uint256 nonce = 0;
+        uint256 chunkCount = 3;
+        bytes memory signature =
+            _sign(userPrivateKey, address(writer), keccak256(abi.encode(writer.CREATE_TYPEHASH(), nonce, chunkCount)));
 
-//     function test_AdminHasRole() public view {
-//         assertEq(prose.hasRole(prose.DEFAULT_ADMIN_ROLE(), admin.addr), true);
-//         assertEq(prose.hasRole(prose.MANAGER_ROLE(), admin.addr), false);
-//     }
+        vm.expectEmit();
+        emit WriterStorage.EntryCreated(0, user.addr);
 
-//     function test_CreateWithSig() public {
-//         string memory content = "Hey";
-//         uint256 nonce = 0;
-//         bytes memory signature =
-//             _sign(managerPrivateKey, address(prose), keccak256(abi.encode(prose.CREATE_TYPEHASH(), nonce, content)));
-//         prose.createwithSig(signature, nonce, content);
-//         assertEq(prose.getEntryCount(), 1);
-//     }
+        writer.createwithSig(signature, nonce, chunkCount);
+        assertEq(writer.getEntryCount(), 1);
+    }
 
-//     function test_UpdateWithSig() public {
-//         string memory content = "Hi";
-//         uint256 nonce = 0;
-//         bytes memory signature =
-//             _sign(managerPrivateKey, address(prose), keccak256(abi.encode(prose.CREATE_TYPEHASH(), nonce, content)));
-//         prose.createwithSig(signature, nonce, content);
-//         assertEq(prose.getEntry(0).content, content);
+    function test_CreateAndAddChunksWithSig() public {
+        uint256 nonce = 0;
+        uint256 size = 2;
+        uint256 entryId = 0;
+        bytes memory signature =
+            _sign(userPrivateKey, address(writer), keccak256(abi.encode(writer.CREATE_TYPEHASH(), nonce, size)));
 
-//         uint256 entryId = 0;
-//         string memory newContent = "Oh";
-//         signature = _sign(
-//             managerPrivateKey,
-//             address(prose),
-//             keccak256(abi.encode(prose.UPDATE_TYPEHASH(), nonce, entryId, newContent))
-//         );
-//         prose.updateWithSig(signature, nonce, entryId, newContent);
-//         assertEq(prose.getEntryCount(), 1);
-//         assertEq(prose.getEntry(entryId).content, newContent);
-//     }
+        vm.expectEmit();
+        emit WriterStorage.EntryCreated(entryId, user.addr);
+        writer.createwithSig(signature, nonce, size);
 
-//     function test_RemoveWithSig() public {
-//         string memory content = "Hello, World!";
-//         uint256 nonce = 0;
-//         bytes memory signature =
-//             _sign(managerPrivateKey, address(prose), keccak256(abi.encode(prose.CREATE_TYPEHASH(), nonce, content)));
-//         prose.createwithSig(signature, nonce, content);
-//         assertEq(prose.getEntryCount(), 1);
+        string memory content1 = "Hello";
+        uint256 chunkIndex1 = 0;
+        signature = _sign(
+            userPrivateKey,
+            address(writer),
+            keccak256(abi.encode(writer.ADD_CHUNK_TYPEHASH(), nonce, entryId, chunkIndex1, content1))
+        );
 
-//         uint256 entryId = 0;
-//         signature =
-//             _sign(managerPrivateKey, address(prose), keccak256(abi.encode(prose.REMOVE_TYPEHASH(), nonce, entryId)));
-//         prose.removeWithSig(signature, nonce, entryId);
-//         assertEq(prose.getEntryCount(), 0);
-//     }
+        vm.expectEmit();
+        emit WriterStorage.ChunkReceived(entryId, chunkIndex1, content1, user.addr);
+        emit WriterStorage.EntryUpdated(entryId, user.addr);
+        writer.addChunkWithSig(signature, nonce, entryId, chunkIndex1, content1);
 
-//     function _sign(uint256 _signerPrivateKey, address verifyingContract, bytes32 hashStruct)
-//         internal
-//         view
-//         returns (bytes memory)
-//     {
-//         bytes32 DOMAIN_SEPARATOR = keccak256(
-//             abi.encode(
-//                 keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
-//                 keccak256(abi.encodePacked(prose.DOMAIN_NAME())),
-//                 keccak256(abi.encodePacked(prose.DOMAIN_VERSION())),
-//                 block.chainid,
-//                 verifyingContract
-//             )
-//         );
+        string memory content2 = "World";
+        uint256 chunkIndex2 = 1;
+        signature = _sign(
+            userPrivateKey,
+            address(writer),
+            keccak256(abi.encode(writer.ADD_CHUNK_TYPEHASH(), nonce, entryId, chunkIndex2, content2))
+        );
 
-//         // bytes32 hashStruct = keccak256(abi.encode(prose.MAINSTRUCT_TYPEHASH(), nonce, _content));
+        vm.expectEmit();
+        emit WriterStorage.ChunkReceived(entryId, chunkIndex2, content2, user.addr);
+        emit WriterStorage.EntryCompleted(entryId, user.addr);
+        writer.addChunkWithSig(signature, nonce, entryId, chunkIndex2, content2);
 
-//         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, hashStruct));
-//         (uint8 v, bytes32 r, bytes32 s) = vm.sign(_signerPrivateKey, digest);
-//         return abi.encodePacked(r, s, v);
-//     }
-// }
+        WriterStorage.Entry memory entry = writer.getEntry(0);
+        string[] memory expectedChunks = new string[](2);
+        expectedChunks[0] = content1;
+        expectedChunks[1] = content2;
+        WriterStorage.Entry memory expectedEntry = WriterStorage.Entry({
+            createdAtBlock: block.number,
+            updatedAtBlock: block.number,
+            totalChunks: size,
+            receivedChunks: size,
+            exists: true,
+            chunks: expectedChunks
+        });
+        entryEq(entry, expectedEntry);
+    }
+
+    // function test_UpdateWithSig() public {
+    //     string memory content = "Hi";
+    //     uint256 nonce = 0;
+    //     bytes memory signature =
+    //         _sign(managerPrivateKey, address(prose), keccak256(abi.encode(prose.CREATE_TYPEHASH(), nonce, content)));
+    //     prose.createwithSig(signature, nonce, content);
+    //     assertEq(prose.getEntry(0).content, content);
+
+    //     uint256 entryId = 0;
+    //     string memory newContent = "Oh";
+    //     signature = _sign(
+    //         managerPrivateKey,
+    //         address(prose),
+    //         keccak256(abi.encode(prose.UPDATE_TYPEHASH(), nonce, entryId, newContent))
+    //     );
+    //     prose.updateWithSig(signature, nonce, entryId, newContent);
+    //     assertEq(prose.getEntryCount(), 1);
+    //     assertEq(prose.getEntry(entryId).content, newContent);
+    // }
+
+    // function test_RemoveWithSig() public {
+    //     string memory content = "Hello, World!";
+    //     uint256 nonce = 0;
+    //     bytes memory signature =
+    //         _sign(managerPrivateKey, address(prose), keccak256(abi.encode(prose.CREATE_TYPEHASH(), nonce, content)));
+    //     prose.createwithSig(signature, nonce, content);
+    //     assertEq(prose.getEntryCount(), 1);
+
+    //     uint256 entryId = 0;
+    //     signature =
+    //         _sign(managerPrivateKey, address(prose), keccak256(abi.encode(prose.REMOVE_TYPEHASH(), nonce, entryId)));
+    //     prose.removeWithSig(signature, nonce, entryId);
+    //     assertEq(prose.getEntryCount(), 0);
+    // }
+
+    function _sign(uint256 signerPrivateKey, address verifyingContract, bytes32 hashStruct)
+        internal
+        view
+        returns (bytes memory)
+    {
+        bytes32 DOMAIN_SEPARATOR = keccak256(
+            abi.encode(
+                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                keccak256(abi.encodePacked(writer.DOMAIN_NAME())),
+                keccak256(abi.encodePacked(writer.DOMAIN_VERSION())),
+                block.chainid,
+                verifyingContract
+            )
+        );
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, hashStruct));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(signerPrivateKey, digest);
+        return abi.encodePacked(r, s, v);
+    }
+}
