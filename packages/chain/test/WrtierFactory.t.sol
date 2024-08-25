@@ -6,13 +6,19 @@ import {Writer} from "../src/Writer.sol";
 import {WriterFactory} from "../src/WriterFactory.sol";
 
 contract WrtierFactoryTest is Test {
-    WriterFactory public writerFactory;
+    WriterFactory public factory;
 
-    address[] managers = [address(0x1)];
+    address user = makeAddr("writer");
+    address[] users = [user];
 
     function setUp() public {
-        writerFactory = new WriterFactory();
+        factory = new WriterFactory();
     }
 
-    function test_Create() public {}
+    function test_Create() public {
+        address writerAddress = factory.create(user, users);
+        Writer writer = Writer(writerAddress);
+        assertEq(writer.hasRole(writer.WRITER_ROLE(), user), true);
+        assertEq(writer.hasRole(writer.DEFAULT_ADMIN_ROLE(), user), true);
+    }
 }

@@ -9,16 +9,14 @@ contract WriterFactory {
 
     event WriterCreated(address indexed writerAddress, address indexed author, address[] writers);
 
-    function create(address[] memory managers) external returns (address) {
-        address author = msg.sender;
-
+    function create(address admin, address[] memory managers) external returns (address) {
         WriterStorage store = new WriterStorage();
-        Writer writer = new Writer(address(store), author, managers);
+        Writer writer = new Writer(address(store), admin, managers);
         store.setLogic(address(writer));
-        store.setNewAdmin(author);
+        store.setNewAdmin(admin);
 
-        authorToWriter[author].push(address(writer));
-        emit WriterCreated(address(writer), author, managers);
+        authorToWriter[admin].push(address(writer));
+        emit WriterCreated(address(writer), admin, managers);
         return address(writer);
     }
 
