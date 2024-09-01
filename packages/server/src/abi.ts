@@ -1,8 +1,26 @@
-export const proseAbi = [
+export const writerABI = [
 	{
 		type: "constructor",
-		inputs: [{ name: "_admin", type: "address", internalType: "address" }],
+		inputs: [
+			{ name: "storageAddress", type: "address", internalType: "address" },
+			{ name: "admin", type: "address", internalType: "address" },
+			{ name: "writers", type: "address[]", internalType: "address[]" },
+		],
 		stateMutability: "nonpayable",
+	},
+	{
+		type: "function",
+		name: "ADD_CHUNK_TYPEHASH",
+		inputs: [],
+		outputs: [{ name: "", type: "bytes32", internalType: "bytes32" }],
+		stateMutability: "view",
+	},
+	{
+		type: "function",
+		name: "CREATE_TYPEHASH",
+		inputs: [],
+		outputs: [{ name: "", type: "bytes32", internalType: "bytes32" }],
+		stateMutability: "view",
 	},
 	{
 		type: "function",
@@ -13,35 +31,80 @@ export const proseAbi = [
 	},
 	{
 		type: "function",
-		name: "create",
-		inputs: [{ name: "content", type: "string", internalType: "string" }],
+		name: "DOMAIN_NAME",
+		inputs: [],
+		outputs: [{ name: "", type: "bytes", internalType: "bytes" }],
+		stateMutability: "view",
+	},
+	{
+		type: "function",
+		name: "DOMAIN_VERSION",
+		inputs: [],
+		outputs: [{ name: "", type: "bytes", internalType: "bytes" }],
+		stateMutability: "view",
+	},
+	{
+		type: "function",
+		name: "REMOVE_TYPEHASH",
+		inputs: [],
+		outputs: [{ name: "", type: "bytes32", internalType: "bytes32" }],
+		stateMutability: "view",
+	},
+	{
+		type: "function",
+		name: "UPDATE_TYPEHASH",
+		inputs: [],
+		outputs: [{ name: "", type: "bytes32", internalType: "bytes32" }],
+		stateMutability: "view",
+	},
+	{
+		type: "function",
+		name: "WRITER_ROLE",
+		inputs: [],
+		outputs: [{ name: "", type: "bytes32", internalType: "bytes32" }],
+		stateMutability: "view",
+	},
+	{
+		type: "function",
+		name: "addChunk",
+		inputs: [
+			{ name: "entryId", type: "uint256", internalType: "uint256" },
+			{ name: "chunkIndex", type: "uint256", internalType: "uint256" },
+			{ name: "chunkContent", type: "string", internalType: "string" },
+		],
 		outputs: [],
 		stateMutability: "nonpayable",
 	},
 	{
 		type: "function",
-		name: "entries",
-		inputs: [{ name: "", type: "uint256", internalType: "uint256" }],
-		outputs: [
-			{ name: "block", type: "uint256", internalType: "uint256" },
-			{ name: "content", type: "string", internalType: "string" },
-			{ name: "exists", type: "bool", internalType: "bool" },
+		name: "addChunkWithSig",
+		inputs: [
+			{ name: "signature", type: "bytes", internalType: "bytes" },
+			{ name: "nonce", type: "uint256", internalType: "uint256" },
+			{ name: "entryId", type: "uint256", internalType: "uint256" },
+			{ name: "chunkIndex", type: "uint256", internalType: "uint256" },
+			{ name: "chunkContent", type: "string", internalType: "string" },
 		],
-		stateMutability: "view",
+		outputs: [],
+		stateMutability: "nonpayable",
 	},
 	{
 		type: "function",
-		name: "entryCount",
-		inputs: [],
-		outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
-		stateMutability: "view",
+		name: "create",
+		inputs: [{ name: "totalChunks", type: "uint256", internalType: "uint256" }],
+		outputs: [],
+		stateMutability: "nonpayable",
 	},
 	{
 		type: "function",
-		name: "entryIds",
-		inputs: [{ name: "", type: "uint256", internalType: "uint256" }],
-		outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
-		stateMutability: "view",
+		name: "createwithSig",
+		inputs: [
+			{ name: "signature", type: "bytes", internalType: "bytes" },
+			{ name: "nonce", type: "uint256", internalType: "uint256" },
+			{ name: "chunkCount", type: "uint256", internalType: "uint256" },
+		],
+		outputs: [],
+		stateMutability: "nonpayable",
 	},
 	{
 		type: "function",
@@ -51,14 +114,24 @@ export const proseAbi = [
 			{
 				name: "",
 				type: "tuple",
-				internalType: "struct Prose.Entry",
+				internalType: "struct WriterStorage.Entry",
 				components: [
-					{ name: "block", type: "uint256", internalType: "uint256" },
-					{ name: "content", type: "string", internalType: "string" },
+					{ name: "createdAtBlock", type: "uint256", internalType: "uint256" },
+					{ name: "updatedAtBlock", type: "uint256", internalType: "uint256" },
+					{ name: "chunks", type: "string[]", internalType: "string[]" },
+					{ name: "totalChunks", type: "uint256", internalType: "uint256" },
+					{ name: "receivedChunks", type: "uint256", internalType: "uint256" },
 					{ name: "exists", type: "bool", internalType: "bool" },
 				],
 			},
 		],
+		stateMutability: "view",
+	},
+	{
+		type: "function",
+		name: "getEntryContent",
+		inputs: [{ name: "id", type: "uint256", internalType: "uint256" }],
+		outputs: [{ name: "", type: "string", internalType: "string" }],
 		stateMutability: "view",
 	},
 	{
@@ -105,7 +178,18 @@ export const proseAbi = [
 	{
 		type: "function",
 		name: "remove",
-		inputs: [{ name: "id", type: "uint256", internalType: "uint256" }],
+		inputs: [{ name: "entryId", type: "uint256", internalType: "uint256" }],
+		outputs: [],
+		stateMutability: "nonpayable",
+	},
+	{
+		type: "function",
+		name: "removeWithSig",
+		inputs: [
+			{ name: "signature", type: "bytes", internalType: "bytes" },
+			{ name: "nonce", type: "uint256", internalType: "uint256" },
+			{ name: "entryId", type: "uint256", internalType: "uint256" },
+		],
 		outputs: [],
 		stateMutability: "nonpayable",
 	},
@@ -114,11 +198,7 @@ export const proseAbi = [
 		name: "renounceRole",
 		inputs: [
 			{ name: "role", type: "bytes32", internalType: "bytes32" },
-			{
-				name: "callerConfirmation",
-				type: "address",
-				internalType: "address",
-			},
+			{ name: "callerConfirmation", type: "address", internalType: "address" },
 		],
 		outputs: [],
 		stateMutability: "nonpayable",
@@ -135,6 +215,38 @@ export const proseAbi = [
 	},
 	{
 		type: "function",
+		name: "setNewAdmin",
+		inputs: [{ name: "newAdmin", type: "address", internalType: "address" }],
+		outputs: [],
+		stateMutability: "nonpayable",
+	},
+	{
+		type: "function",
+		name: "setStorage",
+		inputs: [
+			{ name: "storageAddress", type: "address", internalType: "address" },
+		],
+		outputs: [],
+		stateMutability: "nonpayable",
+	},
+	{
+		type: "function",
+		name: "signatureWasExecuted",
+		inputs: [{ name: "", type: "bytes32", internalType: "bytes32" }],
+		outputs: [{ name: "", type: "bool", internalType: "bool" }],
+		stateMutability: "view",
+	},
+	{
+		type: "function",
+		name: "store",
+		inputs: [],
+		outputs: [
+			{ name: "", type: "address", internalType: "contract WriterStorage" },
+		],
+		stateMutability: "view",
+	},
+	{
+		type: "function",
 		name: "supportsInterface",
 		inputs: [{ name: "interfaceId", type: "bytes4", internalType: "bytes4" }],
 		outputs: [{ name: "", type: "bool", internalType: "bool" }],
@@ -144,58 +256,31 @@ export const proseAbi = [
 		type: "function",
 		name: "update",
 		inputs: [
-			{ name: "id", type: "uint256", internalType: "uint256" },
-			{ name: "content", type: "string", internalType: "string" },
+			{ name: "entryId", type: "uint256", internalType: "uint256" },
+			{ name: "chunkIndex", type: "uint256", internalType: "uint256" },
+			{ name: "chunkContent", type: "string", internalType: "string" },
+		],
+		outputs: [],
+		stateMutability: "nonpayable",
+	},
+	{
+		type: "function",
+		name: "updateWithSig",
+		inputs: [
+			{ name: "signature", type: "bytes", internalType: "bytes" },
+			{ name: "nonce", type: "uint256", internalType: "uint256" },
+			{ name: "entryId", type: "uint256", internalType: "uint256" },
+			{ name: "chunkIndex", type: "uint256", internalType: "uint256" },
+			{ name: "chunkContent", type: "string", internalType: "string" },
 		],
 		outputs: [],
 		stateMutability: "nonpayable",
 	},
 	{
 		type: "event",
-		name: "EntryCreated",
-		inputs: [
-			{ name: "id", type: "uint256", indexed: true, internalType: "uint256" },
-			{
-				name: "content",
-				type: "string",
-				indexed: false,
-				internalType: "string",
-			},
-		],
-		anonymous: false,
-	},
-	{
-		type: "event",
-		name: "EntryRemoved",
-		inputs: [
-			{ name: "id", type: "uint256", indexed: true, internalType: "uint256" },
-		],
-		anonymous: false,
-	},
-	{
-		type: "event",
-		name: "EntryUpdated",
-		inputs: [
-			{ name: "id", type: "uint256", indexed: true, internalType: "uint256" },
-			{
-				name: "content",
-				type: "string",
-				indexed: false,
-				internalType: "string",
-			},
-		],
-		anonymous: false,
-	},
-	{
-		type: "event",
 		name: "RoleAdminChanged",
 		inputs: [
-			{
-				name: "role",
-				type: "bytes32",
-				indexed: true,
-				internalType: "bytes32",
-			},
+			{ name: "role", type: "bytes32", indexed: true, internalType: "bytes32" },
 			{
 				name: "previousAdminRole",
 				type: "bytes32",
@@ -215,12 +300,7 @@ export const proseAbi = [
 		type: "event",
 		name: "RoleGranted",
 		inputs: [
-			{
-				name: "role",
-				type: "bytes32",
-				indexed: true,
-				internalType: "bytes32",
-			},
+			{ name: "role", type: "bytes32", indexed: true, internalType: "bytes32" },
 			{
 				name: "account",
 				type: "address",
@@ -240,12 +320,7 @@ export const proseAbi = [
 		type: "event",
 		name: "RoleRevoked",
 		inputs: [
-			{
-				name: "role",
-				type: "bytes32",
-				indexed: true,
-				internalType: "bytes32",
-			},
+			{ name: "role", type: "bytes32", indexed: true, internalType: "bytes32" },
 			{
 				name: "account",
 				type: "address",
@@ -269,5 +344,64 @@ export const proseAbi = [
 			{ name: "account", type: "address", internalType: "address" },
 			{ name: "neededRole", type: "bytes32", internalType: "bytes32" },
 		],
+	},
+];
+
+export const factoryAbi = [
+	{
+		type: "function",
+		name: "create",
+		inputs: [
+			{ name: "admin", type: "address", internalType: "address" },
+			{ name: "managers", type: "address[]", internalType: "address[]" },
+		],
+		outputs: [{ name: "", type: "address", internalType: "address" }],
+		stateMutability: "nonpayable",
+	},
+	{
+		type: "function",
+		name: "get",
+		inputs: [{ name: "author", type: "address", internalType: "address" }],
+		outputs: [{ name: "", type: "address[]", internalType: "address[]" }],
+		stateMutability: "view",
+	},
+	{
+		type: "function",
+		name: "writerIdCounter",
+		inputs: [],
+		outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
+		stateMutability: "view",
+	},
+	{
+		type: "event",
+		name: "WriterCreated",
+		inputs: [
+			{ name: "id", type: "uint256", indexed: false, internalType: "uint256" },
+			{
+				name: "writerAddress",
+				type: "address",
+				indexed: true,
+				internalType: "address",
+			},
+			{
+				name: "storeAddress",
+				type: "address",
+				indexed: true,
+				internalType: "address",
+			},
+			{
+				name: "admin",
+				type: "address",
+				indexed: true,
+				internalType: "address",
+			},
+			{
+				name: "managers",
+				type: "address[]",
+				indexed: false,
+				internalType: "address[]",
+			},
+		],
+		anonymous: false,
 	},
 ];

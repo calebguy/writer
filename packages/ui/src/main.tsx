@@ -2,6 +2,7 @@ import { PrivyProvider } from "@privy-io/react-auth";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { optimism } from "viem/chains";
 import App from "./App.tsx";
 import "./index.css";
 
@@ -17,6 +18,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 				appId={PRIVY_APP_ID}
 				config={{
 					loginMethods: ["sms"],
+					defaultChain: optimism,
+					supportedChains: [optimism],
 					appearance: {
 						theme: "dark",
 						accentColor: "#d2ff2e",

@@ -55,8 +55,8 @@ export function Header() {
 					>
 						<Plus className="w-3 text-lime" />
 					</Button>
-					<Drawer title="Create" open={open} setOpen={setOpen}>
-						<div>~~~</div>
+					<Drawer open={open} setOpen={setOpen}>
+						<div></div>
 					</Drawer>
 				</>
 			)}

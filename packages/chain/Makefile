@@ -1,4 +1,4 @@
-include ../../.env
+include .env
 
 deploy-factory:
 	forge create --rpc-url ${RPC_URL} --private-key ${PRIVATE_KEY} src/WriterFactory.sol:WriterFactory

@@ -12,6 +12,7 @@ contract Writer is AccessControl, VerifyTypedData {
     bytes32 public constant REMOVE_TYPEHASH = keccak256("Remove(uint256 nonce,uint256 id)");
     bytes32 public constant ADD_CHUNK_TYPEHASH =
         keccak256("AddChunk(uint256 nonce,uint256 entryId,uint256 chunkIndex,string chunkContent)");
+    bytes32 public constant SET_TITLE_TYPEHASH = keccak256("SetTitle(uint256 nonce,string title)");
 
     bytes public DOMAIN_NAME = "Writer";
     bytes public DOMAIN_VERSION = "1";
@@ -19,6 +20,8 @@ contract Writer is AccessControl, VerifyTypedData {
 
     WriterStorage public store;
     mapping(bytes32 => bool) public signatureWasExecuted;
+
+    string public title;
 
     modifier authedBySig(bytes memory signature, bytes32 structHash) {
         address signer = getSigner(signature, structHash);
@@ -28,16 +31,20 @@ contract Writer is AccessControl, VerifyTypedData {
         signatureWasExecuted[keccak256(signature)] = true;
     }
 
-    constructor(address storageAddress, address admin, address[] memory writers)
+    event StorageSet(address indexed storageAddress);
+
+    constructor(string memory newTitle, address storageAddress, address admin, address[] memory writers)
         VerifyTypedData(DOMAIN_NAME, DOMAIN_VERSION)
     {
         store = WriterStorage(storageAddress);
+        title = newTitle;
 
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         uint256 length = writers.length;
         for (uint256 i = 0; i < length; i++) {
             _grantRole(WRITER_ROLE, writers[i]);
         }
+        emit StorageSet(storageAddress);
     }
 
     function setNewAdmin(address newAdmin) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -47,6 +54,7 @@ contract Writer is AccessControl, VerifyTypedData {
 
     function setStorage(address storageAddress) external onlyRole(DEFAULT_ADMIN_ROLE) {
         store = WriterStorage(storageAddress);
+        emit StorageSet(storageAddress);
     }
 
     function getEntryCount() external view returns (uint256) {
@@ -74,6 +82,17 @@ contract Writer is AccessControl, VerifyTypedData {
             }
         }
         return content;
+    }
+
+    function setTitle(string calldata newTitle) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        title = newTitle;
+    }
+
+    function setTitleWithSig(bytes memory signature, uint256 nonce, string calldata newTitle)
+        external
+        authedBySig(signature, keccak256(abi.encode(SET_TITLE_TYPEHASH, nonce, newTitle)))
+    {
+        title = newTitle;
     }
 
     function create(uint256 totalChunks) external onlyRole(WRITER_ROLE) {

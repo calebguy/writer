@@ -5,24 +5,33 @@ import {Writer} from "./Writer.sol";
 import {WriterStorage} from "./WriterStorage.sol";
 
 contract WriterFactory {
-    mapping(address => address[]) internal authorToWriter;
+    // current ID for the entry
+    uint256 public writerIdCounter;
+
+    mapping(address => address[]) internal adminToManagers;
 
     event WriterCreated(
-        address indexed writerAddress, address indexed storeAddress, address indexed author, address[] writers
+        uint256 id,
+        string indexed title,
+        address indexed writerAddress,
+        address storeAddress,
+        address indexed admin,
+        address[] managers
     );
 
-    function create(address admin, address[] memory managers) external returns (address) {
+    function create(string calldata title, address admin, address[] memory managers) external returns (address) {
         WriterStorage store = new WriterStorage();
-        Writer writer = new Writer(address(store), admin, managers);
+        Writer writer = new Writer(title, address(store), admin, managers);
         store.setLogic(address(writer));
         store.setNewAdmin(admin);
 
-        authorToWriter[admin].push(address(writer));
-        emit WriterCreated(address(writer), address(store), admin, managers);
+        adminToManagers[admin].push(address(writer));
+        writerIdCounter++;
+        emit WriterCreated(writerIdCounter, title, address(writer), address(store), admin, managers);
         return address(writer);
     }
 
     function get(address author) external view returns (address[] memory) {
-        return authorToWriter[author];
+        return adminToManagers[author];
     }
 }

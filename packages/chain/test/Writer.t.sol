@@ -31,7 +31,7 @@ contract WriterDirectCallerTest is TestBase {
         writers[0] = user;
 
         store = new WriterStorage();
-        writer = new Writer(address(store), user, writers);
+        writer = new Writer("Notes for today", address(store), user, writers);
         store.setLogic(address(writer));
     }
 
@@ -211,7 +211,7 @@ contract WriterWithSigTest is TestBase {
         address[] memory managers = new address[](1);
         managers[0] = user.addr;
         store = new WriterStorage();
-        writer = new Writer(address(store), user.addr, managers);
+        writer = new Writer("Notes for today", address(store), user.addr, managers);
         store.setLogic(address(writer));
     }
 

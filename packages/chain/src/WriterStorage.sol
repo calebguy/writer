@@ -12,12 +12,15 @@ contract WriterStorage is AccessControl {
         _;
     }
 
+    event LogicSet(address indexed logicAddress);
+
     constructor() {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
     function setLogic(address newLogic) public onlyRole(DEFAULT_ADMIN_ROLE) {
         logic = newLogic;
+        emit LogicSet(newLogic);
     }
 
     // current ID for the entry

@@ -95,3 +95,11 @@ html, body, #root {
 [vaul-drawer][vaul-drawer-direction=bottom]::after {
   display: none;
 }
+
+/* [vaul-drawer] {
+  transition: none;
+} */
+
+/* [vaul-overlay] {
+  transition: none;
+} */

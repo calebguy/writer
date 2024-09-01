@@ -1,0 +1,105 @@
+import {
+	createPublicClient,
+	http,
+	parseAbiItem,
+	type AbiEvent,
+	type Hex,
+	type WatchEventParameters,
+} from "viem";
+import { foundry, optimism } from "viem/chains";
+import { prisma } from "./db";
+import { env, isDev } from "./env";
+import { minBigInt } from "./helpers";
+
+const chain = isDev ? foundry : optimism;
+
+export const publicClient = createPublicClient({
+	chain,
+	transport: http(env.RPC_URL),
+});
+
+async function getAllEventLogs<T extends AbiEvent>({
+	fromBlock,
+	address,
+	event,
+	onLogs,
+}: Pick<
+	WatchEventParameters<T>,
+	"fromBlock" | "address" | "event" | "onLogs"
+> & {
+	fromBlock: bigint;
+}) {
+	// @note currently we do not handle the case where a single query to getLogs() is too large
+	// eth_getLogs has a max limit of 10,000 logs & will throw if there are more results
+	// https://docs.infura.io/api/networks/ethereum/json-rpc-methods/eth_getlogs
+
+	// TODO: adjust step size & retry if we see the following error
+
+	// {
+	//   "jsonrpc": "2.0",
+	//   "id": 1,
+	//   "error": {
+	//     "code": -32005,
+	//     "message": "query returned more than 10000 results"
+	//   }
+	// }
+	const step = BigInt(1_000);
+	const from = fromBlock;
+	const to = await publicClient.getBlockNumber();
+	if (to < from) {
+		console.debug(
+			`To block number: ${to} is less than from block number: ${from}, skipping fetching history.`,
+		);
+		return;
+	}
+
+	for (let fromBlock = from; fromBlock <= to; fromBlock += step) {
+		const toBlock = minBigInt(fromBlock + step, to);
+		const logs = await publicClient.getLogs({
+			address,
+			event,
+			fromBlock,
+			toBlock,
+		});
+		if (logs.length > 0) {
+			onLogs(logs as any);
+		}
+	}
+}
+
+export async function getWriterCreatedEvents() {
+	const fromBlock = env.FACTORY_FROM_BLOCK;
+	const address = env.FACTORY_ADDRESS as Hex;
+	const event = parseAbiItem(
+		"event WriterCreated(uint256 id,string indexed title,address indexed writerAddress,address storeAddress,address indexed admin,address[] managers)",
+	);
+	return await getAllEventLogs({
+		fromBlock,
+		address,
+		event,
+		onLogs: async (logs) => {
+			console.log(`logs length: ${logs.length}`);
+			for (const log of logs) {
+				console.log("----------");
+				console.log(log);
+				const { address, blockNumber, transactionHash } = log;
+				const { id, writerAddress, storeAddress, admin, managers, title } =
+					log.args;
+				await prisma.writer.upsert({
+					create: {
+						id: Number(id),
+						address: writerAddress as string,
+						storageAddress: storeAddress as string,
+						admin: admin as string,
+						createdAtBlock: blockNumber.toString(),
+						createdAtHash: transactionHash as string,
+						authors: managers as string[],
+						title,
+					},
+					update: {},
+					where: { address: writerAddress },
+				});
+			}
+		},
+	});
+}

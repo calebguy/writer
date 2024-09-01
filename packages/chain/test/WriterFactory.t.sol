@@ -5,7 +5,7 @@ import {Test, console} from "forge-std/Test.sol";
 import {Writer} from "../src/Writer.sol";
 import {WriterFactory} from "../src/WriterFactory.sol";
 
-contract WrtierFactoryTest is Test {
+contract WriterFactoryTest is Test {
     WriterFactory public factory;
 
     address user = makeAddr("writer");
@@ -16,7 +16,7 @@ contract WrtierFactoryTest is Test {
     }
 
     function test_Create() public {
-        address writerAddress = factory.create(user, users);
+        address writerAddress = factory.create("Notes for today", user, users);
         Writer writer = Writer(writerAddress);
         assertEq(writer.hasRole(writer.WRITER_ROLE(), user), true);
         assertEq(writer.hasRole(writer.DEFAULT_ADMIN_ROLE(), user), true);
