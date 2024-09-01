@@ -15,7 +15,7 @@ export function Drawer({ open, setOpen, title, children }: DrawerProps) {
 			<VaulDrawer.Portal>
 				<VaulDrawer.Content
 					className={
-						"flex flex-col bg-neutral-800 border border-gray-600 mt-24 h-[80%] max-h-[96%] fixed bottom-0 left-0 right-0 md:max-w-[650px] md:mx-auto lg:max-w-[65vw] p-4 mb-6"
+						"flex flex-col bg-neutral-800 border border-neutral-600 mt-24 h-[80%] max-h-[96%] fixed bottom-0 left-0 right-0 md:max-w-[650px] md:mx-auto lg:max-w-[65vw] p-4 mb-6"
 					}
 				>
 					<VaulDrawer.Title className="text-4xl mb-4">{title}</VaulDrawer.Title>

@@ -43,7 +43,7 @@ async function getAllEventLogs<T extends AbiEvent>({
 	//     "message": "query returned more than 10000 results"
 	//   }
 	// }
-	const step = BigInt(1_000);
+	const step = BigInt(3_000);
 	const from = fromBlock;
 	const to = await publicClient.getBlockNumber();
 	if (to < from) {
@@ -54,6 +54,7 @@ async function getAllEventLogs<T extends AbiEvent>({
 	}
 
 	for (let fromBlock = from; fromBlock <= to; fromBlock += step) {
+		console.log(`getting logs from block ${fromBlock} to ${fromBlock + step}`);
 		const toBlock = minBigInt(fromBlock + step, to);
 		const logs = await publicClient.getLogs({
 			address,
@@ -67,39 +68,50 @@ async function getAllEventLogs<T extends AbiEvent>({
 	}
 }
 
-export async function getWriterCreatedEvents() {
-	const fromBlock = env.FACTORY_FROM_BLOCK;
-	const address = env.FACTORY_ADDRESS as Hex;
-	const event = parseAbiItem(
-		"event WriterCreated(uint256 id,string indexed title,address indexed writerAddress,address storeAddress,address indexed admin,address[] managers)",
-	);
+const event = parseAbiItem(
+	"event WriterCreated(uint256 indexed id,address indexed writerAddress,address indexed admin,string title,address storeAddress,address[] managers)",
+);
+
+const fromBlock = env.FACTORY_FROM_BLOCK;
+const address = env.FACTORY_ADDRESS as Hex;
+
+async function onLogs(logs: any[]) {
+	for (const log of logs) {
+		console.log(log);
+		const { blockNumber, transactionHash } = log;
+		const { id, writerAddress, storeAddress, admin, managers, title } =
+			log.args;
+		return await prisma.writer.upsert({
+			create: {
+				id: Number(id),
+				address: writerAddress as string,
+				storageAddress: storeAddress as string,
+				admin: admin as string,
+				createdAtBlock: blockNumber.toString(),
+				createdAtHash: transactionHash as string,
+				authors: managers as string[],
+				title,
+			},
+			update: {},
+			where: { id: Number(id) },
+		});
+	}
+}
+
+export async function getAllWriterCreatedEvents() {
 	return await getAllEventLogs({
 		fromBlock,
 		address,
 		event,
-		onLogs: async (logs) => {
-			console.log(`logs length: ${logs.length}`);
-			for (const log of logs) {
-				console.log("----------");
-				console.log(log);
-				const { address, blockNumber, transactionHash } = log;
-				const { id, writerAddress, storeAddress, admin, managers, title } =
-					log.args;
-				await prisma.writer.upsert({
-					create: {
-						id: Number(id),
-						address: writerAddress as string,
-						storageAddress: storeAddress as string,
-						admin: admin as string,
-						createdAtBlock: blockNumber.toString(),
-						createdAtHash: transactionHash as string,
-						authors: managers as string[],
-						title,
-					},
-					update: {},
-					where: { address: writerAddress },
-				});
-			}
-		},
+		onLogs,
+	});
+}
+
+export async function listenToNewWriterCreatedEvents() {
+	return publicClient.watchEvent({
+		fromBlock,
+		address,
+		event,
+		onLogs,
 	});
 }

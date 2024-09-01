@@ -11,11 +11,11 @@ contract WriterFactory {
     mapping(address => address[]) internal adminToManagers;
 
     event WriterCreated(
-        uint256 id,
-        string indexed title,
+        uint256 indexed id,
         address indexed writerAddress,
-        address storeAddress,
         address indexed admin,
+        string title,
+        address storeAddress,
         address[] managers
     );
 
@@ -27,7 +27,7 @@ contract WriterFactory {
 
         adminToManagers[admin].push(address(writer));
         writerIdCounter++;
-        emit WriterCreated(writerIdCounter, title, address(writer), address(store), admin, managers);
+        emit WriterCreated(writerIdCounter, address(writer), admin, title, address(store), managers);
         return address(writer);
     }
 

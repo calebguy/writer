@@ -5,7 +5,7 @@ import { waitForHash } from "@syndicateio/syndicate-node/utils";
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { getAddress } from "viem";
-import { getWriterCreatedEvents } from "./chain";
+import { getAllWriterCreatedEvents } from "./chain";
 import { prisma } from "./db";
 import { env } from "./env";
 import { createSchema } from "./schema";
@@ -30,7 +30,7 @@ const api = app
 	})
 	.post("/create", zValidator("json", createSchema), async (c) => {
 		const body = c.req.valid("json");
-		const { admin, managers } = body;
+		const { admin, managers, title } = body;
 		console.log(
 			`creating new writing with admin: ${admin} and managers: ${managers}`,
 		);
@@ -38,8 +38,10 @@ const api = app
 			projectId,
 			contractAddress: env.FACTORY_ADDRESS,
 			chainId: 10,
-			functionSignature: "create(address admin, address[] managers)",
+			functionSignature:
+				"create(string title, address admin, address[] managers)",
 			args: {
+				title,
 				admin,
 				managers,
 			},
@@ -51,7 +53,7 @@ const api = app
 		return c.json({ hash }, 200);
 	});
 
-getWriterCreatedEvents();
+getAllWriterCreatedEvents();
 
 export type Api = typeof api;
 export default app;
