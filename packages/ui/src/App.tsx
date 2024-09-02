@@ -3,11 +3,10 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { hc } from "hono/client";
 import { useMemo } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
+import { Link } from "react-router-dom";
 import type { Hex } from "viem";
 import type { Api } from "../../server/src";
 import { Button } from "./components/Button";
-import { Footer } from "./components/Footer";
-import { Header } from "./components/Header";
 import type { CreateNewBucketInputs, Writer } from "./interfaces";
 import { cn } from "./utils/cn";
 
@@ -53,19 +52,12 @@ function App() {
 	);
 
 	return (
-		<div className="h-full flex flex-col">
-			<Header />
-			<div className="mt-10 flex-grow">
-				{wallet &&
-					hasWriters &&
-					data?.writers?.map((writer) => (
-						<Bucket key={`writer-${writer.id}`} writer={writer} />
-					))}
-				{/* <div>
-							<CreateBucketForm onSuccess={refetch} address={wallet.address}/>
-						</div> */}
-			</div>
-			<Footer />
+		<div className="mt-10 flex-grow">
+			{wallet &&
+				hasWriters &&
+				data?.writers?.map((writer) => (
+					<Bucket key={`writer-${writer.id}`} writer={writer} />
+				))}
 		</div>
 	);
 }
@@ -74,20 +66,10 @@ interface BucketProps {
 	writer: Writer;
 }
 
-function Bucket({
-	writer: {
-		id,
-		title,
-		address,
-		storageAddress,
-		admin,
-		createdAtBlock,
-		createdAtHash,
-		authors,
-	},
-}: BucketProps) {
+function Bucket({ writer: { id, title, address } }: BucketProps) {
 	return (
-		<div
+		<Link
+			to={`/writer/${address}`}
 			key={id}
 			className={cn(
 				"border-0 hover:cursor-zoom-in border-neutral-700 px-3 py-2 bg-neutral-900 max-w-[200px] max-h-[200px] w-full h-full overflow-hidden flex flex-col justify-between",
@@ -95,7 +77,7 @@ function Bucket({
 		>
 			<div className="text-left text-neutral-200">{title}</div>
 			<div className="text-right text-neutral-600">{id}</div>
-		</div>
+		</Link>
 	);
 }
 

@@ -1,5 +1,5 @@
 import { usePrivy } from "@privy-io/react-auth";
-import { useState } from "react";
+import { Link } from "react-router-dom";
 import { cn } from "../utils/cn";
 import { Button, ButtonVariant } from "./Button";
 import { Blob } from "./icons/Blob";
@@ -7,8 +7,6 @@ import { Blob } from "./icons/Blob";
 export function Header() {
 	const { ready, authenticated, login, logout } = usePrivy();
 	const isLoggedIn = ready && authenticated;
-
-	const [open, setOpen] = useState(false);
 
 	return (
 		<div className="flex">
@@ -34,14 +32,15 @@ export function Header() {
 			</div>
 
 			<div className="flex flex-col grow">
-				<h1
+				<Link
+					to="/"
 					className={cn("text-4xl", {
 						"text-lime": isLoggedIn,
 						"text-neutral-500": !isLoggedIn,
 					})}
 				>
 					Writer
-				</h1>
+				</Link>
 			</div>
 
 			{/* {authenticated && (
