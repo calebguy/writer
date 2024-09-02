@@ -2,9 +2,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useState } from "react";
 import { cn } from "../utils/cn";
 import { Button, ButtonVariant } from "./Button";
-import { Drawer } from "./Drawer";
 import { Blob } from "./icons/Blob";
-import { Plus } from "./icons/Plus";
 
 export function Header() {
 	const { ready, authenticated, login, logout } = usePrivy();
@@ -46,7 +44,7 @@ export function Header() {
 				</h1>
 			</div>
 
-			{authenticated && (
+			{/* {authenticated && (
 				<>
 					<Button
 						bounce
@@ -56,10 +54,10 @@ export function Header() {
 						<Plus className="w-3 text-lime" />
 					</Button>
 					<Drawer open={open} setOpen={setOpen}>
-						<div></div>
+						<div>.</div>
 					</Drawer>
 				</>
-			)}
+			)} */}
 		</div>
 	);
 }
