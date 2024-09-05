@@ -96,6 +96,10 @@ html, body, #root {
   display: none;
 }
 
+.ProseMirror-focused {
+  outline: none;
+}
+
 /* [vaul-drawer] {
   transition: none;
 } */

@@ -10,7 +10,16 @@ export function Header() {
 
 	return (
 		<div className="flex">
-			<div className="flex flex-col justify-center items-center">
+			<div className="flex justify-between items-center w-full">
+				<Link
+					to="/"
+					className={cn("text-3xl active:-translate-x-[1px] active:translate-y-[1px]", {
+						"text-lime": isLoggedIn,
+						"text-neutral-500": !isLoggedIn,
+					})}
+				>
+					Writer
+				</Link>
 				<Button
 					bounce
 					variant={ButtonVariant.Empty}
@@ -23,7 +32,7 @@ export function Header() {
 					}}
 				>
 					<Blob
-						className={cn("h-9", {
+						className={cn("h-8", {
 							"text-lime": isLoggedIn,
 							"text-neutral-500": !isLoggedIn,
 						})}
@@ -31,17 +40,7 @@ export function Header() {
 				</Button>
 			</div>
 
-			<div className="flex flex-col grow">
-				<Link
-					to="/"
-					className={cn("text-4xl", {
-						"text-lime": isLoggedIn,
-						"text-neutral-500": !isLoggedIn,
-					})}
-				>
-					Writer
-				</Link>
-			</div>
+			
 
 			{/* {authenticated && (
 				<>

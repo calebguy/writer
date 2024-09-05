@@ -1,40 +1,12 @@
 import { useWallets } from "@privy-io/react-auth";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { hc } from "hono/client";
 import { useMemo } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import type { Hex } from "viem";
-import type { Api } from "../../server/src";
-import { Button } from "./components/Button";
 import type { CreateNewBucketInputs, Writer } from "./interfaces";
+import { createNewWriter, getWriters } from "./utils/api";
 import { cn } from "./utils/cn";
-
-const client = hc<Api>("/");
-
-async function getWriters(address: Hex) {
-	const res = await client.api.account[":address"].$get({
-		param: { address },
-	});
-	if (!res.ok) {
-		throw new Error(res.statusText);
-	}
-	return res.json();
-}
-
-async function createNewWriter(json: {
-	admin: string;
-	managers: string[];
-	title: string;
-}) {
-	const res = await client.api.create.$post({
-		json,
-	});
-	if (!res.ok) {
-		throw new Error(res.statusText);
-	}
-	return res.json();
-}
 
 function App() {
 	const { wallets } = useWallets();
@@ -52,12 +24,19 @@ function App() {
 	);
 
 	return (
-		<div className="mt-10 flex-grow">
+		<div
+			className="mt-10 flex-grow grid gap-2"
+			style={{ gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))" }}
+		>
 			{wallet &&
 				hasWriters &&
 				data?.writers?.map((writer) => (
 					<Bucket key={`writer-${writer.id}`} writer={writer} />
 				))}
+			<CreateBucketForm
+				onSuccess={refetch}
+				address={wallet?.address as string}
+			/>
 		</div>
 	);
 }
@@ -72,7 +51,7 @@ function Bucket({ writer: { id, title, address } }: BucketProps) {
 			to={`/writer/${address}`}
 			key={id}
 			className={cn(
-				"border-0 hover:cursor-zoom-in border-neutral-700 px-3 py-2 bg-neutral-900 max-w-[200px] max-h-[200px] w-full h-full overflow-hidden flex flex-col justify-between",
+				"border-0 hover:cursor-zoom-in border-neutral-700 px-3 py-2 bg-neutral-900 aspect-square flex flex-col justify-between",
 			)}
 		>
 			<div className="text-left text-neutral-200">{title}</div>
@@ -105,9 +84,13 @@ function CreateBucketForm({ onSuccess, address }: CreateBucketFormProps) {
 		});
 	};
 	return (
-		<form onSubmit={handleSubmit(onSubmit)} className="flex flex-col space-y-2">
-			<div>
-				<div
+		<div
+			// onSubmit={handleSubmit(onSubmit)}
+			className="aspect-square border border-neutral-900 bg-transparent hover:bg-neutral-900 hover:cursor-pointer group"
+		>
+			<div className="flex justify-center items-center px-3 py-2 h-full">
+				<div className="text-2xl text-black group-hover:text-white">+</div>
+				{/* <div
 					className={cn("flex items-center", {
 						"text-lime uppercase": errors.title,
 					})}
@@ -117,13 +100,19 @@ function CreateBucketForm({ onSuccess, address }: CreateBucketFormProps) {
 				</div>
 				<input
 					{...register("title", { required: true })}
-					className="outline-none text-white px-1 py-0.5 bg-neutral-700"
-				/>
+					className="outline-none text-white px-1 py-0.5 bg-neutral-700 bg-transparent"
+				/> */}
 			</div>
-			<Button type="submit" disabled={isPending}>
-				+ Bucket
-			</Button>
-		</form>
+			{/* <Button
+				type="submit"
+				disabled={isPending}
+				className="text-xl bg-transparent"
+			>
+				<span className="text-lime" style={{ lineHeight: "0.25rem" }}>
+					+
+				</span>
+			</Button> */}
+		</div>
 	);
 }
 

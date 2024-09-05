@@ -11,6 +11,9 @@
   "dependencies": {
     "@privy-io/react-auth": "^1.77.0",
     "@tanstack/react-query": "^5.40.0",
+    "@tiptap/pm": "^2.6.6",
+    "@tiptap/react": "^2.6.6",
+    "@tiptap/starter-kit": "^2.6.6",
     "classnames": "^2.5.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

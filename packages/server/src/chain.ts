@@ -29,12 +29,11 @@ async function getAllEventLogs<T extends AbiEvent>({
 > & {
 	fromBlock: bigint;
 }) {
-	// @note currently we do not handle the case where a single query to getLogs() is too large
+	// @note TODO:
 	// eth_getLogs has a max limit of 10,000 logs & will throw if there are more results
 	// https://docs.infura.io/api/networks/ethereum/json-rpc-methods/eth_getlogs
 
-	// TODO: adjust step size & retry if we see the following error
-
+	// adjust step size & retry if we see the following error
 	// {
 	//   "jsonrpc": "2.0",
 	//   "id": 1,
@@ -43,6 +42,8 @@ async function getAllEventLogs<T extends AbiEvent>({
 	//     "message": "query returned more than 10000 results"
 	//   }
 	// }
+
+	// Max range is 3k blocks
 	const step = BigInt(3_000);
 	const from = fromBlock;
 	const to = await publicClient.getBlockNumber();

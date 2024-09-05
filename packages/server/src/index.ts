@@ -19,11 +19,26 @@ app.use("*", serveStatic({ path: "../ui/dist/index.html" }));
 
 const api = app
 	.basePath("/api")
+	.get("/writer/:address", async (c) => {
+		const address = getAddress(c.req.param("address"));
+		const writer = await prisma.writer.findFirst({
+			where: {
+				address,
+			},
+			include: {
+				entries: true,
+			},
+		});
+		return c.json(writer);
+	})
 	.get("/account/:address", async (c) => {
 		const address = getAddress(c.req.param("address"));
 		const writers = await prisma.writer.findMany({
 			where: {
 				admin: address,
+			},
+			include: {
+				entries: true,
 			},
 		});
 		return c.json({ writers });
