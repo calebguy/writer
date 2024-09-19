@@ -18,7 +18,7 @@ export const publicClient = createPublicClient({
 	transport: http(env.RPC_URL),
 });
 
-async function getAllEventLogs<T extends AbiEvent>({
+async function getEventLogsFromBlock<T extends AbiEvent>({
 	fromBlock,
 	address,
 	event,
@@ -100,8 +100,13 @@ async function onLogs(logs: any[]) {
 }
 
 export async function getAllWriterCreatedEvents() {
-	return await getAllEventLogs({
-		fromBlock,
+	const mostRecentWriter = await prisma.writer.findFirst({
+		orderBy: { createdAtBlock: "desc" },
+	});
+	return await getEventLogsFromBlock({
+		fromBlock: mostRecentWriter
+			? BigInt(mostRecentWriter.createdAtBlock)
+			: fromBlock,
 		address,
 		event,
 		onLogs,

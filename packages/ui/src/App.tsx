@@ -1,11 +1,10 @@
 import { useWallets } from "@privy-io/react-auth";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
-import { type SubmitHandler, useForm } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { Hex } from "viem";
-import type { CreateNewBucketInputs, Writer } from "./interfaces";
-import { createNewWriter, getWriters } from "./utils/api";
+import type { Writer } from "./interfaces";
+import { getWriters } from "./utils/api";
 import { cn } from "./utils/cn";
 
 function App() {
@@ -66,52 +65,76 @@ interface CreateBucketFormProps {
 }
 
 function CreateBucketForm({ onSuccess, address }: CreateBucketFormProps) {
-	const { mutate, isPending } = useMutation({
-		mutationFn: createNewWriter,
-		mutationKey: ["create-from-factory"],
-		onSuccess: () => onSuccess(),
-	});
-	const {
-		register,
-		handleSubmit,
-		formState: { errors },
-	} = useForm<CreateNewBucketInputs>();
-	const onSubmit: SubmitHandler<CreateNewBucketInputs> = (data) => {
-		mutate({
-			title: data.title,
-			admin: address,
-			managers: [address],
-		});
-	};
+	// const { mutate, isPending } = useMutation({
+	// 	mutationFn: createNewWriter,
+	// 	mutationKey: ["create-from-factory"],
+	// 	onSuccess: () => onSuccess(),
+	// });
+	// const {
+	// 	register,
+	// 	handleSubmit,
+	// 	formState: { errors },
+	// } = useForm<CreateNewBucketInputs>();
+	// const onSubmit: SubmitHandler<CreateNewBucketInputs> = (data) => {
+	// 	mutate({
+	// 		title: data.title,
+	// 		admin: address,
+	// 		managers: [address],
+	// 	});
+	// };
+
+	const [showForm, setShowForm] = useState(false);
+
+	const ref = useRef<HTMLInputElement>(null);
+	useEffect(() => {
+		const handleClickOutside = (event: MouseEvent) => {
+			if (ref.current) {
+				if (!ref.current.contains(event.target as Node)) {
+					setShowForm(false);
+				} else {
+					setShowForm(true);
+				}
+			}
+		};
+
+		document.addEventListener("mousedown", handleClickOutside);
+		return () => {
+			document.removeEventListener("mousedown", handleClickOutside);
+		};
+	}, []);
 	return (
 		<div
-			// onSubmit={handleSubmit(onSubmit)}
-			className="aspect-square border border-neutral-900 bg-transparent hover:bg-neutral-900 hover:cursor-pointer group"
+			ref={ref}
+			className={cn("aspect-square border border-neutral-900 group", {
+				"bg-neutral-900": showForm,
+				"hover:bg-neutral-900 hover:cursor-text bg-transparent": !showForm,
+			})}
 		>
-			<div className="flex justify-center items-center px-3 py-2 h-full">
-				<div className="text-2xl text-black group-hover:text-white">+</div>
-				{/* <div
-					className={cn("flex items-center", {
-						"text-lime uppercase": errors.title,
-					})}
-				>
-					<span className="leading-snug">*</span>
-					<span>title</span>
-				</div>
-				<input
-					{...register("title", { required: true })}
-					className="outline-none text-white px-1 py-0.5 bg-neutral-700 bg-transparent"
-				/> */}
-			</div>
-			{/* <Button
-				type="submit"
-				disabled={isPending}
-				className="text-xl bg-transparent"
+			<div
+				className={cn("flex justify-center items-center h-full", {
+					"items-start justify-start": showForm,
+					"group-hover:items-start group-hover:justify-start px-3 py-2":
+						!showForm,
+				})}
 			>
-				<span className="text-lime" style={{ lineHeight: "0.25rem" }}>
-					+
-				</span>
-			</Button> */}
+				{!showForm && (
+					<>
+						<div className="text-2xl text-white group-hover:hidden">+</div>
+						<div className="text-base text-neutral-500 hidden group-hover:block text-left">
+							Name your collection
+						</div>
+					</>
+				)}
+				{showForm && (
+					<form className="w-full h-full">
+						<textarea
+							tabIndex={0}
+							className="w-full h-full bg-neutral-900 text-base placeholder:text-neutral-700 px-3 py-2"
+							placeholder="Name your collection"
+						/>
+					</form>
+				)}
+			</div>
 		</div>
 	);
 }
