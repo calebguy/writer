@@ -1,11 +1,13 @@
 import { useWallets } from "@privy-io/react-auth";
-import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import type { Hex } from "viem";
-import type { Writer } from "./interfaces";
-import { getWriters } from "./utils/api";
+import type { CreateNewBucketInputs, Writer } from "./interfaces";
+import { createNewWriter, getWriters } from "./utils/api";
 import { cn } from "./utils/cn";
+import { useFirstWallet, useIsMac } from "./utils/hooks";
 
 function App() {
 	const { wallets } = useWallets();
@@ -59,32 +61,10 @@ function Bucket({ writer: { id, title, address } }: BucketProps) {
 	);
 }
 
-interface CreateBucketFormProps {
-	onSuccess: () => void;
-	address: string;
-}
+interface CreateBucketFormProps {}
 
-function CreateBucketForm({ onSuccess, address }: CreateBucketFormProps) {
-	// const { mutate, isPending } = useMutation({
-	// 	mutationFn: createNewWriter,
-	// 	mutationKey: ["create-from-factory"],
-	// 	onSuccess: () => onSuccess(),
-	// });
-	// const {
-	// 	register,
-	// 	handleSubmit,
-	// 	formState: { errors },
-	// } = useForm<CreateNewBucketInputs>();
-	// const onSubmit: SubmitHandler<CreateNewBucketInputs> = (data) => {
-	// 	mutate({
-	// 		title: data.title,
-	// 		admin: address,
-	// 		managers: [address],
-	// 	});
-	// };
-
+function CreateBucketForm({}: CreateBucketFormProps) {
 	const [showForm, setShowForm] = useState(false);
-
 	const ref = useRef<HTMLInputElement>(null);
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
@@ -125,30 +105,80 @@ function CreateBucketForm({ onSuccess, address }: CreateBucketFormProps) {
 						</div>
 					</>
 				)}
-				{showForm && <CreateForm />}
+				{showForm && (
+					<CreateForm
+						onCancel={() => setShowForm(false)}
+						onSuccess={() => {
+							console.log("new bucket created, reload");
+						}}
+					/>
+				)}
 			</div>
 		</div>
 	);
 }
 
-function CreateForm() {
-	const ref = useRef<HTMLTextAreaElement>(null);
+interface CreateFormProps {
+	onCancel: () => void;
+	onSuccess: () => void;
+}
+
+function CreateForm({ onSuccess, onCancel }: CreateFormProps) {
+	const isMac = useIsMac();
+	const address = useFirstWallet()?.address;
+	const inputName = "title";
+	const { register, handleSubmit, setFocus } = useForm<CreateNewBucketInputs>();
+	const onSubmit: SubmitHandler<CreateNewBucketInputs> = useCallback(
+		(data) => {
+			mutate({
+				title: data[inputName],
+				admin: address,
+				managers: [address],
+			});
+		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[address],
+	);
+
+	const { mutate } = useMutation({
+		mutationFn: createNewWriter,
+		mutationKey: ["create-from-factory"],
+		onSuccess,
+	});
+
+	useEffect(() => {
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+				event.preventDefault();
+				handleSubmit(onSubmit)();
+			} else if (event.key === "Escape") {
+				onCancel();
+			}
+		};
+
+		document.addEventListener("keydown", handleKeyDown);
+		return () => {
+			document.removeEventListener("keydown", handleKeyDown);
+		};
+	}, [handleSubmit, onSubmit, onCancel]);
+
 	useEffect(() => {
 		const timeoutId = setTimeout(() => {
-			ref.current?.focus();
-		}, 0); // 0 ms delay to ensure mounting
-
+			setFocus(inputName);
+		}, 0);
 		return () => clearTimeout(timeoutId);
-	}, []);
+	}, [setFocus]);
 	return (
 		<form className="w-full h-full">
 			<textarea
-				ref={ref}
-				tabIndex={0}
 				className="w-full h-full bg-neutral-900 text-base placeholder:text-neutral-700 px-3 py-2 outline-[1px] outline-dashed outline-lime resize-none"
 				placeholder="Name your collection"
+				{...register(inputName)}
 			/>
-			<div>⌘ + ↵</div>
+			<div className="text-neutral-500 text-sm leading-[16px] mt-1">
+				<div>{isMac ? "⌘" : "ctrl"} + ↵</div>
+				<div>to create</div>
+			</div>
 		</form>
 	);
 }

@@ -82,7 +82,7 @@ async function onLogs(logs: any[]) {
 		const { blockNumber, transactionHash } = log;
 		const { id, writerAddress, storeAddress, admin, managers, title } =
 			log.args;
-		return await prisma.writer.upsert({
+		await prisma.writer.upsert({
 			create: {
 				id: Number(id),
 				address: writerAddress as string,
