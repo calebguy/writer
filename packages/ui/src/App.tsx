@@ -119,23 +119,37 @@ function CreateBucketForm({ onSuccess, address }: CreateBucketFormProps) {
 			>
 				{!showForm && (
 					<>
-						<div className="text-2xl text-white group-hover:hidden">+</div>
+						<div className="text-2xl text-lime group-hover:hidden">+</div>
 						<div className="text-base text-neutral-500 hidden group-hover:block text-left">
-							Name your collection
+							Create a collection
 						</div>
 					</>
 				)}
-				{showForm && (
-					<form className="w-full h-full">
-						<textarea
-							tabIndex={0}
-							className="w-full h-full bg-neutral-900 text-base placeholder:text-neutral-700 px-3 py-2"
-							placeholder="Name your collection"
-						/>
-					</form>
-				)}
+				{showForm && <CreateForm />}
 			</div>
 		</div>
+	);
+}
+
+function CreateForm() {
+	const ref = useRef<HTMLTextAreaElement>(null);
+	useEffect(() => {
+		const timeoutId = setTimeout(() => {
+			ref.current?.focus();
+		}, 0); // 0 ms delay to ensure mounting
+
+		return () => clearTimeout(timeoutId);
+	}, []);
+	return (
+		<form className="w-full h-full">
+			<textarea
+				ref={ref}
+				tabIndex={0}
+				className="w-full h-full bg-neutral-900 text-base placeholder:text-neutral-700 px-3 py-2 outline-[1px] outline-dashed outline-lime resize-none"
+				placeholder="Name your collection"
+			/>
+			<div>⌘ + ↵</div>
+		</form>
 	);
 }
 
