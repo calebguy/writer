@@ -2,10 +2,16 @@ import { zValidator } from "@hono/zod-validator";
 import { SyndicateClient } from "@syndicateio/syndicate-node";
 import { waitForHash } from "@syndicateio/syndicate-node/utils";
 
+import { sleep } from "bun";
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { getAddress } from "viem";
-import { getAllWriterCreatedEvents } from "./chain";
+import {
+	getAllWriterCreatedEvents,
+	getCreatedEvents,
+	listenToNewWriterCreatedEvents,
+	publicClient,
+} from "./chain";
 import { prisma } from "./db";
 import { env } from "./env";
 import { createSchema } from "./schema";
@@ -62,13 +68,26 @@ const api = app
 			},
 		});
 		const hash = await waitForHash(syndicate, { projectId, transactionId });
+
 		console.log(
 			`Transaction ID: ${transactionId} was broadcast with hash: ${hash}`,
 		);
-		return c.json({ hash }, 200);
+
+		// give some time for the event to be emitted
+		await sleep(5_000);
+		const currentBlock = await publicClient.getBlock();
+		await getCreatedEvents(currentBlock.number - BigInt(10));
+		const writer = await prisma.writer.findFirst({
+			where: {
+				createdAtHash: hash,
+			},
+		});
+		console.log("created new writer", writer);
+		return c.json({ writer }, 200);
 	});
 
 getAllWriterCreatedEvents();
+listenToNewWriterCreatedEvents();
 
 export type Api = typeof api;
 export default app;

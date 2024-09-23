@@ -26,7 +26,7 @@ function App() {
 
 	return (
 		<div
-			className="mt-10 flex-grow grid gap-2"
+			className="mt-10 grid gap-2 gap-y-4"
 			style={{ gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))" }}
 		>
 			{wallet &&
@@ -34,10 +34,7 @@ function App() {
 				data?.writers?.map((writer) => (
 					<Bucket key={`writer-${writer.id}`} writer={writer} />
 				))}
-			<CreateBucketForm
-				onSuccess={refetch}
-				address={wallet?.address as string}
-			/>
+			<CreateBucketForm />
 		</div>
 	);
 }
@@ -61,9 +58,7 @@ function Bucket({ writer: { id, title, address } }: BucketProps) {
 	);
 }
 
-interface CreateBucketFormProps {}
-
-function CreateBucketForm({}: CreateBucketFormProps) {
+function CreateBucketForm() {
 	const [showForm, setShowForm] = useState(false);
 	const ref = useRef<HTMLInputElement>(null);
 	useEffect(() => {

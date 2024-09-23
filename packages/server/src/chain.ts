@@ -6,12 +6,13 @@ import {
 	type Hex,
 	type WatchEventParameters,
 } from "viem";
-import { foundry, optimism } from "viem/chains";
+import { optimism } from "viem/chains";
 import { prisma } from "./db";
-import { env, isDev } from "./env";
+import { env } from "./env";
 import { minBigInt } from "./helpers";
 
-const chain = isDev ? foundry : optimism;
+// const chain = isDev ? foundry : optimism;
+const chain = optimism;
 
 export const publicClient = createPublicClient({
 	chain,
@@ -99,22 +100,27 @@ async function onLogs(logs: any[]) {
 	}
 }
 
-export async function getAllWriterCreatedEvents() {
-	const mostRecentWriter = await prisma.writer.findFirst({
-		orderBy: { createdAtBlock: "desc" },
-	});
+export async function getCreatedEvents(fromBlock: bigint) {
 	return await getEventLogsFromBlock({
-		fromBlock: mostRecentWriter
-			? BigInt(mostRecentWriter.createdAtBlock)
-			: fromBlock,
+		fromBlock,
 		address,
 		event,
 		onLogs,
 	});
 }
 
+export async function getAllWriterCreatedEvents() {
+	const mostRecentWriter = await prisma.writer.findFirst({
+		orderBy: { createdAtBlock: "desc" },
+	});
+	return await getCreatedEvents(
+		mostRecentWriter ? BigInt(mostRecentWriter.createdAtBlock) : fromBlock,
+	);
+}
+
 export async function listenToNewWriterCreatedEvents() {
 	return publicClient.watchEvent({
+		pollingInterval: 10_000,
 		fromBlock,
 		address,
 		event,
