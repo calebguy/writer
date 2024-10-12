@@ -13,8 +13,8 @@ export function Writer() {
 	});
 	console.log("data", data);
 	return (
-		<div className="flex-grow text-left mt-10 px-3 py-2 bg-neutral-900">
-			<div className="text-xl mb-2">{data?.title}</div>
+		<div className="flex-grow text-left mt-10 px-3 py-2">
+			<div className="text-xl mb-2 text-white">{data?.title}</div>
 			<Editor />
 		</div>
 	);

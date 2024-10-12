@@ -7,7 +7,7 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
 	return (
-		<div className="h-full flex flex-col">
+		<div className="grow flex flex-col">
 			<Header />
 			{children}
 			<Footer />

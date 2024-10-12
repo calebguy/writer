@@ -67,8 +67,10 @@
 #root {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 3rem;
   text-align: center;
+  display: flex;
+  flex-direction: column;
 }
 
 html, body {
@@ -81,7 +83,7 @@ html, body, #root {
 
 #root {
   position: relative;
-  height: 1px;
+  /* height: 1px; */
 }
 
 #privy-dialog-backdrop {
@@ -98,6 +100,15 @@ html, body, #root {
 
 .ProseMirror-focused {
   outline: none;
+}
+
+@keyframes march {
+  from {
+    background-position: 0 0, 0 0;
+  }
+  to {
+    background-position: 0 0, 10px 10px;
+  }
 }
 
 /* [vaul-drawer] {

@@ -1,7 +1,7 @@
 import { useWallets } from "@privy-io/react-auth";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
+import { type SubmitHandler, useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import type { Hex } from "viem";
 import type { CreateNewBucketInputs, Writer } from "./interfaces";
@@ -10,8 +10,9 @@ import { cn } from "./utils/cn";
 import { useFirstWallet, useIsMac } from "./utils/hooks";
 
 function App() {
-	const { wallets } = useWallets();
+	const { wallets, ready } = useWallets();
 	const wallet = wallets[0];
+	const address = wallet?.address;
 
 	const { data, refetch } = useQuery({
 		queryFn: () => getWriters(wallet?.address as Hex),
@@ -25,17 +26,33 @@ function App() {
 	);
 
 	return (
-		<div
-			className="mt-10 grid gap-2 gap-y-4"
-			style={{ gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))" }}
-		>
-			{wallet &&
-				hasWriters &&
-				data?.writers?.map((writer) => (
-					<Bucket key={`writer-${writer.id}`} writer={writer} />
-				))}
-			<CreateBucketForm />
-		</div>
+		<>
+			{address && (
+				<div
+					className="mt-10 grid gap-2 gap-y-4"
+					style={{
+						gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+					}}
+				>
+					{wallet &&
+						hasWriters &&
+						data?.writers?.map((writer) => (
+							<Bucket key={`writer-${writer.id}`} writer={writer} />
+						))}
+					<CreateBucketForm
+						onSuccess={() => {
+							console.log("new bucket created");
+							refetch();
+						}}
+					/>
+				</div>
+			)}
+			{!address && ready && (
+				<div className="text-xl text-lime mt-8 grow flex justify-center items-center">
+					<div>Connect your wallet to write</div>
+				</div>
+			)}
+		</>
 	);
 }
 
@@ -58,7 +75,11 @@ function Bucket({ writer: { id, title, address } }: BucketProps) {
 	);
 }
 
-function CreateBucketForm() {
+interface CreateBucketFormProps {
+	onSuccess: () => void;
+}
+
+function CreateBucketForm({ onSuccess }: CreateBucketFormProps) {
 	const [showForm, setShowForm] = useState(false);
 	const ref = useRef<HTMLInputElement>(null);
 	useEffect(() => {
@@ -103,9 +124,7 @@ function CreateBucketForm() {
 				{showForm && (
 					<CreateForm
 						onCancel={() => setShowForm(false)}
-						onSuccess={() => {
-							console.log("new bucket created, reload");
-						}}
+						onSuccess={onSuccess}
 					/>
 				)}
 			</div>
@@ -122,7 +141,8 @@ function CreateForm({ onSuccess, onCancel }: CreateFormProps) {
 	const isMac = useIsMac();
 	const address = useFirstWallet()?.address;
 	const inputName = "title";
-	const { register, handleSubmit, setFocus } = useForm<CreateNewBucketInputs>();
+	const { register, handleSubmit, setFocus, reset } =
+		useForm<CreateNewBucketInputs>();
 	const onSubmit: SubmitHandler<CreateNewBucketInputs> = useCallback(
 		(data) => {
 			mutate({
@@ -135,10 +155,13 @@ function CreateForm({ onSuccess, onCancel }: CreateFormProps) {
 		[address],
 	);
 
-	const { mutate } = useMutation({
+	const { mutate, isPending } = useMutation({
 		mutationFn: createNewWriter,
 		mutationKey: ["create-from-factory"],
-		onSuccess,
+		onSuccess: () => {
+			reset();
+			onSuccess();
+		},
 	});
 
 	useEffect(() => {
@@ -163,10 +186,12 @@ function CreateForm({ onSuccess, onCancel }: CreateFormProps) {
 		}, 0);
 		return () => clearTimeout(timeoutId);
 	}, [setFocus]);
+
 	return (
 		<form className="w-full h-full">
 			<textarea
-				className="w-full h-full bg-neutral-900 text-base placeholder:text-neutral-700 px-3 py-2 outline-[1px] outline-dashed outline-lime resize-none"
+				disabled={!address || isPending}
+				className="w-full h-full bg-neutral-900 text-base placeholder:text-neutral-700 px-3 py-2 outline-none border-[1px] border-dashed border-lime resize-none ants disabled:opacity-30"
 				placeholder="Name your collection"
 				{...register(inputName)}
 			/>
