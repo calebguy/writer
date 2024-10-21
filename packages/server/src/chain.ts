@@ -1,5 +1,5 @@
-import { Prisma, TransactionStatus } from "@prisma/client";
-import { InputJsonValue } from "@prisma/client/runtime/library";
+import type { Prisma, TransactionStatus } from "@prisma/client";
+import type { InputJsonValue } from "@prisma/client/runtime/library";
 import {
 	createPublicClient,
 	fromHex,
