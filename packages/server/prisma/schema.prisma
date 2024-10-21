@@ -13,29 +13,47 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// This may need to change, we need a model where things can be 'created'
+// in the DB and then verified onchain by the listeners
+
+
+// Currently we map the ID from the factory to the database ID which maybe is not the best idea
+// I'd like to be able to create 'soft' data into the database as soon as the user POSTs
+// and then updated with the onchain data later. That way we can still use the soft data for
+// the frontend immediately, and then fill in the hard data async.
+
 model Writer {
   id Int @id @default(autoincrement())
-  title String?
-  address String @unique
-  storageAddress String @unique
+  title String
+  address String? @unique
+  storageAddress String? @unique
   admin String
-  authors String[]
-  createdAtBlock String
-  createdAtHash String
+  managers String[]
+  onChainId BigInt? @unique
+  createdAtBlock BigInt?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   entries Entry[]
+  transactionId String? @unique
+  transaction SyndicateTransaction? @relation(fields: [transactionId], references: [id])
 }
 
 model Entry {
   id Int @id @default(autoincrement())
   author String
-  createdAtBlock Int
-  updatedAtBlock Int
   totalChunks Int
   receivedChunks Int
   exists Boolean
-  writerId Int
-  writer Writer @relation(fields: [writerId], references: [id])
+  createdAtBlock BigInt?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  writerId BigInt
+  writer Writer @relation(fields: [writerId], references: [onChainId])
   chunks Chunk[]
+  transactionId String? @unique
+  transaction SyndicateTransaction? @relation(fields: [transactionId], references: [id])
 }
 
 model Chunk {
@@ -44,6 +62,38 @@ model Chunk {
   author String
   encodedContent String
   decodedContent String
+  createdAtBlock BigInt?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   entryId Int
   entry Entry @relation(fields: [entryId], references: [id])
+  transactionId String? @unique
+  transaction SyndicateTransaction? @relation(fields: [transactionId], references: [id])
+}
+
+enum TransactionStatus {
+  PENDING
+  PROCESSED
+  SUBMITTED
+  CONFIRMED
+  PAUSED
+  ABANDONED
+}
+
+model SyndicateTransaction {
+  id String @id @default(uuid())
+  chainId BigInt
+  blockNumber BigInt?
+  hash String? @unique
+  projectId String
+  status TransactionStatus @default(PENDING)
+  functionSignature String
+  args Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  writers Writer[]
+  entries Entry[]
+  chunks Chunk[]
 }

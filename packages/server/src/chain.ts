@@ -1,5 +1,8 @@
+import { Prisma } from "@prisma/client";
+import { InputJsonValue } from "@prisma/client/runtime/library";
 import {
 	createPublicClient,
+	fromHex,
 	http,
 	parseAbiItem,
 	type AbiEvent,
@@ -7,9 +10,10 @@ import {
 	type WatchEventParameters,
 } from "viem";
 import { optimism } from "viem/chains";
+import { syndicate } from ".";
 import { prisma } from "./db";
 import { env } from "./env";
-import { minBigInt } from "./helpers";
+import { minBigInt, synDataToUuid } from "./helpers";
 
 // const chain = isDev ? foundry : optimism;
 const chain = optimism;
@@ -83,19 +87,72 @@ async function onLogs(logs: any[]) {
 		const { blockNumber, transactionHash } = log;
 		const { id, writerAddress, storeAddress, admin, managers, title } =
 			log.args;
+		const { input } = await publicClient.getTransaction({
+			hash: transactionHash as Hex,
+		});
+
+		let transactionId: string | null = null;
+
+		try {
+			const synIdEncoded = input.slice(-70);
+			const synIdDecoded = fromHex(`0x${synIdEncoded}`, "string");
+			const isSyndicateTx = synIdDecoded.startsWith("syn");
+			if (isSyndicateTx) {
+				transactionId = synDataToUuid(synIdDecoded);
+			}
+			console.log(transactionId);
+		} catch {}
+		const where: Prisma.WriterWhereUniqueInput = {};
+
+		if (transactionId) {
+			console.log("getting transation", transactionId);
+			const synTx = await syndicate.wallet.getTransactionRequest(
+				env.SYNDICATE_PROJECT_ID,
+				transactionId,
+			);
+			console.log("got transaction", synTx);
+			const tx = synTx.transactionAttempts?.filter((tx) =>
+				["SUBMITTED", "CONFIRMED"].includes(tx.status),
+			)[0];
+			await prisma.syndicateTransaction.upsert({
+				create: {
+					id: transactionId,
+					chainId: synTx.chainId,
+					projectId: env.SYNDICATE_PROJECT_ID,
+					functionSignature: synTx.functionSignature,
+					args: synTx.decodedData as InputJsonValue,
+					blockNumber: tx?.block,
+					hash: tx?.hash,
+					status: tx?.status,
+				},
+				update: {
+					updatedAt: new Date(),
+					hash: tx?.hash,
+				},
+				where: {
+					id: transactionId,
+				},
+			});
+			where.transactionId = transactionId;
+		} else {
+			where.onChainId = BigInt(id);
+		}
+
 		await prisma.writer.upsert({
 			create: {
-				id: Number(id),
+				title,
+				transactionId,
+				onChainId: BigInt(id),
 				address: writerAddress as string,
 				storageAddress: storeAddress as string,
 				admin: admin as string,
+				managers: managers as string[],
 				createdAtBlock: blockNumber.toString(),
-				createdAtHash: transactionHash as string,
-				authors: managers as string[],
-				title,
 			},
-			update: {},
-			where: { id: Number(id) },
+			update: {
+				updatedAt: new Date(),
+			},
+			where,
 		});
 	}
 }
@@ -112,10 +169,18 @@ export async function getCreatedEvents(fromBlock: bigint) {
 export async function getAllWriterCreatedEvents() {
 	const mostRecentWriter = await prisma.writer.findFirst({
 		orderBy: { createdAtBlock: "desc" },
+		where: {
+			createdAtBlock: {
+				not: null,
+			},
+		},
 	});
-	return await getCreatedEvents(
-		mostRecentWriter ? BigInt(mostRecentWriter.createdAtBlock) : fromBlock,
-	);
+	if (!mostRecentWriter || !mostRecentWriter.createdAtBlock) {
+		return getCreatedEvents(fromBlock);
+	}
+	const block = mostRecentWriter ? mostRecentWriter.createdAtBlock : fromBlock;
+	console.log(`Getting events from block ${block}`);
+	return await getCreatedEvents(block);
 }
 
 export async function listenToNewWriterCreatedEvents() {
