@@ -34,17 +34,17 @@ function App() {
 						gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
 					}}
 				>
-					{wallet &&
-						hasWriters &&
-						data?.writers?.map((writer) => (
-							<Bucket key={`writer-${writer.id}`} writer={writer} />
-						))}
 					<CreateBucketForm
 						onSuccess={() => {
 							console.log("new bucket created");
 							refetch();
 						}}
 					/>
+					{wallet &&
+						hasWriters &&
+						data?.writers?.map((writer) => (
+							<Bucket key={`writer-${writer.id}`} writer={writer} />
+						))}
 				</div>
 			)}
 			{!address && ready && (
@@ -116,7 +116,7 @@ function CreateBucketForm({ onSuccess }: CreateBucketFormProps) {
 				{!showForm && (
 					<>
 						<div className="text-2xl text-lime group-hover:hidden">+</div>
-						<div className="text-base text-neutral-500 hidden group-hover:block text-left">
+						<div className="text-base text-neutral-700 hidden group-hover:block text-left">
 							Create a collection
 						</div>
 					</>
@@ -188,14 +188,14 @@ function CreateForm({ onSuccess, onCancel }: CreateFormProps) {
 	}, [setFocus]);
 
 	return (
-		<form className="w-full h-full">
+		<form className="w-full h-full relative">
 			<textarea
 				disabled={!address || isPending}
 				className="w-full h-full bg-neutral-900 text-base placeholder:text-neutral-700 px-3 py-2 outline-none border-[1px] border-dashed border-lime resize-none ants disabled:opacity-30"
 				placeholder="Name your collection"
 				{...register(inputName)}
 			/>
-			<div className="text-neutral-500 text-sm leading-[16px] mt-1">
+			<div className="text-neutral-700 text-sm leading-[16px] mt-1 absolute bottom-3 left-1/2 -translate-x-1/2">
 				<div>{isMac ? "⌘" : "ctrl"} + ↵</div>
 				<div>to create</div>
 			</div>

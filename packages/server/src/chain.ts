@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, TransactionStatus } from "@prisma/client";
 import { InputJsonValue } from "@prisma/client/runtime/library";
 import {
 	createPublicClient,
@@ -11,6 +11,7 @@ import {
 } from "viem";
 import { optimism } from "viem/chains";
 import { syndicate } from ".";
+import { factoryAbi } from "./abi";
 import { prisma } from "./db";
 import { env } from "./env";
 import { minBigInt, synDataToUuid } from "./helpers";
@@ -100,17 +101,14 @@ async function onLogs(logs: any[]) {
 			if (isSyndicateTx) {
 				transactionId = synDataToUuid(synIdDecoded);
 			}
-			console.log(transactionId);
 		} catch {}
-		const where: Prisma.WriterWhereUniqueInput = {};
+		let where: Prisma.WriterWhereUniqueInput | null = null;
 
 		if (transactionId) {
-			console.log("getting transation", transactionId);
 			const synTx = await syndicate.wallet.getTransactionRequest(
 				env.SYNDICATE_PROJECT_ID,
 				transactionId,
 			);
-			console.log("got transaction", synTx);
 			const tx = synTx.transactionAttempts?.filter((tx) =>
 				["SUBMITTED", "CONFIRMED"].includes(tx.status),
 			)[0];
@@ -123,7 +121,7 @@ async function onLogs(logs: any[]) {
 					args: synTx.decodedData as InputJsonValue,
 					blockNumber: tx?.block,
 					hash: tx?.hash,
-					status: tx?.status,
+					status: tx?.status as TransactionStatus,
 				},
 				update: {
 					updatedAt: new Date(),
@@ -133,9 +131,9 @@ async function onLogs(logs: any[]) {
 					id: transactionId,
 				},
 			});
-			where.transactionId = transactionId;
+			where = { transactionId };
 		} else {
-			where.onChainId = BigInt(id);
+			where = { onChainId: BigInt(id) };
 		}
 
 		await prisma.writer.upsert({
@@ -150,6 +148,12 @@ async function onLogs(logs: any[]) {
 				createdAtBlock: blockNumber.toString(),
 			},
 			update: {
+				onChainId: BigInt(id),
+				address: writerAddress as string,
+				storageAddress: storeAddress as string,
+				admin: admin as string,
+				managers: managers as string[],
+				createdAtBlock: blockNumber.toString(),
 				updatedAt: new Date(),
 			},
 			where,
@@ -184,11 +188,12 @@ export async function getAllWriterCreatedEvents() {
 }
 
 export async function listenToNewWriterCreatedEvents() {
-	return publicClient.watchEvent({
-		pollingInterval: 10_000,
+	return publicClient.watchContractEvent({
+		pollingInterval: 5_000,
 		fromBlock,
 		address,
-		event,
+		abi: factoryAbi,
+		eventName: "WriterCreated",
 		onLogs,
 	});
 }

@@ -39,6 +39,9 @@ const api = app
 	.get("/account/:address", async (c) => {
 		const address = getAddress(c.req.param("address"));
 		const writers = await prisma.writer.findMany({
+			orderBy: {
+				createdAt: "desc",
+			},
 			where: {
 				admin: address,
 			},
