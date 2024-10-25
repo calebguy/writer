@@ -1,16 +1,19 @@
-import { EditorProvider } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-
-// define your extension array
-const extensions = [StarterKit];
+import Document from "@tiptap/extension-document";
+import Paragraph from "@tiptap/extension-paragraph";
+import Text from "@tiptap/extension-text";
+import { EditorContent, useEditor } from "@tiptap/react";
 
 const content = "";
 
 export function Editor() {
-	return (
-		<EditorProvider extensions={extensions} content={content}>
-			{/* <FloatingMenu editor={null}>This is the floating menu</FloatingMenu> */}
-			{/* <BubbleMenu editor={null}>This is the bubble menu</BubbleMenu> */}
-		</EditorProvider>
-	);
+	const editor = useEditor({
+		extensions: [Document, Paragraph, Text],
+		onUpdate: ({ editor }) => {
+			console.log(editor.getHTML());
+			console.log(editor.getText());
+		},
+		content,
+	});
+
+	return <EditorContent editor={editor} />;
 }

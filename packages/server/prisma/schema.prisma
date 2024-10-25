@@ -60,8 +60,9 @@ model Chunk {
   id Int @id @default(autoincrement())
   index Int
   author String
-  encodedContent String
-  decodedContent String
+  compressionAlgorithm String
+  compressedContent String
+  decompressedContent String
   createdAtBlock BigInt?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

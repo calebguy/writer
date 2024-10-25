@@ -12,7 +12,8 @@ import {
 import { CREATE_FUNCTION_SIGNATURE, TARGET_CHAIN_ID } from "./constants";
 import { prisma, writerToJsonSafe } from "./db";
 import { env } from "./env";
-import { createSchema } from "./schema";
+import { getChunksFromContent } from "./helpers";
+import { createEntrySchema, createWriterSchema } from "./requestSchema";
 
 const app = new Hono();
 export const syndicate = new SyndicateClient({ token: env.SYNDICATE_API_KEY });
@@ -57,7 +58,7 @@ const api = app
 			writers: writers.map(writerToJsonSafe),
 		});
 	})
-	.post("/create", zValidator("json", createSchema), async (c) => {
+	.post("/writer", zValidator("json", createWriterSchema), async (c) => {
 		const { admin, managers, title } = c.req.valid("json");
 		console.log(
 			`creating new writing with admin: ${admin} and managers: ${managers}`,
@@ -95,7 +96,27 @@ const api = app
 		});
 		console.log("created new writer", writer);
 		return c.json({ writer: writerToJsonSafe(writer) }, 200);
-	});
+	})
+	.post(
+		"/write/:address/entry",
+		zValidator("json", createEntrySchema),
+		async (c) => {
+			const address = getAddress(c.req.param("address"));
+			const { content } = c.req.valid("json");
+
+			const writer = await prisma.writer.findFirst({
+				where: {
+					address,
+				},
+			});
+			if (!writer) {
+				return c.json({ error: "Writer not found" }, 404);
+			}
+
+			const chunks = getChunksFromContent(content);
+			return c.json({ content });
+		},
+	);
 
 export type Api = typeof api;
 export default app;

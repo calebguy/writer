@@ -71,6 +71,7 @@
   text-align: center;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 html, body {
@@ -81,11 +82,6 @@ html, body, #root {
   min-height: 100dvh;
 }
 
-#root {
-  position: relative;
-  /* height: 1px; */
-}
-
 #privy-dialog-backdrop {
   display: none;
 }
@@ -94,21 +90,16 @@ html, body, #root {
   box-shadow: none;
 }
 
-[vaul-drawer][vaul-drawer-direction=bottom]::after {
-  display: none;
+.ProseMirror {
+  border: 1px solid theme('colors.neutral.700');
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
 }
 
 .ProseMirror-focused {
   outline: none;
-}
-
-@keyframes march {
-  from {
-    background-position: 0 0, 0 0;
-  }
-  to {
-    background-position: 0 0, 10px 10px;
-  }
 }
 
 .rotating {
@@ -154,4 +145,8 @@ html, body, #root {
 
 /* [vaul-overlay] {
   transition: none;
+} */
+
+/* [vaul-drawer][vaul-drawer-direction=bottom]::after {
+  display: none;
 } */

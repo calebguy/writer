@@ -18,7 +18,6 @@ import { syndicate } from "./server";
 
 // const chain = isDev ? foundry : optimism;
 const chain = optimism;
-console.log(env.RPC_URL);
 export const publicClient = createPublicClient({
 	chain,
 	transport: http(env.RPC_URL),

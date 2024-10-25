@@ -23,3 +23,8 @@ export function synDataToUuid(input: string) {
 
 	return uuid;
 }
+
+export function getChunksFromContent(content: string) {
+	const chunks = content.split("\n");
+	return chunks;
+}

@@ -30,7 +30,7 @@ export async function createNewWriter(json: {
 	managers: string[];
 	title: string;
 }) {
-	const res = await client.api.create.$post({
+	const res = await client.api.writer.$post({
 		json,
 	});
 	if (!res.ok) {
