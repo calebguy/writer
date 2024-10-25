@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import type { Hex } from "viem";
+import { Blob } from "./components/icons/Blob";
 import type { CreateNewBucketInputs, Writer } from "./interfaces";
 import { createNewWriter, getWriters } from "./utils/api";
 import { cn } from "./utils/cn";
@@ -49,7 +50,7 @@ function App() {
 			)}
 			{!address && ready && (
 				<div className="text-xl text-lime mt-8 grow flex justify-center items-center">
-					<div>Connect your wallet to write</div>
+					<div>Click the lil guy to begin</div>
 				</div>
 			)}
 		</>
@@ -141,7 +142,7 @@ function CreateForm({ onSuccess, onCancel }: CreateFormProps) {
 	const isMac = useIsMac();
 	const address = useFirstWallet()?.address;
 	const inputName = "title";
-	const { register, handleSubmit, setFocus, reset } =
+	const { register, handleSubmit, setFocus, reset, getValues } =
 		useForm<CreateNewBucketInputs>();
 	const onSubmit: SubmitHandler<CreateNewBucketInputs> = useCallback(
 		(data) => {
@@ -191,14 +192,26 @@ function CreateForm({ onSuccess, onCancel }: CreateFormProps) {
 		<form className="w-full h-full relative">
 			<textarea
 				disabled={!address || isPending}
-				className="w-full h-full bg-neutral-900 text-base placeholder:text-neutral-700 px-3 py-2 outline-none border-[1px] border-dashed border-lime resize-none ants disabled:opacity-30"
+				className={cn(
+					"w-full h-full text-base bg-neutral-900 disabled:opacity-30 placeholder:text-neutral-700 px-3 py-2 outline-none border-[1px] border-dashed border-lime resize-none ants",
+				)}
 				placeholder="Name your collection"
 				{...register(inputName)}
 			/>
-			<div className="text-neutral-700 text-sm leading-[16px] mt-1 absolute bottom-3 left-1/2 -translate-x-1/2">
-				<div>{isMac ? "⌘" : "ctrl"} + ↵</div>
-				<div>to create</div>
-			</div>
+			{isPending && (
+				<div className="absolute inset-0 bg-lime text-black flex flex-col items-center justify-between py-2 px-3">
+					<div className="text-[#b5db29]">{getValues(inputName)}</div>
+					<div className="text-sm absolute inset-0 flex justify-center items-center">
+						<Blob className="w-6 h-6 rotating" />
+					</div>
+				</div>
+			)}
+			{!isPending && (
+				<div className="text-neutral-700 text-sm leading-[16px] mt-1 absolute bottom-3 left-1/2 -translate-x-1/2">
+					<div>{isMac ? "⌘" : "ctrl"} + ↵</div>
+					<div>to create</div>
+				</div>
+			)}
 		</form>
 	);
 }

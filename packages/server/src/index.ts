@@ -22,6 +22,9 @@ const projectId = env.SYNDICATE_PROJECT_ID;
 app.use("*", serveStatic({ root: "../ui/dist" }));
 app.use("*", serveStatic({ path: "../ui/dist/index.html" }));
 
+listenToNewWriterCreatedEvents();
+getAllWriterCreatedEvents();
+
 const api = app
 	.basePath("/api")
 	.get("/writer/:address", async (c) => {
@@ -86,9 +89,6 @@ const api = app
 		console.log("created new writer", writer);
 		return c.json({ writer: jsonSafe(writer) }, 200);
 	});
-
-getAllWriterCreatedEvents();
-listenToNewWriterCreatedEvents();
 
 export type Api = typeof api;
 export default app;

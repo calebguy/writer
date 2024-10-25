@@ -1,7 +1,8 @@
-export const writerABI = [
+export const writerAbi = [
 	{
 		type: "constructor",
 		inputs: [
+			{ name: "newTitle", type: "string", internalType: "string" },
 			{ name: "storageAddress", type: "address", internalType: "address" },
 			{ name: "admin", type: "address", internalType: "address" },
 			{ name: "writers", type: "address[]", internalType: "address[]" },
@@ -46,6 +47,13 @@ export const writerABI = [
 	{
 		type: "function",
 		name: "REMOVE_TYPEHASH",
+		inputs: [],
+		outputs: [{ name: "", type: "bytes32", internalType: "bytes32" }],
+		stateMutability: "view",
+	},
+	{
+		type: "function",
+		name: "SET_TITLE_TYPEHASH",
 		inputs: [],
 		outputs: [{ name: "", type: "bytes32", internalType: "bytes32" }],
 		stateMutability: "view",
@@ -231,6 +239,24 @@ export const writerABI = [
 	},
 	{
 		type: "function",
+		name: "setTitle",
+		inputs: [{ name: "newTitle", type: "string", internalType: "string" }],
+		outputs: [],
+		stateMutability: "nonpayable",
+	},
+	{
+		type: "function",
+		name: "setTitleWithSig",
+		inputs: [
+			{ name: "signature", type: "bytes", internalType: "bytes" },
+			{ name: "nonce", type: "uint256", internalType: "uint256" },
+			{ name: "newTitle", type: "string", internalType: "string" },
+		],
+		outputs: [],
+		stateMutability: "nonpayable",
+	},
+	{
+		type: "function",
 		name: "signatureWasExecuted",
 		inputs: [{ name: "", type: "bytes32", internalType: "bytes32" }],
 		outputs: [{ name: "", type: "bool", internalType: "bool" }],
@@ -250,6 +276,13 @@ export const writerABI = [
 		name: "supportsInterface",
 		inputs: [{ name: "interfaceId", type: "bytes4", internalType: "bytes4" }],
 		outputs: [{ name: "", type: "bool", internalType: "bool" }],
+		stateMutability: "view",
+	},
+	{
+		type: "function",
+		name: "title",
+		inputs: [],
+		outputs: [{ name: "", type: "string", internalType: "string" }],
 		stateMutability: "view",
 	},
 	{
@@ -336,6 +369,19 @@ export const writerABI = [
 		],
 		anonymous: false,
 	},
+	{
+		type: "event",
+		name: "StorageSet",
+		inputs: [
+			{
+				name: "storageAddress",
+				type: "address",
+				indexed: true,
+				internalType: "address",
+			},
+		],
+		anonymous: false,
+	},
 	{ type: "error", name: "AccessControlBadConfirmation", inputs: [] },
 	{
 		type: "error",
@@ -344,64 +390,5 @@ export const writerABI = [
 			{ name: "account", type: "address", internalType: "address" },
 			{ name: "neededRole", type: "bytes32", internalType: "bytes32" },
 		],
-	},
-];
-
-export const factoryAbi = [
-	{
-		type: "function",
-		name: "create",
-		inputs: [
-			{ name: "admin", type: "address", internalType: "address" },
-			{ name: "managers", type: "address[]", internalType: "address[]" },
-		],
-		outputs: [{ name: "", type: "address", internalType: "address" }],
-		stateMutability: "nonpayable",
-	},
-	{
-		type: "function",
-		name: "get",
-		inputs: [{ name: "author", type: "address", internalType: "address" }],
-		outputs: [{ name: "", type: "address[]", internalType: "address[]" }],
-		stateMutability: "view",
-	},
-	{
-		type: "function",
-		name: "writerIdCounter",
-		inputs: [],
-		outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
-		stateMutability: "view",
-	},
-	{
-		type: "event",
-		name: "WriterCreated",
-		inputs: [
-			{ name: "id", type: "uint256", indexed: false, internalType: "uint256" },
-			{
-				name: "writerAddress",
-				type: "address",
-				indexed: true,
-				internalType: "address",
-			},
-			{
-				name: "storeAddress",
-				type: "address",
-				indexed: true,
-				internalType: "address",
-			},
-			{
-				name: "admin",
-				type: "address",
-				indexed: true,
-				internalType: "address",
-			},
-			{
-				name: "managers",
-				type: "address[]",
-				indexed: false,
-				internalType: "address[]",
-			},
-		],
-		anonymous: false,
 	},
 ];

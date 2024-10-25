@@ -11,14 +11,14 @@ import {
 } from "viem";
 import { optimism } from "viem/chains";
 import { syndicate } from ".";
-import { factoryAbi } from "./abi";
+import { writerFactoryAbi } from "./abi/writerFactory";
 import { prisma } from "./db";
 import { env } from "./env";
 import { minBigInt, synDataToUuid } from "./helpers";
 
 // const chain = isDev ? foundry : optimism;
 const chain = optimism;
-
+console.log(env.RPC_URL);
 export const publicClient = createPublicClient({
 	chain,
 	transport: http(env.RPC_URL),
@@ -63,9 +63,10 @@ async function getEventLogsFromBlock<T extends AbiEvent>({
 	for (let fromBlock = from; fromBlock <= to; fromBlock += step) {
 		console.log(`getting logs from block ${fromBlock} to ${fromBlock + step}`);
 		const toBlock = minBigInt(fromBlock + step, to);
-		const logs = await publicClient.getLogs({
+		const logs = await publicClient.getContractEvents({
 			address,
-			event,
+			abi: writerFactoryAbi,
+			eventName: "WriterCreated",
 			fromBlock,
 			toBlock,
 		});
@@ -189,11 +190,14 @@ export async function getAllWriterCreatedEvents() {
 
 export async function listenToNewWriterCreatedEvents() {
 	return publicClient.watchContractEvent({
-		pollingInterval: 5_000,
-		fromBlock,
+		pollingInterval: 1_000,
+		// fromBlock,
 		address,
-		abi: factoryAbi,
+		abi: writerFactoryAbi,
 		eventName: "WriterCreated",
-		onLogs,
+		onLogs: (logs) => {
+			console.log("listener hit");
+			onLogs(logs as any);
+		},
 	});
 }
