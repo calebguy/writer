@@ -10,11 +10,11 @@ import {
 	type WatchEventParameters,
 } from "viem";
 import { optimism } from "viem/chains";
-import { syndicate } from ".";
 import { writerFactoryAbi } from "./abi/writerFactory";
 import { prisma } from "./db";
 import { env } from "./env";
 import { minBigInt, synDataToUuid } from "./helpers";
+import { syndicate } from "./server";
 
 // const chain = isDev ? foundry : optimism;
 const chain = optimism;

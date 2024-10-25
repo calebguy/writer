@@ -1,5 +1,3 @@
-import { stringify } from "viem";
-
 export function minBigInt(a: bigint, ...args: (bigint | undefined)[]): bigint {
 	let m = a;
 	for (const z of args) {
@@ -8,10 +6,6 @@ export function minBigInt(a: bigint, ...args: (bigint | undefined)[]): bigint {
 		}
 	}
 	return m;
-}
-
-export function jsonSafe(obj: unknown) {
-	return JSON.parse(stringify(obj));
 }
 
 export function synDataToUuid(input: string) {

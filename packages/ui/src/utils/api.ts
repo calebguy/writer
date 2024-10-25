@@ -1,6 +1,7 @@
+import type { InferResponseType } from "hono/client";
 import { hc } from "hono/client";
+import type { Api } from "server/src/server";
 import type { Hex } from "viem";
-import type { Api } from "./../../../server/src/index";
 
 const client = hc<Api>("/");
 
@@ -37,3 +38,7 @@ export async function createNewWriter(json: {
 	}
 	return res.json();
 }
+
+export type GetWritersResponse = InferResponseType<
+	(typeof client.api.account)[":address"]["$get"]
+>;

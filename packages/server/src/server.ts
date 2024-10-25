@@ -10,9 +10,8 @@ import {
 	listenToNewWriterCreatedEvents,
 } from "./chain";
 import { CREATE_FUNCTION_SIGNATURE, TARGET_CHAIN_ID } from "./constants";
-import { prisma } from "./db";
+import { prisma, writerToJsonSafe } from "./db";
 import { env } from "./env";
-import { jsonSafe } from "./helpers";
 import { createSchema } from "./schema";
 
 const app = new Hono();
@@ -35,9 +34,10 @@ const api = app
 			},
 			include: {
 				entries: true,
+				transaction: true,
 			},
 		});
-		return c.json(jsonSafe(writer));
+		return c.json(writer ? writerToJsonSafe(writer) : null);
 	})
 	.get("/account/:address", async (c) => {
 		const address = getAddress(c.req.param("address"));
@@ -50,9 +50,12 @@ const api = app
 			},
 			include: {
 				entries: true,
+				transaction: true,
 			},
 		});
-		return c.json({ writers: jsonSafe(writers) });
+		return c.json({
+			writers: writers.map(writerToJsonSafe),
+		});
 	})
 	.post("/create", zValidator("json", createSchema), async (c) => {
 		const { admin, managers, title } = c.req.valid("json");
@@ -85,9 +88,13 @@ const api = app
 				managers,
 				transactionId,
 			},
+			include: {
+				entries: true,
+				transaction: true,
+			},
 		});
 		console.log("created new writer", writer);
-		return c.json({ writer: jsonSafe(writer) }, 200);
+		return c.json({ writer: writerToJsonSafe(writer) }, 200);
 	});
 
 export type Api = typeof api;

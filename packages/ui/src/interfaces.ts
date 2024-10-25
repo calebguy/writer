@@ -4,7 +4,7 @@ export interface Writer {
 	address: string;
 	storageAddress: string;
 	admin: string;
-	createdAtBlock: string;
+	createdAtBlock: number | null;
 	createdAtHash: string;
 	authors: string[];
 }

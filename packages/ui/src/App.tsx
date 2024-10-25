@@ -5,8 +5,12 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import type { Hex } from "viem";
 import { Blob } from "./components/icons/Blob";
-import type { CreateNewBucketInputs, Writer } from "./interfaces";
-import { createNewWriter, getWriters } from "./utils/api";
+import type { CreateNewBucketInputs } from "./interfaces";
+import {
+	type GetWritersResponse,
+	createNewWriter,
+	getWriters,
+} from "./utils/api";
 import { cn } from "./utils/cn";
 import { useFirstWallet, useIsMac } from "./utils/hooks";
 
@@ -58,7 +62,7 @@ function App() {
 }
 
 interface BucketProps {
-	writer: Writer;
+	writer: GetWritersResponse["writers"][number];
 }
 
 function Bucket({ writer: { id, title, address } }: BucketProps) {
