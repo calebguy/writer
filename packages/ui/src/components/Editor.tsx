@@ -10,11 +10,13 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import { all, createLowlight } from "lowlight";
 import { Markdown } from "tiptap-markdown";
 
-const content = "";
-
 const lowlight = createLowlight(all);
 
-export function Editor() {
+interface EditorProps {
+	content?: string;
+}
+
+export function Editor({ content }: EditorProps) {
 	const editor = useEditor({
 		extensions: [
 			Document,
