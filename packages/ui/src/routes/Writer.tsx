@@ -17,7 +17,7 @@ export function Writer() {
 		<div className="flex-grow text-left mt-10 px-3 py-2">
 			<div className="text-xl mb-2 text-white">{data?.title}</div>
 			<Editor />
-			<Button className="mt-2">Save</Button>
+			<Button className="mt-2 bg-neutral-900">Save</Button>
 		</div>
 	);
 }

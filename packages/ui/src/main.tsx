@@ -6,10 +6,11 @@ import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import { optimism } from "viem/chains";
 import App from "./App.tsx";
 import ErrorPage from "./error-page.tsx";
-import "./index.css";
 import { AppLayout } from "./layouts/App.layout.tsx";
 import { Account } from "./routes/Account.tsx";
 import { Writer } from "./routes/Writer.tsx";
+
+import "./index.scss";
 
 const PRIVY_APP_ID = "clzekejfs079912zv96ahfm5a";
 const queryClient = new QueryClient();
