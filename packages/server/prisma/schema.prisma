@@ -43,6 +43,7 @@ model Entry {
   id Int @id @default(autoincrement())
   author String
   totalChunks Int
+  receivedChunks Int
   exists Boolean
   createdAtBlock BigInt?
   createdAt DateTime @default(now())
