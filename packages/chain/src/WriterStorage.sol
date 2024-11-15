@@ -56,28 +56,28 @@ contract WriterStorage is AccessControl {
         _revokeRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    function create(uint256 totalChunks, address author) public onlyLogic returns (uint256) {
-        uint256 id = entryIdCounter;
-        entries[id] = Entry({
-            createdAtBlock: block.number,
-            updatedAtBlock: block.number,
-            chunks: new string[](totalChunks),
-            totalChunks: totalChunks,
-            receivedChunks: 0,
-            exists: true
-        });
-        entryIds.push(id);
-        entryIdToEntryIdsIndex[id] = entryIds.length - 1;
-        entryIdCounter++;
-        emit EntryCreated(id, author);
-        return id;
+    function create(uint256 totalChunks, address author) public onlyLogic returns (uint256, Entry memory) {
+        return _create(totalChunks, author);
+    }
+
+    function createWithChunk(uint256 totalChunks, string calldata chunkContent, address author)
+        public
+        onlyLogic
+        returns (uint256, Entry memory)
+    {
+        require(totalChunks > 0, "WriterStorage: Total chunks must be greater than 0");
+        require(bytes(chunkContent).length > 0, "WriterStorage: Chunk content cannot be empty");
+
+        (uint256 entryId, Entry memory entry) = _create(totalChunks, author);
+        _addChunk(entryId, 0, chunkContent, author);
+        return (entryId, entry);
     }
 
     function update(uint256 entryId, uint256 chunkIndex, string calldata chunkContent, address author)
         public
         onlyLogic
     {
-        _writeChunk(entryId, chunkIndex, chunkContent, author);
+        _addChunk(entryId, chunkIndex, chunkContent, author);
         emit EntryUpdated(entryId, author);
     }
 
@@ -107,29 +107,13 @@ contract WriterStorage is AccessControl {
     {
         require(bytes(getEntry(entryId).chunks[chunkIndex]).length == 0, "WriterStorage: Chunk already exists");
 
-        Entry storage entry = _writeChunk(entryId, chunkIndex, chunkContent, author);
-        entry.receivedChunks++;
+        Entry storage entry = _addChunk(entryId, chunkIndex, chunkContent, author);
 
         if (entry.receivedChunks == entry.totalChunks) {
             emit EntryCompleted(entryId, author);
         } else {
             emit EntryUpdated(entryId, author);
         }
-    }
-
-    function _writeChunk(uint256 entryId, uint256 chunkIndex, string calldata chunkContent, address author)
-        internal
-        returns (Entry storage)
-    {
-        Entry storage entry = entries[entryId];
-        require(entry.exists, "WriterStorage: Entry does not exist");
-        require(chunkIndex < entry.totalChunks, "WriterStorage: Invalid chunk index");
-
-        entry.chunks[chunkIndex] = chunkContent;
-        entry.updatedAtBlock = block.number;
-
-        emit ChunkReceived(entryId, chunkIndex, chunkContent, author);
-        return entry;
     }
 
     function getEntryCount() public view returns (uint256) {
@@ -142,5 +126,38 @@ contract WriterStorage is AccessControl {
 
     function getEntry(uint256 id) public view returns (Entry memory) {
         return entries[id];
+    }
+
+    function _create(uint256 totalChunks, address author) internal returns (uint256, Entry memory) {
+        uint256 id = entryIdCounter;
+        entries[id] = Entry({
+            createdAtBlock: block.number,
+            updatedAtBlock: block.number,
+            chunks: new string[](totalChunks),
+            totalChunks: totalChunks,
+            receivedChunks: 0,
+            exists: true
+        });
+        entryIds.push(id);
+        entryIdToEntryIdsIndex[id] = entryIds.length - 1;
+        entryIdCounter++;
+        emit EntryCreated(id, author);
+        return (id, entries[id]);
+    }
+
+    function _addChunk(uint256 entryId, uint256 chunkIndex, string calldata chunkContent, address author)
+        internal
+        returns (Entry storage)
+    {
+        Entry storage entry = entries[entryId];
+        require(entry.exists, "WriterStorage: Entry does not exist");
+        require(chunkIndex < entry.totalChunks, "WriterStorage: Invalid chunk index");
+
+        entry.chunks[chunkIndex] = chunkContent;
+        entry.updatedAtBlock = block.number;
+        entry.receivedChunks++;
+
+        emit ChunkReceived(entryId, chunkIndex, chunkContent, author);
+        return entry;
     }
 }

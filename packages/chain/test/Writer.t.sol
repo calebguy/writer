@@ -62,6 +62,40 @@ contract WriterDirectCallerTest is TestBase {
         assertEq(writer.getEntryIds(), expectedEntryIds);
     }
 
+    function test_CreateWithChunk() public {
+        vm.prank(user);
+        uint256 currentBlock = block.number;
+
+        vm.expectEmit();
+        emit WriterStorage.EntryCreated(0, user);
+
+        uint256 totalChunks = 1;
+
+        string memory chunkContent = "Hello";
+        writer.createWithChunk(totalChunks, chunkContent);
+        assertEq(writer.getEntryCount(), 1);
+        assertEq(writer.getEntryIds().length, 1);
+
+        string[] memory expectedChunks = new string[](1);
+        expectedChunks[0] = chunkContent;
+
+        WriterStorage.Entry memory entry = writer.getEntry(0);
+        WriterStorage.Entry memory expectedEntry = WriterStorage.Entry({
+            createdAtBlock: currentBlock,
+            updatedAtBlock: currentBlock,
+            totalChunks: totalChunks,
+            receivedChunks: totalChunks,
+            exists: true,
+            chunks: expectedChunks
+        });
+
+        entryEq(entry, expectedEntry);
+
+        uint256[] memory expectedEntryIds = new uint256[](1);
+        expectedEntryIds[0] = 0;
+        assertEq(writer.getEntryIds(), expectedEntryIds);
+    }
+
     function test_CreateAndAddChunks() public {
         vm.startPrank(user);
         uint256 size = 2;
@@ -137,7 +171,7 @@ contract WriterDirectCallerTest is TestBase {
             createdAtBlock: block.number,
             updatedAtBlock: block.number,
             totalChunks: size,
-            receivedChunks: size,
+            receivedChunks: size + 1,
             exists: true,
             chunks: expectedChunks
         });
@@ -224,7 +258,7 @@ contract WriterWithSigTest is TestBase {
         vm.expectEmit();
         emit WriterStorage.EntryCreated(0, user.addr);
 
-        writer.createwithSig(signature, nonce, chunkCount);
+        writer.createWithSig(signature, nonce, chunkCount);
         assertEq(writer.getEntryCount(), 1);
     }
 
@@ -237,7 +271,7 @@ contract WriterWithSigTest is TestBase {
 
         vm.expectEmit();
         emit WriterStorage.EntryCreated(entryId, user.addr);
-        writer.createwithSig(signature, nonce, size);
+        writer.createWithSig(signature, nonce, size);
 
         string memory content1 = "Hello";
         uint256 chunkIndex1 = 0;
@@ -289,7 +323,7 @@ contract WriterWithSigTest is TestBase {
 
         vm.expectEmit();
         emit WriterStorage.EntryCreated(entryId, user.addr);
-        writer.createwithSig(signature, nonce, size);
+        writer.createWithSig(signature, nonce, size);
 
         string memory content = "Writer";
         uint256 chunkIndex1 = 0;
@@ -336,7 +370,7 @@ contract WriterWithSigTest is TestBase {
             createdAtBlock: block.number,
             updatedAtBlock: block.number,
             totalChunks: size,
-            receivedChunks: size,
+            receivedChunks: size + 1,
             exists: true,
             chunks: expectedChunks
         });
@@ -352,7 +386,7 @@ contract WriterWithSigTest is TestBase {
 
         vm.expectEmit();
         emit WriterStorage.EntryCreated(entryId, user.addr);
-        writer.createwithSig(signature, nonce, size);
+        writer.createWithSig(signature, nonce, size);
 
         string memory content1 = "Hello";
         uint256 chunkIndex1 = 0;
