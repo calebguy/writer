@@ -5,6 +5,7 @@ export default {
 		extend: {
 			colors: {
 				lime: "#d2ff2e",
+				limeSecondary: "#485900",
 			},
 		},
 	},

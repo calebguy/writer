@@ -14,10 +14,16 @@ const lowlight = createLowlight(all);
 
 interface EditorProps {
 	content?: string;
+	onChange?: (content: string) => void;
 }
 
-export function Editor({ content }: EditorProps) {
+export function Editor({ content, onChange }: EditorProps) {
 	const editor = useEditor({
+		editorProps: {
+			attributes: {
+				class: "grow flex flex-col",
+			},
+		},
 		extensions: [
 			Document,
 			Paragraph,
@@ -30,9 +36,10 @@ export function Editor({ content }: EditorProps) {
 		],
 		onUpdate: ({ editor }) => {
 			console.log(editor.storage.markdown.getMarkdown());
+			onChange?.(editor.storage.markdown.getMarkdown());
 		},
 		content,
 	});
 
-	return <EditorContent editor={editor} />;
+	return <EditorContent editor={editor} className="grow flex flex-col" />;
 }

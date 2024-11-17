@@ -262,7 +262,7 @@ contract WriterWithSigTest is TestBase {
         assertEq(writer.getEntryCount(), 1);
     }
 
-    function test_CreateAndAddChunksWithSig() public {
+    function test_CreateWithSigThenAndAddChunksWithSig() public {
         uint256 nonce = 0;
         uint256 size = 2;
         uint256 entryId = 0;
@@ -308,6 +308,35 @@ contract WriterWithSigTest is TestBase {
             updatedAtBlock: block.number,
             totalChunks: size,
             receivedChunks: size,
+            exists: true,
+            chunks: expectedChunks
+        });
+        entryEq(entry, expectedEntry);
+    }
+
+    function test_CreateWithChunkWithSig() public {
+        uint256 nonce = 0;
+        uint256 chunkCount = 1;
+        string memory chunkContent = "Hello";
+        bytes memory signature = _sign(
+            userPrivateKey,
+            address(writer),
+            keccak256(abi.encode(writer.CREATE_WITH_CHUNK_TYPEHASH(), nonce, chunkCount, chunkContent))
+        );
+
+        vm.expectEmit();
+        emit WriterStorage.EntryCreated(0, user.addr);
+        emit WriterStorage.ChunkReceived(0, 0, chunkContent, user.addr);
+        writer.createWithChunkWithSig(signature, nonce, chunkCount, chunkContent);
+
+        WriterStorage.Entry memory entry = writer.getEntry(0);
+        string[] memory expectedChunks = new string[](1);
+        expectedChunks[0] = chunkContent;
+        WriterStorage.Entry memory expectedEntry = WriterStorage.Entry({
+            createdAtBlock: block.number,
+            updatedAtBlock: block.number,
+            totalChunks: chunkCount,
+            receivedChunks: chunkCount,
             exists: true,
             chunks: expectedChunks
         });

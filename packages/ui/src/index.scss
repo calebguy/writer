@@ -50,6 +50,12 @@
   font-display: swap;
 }
 
+::selection {
+  // text-decoration: underline;
+  // outline: 1px solid theme('colors.limeSecondary');
+  background-color: theme('colors.limeSecondary');
+}
+
 :root {
   font-family: "LTRemark";
   line-height: 1.5;
@@ -91,11 +97,13 @@ html, body, #root {
 }
 
 .ProseMirror {
-  border: 1px solid theme('colors.neutral.900');
+  background-color: theme('colors.neutral.900');
   padding-left: 0.5rem;
   padding-right: 0.5rem;
   padding-top: 0.25rem;
   padding-bottom: 0.25rem;
+  height: 100%;
+  caret-color: theme('colors.lime');
 }
 
 .ProseMirror-focused {

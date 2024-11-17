@@ -24,7 +24,7 @@ export function synDataToUuid(input: string) {
 	return uuid;
 }
 
+// @note TODO: implement this properly
 export function getChunksFromContent(content: string) {
-	const chunks = content.split("\n");
-	return chunks;
+	return [content];
 }

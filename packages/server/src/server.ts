@@ -9,11 +9,15 @@ import {
 	getAllWriterCreatedEvents,
 	listenToNewWriterCreatedEvents,
 } from "./chain";
-import { CREATE_FUNCTION_SIGNATURE, TARGET_CHAIN_ID } from "./constants";
+import {
+	CREATE_FUNCTION_SIGNATURE,
+	CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
+	TARGET_CHAIN_ID,
+} from "./constants";
 import { prisma, writerToJsonSafe } from "./db";
 import { env } from "./env";
 import { getChunksFromContent } from "./helpers";
-import { createEntrySchema, createWriterSchema } from "./requestSchema";
+import { createWithChunkSchema, createWriterSchema } from "./requestSchema";
 
 const app = new Hono();
 export const syndicate = new SyndicateClient({ token: env.SYNDICATE_API_KEY });
@@ -98,11 +102,11 @@ const api = app
 		return c.json({ writer: writerToJsonSafe(writer) }, 200);
 	})
 	.post(
-		"/write/:address/entry",
-		zValidator("json", createEntrySchema),
+		"/writer/:address/entry",
+		zValidator("json", createWithChunkSchema),
 		async (c) => {
 			const address = getAddress(c.req.param("address"));
-			const { content } = c.req.valid("json");
+			const { content, signature, nonce } = c.req.valid("json");
 
 			const writer = await prisma.writer.findFirst({
 				where: {
@@ -114,6 +118,39 @@ const api = app
 			}
 
 			const chunks = getChunksFromContent(content);
+			if (chunks.length === 1) {
+				const args = {
+					signature,
+					nonce,
+					totalChunks: 1,
+					chunkContent: chunks[0],
+				};
+				const { transactionId } = await syndicate.transact.sendTransaction({
+					projectId,
+					contractAddress: address,
+					chainId: TARGET_CHAIN_ID,
+					functionSignature: CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
+					args,
+				});
+				console.log(
+					"got transaction id for single chunk entry creation",
+					transactionId,
+				);
+				await prisma.syndicateTransaction.create({
+					data: {
+						id: transactionId,
+						chainId: TARGET_CHAIN_ID,
+						projectId,
+						functionSignature: CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
+						args,
+						status: TransactionStatus.PENDING,
+					},
+				});
+				// @note TODO: implement this
+			} else {
+				console.log("multiple chunks received", chunks);
+			}
+			// @note based on the chunks here we can either call createEntryWithContent or createEntry
 			return c.json({ content });
 		},
 	);
