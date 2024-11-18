@@ -49,8 +49,9 @@ model Entry {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  writerId BigInt
-  writer Writer @relation(fields: [writerId], references: [onChainId])
+  // @note TODO: shouldn't we reference the internal ID here
+  writerId Int
+  writer Writer @relation(fields: [writerId], references: [id])
   chunks Chunk[]
   transactionId String? @unique
   transaction SyndicateTransaction? @relation(fields: [transactionId], references: [id])

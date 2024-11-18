@@ -12,6 +12,7 @@ import {
 } from "./constants";
 import { prisma, writerToJsonSafe } from "./db";
 import { env } from "./env";
+import factoryListener from "./listener/factoryListener";
 import storageListener from "./listener/storageListener";
 import { createWithChunkSchema, createWriterSchema } from "./requestSchema";
 import { syndicate } from "./syndicate";
@@ -21,15 +22,10 @@ const app = new Hono();
 app.use("*", serveStatic({ root: "../ui/dist" }));
 app.use("*", serveStatic({ path: "../ui/dist/index.html" }));
 
-Promise.all([
-	// factoryListener.init(),
-	storageListener.init(),
-]);
+Promise.all([factoryListener.init(), storageListener.init()]);
 
 const privy = new PrivyClient(env.PRIVY_APP_ID, env.PRIVY_SECRET);
 
-// @note TODO: need to lock down all api routes using Privy Auth API
-// https://docs.privy.io/guide/server/authorization/verification
 const api = app
 	.basePath("/api")
 	.get("/writer/:address", async (c) => {
@@ -39,7 +35,12 @@ const api = app
 				address,
 			},
 			include: {
-				entries: true,
+				entries: {
+					include: {
+						chunks: true,
+						transaction: true,
+					},
+				},
 				transaction: true,
 			},
 		});
@@ -110,6 +111,7 @@ const api = app
 		"/writer/:address/createWithChunk",
 		zValidator("json", createWithChunkSchema),
 		async (c) => {
+			// @note TODO: wrap this in middleware probably
 			const privyIdToken = getCookie(c, "privy-id-token");
 			if (!privyIdToken) {
 				return c.json({ error: "privy-id-token not found" }, 401);

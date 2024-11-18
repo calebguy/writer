@@ -28,7 +28,7 @@ CREATE TABLE "Entry" (
     "createdAtBlock" BIGINT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "writerId" BIGINT NOT NULL,
+    "writerId" INTEGER NOT NULL,
     "transactionId" TEXT,
 
     CONSTRAINT "Entry_pkey" PRIMARY KEY ("id")
@@ -92,7 +92,7 @@ CREATE UNIQUE INDEX "SyndicateTransaction_hash_key" ON "SyndicateTransaction"("h
 ALTER TABLE "Writer" ADD CONSTRAINT "Writer_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "SyndicateTransaction"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Entry" ADD CONSTRAINT "Entry_writerId_fkey" FOREIGN KEY ("writerId") REFERENCES "Writer"("onChainId") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Entry" ADD CONSTRAINT "Entry_writerId_fkey" FOREIGN KEY ("writerId") REFERENCES "Writer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Entry" ADD CONSTRAINT "Entry_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "SyndicateTransaction"("id") ON DELETE SET NULL ON UPDATE CASCADE;
