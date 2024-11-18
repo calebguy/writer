@@ -7,9 +7,9 @@ import type { Hex } from "viem";
 import { Blob } from "./components/icons/Blob";
 import type { CreateNewBucketInputs } from "./interfaces";
 import {
-	type GetWritersResponse,
-	createNewWriter,
-	getWriters,
+    type GetWritersResponse,
+    createFromFactory,
+    getAuthor,
 } from "./utils/api";
 import { cn } from "./utils/cn";
 import { useFirstWallet, useIsMac } from "./utils/hooks";
@@ -20,7 +20,7 @@ function App() {
 	const address = wallet?.address;
 
 	const { data, refetch } = useQuery({
-		queryFn: () => getWriters(wallet?.address as Hex),
+		queryFn: () => getAuthor(wallet?.address as Hex),
 		queryKey: ["get-writers", wallet?.address],
 		enabled: !!wallet?.address,
 	});
@@ -161,7 +161,7 @@ function CreateForm({ onSuccess, onCancel }: CreateFormProps) {
 	);
 
 	const { mutate, isPending } = useMutation({
-		mutationFn: createNewWriter,
+		mutationFn: createFromFactory,
 		mutationKey: ["create-from-factory"],
 		onSuccess: () => {
 			reset();

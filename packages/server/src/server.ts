@@ -1,11 +1,10 @@
 import { zValidator } from "@hono/zod-validator";
-import { SyndicateClient } from "@syndicateio/syndicate-node";
-
 import { TransactionStatus } from "@prisma/client";
+import { PrivyClient, type WalletWithMetadata } from "@privy-io/server-auth";
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
+import { getCookie } from "hono/cookie";
 import { getAddress } from "viem";
-import { getAllWriterHistory, listenToNewWriterCreatedEvents } from "./chain";
 import {
 	CREATE_FUNCTION_SIGNATURE,
 	CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
@@ -13,19 +12,24 @@ import {
 } from "./constants";
 import { prisma, writerToJsonSafe } from "./db";
 import { env } from "./env";
-import { getChunksFromContent } from "./helpers";
+import storageListener from "./listener/storageListener";
 import { createWithChunkSchema, createWriterSchema } from "./requestSchema";
+import { syndicate } from "./syndicate";
 
 const app = new Hono();
-export const syndicate = new SyndicateClient({ token: env.SYNDICATE_API_KEY });
-const projectId = env.SYNDICATE_PROJECT_ID;
 
 app.use("*", serveStatic({ root: "../ui/dist" }));
 app.use("*", serveStatic({ path: "../ui/dist/index.html" }));
 
-listenToNewWriterCreatedEvents();
-getAllWriterHistory();
+Promise.all([
+	// factoryListener.init(),
+	storageListener.init(),
+]);
 
+const privy = new PrivyClient(env.PRIVY_APP_ID, env.PRIVY_SECRET);
+
+// @note TODO: need to lock down all api routes using Privy Auth API
+// https://docs.privy.io/guide/server/authorization/verification
 const api = app
 	.basePath("/api")
 	.get("/writer/:address", async (c) => {
@@ -41,7 +45,7 @@ const api = app
 		});
 		return c.json(writer ? writerToJsonSafe(writer) : null);
 	})
-	.get("/account/:address", async (c) => {
+	.get("/author/:address", async (c) => {
 		const address = getAddress(c.req.param("address"));
 		const writers = await prisma.writer.findMany({
 			orderBy: {
@@ -59,96 +63,132 @@ const api = app
 			writers: writers.map(writerToJsonSafe),
 		});
 	})
-	.post("/writer", zValidator("json", createWriterSchema), async (c) => {
-		const { admin, managers, title } = c.req.valid("json");
-		console.log(
-			`creating new writing with admin: ${admin} and managers: ${managers}`,
-		);
-		const args = { title, admin, managers };
-		const { transactionId } = await syndicate.transact.sendTransaction({
-			projectId,
-			contractAddress: env.FACTORY_ADDRESS,
-			chainId: TARGET_CHAIN_ID,
-			functionSignature: CREATE_FUNCTION_SIGNATURE,
-			args,
-		});
-		console.log("got transaction id", transactionId);
-		await prisma.syndicateTransaction.create({
-			data: {
-				id: transactionId,
+	.post(
+		"/factory/create",
+		zValidator("json", createWriterSchema),
+		async (c) => {
+			const { admin, managers, title } = c.req.valid("json");
+			console.log(
+				`creating new writing with admin: ${admin} and managers: ${managers}`,
+			);
+			const args = { title, admin, managers };
+			const { transactionId } = await syndicate.transact.sendTransaction({
+				projectId: env.SYNDICATE_PROJECT_ID,
+				contractAddress: env.FACTORY_ADDRESS,
 				chainId: TARGET_CHAIN_ID,
-				projectId,
 				functionSignature: CREATE_FUNCTION_SIGNATURE,
 				args,
-				status: TransactionStatus.PENDING,
-			},
-		});
-		const writer = await prisma.writer.create({
-			data: {
-				title,
-				admin,
-				managers,
-				transactionId,
-			},
-			include: {
-				entries: true,
-				transaction: true,
-			},
-		});
-		console.log("created new writer", writer);
-		return c.json({ writer: writerToJsonSafe(writer) }, 200);
-	})
+			});
+			console.log("got transaction id", transactionId);
+			await prisma.syndicateTransaction.create({
+				data: {
+					id: transactionId,
+					chainId: TARGET_CHAIN_ID,
+					projectId: env.SYNDICATE_PROJECT_ID,
+					functionSignature: CREATE_FUNCTION_SIGNATURE,
+					args,
+					status: TransactionStatus.PENDING,
+				},
+			});
+			const writer = await prisma.writer.create({
+				data: {
+					title,
+					admin,
+					managers,
+					transactionId,
+				},
+				include: {
+					entries: true,
+					transaction: true,
+				},
+			});
+			console.log("created new writer", writer);
+			return c.json({ writer: writerToJsonSafe(writer) }, 200);
+		},
+	)
 	.post(
-		"/writer/:address/entry",
+		"/writer/:address/createWithChunk",
 		zValidator("json", createWithChunkSchema),
 		async (c) => {
-			const address = getAddress(c.req.param("address"));
-			const { content, signature, nonce } = c.req.valid("json");
+			const privyIdToken = getCookie(c, "privy-id-token");
+			if (!privyIdToken) {
+				return c.json({ error: "privy-id-token not found" }, 401);
+			}
+			const privyUser = await privy.getUser({ idToken: privyIdToken });
+			const userWallet: WalletWithMetadata = privyUser.linkedAccounts.filter(
+				(accnt) =>
+					accnt.type === "wallet" && accnt.walletClientType === "privy",
+			)?.[0] as WalletWithMetadata;
+			const userAddress = getAddress(userWallet.address);
+			if (!userAddress) {
+				return c.json({ error: "user address not found" }, 401);
+			}
+			// @note TODO: you should also check that the userAddress has WRITER_ROLE on the contract
 
+			const contractAddress = getAddress(c.req.param("address"));
+			const { signature, nonce, chunkCount, chunkContent } =
+				c.req.valid("json");
+			console.log(
+				`creating new entry on writer: ${contractAddress}, chunkCount: ${chunkCount}, content: ${chunkContent}`,
+			);
+			const args = { signature, nonce, chunkCount, chunkContent };
+			const { transactionId } = await syndicate.transact.sendTransaction({
+				projectId: env.SYNDICATE_PROJECT_ID,
+				contractAddress,
+				chainId: TARGET_CHAIN_ID,
+				functionSignature: CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
+				args,
+			});
+			console.log("got transaction id", transactionId);
+			await prisma.syndicateTransaction.create({
+				data: {
+					id: transactionId,
+					chainId: TARGET_CHAIN_ID,
+					projectId: env.SYNDICATE_PROJECT_ID,
+					functionSignature: CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
+					args,
+					status: TransactionStatus.PENDING,
+				},
+			});
 			const writer = await prisma.writer.findFirst({
 				where: {
-					address,
+					address: getAddress(contractAddress),
 				},
 			});
 			if (!writer) {
-				return c.json({ error: "Writer not found" }, 404);
+				return c.json({ error: "writer not found" }, 404);
 			}
-
-			const chunks = getChunksFromContent(content);
-			if (chunks.length === 1) {
-				const args = {
-					signature,
-					nonce,
-					totalChunks: 1,
-					chunkContent: chunks[0],
-				};
-				const { transactionId } = await syndicate.transact.sendTransaction({
-					projectId,
-					contractAddress: address,
-					chainId: TARGET_CHAIN_ID,
-					functionSignature: CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
-					args,
-				});
-				console.log(
-					"got transaction id for single chunk entry creation",
+			const entry = await prisma.entry.create({
+				data: {
+					author: userAddress,
+					totalChunks: chunkCount,
+					receivedChunks: 1,
+					exists: true,
+					writerId: writer.id,
 					transactionId,
-				);
-				await prisma.syndicateTransaction.create({
-					data: {
-						id: transactionId,
-						chainId: TARGET_CHAIN_ID,
-						projectId,
-						functionSignature: CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
-						args,
-						status: TransactionStatus.PENDING,
-					},
-				});
-				// @note TODO: implement this
-			} else {
-				console.log("multiple chunks received", chunks);
-			}
-			// @note based on the chunks here we can either call createEntryWithContent or createEntry
-			return c.json({ content });
+				},
+			});
+			await prisma.chunk.create({
+				data: {
+					index: 0,
+					author: userAddress,
+					compressionAlgorithm: "0x0",
+					compressedContent: chunkContent,
+					decompressedContent: chunkContent,
+					entryId: entry.id,
+					transactionId,
+				},
+			});
+			const entryWithChunk = await prisma.entry.findFirst({
+				where: {
+					id: entry.id,
+				},
+				include: {
+					chunks: true,
+					transaction: true,
+				},
+			});
+			return c.json({ entry: entryWithChunk }, 200);
 		},
 	);
 

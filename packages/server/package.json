@@ -17,6 +17,7 @@
   "dependencies": {
     "@hono/zod-validator": "^0.2.2",
     "@prisma/client": "^5.19.0",
+    "@privy-io/server-auth": "^1.16.4",
     "@syndicateio/syndicate-node": "^1.0.1",
     "@types/uuid": "^10.0.0",
     "hono": "^4.4.2",

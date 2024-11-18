@@ -13,7 +13,6 @@ export const createEntrySchema = z.object({
 export const createWithChunkSchema = z.object({
 	signature: z.string(),
 	nonce: z.number(),
-	totalChunks: z.number(),
+	chunkCount: z.number(),
 	chunkContent: z.string(),
-	content: z.string(),
 });

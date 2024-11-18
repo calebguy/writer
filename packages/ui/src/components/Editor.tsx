@@ -6,7 +6,11 @@ import ListItem from "@tiptap/extension-list-item";
 import Paragraph from "@tiptap/extension-paragraph";
 
 import Text from "@tiptap/extension-text";
-import { EditorContent, useEditor } from "@tiptap/react";
+import {
+	EditorContent,
+	type Editor as TiptapEditor,
+	useEditor,
+} from "@tiptap/react";
 import { all, createLowlight } from "lowlight";
 import { Markdown } from "tiptap-markdown";
 
@@ -14,7 +18,7 @@ const lowlight = createLowlight(all);
 
 interface EditorProps {
 	content?: string;
-	onChange?: (content: string) => void;
+	onChange?: (editor: TiptapEditor) => void;
 }
 
 export function Editor({ content, onChange }: EditorProps) {
@@ -35,8 +39,7 @@ export function Editor({ content, onChange }: EditorProps) {
 			Heading.configure({ levels: [1, 2, 3] }),
 		],
 		onUpdate: ({ editor }) => {
-			console.log(editor.storage.markdown.getMarkdown());
-			onChange?.(editor.storage.markdown.getMarkdown());
+			onChange?.(editor);
 		},
 		content,
 	});

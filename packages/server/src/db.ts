@@ -18,6 +18,11 @@ export function writerToJsonSafe({
 					blockNumber: writer.transaction.blockNumber?.toString(),
 				}
 			: null,
+		entries: writer.entries.map((entry) => ({
+			...entry,
+			writerId: entry.writerId.toString(),
+			createdAtBlock: entry.createdAtBlock?.toString(),
+		})),
 		onChainId: onChainId?.toString(),
 		createdAtBlock: createdAtBlock?.toString(),
 	};
