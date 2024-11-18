@@ -45,6 +45,7 @@ model Entry {
   totalChunks Int
   receivedChunks Int
   exists Boolean
+  onChainId BigInt? @unique
   createdAtBlock BigInt?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

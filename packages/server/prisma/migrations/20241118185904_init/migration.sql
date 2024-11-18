@@ -25,6 +25,7 @@ CREATE TABLE "Entry" (
     "totalChunks" INTEGER NOT NULL,
     "receivedChunks" INTEGER NOT NULL,
     "exists" BOOLEAN NOT NULL,
+    "onChainId" BIGINT,
     "createdAtBlock" BIGINT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -78,6 +79,9 @@ CREATE UNIQUE INDEX "Writer_onChainId_key" ON "Writer"("onChainId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Writer_transactionId_key" ON "Writer"("transactionId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Entry_onChainId_key" ON "Entry"("onChainId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Entry_transactionId_key" ON "Entry"("transactionId");

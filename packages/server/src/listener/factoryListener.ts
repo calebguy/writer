@@ -1,11 +1,10 @@
 import type { Prisma, TransactionStatus } from "@prisma/client";
 import type { InputJsonValue } from "@prisma/client/runtime/library";
-import { type AbiEvent, type Hex, type Log, fromHex, getAddress } from "viem";
+import { type AbiEvent, type Hex, type Log, getAddress } from "viem";
 import { writerFactoryAbi } from "../abi/writerFactory";
 import { prisma } from "../db";
 import { env } from "../env";
-import { synDataToUuid } from "../helpers";
-import { syndicate } from "../syndicate";
+import { getSynIdFromRawInput, syndicate } from "../syndicate";
 import { type Listener, LogFetcher } from "./logFetcher";
 
 class FactoryListener extends LogFetcher implements Listener {
@@ -72,18 +71,8 @@ class FactoryListener extends LogFetcher implements Listener {
 				hash: transactionHash as Hex,
 			});
 
-			let transactionId: string | null = null;
-
-			try {
-				const synIdEncoded = input.slice(-70);
-				const synIdDecoded = fromHex(`0x${synIdEncoded}`, "string");
-				const isSyndicateTx = synIdDecoded.startsWith("syn");
-				if (isSyndicateTx) {
-					transactionId = synDataToUuid(synIdDecoded);
-				}
-			} catch {}
+			const transactionId = getSynIdFromRawInput(input);
 			let where: Prisma.WriterWhereUniqueInput | null = null;
-
 			if (transactionId) {
 				const synTx = await syndicate.wallet.getTransactionRequest(
 					env.SYNDICATE_PROJECT_ID,

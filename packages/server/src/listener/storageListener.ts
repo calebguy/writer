@@ -1,7 +1,10 @@
-import { type AbiEvent, type Log, getAddress } from "viem";
+import { Prisma, TransactionStatus } from "@prisma/client";
+import { InputJsonValue } from "@prisma/client/runtime/library";
+import { type AbiEvent, Hex, type Log, getAddress } from "viem";
 import { writerStorageAbi } from "../abi/writerStorage";
 import { prisma } from "../db";
 import { env } from "../env";
+import { getSynIdFromRawInput, syndicate } from "../syndicate";
 import { type Listener, LogFetcher } from "./logFetcher";
 
 class StorageListener extends LogFetcher implements Listener {
@@ -57,6 +60,53 @@ class StorageListener extends LogFetcher implements Listener {
 			const { blockNumber, transactionHash } = log;
 			// @ts-expect-error
 			const { id, author } = log.args;
+			const { input } = await this.client.getTransaction({
+				hash: transactionHash as Hex,
+			});
+			const transactionId = getSynIdFromRawInput(input);
+			let where: Prisma.EntryWhereUniqueInput | null = null;
+			console.log("transactionId", transactionId);
+			if (transactionId) {
+				const synTx = await syndicate.wallet.getTransactionRequest(
+					env.SYNDICATE_PROJECT_ID,
+					transactionId,
+				);
+				const tx = synTx.transactionAttempts?.filter((tx) =>
+					["SUBMITTED", "CONFIRMED"].includes(tx.status),
+				)[0];
+				console.log("syndicate tx for entry", tx);
+				await prisma.syndicateTransaction.upsert({
+					create: {
+						id: transactionId,
+						chainId: synTx.chainId,
+						projectId: env.SYNDICATE_PROJECT_ID,
+						functionSignature: synTx.functionSignature,
+						args: synTx.decodedData as InputJsonValue,
+						blockNumber: tx?.block,
+						hash: tx?.hash,
+						status: tx?.status as TransactionStatus,
+					},
+					update: {
+						updatedAt: new Date(),
+						hash: tx?.hash,
+					},
+					where: {
+						id: transactionId,
+					},
+				});
+				where = { transactionId };
+			} else {
+				where: {
+					onChainId: BigInt(id);
+				}
+			}
+
+			// @note TODO: fill this in
+			await prisma.entry.upsert({
+				create: {},
+				update: {},
+				where,
+			});
 			console.log("blockNumber", blockNumber);
 			console.log("transactionHash", transactionHash);
 			console.log("id", id);
