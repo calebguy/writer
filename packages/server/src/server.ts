@@ -5,10 +5,7 @@ import { TransactionStatus } from "@prisma/client";
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { getAddress } from "viem";
-import {
-	getAllWriterCreatedEvents,
-	listenToNewWriterCreatedEvents,
-} from "./chain";
+import { getAllWriterHistory, listenToNewWriterCreatedEvents } from "./chain";
 import {
 	CREATE_FUNCTION_SIGNATURE,
 	CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
@@ -27,7 +24,7 @@ app.use("*", serveStatic({ root: "../ui/dist" }));
 app.use("*", serveStatic({ path: "../ui/dist/index.html" }));
 
 listenToNewWriterCreatedEvents();
-getAllWriterCreatedEvents();
+getAllWriterHistory();
 
 const api = app
 	.basePath("/api")

@@ -62,4 +62,4 @@ export const writerFactoryAbi = [
 		],
 		anonymous: false,
 	},
-];
+] as const;

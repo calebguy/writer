@@ -36,8 +36,8 @@ export function Writer() {
 		const nonce = 0;
 		const chunkCount = 1;
 		const chunkContent = content;
-		const entryId = 0;
-		const chunkIndex = 0;
+		// const entryId = 0;
+		// const chunkIndex = 0;
 		const payload = {
 			domain: {
 				name: "Writer",
@@ -47,11 +47,12 @@ export function Writer() {
 			},
 			message: {
 				nonce,
-				entryId,
-				chunkIndex,
+				// entryId,
+				// chunkIndex,
+				chunkCount,
 				chunkContent,
 			},
-			primaryType: "AddChunk",
+			primaryType: "CreateWithChunk",
 			types: {
 				EIP712Domain: [
 					{ name: "name", type: "string" },
@@ -59,10 +60,11 @@ export function Writer() {
 					{ name: "chainId", type: "uint256" },
 					{ name: "verifyingContract", type: "address" },
 				],
-				AddChunk: [
+				CreateWithChunk: [
 					{ name: "nonce", type: "uint256" },
-					{ name: "entryId", type: "uint256" },
-					{ name: "chunkIndex", type: "uint256" },
+					// { name: "entryId", type: "uint256" },
+					// { name: "chunkIndex", type: "uint256" },
+					{ name: "chunkCount", type: "uint256" },
 					{ name: "chunkContent", type: "string" },
 				],
 			},

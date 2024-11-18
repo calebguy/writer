@@ -1,16 +1,18 @@
 import type { Prisma, TransactionStatus } from "@prisma/client";
 import type { InputJsonValue } from "@prisma/client/runtime/library";
 import {
+	type AbiEvent,
+	GetContractEventsParameters,
+	type Hex,
 	createPublicClient,
 	fromHex,
+	getAddress,
 	http,
 	parseAbiItem,
-	type AbiEvent,
-	type Hex,
-	type WatchEventParameters,
 } from "viem";
 import { optimism } from "viem/chains";
 import { writerFactoryAbi } from "./abi/writerFactory";
+import { writerStorageAbi } from "./abi/writerStorage";
 import { prisma } from "./db";
 import { env } from "./env";
 import { minBigInt, synDataToUuid } from "./helpers";
@@ -26,13 +28,15 @@ export const publicClient = createPublicClient({
 async function getEventLogsFromBlock<T extends AbiEvent>({
 	fromBlock,
 	address,
-	event,
+	abi,
+	eventName,
 	onLogs,
 }: Pick<
-	WatchEventParameters<T>,
-	"fromBlock" | "address" | "event" | "onLogs"
+	GetContractEventsParameters,
+	"fromBlock" | "address" | "abi" | "eventName"
 > & {
 	fromBlock: bigint;
+	onLogs: (logs: T[]) => Promise<void>;
 }) {
 	// @note TODO:
 	// eth_getLogs has a max limit of 10,000 logs & will throw if there are more results
@@ -64,29 +68,37 @@ async function getEventLogsFromBlock<T extends AbiEvent>({
 		const toBlock = minBigInt(fromBlock + step, to);
 		const logs = await publicClient.getContractEvents({
 			address,
-			abi: writerFactoryAbi,
-			eventName: "WriterCreated",
+			abi,
+			eventName,
 			fromBlock,
 			toBlock,
 		});
 		if (logs.length > 0) {
-			onLogs(logs as any);
+			onLogs(logs as unknown as T[]);
 		}
 	}
 }
 
-const event = parseAbiItem(
+const writerCreatedEvent = parseAbiItem(
 	"event WriterCreated(uint256 indexed id,address indexed writerAddress,address indexed admin,string title,address storeAddress,address[] managers)",
 );
+const writerEntryCreatedEvent = parseAbiItem(
+	"event EntryCreated(uint256 indexed id, address author)",
+);
 
-const fromBlock = env.FACTORY_FROM_BLOCK;
-const address = env.FACTORY_ADDRESS as Hex;
+async function onWriterEntryCreated(logs: unknown[]) {
+	for (const log of logs) {
+		console.log("[writer-entry-created]", log);
+	}
+}
 
-async function onLogs(logs: any[]) {
+async function onWriterCreated(logs: unknown[]) {
 	for (const log of logs) {
 		console.log(log);
+		// @ts-expect-error
 		const { blockNumber, transactionHash } = log;
 		const { id, writerAddress, storeAddress, admin, managers, title } =
+			// @ts-expect-error
 			log.args;
 		const { input } = await publicClient.getTransaction({
 			hash: transactionHash as Hex,
@@ -161,16 +173,39 @@ async function onLogs(logs: any[]) {
 	}
 }
 
-export async function getCreatedEvents(fromBlock: bigint) {
+export async function getWriterCreatedEvents(fromBlock: bigint) {
 	return await getEventLogsFromBlock({
 		fromBlock,
-		address,
-		event,
-		onLogs,
+		address: env.FACTORY_ADDRESS as Hex,
+		abi: writerFactoryAbi,
+		eventName: "WriterCreated",
+		onLogs: onWriterCreated,
 	});
 }
 
-export async function getAllWriterCreatedEvents() {
+export async function getWriterEntryCreatedEvents(fromBlock: bigint) {
+	const writers = await prisma.writer.findMany({
+		where: {
+			storageAddress: {
+				not: null,
+			},
+		},
+	});
+	const storeAddresses = writers.map((w) => w.storageAddress);
+	return Promise.all(
+		storeAddresses.map((address) =>
+			getEventLogsFromBlock({
+				fromBlock,
+				address: address as Hex,
+				abi: writerStorageAbi,
+				eventName: "EntryCreated",
+				onLogs: onWriterEntryCreated,
+			}),
+		),
+	);
+}
+
+export async function getAllWriterHistory() {
 	const mostRecentWriter = await prisma.writer.findFirst({
 		orderBy: { createdAtBlock: "desc" },
 		where: {
@@ -180,23 +215,60 @@ export async function getAllWriterCreatedEvents() {
 		},
 	});
 	if (!mostRecentWriter || !mostRecentWriter.createdAtBlock) {
-		return getCreatedEvents(fromBlock);
+		return Promise.all([
+			getWriterCreatedEvents(env.FACTORY_FROM_BLOCK),
+			getWriterEntryCreatedEvents(env.FACTORY_FROM_BLOCK),
+		]);
 	}
-	const block = mostRecentWriter ? mostRecentWriter.createdAtBlock : fromBlock;
+	const block = mostRecentWriter
+		? mostRecentWriter.createdAtBlock
+		: env.FACTORY_FROM_BLOCK;
 	console.log(`Getting events from block ${block}`);
-	return await getCreatedEvents(block);
+	return Promise.all([
+		getWriterCreatedEvents(block),
+		getWriterEntryCreatedEvents(block),
+	]);
 }
 
 export async function listenToNewWriterCreatedEvents() {
 	return publicClient.watchContractEvent({
 		pollingInterval: 1_000,
 		// fromBlock,
-		address,
+		address: env.FACTORY_ADDRESS as Hex,
 		abi: writerFactoryAbi,
 		eventName: "WriterCreated",
 		onLogs: (logs) => {
-			console.log("listener hit");
-			onLogs(logs as any);
+			console.log("[writer-created] listener hit");
+			onWriterCreated(logs as unknown as unknown[]);
 		},
 	});
+}
+
+export async function listenToNewEntries() {
+	// Query to get all writers & create listeners for each
+	const writers = await prisma.writer.findMany({
+		where: {
+			storageAddress: {
+				not: null,
+			},
+		},
+	});
+	const listeners = [];
+	for (const writer of writers) {
+		if (!writer.storageAddress) {
+			continue;
+		}
+		listeners.push(
+			publicClient.watchContractEvent({
+				pollingInterval: 1_000,
+				address: getAddress(writer.storageAddress),
+				abi: writerStorageAbi,
+				eventName: "EntryCreated",
+				onLogs: (logs) => {
+					console.log("[writer-entry-created] listener hit");
+					onWriterEntryCreated(logs as unknown as unknown[]);
+				},
+			}),
+		);
+	}
 }

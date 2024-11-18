@@ -25,6 +25,13 @@ export const writerAbi = [
 	},
 	{
 		type: "function",
+		name: "CREATE_WITH_CHUNK_TYPEHASH",
+		inputs: [],
+		outputs: [{ name: "", type: "bytes32", internalType: "bytes32" }],
+		stateMutability: "view",
+	},
+	{
+		type: "function",
 		name: "DEFAULT_ADMIN_ROLE",
 		inputs: [],
 		outputs: [{ name: "", type: "bytes32", internalType: "bytes32" }],
@@ -99,13 +106,35 @@ export const writerAbi = [
 	{
 		type: "function",
 		name: "create",
-		inputs: [{ name: "totalChunks", type: "uint256", internalType: "uint256" }],
+		inputs: [{ name: "chunkCount", type: "uint256", internalType: "uint256" }],
 		outputs: [],
 		stateMutability: "nonpayable",
 	},
 	{
 		type: "function",
-		name: "createwithSig",
+		name: "createWithChunk",
+		inputs: [
+			{ name: "chunkCount", type: "uint256", internalType: "uint256" },
+			{ name: "chunkContent", type: "string", internalType: "string" },
+		],
+		outputs: [],
+		stateMutability: "nonpayable",
+	},
+	{
+		type: "function",
+		name: "createWithChunkWithSig",
+		inputs: [
+			{ name: "signature", type: "bytes", internalType: "bytes" },
+			{ name: "nonce", type: "uint256", internalType: "uint256" },
+			{ name: "chunkCount", type: "uint256", internalType: "uint256" },
+			{ name: "chunkContent", type: "string", internalType: "string" },
+		],
+		outputs: [],
+		stateMutability: "nonpayable",
+	},
+	{
+		type: "function",
+		name: "createWithSig",
 		inputs: [
 			{ name: "signature", type: "bytes", internalType: "bytes" },
 			{ name: "nonce", type: "uint256", internalType: "uint256" },
@@ -391,4 +420,4 @@ export const writerAbi = [
 			{ name: "neededRole", type: "bytes32", internalType: "bytes32" },
 		],
 	},
-];
+] as const;
