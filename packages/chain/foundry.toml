@@ -4,6 +4,6 @@ out = "out"
 libs = ["lib"]
 
 [rpc_endpoints]
-op = "https://mainnet.optimism.io"
+op = "${OP_RPC_URL}"
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { type FormEvent, useState } from "react";
 import { useParams } from "react-router";
 import { TARGET_CHAIN_ID } from "server/src/constants";
-import { type Hex, stringify } from "viem";
+import { type Hex, getAddress, stringify } from "viem";
 import { Button } from "../components/Button";
 import { Editor } from "../components/Editor";
 import { getWriter } from "../utils/api";
@@ -19,6 +19,11 @@ export function Writer() {
 	const [content, setContent] = useState<string>("");
 
 	const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+		if (!address) {
+			console.debug("Could not get contract address when submitting form");
+			return;
+		}
+
 		e.preventDefault();
 		console.log("data", data);
 		if (!wallet) {
@@ -31,19 +36,22 @@ export function Writer() {
 		const nonce = 0;
 		const chunkCount = 1;
 		const chunkContent = content;
+		const entryId = 0;
+		const chunkIndex = 0;
 		const payload = {
 			domain: {
 				name: "Writer",
 				version: "1",
 				chainId: TARGET_CHAIN_ID,
-				verifyingContract: address,
+				verifyingContract: getAddress(address),
 			},
 			message: {
 				nonce,
-				chunkCount,
+				entryId,
+				chunkIndex,
 				chunkContent,
 			},
-			primaryType: "Main",
+			primaryType: "AddChunk",
 			types: {
 				EIP712Domain: [
 					{ name: "name", type: "string" },
@@ -51,9 +59,10 @@ export function Writer() {
 					{ name: "chainId", type: "uint256" },
 					{ name: "verifyingContract", type: "address" },
 				],
-				Main: [
+				AddChunk: [
 					{ name: "nonce", type: "uint256" },
-					{ name: "chunkCount", type: "uint256" },
+					{ name: "entryId", type: "uint256" },
+					{ name: "chunkIndex", type: "uint256" },
 					{ name: "chunkContent", type: "string" },
 				],
 			},
@@ -61,7 +70,7 @@ export function Writer() {
 
 		const signature = await provider.request({
 			method,
-			params: [wallet.address, payload],
+			params: [wallet.address, JSON.stringify(payload)],
 		});
 		console.log({ signature, nonce, chunkCount, chunkContent });
 	};

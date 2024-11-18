@@ -480,3 +480,20 @@ contract WriterWithSigTest is TestBase {
         return abi.encodePacked(r, s, v);
     }
 }
+
+contract WriterForkTest is TestBase {
+    uint256 opFork;
+    string OP_RPC_URL = vm.envString("OP_RPC_URL");
+
+    function setUp() public {
+        opFork = vm.createFork(OP_RPC_URL);
+    }
+
+    function test_ForkCreateWithChunkWithSig() public {
+        vm.selectFork(opFork);
+        assertEq(vm.activeFork(), opFork);
+
+        Writer myWriter = Writer(0x2590Bfff6F5e2Ca9F87fa7632C1778D0D646db3e);
+        assertEq(myWriter.DOMAIN_NAME(), "Writer");
+    }
+}

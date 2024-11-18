@@ -92,7 +92,7 @@ contract Writer is AccessControl, VerifyTypedData {
 
     function setTitleWithSig(bytes memory signature, uint256 nonce, string calldata newTitle)
         external
-        authedBySig(signature, keccak256(abi.encode(SET_TITLE_TYPEHASH, nonce, newTitle)))
+        authedBySig(signature, keccak256(abi.encode(SET_TITLE_TYPEHASH, nonce, keccak256(abi.encodePacked(newTitle)))))
     {
         title = newTitle;
     }
@@ -120,10 +120,17 @@ contract Writer is AccessControl, VerifyTypedData {
         string calldata chunkContent
     )
         external
-        authedBySig(signature, keccak256(abi.encode(CREATE_WITH_CHUNK_TYPEHASH, nonce, chunkCount, chunkContent)))
+        authedBySig(
+            signature,
+            keccak256(abi.encode(CREATE_WITH_CHUNK_TYPEHASH, nonce, chunkCount, keccak256(abi.encodePacked(chunkContent))))
+        )
     {
-        address signer =
-            getSigner(signature, keccak256(abi.encode(CREATE_WITH_CHUNK_TYPEHASH, nonce, chunkCount, chunkContent)));
+        address signer = getSigner(
+            signature,
+            keccak256(
+                abi.encode(CREATE_WITH_CHUNK_TYPEHASH, nonce, chunkCount, keccak256(abi.encodePacked(chunkContent)))
+            )
+        );
         _createWithChunk(chunkCount, chunkContent, signer);
     }
 
@@ -139,10 +146,17 @@ contract Writer is AccessControl, VerifyTypedData {
         string calldata chunkContent
     )
         external
-        authedBySig(signature, keccak256(abi.encode(UPDATE_TYPEHASH, nonce, entryId, chunkIndex, chunkContent)))
+        authedBySig(
+            signature,
+            keccak256(abi.encode(UPDATE_TYPEHASH, nonce, entryId, chunkIndex, keccak256(abi.encodePacked(chunkContent))))
+        )
     {
-        address signer =
-            getSigner(signature, keccak256(abi.encode(UPDATE_TYPEHASH, nonce, entryId, chunkIndex, chunkContent)));
+        address signer = getSigner(
+            signature,
+            keccak256(
+                abi.encode(UPDATE_TYPEHASH, nonce, entryId, chunkIndex, keccak256(abi.encodePacked(chunkContent)))
+            )
+        );
         _update(entryId, chunkIndex, chunkContent, signer);
     }
 
@@ -173,10 +187,17 @@ contract Writer is AccessControl, VerifyTypedData {
         string calldata chunkContent
     )
         external
-        authedBySig(signature, keccak256(abi.encode(ADD_CHUNK_TYPEHASH, nonce, entryId, chunkIndex, chunkContent)))
+        authedBySig(
+            signature,
+            keccak256(abi.encode(ADD_CHUNK_TYPEHASH, nonce, entryId, chunkIndex, keccak256(abi.encodePacked(chunkContent))))
+        )
     {
-        address signer =
-            getSigner(signature, keccak256(abi.encode(ADD_CHUNK_TYPEHASH, nonce, entryId, chunkIndex, chunkContent)));
+        address signer = getSigner(
+            signature,
+            keccak256(
+                abi.encode(ADD_CHUNK_TYPEHASH, nonce, entryId, chunkIndex, keccak256(abi.encodePacked(chunkContent)))
+            )
+        );
         _addChunk(entryId, chunkIndex, chunkContent, signer);
     }
 

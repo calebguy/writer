@@ -54,7 +54,7 @@ function App() {
 			)}
 			{!address && ready && (
 				<div className="text-xl text-lime mt-8 grow flex justify-center items-center">
-					<div>Click the lil guy to begin</div>
+					<div>CLICK THE BLOB</div>
 				</div>
 			)}
 		</>
