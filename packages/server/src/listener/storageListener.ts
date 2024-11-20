@@ -1,6 +1,6 @@
-import { Prisma, TransactionStatus } from "@prisma/client";
-import { InputJsonValue } from "@prisma/client/runtime/library";
-import { type AbiEvent, Hex, type Log, getAddress } from "viem";
+import type { TransactionStatus } from "@prisma/client";
+import type { InputJsonValue } from "@prisma/client/runtime/library";
+import { type AbiEvent, type Hex, type Log, getAddress } from "viem";
 import { writerStorageAbi } from "../abi/writerStorage";
 import { prisma } from "../db";
 import { env } from "../env";
@@ -16,6 +16,7 @@ class StorageListener extends LogFetcher implements Listener {
 		return Promise.all([this.fetchHistory(), this.listen()]);
 	}
 
+	// @note TODO: might not need this
 	async listen() {
 		const storageAddresses = await this.getStorageAddresses();
 		return Promise.all(
@@ -34,6 +35,7 @@ class StorageListener extends LogFetcher implements Listener {
 		);
 	}
 
+	// @note TODO: might not need this
 	// Listens to the 'EntryCreated' event for all current storage addresses
 	async fetchHistory() {
 		const storageAddresses = await this.getStorageAddresses();
@@ -53,19 +55,33 @@ class StorageListener extends LogFetcher implements Listener {
 		);
 	}
 
+	fetchHistoryForAddress(address: string) {
+		return this.fetchLogsFromBlock({
+			fromBlock: env.FACTORY_FROM_BLOCK,
+			address: getAddress(address),
+			abi: this.abi,
+			eventName: this.eventName,
+			onLogs: async (logs) => {
+				console.log(`[storage: ${address}] history`);
+				this.onLogs(logs);
+			},
+		});
+	}
+
 	async onLogs(logs: Log[] | AbiEvent[]) {
 		console.log("[storage-listener] logs", logs);
+		const writers = await prisma.writer.findMany();
 		for (const log of logs) {
 			// @ts-expect-error
-			const { blockNumber, transactionHash } = log;
+			const { blockNumber, transactionHash, address: storageAddress } = log;
 			// @ts-expect-error
 			const { id, author } = log.args;
 			const { input } = await this.client.getTransaction({
 				hash: transactionHash as Hex,
 			});
 			const transactionId = getSynIdFromRawInput(input);
-			let where: Prisma.EntryWhereUniqueInput | null = null;
-			console.log("transactionId", transactionId);
+
+			console.log("STORAGE LISTENERtransactionId", transactionId);
 			if (transactionId) {
 				const synTx = await syndicate.wallet.getTransactionRequest(
 					env.SYNDICATE_PROJECT_ID,
@@ -94,18 +110,38 @@ class StorageListener extends LogFetcher implements Listener {
 						id: transactionId,
 					},
 				});
-				where = { transactionId };
-			} else {
-				where: {
-					onChainId: BigInt(id);
-				}
 			}
 
-			// @note TODO: fill this in
+			const writer = await prisma.writer.findUnique({
+				where: {
+					storageAddress: getAddress(storageAddress),
+				},
+			});
+
+			if (!writer) {
+				console.error(
+					`[storage-listener] Writer not found for storage address ${storageAddress}`,
+				);
+				return;
+			}
+
+			// // @note TODO: fill this in
 			await prisma.entry.upsert({
-				create: {},
-				update: {},
-				where,
+				create: {
+					totalChunks: 1,
+					receivedChunks: 0,
+					exists: true,
+					onChainId: BigInt(id),
+					writerId: writer.id,
+					createdAtHash: transactionHash,
+					createdAtBlock: blockNumber,
+					transactionId,
+				},
+				update: {
+					createdAtHash: transactionHash,
+					createdAtBlock: blockNumber,
+				},
+				where: transactionId ? { transactionId } : { onChainId: BigInt(id) },
 			});
 			console.log("blockNumber", blockNumber);
 			console.log("transactionHash", transactionHash);

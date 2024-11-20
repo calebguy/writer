@@ -10,6 +10,7 @@ CREATE TABLE "Writer" (
     "admin" TEXT NOT NULL,
     "managers" TEXT[],
     "onChainId" BIGINT,
+    "createdAtHash" TEXT,
     "createdAtBlock" BIGINT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -21,11 +22,11 @@ CREATE TABLE "Writer" (
 -- CreateTable
 CREATE TABLE "Entry" (
     "id" SERIAL NOT NULL,
-    "author" TEXT NOT NULL,
     "totalChunks" INTEGER NOT NULL,
     "receivedChunks" INTEGER NOT NULL,
     "exists" BOOLEAN NOT NULL,
     "onChainId" BIGINT,
+    "createdAtHash" TEXT,
     "createdAtBlock" BIGINT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -43,6 +44,7 @@ CREATE TABLE "Chunk" (
     "compressionAlgorithm" TEXT NOT NULL,
     "compressedContent" TEXT NOT NULL,
     "decompressedContent" TEXT NOT NULL,
+    "createdAtHash" TEXT,
     "createdAtBlock" BIGINT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,

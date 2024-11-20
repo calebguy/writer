@@ -13,7 +13,6 @@ import {
 import { prisma, writerToJsonSafe } from "./db";
 import { env } from "./env";
 import factoryListener from "./listener/factoryListener";
-import storageListener from "./listener/storageListener";
 import { createWithChunkSchema, createWriterSchema } from "./requestSchema";
 import { syndicate } from "./syndicate";
 
@@ -22,7 +21,10 @@ const app = new Hono();
 app.use("*", serveStatic({ root: "../ui/dist" }));
 app.use("*", serveStatic({ path: "../ui/dist/index.html" }));
 
-Promise.all([factoryListener.init(), storageListener.init()]);
+Promise.all([
+	factoryListener.init(),
+	// storageListener.init()
+]);
 
 const privy = new PrivyClient(env.PRIVY_APP_ID, env.PRIVY_SECRET);
 
@@ -162,7 +164,6 @@ const api = app
 			}
 			const entry = await prisma.entry.create({
 				data: {
-					author: userAddress,
 					totalChunks: chunkCount,
 					receivedChunks: 1,
 					exists: true,

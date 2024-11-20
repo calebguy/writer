@@ -1,4 +1,4 @@
-import type { Prisma, TransactionStatus } from "@prisma/client";
+import type { TransactionStatus } from "@prisma/client";
 import type { InputJsonValue } from "@prisma/client/runtime/library";
 import { type AbiEvent, type Hex, type Log, getAddress } from "viem";
 import { writerFactoryAbi } from "../abi/writerFactory";
@@ -6,6 +6,7 @@ import { prisma } from "../db";
 import { env } from "../env";
 import { getSynIdFromRawInput, syndicate } from "../syndicate";
 import { type Listener, LogFetcher } from "./logFetcher";
+import storageListener from "./storageListener";
 
 class FactoryListener extends LogFetcher implements Listener {
 	private readonly eventName = "WriterCreated";
@@ -72,7 +73,6 @@ class FactoryListener extends LogFetcher implements Listener {
 			});
 
 			const transactionId = getSynIdFromRawInput(input);
-			let where: Prisma.WriterWhereUniqueInput | null = null;
 			if (transactionId) {
 				const synTx = await syndicate.wallet.getTransactionRequest(
 					env.SYNDICATE_PROJECT_ID,
@@ -100,9 +100,6 @@ class FactoryListener extends LogFetcher implements Listener {
 						id: transactionId,
 					},
 				});
-				where = { transactionId };
-			} else {
-				where = { onChainId: BigInt(id) };
 			}
 
 			await prisma.writer.upsert({
@@ -114,6 +111,7 @@ class FactoryListener extends LogFetcher implements Listener {
 					storageAddress: storeAddress as string,
 					admin: admin as string,
 					managers: managers as string[],
+					createdAtHash: transactionHash,
 					createdAtBlock: blockNumber.toString(),
 				},
 				update: {
@@ -123,10 +121,13 @@ class FactoryListener extends LogFetcher implements Listener {
 					admin: admin as string,
 					managers: managers as string[],
 					createdAtBlock: blockNumber.toString(),
+					createdAtHash: transactionHash,
 					updatedAt: new Date(),
 				},
-				where,
+				where: transactionId ? { transactionId } : { onChainId: BigInt(id) },
 			});
+
+			storageListener.fetchHistoryForAddress(storeAddress);
 		}
 	}
 }
