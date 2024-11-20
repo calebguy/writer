@@ -127,7 +127,7 @@ class FactoryListener extends LogFetcher implements Listener {
 				where: transactionId ? { transactionId } : { onChainId: BigInt(id) },
 			});
 
-			storageListener.fetchHistoryForAddress(storeAddress);
+			storageListener.doIt(storeAddress);
 		}
 	}
 }

@@ -5,77 +5,90 @@ import { writerStorageAbi } from "../abi/writerStorage";
 import { prisma } from "../db";
 import { env } from "../env";
 import { getSynIdFromRawInput, syndicate } from "../syndicate";
-import { type Listener, LogFetcher } from "./logFetcher";
+import { LogFetcher } from "./logFetcher";
 
-class StorageListener extends LogFetcher implements Listener {
-	private readonly eventName = "EntryCreated";
+class StorageListener extends LogFetcher {
 	private readonly abi = writerStorageAbi;
 	private readonly pollingInterval = 1_000;
 
-	init() {
-		return Promise.all([this.fetchHistory(), this.listen()]);
+	async doIt(address: string) {
+		return Promise.all([this.fetchHistory(address), this.listen(address)]);
 	}
 
-	// @note TODO: might not need this
-	async listen() {
-		const storageAddresses = await this.getStorageAddresses();
-		return Promise.all(
-			storageAddresses.map((address) =>
-				this.watchEvent({
-					pollingInterval: this.pollingInterval,
-					address: getAddress(address),
-					abi: this.abi,
-					eventName: this.eventName,
-					onLogs: async (logs) => {
-						console.log("[storage] listener");
-						await this.onLogs(logs);
-					},
-				}),
-			),
-		);
+	listen(address: string) {
+		return Promise.all([
+			this.listenChunkReceived(address),
+			this.listenEntryCreated(address),
+		]);
 	}
 
-	// @note TODO: might not need this
-	// Listens to the 'EntryCreated' event for all current storage addresses
-	async fetchHistory() {
-		const storageAddresses = await this.getStorageAddresses();
-		return Promise.all(
-			storageAddresses.map((address) =>
-				this.fetchLogsFromBlock({
-					fromBlock: env.FACTORY_FROM_BLOCK,
-					address: getAddress(address),
-					abi: this.abi,
-					eventName: this.eventName,
-					onLogs: async (logs) => {
-						console.log(`[storage: ${address}] history`);
-						this.onLogs(logs);
-					},
-				}),
-			),
-		);
+	fetchHistory(address: string) {
+		return Promise.all([
+			this.fetchHistoryEntryCreated(address),
+			this.fetchHistoryChunkReceived(address),
+		]);
 	}
 
-	fetchHistoryForAddress(address: string) {
-		return this.fetchLogsFromBlock({
-			fromBlock: env.FACTORY_FROM_BLOCK,
+	listenEntryCreated(address: string) {
+		return this.watchEvent({
+			pollingInterval: this.pollingInterval,
 			address: getAddress(address),
 			abi: this.abi,
-			eventName: this.eventName,
+			eventName: "EntryCreated",
 			onLogs: async (logs) => {
-				console.log(`[storage: ${address}] history`);
-				this.onLogs(logs);
+				console.log("[storage] listener");
+				await this.onEntryCreatedLogs(logs);
 			},
 		});
 	}
 
-	async onLogs(logs: Log[] | AbiEvent[]) {
+	listenChunkReceived(address: string) {
+		return this.watchEvent({
+			pollingInterval: this.pollingInterval,
+			address: getAddress(address),
+			abi: this.abi,
+			eventName: "ChunkReceived",
+			onLogs: async (logs) => {
+				console.log("[storage] listener");
+				await this.onChunkReceivedLogs(logs);
+			},
+		});
+	}
+
+	fetchHistoryEntryCreated(address: string) {
+		return this.fetchLogsFromBlock({
+			fromBlock: env.FACTORY_FROM_BLOCK,
+			address: getAddress(address),
+			abi: this.abi,
+			eventName: "EntryCreated",
+			onLogs: async (logs) => {
+				console.log(`[storage: ${address}] history`);
+				this.onEntryCreatedLogs(logs);
+			},
+		});
+	}
+
+	fetchHistoryChunkReceived(address: string) {
+		return this.fetchLogsFromBlock({
+			fromBlock: env.FACTORY_FROM_BLOCK,
+			address: getAddress(address),
+			abi: this.abi,
+			eventName: "ChunkReceived",
+			onLogs: async (logs) => {
+				console.log(`[storage: ${address}] history`);
+				this.onChunkReceivedLogs(logs);
+			},
+		});
+	}
+
+	async onEntryCreatedLogs(logs: Log[] | AbiEvent[]) {
 		console.log("[storage-listener] logs", logs);
 		const writers = await prisma.writer.findMany();
 		for (const log of logs) {
 			// @ts-expect-error
 			const { blockNumber, transactionHash, address: storageAddress } = log;
 			// @ts-expect-error
-			const { id, author } = log.args;
+			const { id } = log.args;
 			const { input } = await this.client.getTransaction({
 				hash: transactionHash as Hex,
 			});
@@ -90,7 +103,7 @@ class StorageListener extends LogFetcher implements Listener {
 				const tx = synTx.transactionAttempts?.filter((tx) =>
 					["SUBMITTED", "CONFIRMED"].includes(tx.status),
 				)[0];
-				console.log("syndicate tx for entry", tx);
+				// console.log("syndicate tx for entry", tx);
 				await prisma.syndicateTransaction.upsert({
 					create: {
 						id: transactionId,
@@ -125,9 +138,9 @@ class StorageListener extends LogFetcher implements Listener {
 				return;
 			}
 
-			// // @note TODO: fill this in
 			await prisma.entry.upsert({
 				create: {
+					// @note TODO: we might not need totalChunks & receivedChunks TBD
 					totalChunks: 1,
 					receivedChunks: 0,
 					exists: true,
@@ -143,26 +156,11 @@ class StorageListener extends LogFetcher implements Listener {
 				},
 				where: transactionId ? { transactionId } : { onChainId: BigInt(id) },
 			});
-			console.log("blockNumber", blockNumber);
-			console.log("transactionHash", transactionHash);
-			console.log("id", id);
-			console.log("author", author);
 		}
 	}
 
-	private async getStorageAddresses() {
-		const writers = await prisma.writer.findMany();
-		const writersWillNullStorageAddress = writers.filter(
-			(w) => !w.storageAddress,
-		);
-		// @note we need to devise a plan for handling this
-		if (writersWillNullStorageAddress.length > 0) {
-			console.warn(
-				`[storage-listener] Found ${writersWillNullStorageAddress.length} writers with null storage address.`,
-			);
-		}
-		const writersWithStorageAddress = writers.filter((w) => w.storageAddress);
-		return writersWithStorageAddress.map((w) => w.storageAddress) as string[];
+	async onChunkReceivedLogs(logs: Log[] | AbiEvent[]) {
+		console.log("[storage-listener] logs", logs);
 	}
 }
 
