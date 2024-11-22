@@ -9,7 +9,6 @@ class WriterListener {
 
 	async init() {
 		this.title = await this.getTitle();
-		console.log("[new-entry]", this.title);
 		await this.syncState();
 	}
 
@@ -19,20 +18,22 @@ class WriterListener {
 		for (const entryId of entryIds) {
 			const entry = await this.getEntry(entryId);
 			const content = await this.getEntryContent(entryId);
-			console.log("[entry]", entry);
-			console.log("[entry-content]", content);
+			console.log("[entry-content]", this.address, content);
 			const writer = await prisma.writer.findUnique({
 				where: {
 					address: this.address,
 				},
 			});
 			if (!writer) {
-				console.error("[writer-not-found]", this.address);
+				console.error("[WRITER-NOT-FOUND]", this.address);
 				return;
 			}
 			await prisma.entry.upsert({
 				where: {
-					onChainId: entryId,
+					onChainId_writerId: {
+						onChainId: entryId,
+						writerId: writer.id,
+					},
 				},
 				update: {
 					onChainId: entryId,
@@ -45,7 +46,6 @@ class WriterListener {
 					writerId: writer.id,
 				},
 			});
-			console.log("content", content);
 		}
 	}
 

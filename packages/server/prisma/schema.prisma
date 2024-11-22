@@ -33,7 +33,7 @@ model Writer {
 model Entry {
   id Int @id @default(autoincrement())
   exists Boolean
-  onChainId BigInt? @unique
+  onChainId BigInt?
   createdAtHash String?
   content String?
   createdAt DateTime @default(now())
@@ -43,6 +43,7 @@ model Entry {
   writer Writer @relation(fields: [writerId], references: [id])
   transactionId String? @unique
   transaction SyndicateTransaction? @relation(fields: [transactionId], references: [id])
+  @@unique([onChainId, writerId])
 }
 
 enum TransactionStatus {

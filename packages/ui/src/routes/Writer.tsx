@@ -37,7 +37,8 @@ export function Writer() {
 
 		const provider = await wallet.getEthereumProvider();
 		const method = "eth_signTypedData_v4";
-		const nonce = 0;
+		// To avoid signature collision, a random nonce is used
+		const nonce = Math.floor(Math.random() * 1000000000000000000);
 		const chunkCount = 1;
 		const chunkContent = content;
 		const payload = {

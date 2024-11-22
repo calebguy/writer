@@ -38,7 +38,6 @@ const api = app
 				transaction: true,
 			},
 		});
-		console.log("writer", writer);
 		return c.json(writer ? writerToJsonSafe(writer) : null);
 	})
 	.get("/author/:address", async (c) => {

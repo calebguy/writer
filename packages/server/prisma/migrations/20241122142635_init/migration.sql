@@ -62,10 +62,10 @@ CREATE UNIQUE INDEX "Writer_onChainId_key" ON "Writer"("onChainId");
 CREATE UNIQUE INDEX "Writer_transactionId_key" ON "Writer"("transactionId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Entry_onChainId_key" ON "Entry"("onChainId");
+CREATE UNIQUE INDEX "Entry_transactionId_key" ON "Entry"("transactionId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Entry_transactionId_key" ON "Entry"("transactionId");
+CREATE UNIQUE INDEX "Entry_onChainId_writerId_key" ON "Entry"("onChainId", "writerId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "SyndicateTransaction_hash_key" ON "SyndicateTransaction"("hash");

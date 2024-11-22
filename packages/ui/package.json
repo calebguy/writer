@@ -24,7 +24,7 @@
     "react-hook-form": "^7.53.0",
     "react-router": "^6.26.1",
     "react-router-dom": "^6.26.1",
-    "sass": "^1.80.6",
+    "sass": "^1.81.0",
     "server": "workspace:*",
     "tiptap-markdown": "^0.8.10",
     "vaul": "^0.9.1",
