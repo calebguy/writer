@@ -160,7 +160,9 @@ function CreateForm({
 			/>
 			{isLoading && (
 				<div className="absolute inset-0 bg-lime text-black flex flex-col items-center justify-between py-2 px-3">
-					<div className="text-[#b5db29]">{getValues(inputName)}</div>
+					<div className="text-[#b5db29] w-full text-left">
+						{getValues(inputName)}
+					</div>
 					<div className="text-sm absolute inset-0 flex justify-center items-center">
 						<Blob className="w-6 h-6 rotating" />
 					</div>

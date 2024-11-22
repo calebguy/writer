@@ -112,7 +112,7 @@ export function Writer() {
 			{data?.entries.map((entry) => (
 				<Block
 					key={entry.id}
-					href={`/writer/${data.address}/${entry.id}`}
+					href={`/writer/${data.address}/${entry.onChainId}`}
 					title={entry.content ?? "n/a"}
 					id={entry.id.toString()}
 				/>
