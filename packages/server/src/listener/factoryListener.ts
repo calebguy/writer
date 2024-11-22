@@ -120,7 +120,7 @@ class FactoryListener extends LogFetcher implements Listener {
 				where: transactionId ? { transactionId } : { onChainId: BigInt(id) },
 			});
 
-			await new WriterListener(writerAddress).init();
+			await new WriterListener(writerAddress, storeAddress).init();
 		}
 	}
 }

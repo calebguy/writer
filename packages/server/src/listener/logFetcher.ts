@@ -17,9 +17,10 @@ export class LogFetcher {
 		abi,
 		eventName,
 		onLogs,
+		args,
 	}: Pick<
 		GetContractEventsParameters,
-		"fromBlock" | "address" | "abi" | "eventName"
+		"fromBlock" | "address" | "abi" | "eventName" | "args"
 	> & {
 		fromBlock: bigint;
 		// @note how can we get better exact typing here
@@ -59,9 +60,10 @@ export class LogFetcher {
 				eventName,
 				fromBlock: block,
 				toBlock,
+				args,
 			});
 			if (logs.length > 0) {
-				onLogs(logs);
+				await onLogs(logs);
 			}
 		}
 	}

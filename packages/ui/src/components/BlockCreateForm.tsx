@@ -11,7 +11,7 @@ import { Blob } from "./icons/Blob";
 
 interface CreateBucketFormProps {
 	isLoading: boolean;
-	onSubmit: (data: BlockCreateInput) => Promise<any>;
+	onSubmit: (data: BlockCreateInput) => Promise<unknown>;
 	hoverLabel?: string;
 	activeLabel?: string;
 }
@@ -22,6 +22,7 @@ export default function BlockCreateForm({
 	onSubmit,
 	isLoading,
 }: CreateBucketFormProps) {
+	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isActive, setIsActive] = useState(false);
 	const ref = useRef<HTMLInputElement>(null);
 	useEffect(() => {
@@ -65,9 +66,13 @@ export default function BlockCreateForm({
 				)}
 				{isActive && (
 					<CreateForm
-						isLoading={isLoading}
+						isLoading={isLoading || isSubmitting}
 						placeholder={activeLabel}
-						onSubmit={(data) => onSubmit(data).then(() => setIsActive(false))}
+						onSubmit={async (data) => {
+							setIsSubmitting(true);
+							await onSubmit(data).then(() => setIsActive(false));
+							setIsSubmitting(false);
+						}}
 						onCancel={() => setIsActive(false)}
 					/>
 				)}
@@ -77,7 +82,7 @@ export default function BlockCreateForm({
 }
 
 interface CreateFormProps {
-	onSubmit: (data: BlockCreateInput) => Promise<any>;
+	onSubmit: (data: BlockCreateInput) => Promise<unknown>;
 	onCancel: () => void;
 	placeholder?: string;
 	isLoading: boolean;
