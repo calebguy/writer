@@ -13,15 +13,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// This may need to change, we need a model where things can be 'created'
-// in the DB and then verified onchain by the listeners
-
-
-// Currently we map the ID from the factory to the database ID which maybe is not the best idea
-// I'd like to be able to create 'soft' data into the database as soon as the user POSTs
-// and then updated with the onchain data later. That way we can still use the soft data for
-// the frontend immediately, and then fill in the hard data async.
-
 model Writer {
   id Int @id @default(autoincrement())
   title String
@@ -31,7 +22,6 @@ model Writer {
   managers String[]
   onChainId BigInt? @unique
   createdAtHash String?
-  createdAtBlock BigInt?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -42,37 +32,15 @@ model Writer {
 
 model Entry {
   id Int @id @default(autoincrement())
-  totalChunks Int
-  receivedChunks Int
   exists Boolean
   onChainId BigInt? @unique
   createdAtHash String?
-  createdAtBlock BigInt?
+  content String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // @note TODO: shouldn't we reference the internal ID here
   writerId Int
   writer Writer @relation(fields: [writerId], references: [id])
-  chunks Chunk[]
-  transactionId String? @unique
-  transaction SyndicateTransaction? @relation(fields: [transactionId], references: [id])
-}
-
-model Chunk {
-  id Int @id @default(autoincrement())
-  index Int
-  author String
-  compressionAlgorithm String
-  compressedContent String
-  decompressedContent String
-  createdAtHash String?
-  createdAtBlock BigInt?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  entryId Int
-  entry Entry @relation(fields: [entryId], references: [id])
   transactionId String? @unique
   transaction SyndicateTransaction? @relation(fields: [transactionId], references: [id])
 }
@@ -100,5 +68,4 @@ model SyndicateTransaction {
   
   writers Writer[]
   entries Entry[]
-  chunks Chunk[]
 }

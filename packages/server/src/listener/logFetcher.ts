@@ -1,26 +1,14 @@
-import {
-	createPublicClient,
-	http,
-	type AbiEvent,
-	type GetContractEventsParameters,
-	type Log,
-	type WatchContractEventParameters,
+import type {
+	AbiEvent,
+	GetContractEventsParameters,
+	Log,
+	WatchContractEventParameters,
 } from "viem";
-import { optimism } from "viem/chains";
-import { env } from "../env";
 import { minBigInt } from "../helpers";
+import chain, { type Chain } from "./chain";
 
 export class LogFetcher {
-	private readonly chain = optimism;
-	protected readonly client = createPublicClient({
-		chain: this.chain,
-		transport: http(env.RPC_URL),
-		batch: {
-			multicall: {
-				wait: 16,
-			},
-		},
-	});
+	chain: Chain = chain;
 	private readonly STEP = 3_000;
 
 	async fetchLogsFromBlock<T extends AbiEvent>({
@@ -54,7 +42,7 @@ export class LogFetcher {
 		// Max range is 3k blocks
 		const step = BigInt(this.STEP);
 		const from = fromBlock;
-		const to = await this.client.getBlockNumber();
+		const to = await this.chain.client.getBlockNumber();
 		if (to < from) {
 			console.debug(
 				`To block number: ${to} is less than from block number: ${from}, skipping fetching history.`,
@@ -64,8 +52,8 @@ export class LogFetcher {
 
 		for (let block = from; block <= to; block += step) {
 			const toBlock = minBigInt(block + step, to);
-			console.log(`getting logs from block ${block} to ${toBlock}`);
-			const logs = await this.client.getContractEvents({
+			// console.log(`getting logs from block ${block} to ${toBlock}`);
+			const logs = await this.chain.client.getContractEvents({
 				address,
 				abi,
 				eventName,
@@ -79,7 +67,7 @@ export class LogFetcher {
 	}
 
 	watchEvent(args: WatchContractEventParameters) {
-		return this.client.watchContractEvent(args);
+		return this.chain.client.watchContractEvent(args);
 	}
 }
 

@@ -6,7 +6,7 @@ import { prisma } from "../db";
 import { env } from "../env";
 import { getSynIdFromRawInput, syndicate } from "../syndicate";
 import { type Listener, LogFetcher } from "./logFetcher";
-import storageListener from "./storageListener";
+import WriterListener from "./writerListener";
 
 class FactoryListener extends LogFetcher implements Listener {
 	private readonly eventName = "WriterCreated";
@@ -20,19 +20,17 @@ class FactoryListener extends LogFetcher implements Listener {
 
 	async fetchHistory() {
 		const mostRecentWriter = await prisma.writer.findFirst({
-			orderBy: { createdAtBlock: "desc" },
-			where: {
-				createdAtBlock: {
-					not: null,
-				},
-			},
+			orderBy: { createdAt: "desc" },
 		});
 
 		let fromBlock: bigint;
-		if (!mostRecentWriter || !mostRecentWriter.createdAtBlock) {
+		if (!mostRecentWriter) {
 			fromBlock = env.FACTORY_FROM_BLOCK;
 		} else {
-			fromBlock = BigInt(mostRecentWriter.createdAtBlock);
+			const tx = await this.chain.client.getTransaction({
+				hash: mostRecentWriter.createdAtHash as Hex,
+			});
+			fromBlock = tx.blockNumber;
 		}
 
 		return super.fetchLogsFromBlock({
@@ -68,7 +66,7 @@ class FactoryListener extends LogFetcher implements Listener {
 			const { id, writerAddress, storeAddress, admin, managers, title } =
 				// @ts-expect-error
 				log.args;
-			const { input } = await this.client.getTransaction({
+			const { input } = await this.chain.client.getTransaction({
 				hash: transactionHash as Hex,
 			});
 
@@ -112,7 +110,6 @@ class FactoryListener extends LogFetcher implements Listener {
 					admin: admin as string,
 					managers: managers as string[],
 					createdAtHash: transactionHash,
-					createdAtBlock: blockNumber.toString(),
 				},
 				update: {
 					onChainId: BigInt(id),
@@ -120,14 +117,13 @@ class FactoryListener extends LogFetcher implements Listener {
 					storageAddress: storeAddress as string,
 					admin: admin as string,
 					managers: managers as string[],
-					createdAtBlock: blockNumber.toString(),
 					createdAtHash: transactionHash,
 					updatedAt: new Date(),
 				},
 				where: transactionId ? { transactionId } : { onChainId: BigInt(id) },
 			});
 
-			storageListener.doIt(storeAddress);
+			await new WriterListener(writerAddress).init();
 		}
 	}
 }

@@ -49,7 +49,9 @@ contract WriterStorage is AccessControl {
     event EntryRemoved(uint256 indexed id, address author);
     event EntryCompleted(uint256 indexed id, address author);
 
-    event ChunkReceived(uint256 indexed id, uint256 chunkIndex, string chunkContent, address author);
+    event ChunkReceived(
+        uint256 indexed entryId, uint256 indexed chunkIndex, string chunkContent, address indexed author
+    );
 
     function setNewAdmin(address newAdmin) public onlyRole(DEFAULT_ADMIN_ROLE) {
         _grantRole(DEFAULT_ADMIN_ROLE, newAdmin);

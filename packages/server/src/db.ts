@@ -4,13 +4,13 @@ export const prisma = new PrismaClient();
 
 export function writerToJsonSafe({
 	onChainId,
-	createdAtBlock,
 	...writer
 }: Prisma.WriterGetPayload<{
 	include: { transaction: true; entries: true };
 }>) {
 	return {
 		...writer,
+		onChainId: onChainId?.toString(),
 		transaction: writer.transaction
 			? {
 					...writer.transaction,
@@ -20,10 +20,7 @@ export function writerToJsonSafe({
 			: null,
 		entries: writer.entries.map((entry) => ({
 			...entry,
-			writerId: entry.writerId.toString(),
-			createdAtBlock: entry.createdAtBlock?.toString(),
+			onChainId: entry.onChainId?.toString(),
 		})),
-		onChainId: onChainId?.toString(),
-		createdAtBlock: createdAtBlock?.toString(),
 	};
 }

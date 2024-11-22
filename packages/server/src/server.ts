@@ -21,10 +21,7 @@ const app = new Hono();
 app.use("*", serveStatic({ root: "../ui/dist" }));
 app.use("*", serveStatic({ path: "../ui/dist/index.html" }));
 
-Promise.all([
-	factoryListener.init(),
-	// storageListener.init()
-]);
+factoryListener.init();
 
 const privy = new PrivyClient(env.PRIVY_APP_ID, env.PRIVY_SECRET);
 
@@ -37,15 +34,11 @@ const api = app
 				address,
 			},
 			include: {
-				entries: {
-					include: {
-						chunks: true,
-						transaction: true,
-					},
-				},
+				entries: true,
 				transaction: true,
 			},
 		});
+		console.log("writer", writer);
 		return c.json(writer ? writerToJsonSafe(writer) : null);
 	})
 	.get("/author/:address", async (c) => {
@@ -110,7 +103,7 @@ const api = app
 		},
 	)
 	.post(
-		"/writer/:address/createWithChunk",
+		"/writer/:address/create",
 		zValidator("json", createWithChunkSchema),
 		async (c) => {
 			// @note TODO: wrap this in middleware probably
@@ -130,6 +123,17 @@ const api = app
 			// @note TODO: you should also check that the userAddress has WRITER_ROLE on the contract
 
 			const contractAddress = getAddress(c.req.param("address"));
+			console.log("contractAddress", contractAddress);
+			const writer = await prisma.writer.findFirst({
+				where: {
+					address: getAddress(contractAddress),
+				},
+			});
+			console.log("writer", writer);
+			if (!writer) {
+				return c.json({ error: "writer not found" }, 404);
+			}
+
 			const { signature, nonce, chunkCount, chunkContent } =
 				c.req.valid("json");
 			console.log(
@@ -154,44 +158,15 @@ const api = app
 					status: TransactionStatus.PENDING,
 				},
 			});
-			const writer = await prisma.writer.findFirst({
-				where: {
-					address: getAddress(contractAddress),
-				},
-			});
-			if (!writer) {
-				return c.json({ error: "writer not found" }, 404);
-			}
 			const entry = await prisma.entry.create({
 				data: {
-					totalChunks: chunkCount,
-					receivedChunks: 1,
 					exists: true,
 					writerId: writer.id,
 					transactionId,
+					content: chunkContent,
 				},
 			});
-			await prisma.chunk.create({
-				data: {
-					index: 0,
-					author: userAddress,
-					compressionAlgorithm: "0x0",
-					compressedContent: chunkContent,
-					decompressedContent: chunkContent,
-					entryId: entry.id,
-					transactionId,
-				},
-			});
-			const entryWithChunk = await prisma.entry.findFirst({
-				where: {
-					id: entry.id,
-				},
-				include: {
-					chunks: true,
-					transaction: true,
-				},
-			});
-			return c.json({ entry: entryWithChunk }, 200);
+			return c.json({ entry }, 200);
 		},
 	);
 

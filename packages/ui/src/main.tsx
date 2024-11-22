@@ -4,10 +4,10 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import { optimism } from "viem/chains";
-import App from "./App.tsx";
 import ErrorPage from "./error-page.tsx";
 import { AppLayout } from "./layouts/App.layout.tsx";
 import { Account } from "./routes/Account.tsx";
+import Home from "./routes/Home.tsx";
 import { Writer } from "./routes/Writer.tsx";
 
 import "./index.scss";
@@ -20,7 +20,7 @@ const router = createBrowserRouter([
 		path: "/",
 		element: (
 			<AppLayout>
-				<App />
+				<Home />
 			</AppLayout>
 		),
 		errorElement: (
@@ -64,7 +64,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 			<PrivyProvider
 				appId={PRIVY_APP_ID}
 				config={{
-					loginMethods: ["sms"],
+					loginMethods: ["sms", "email"],
 					defaultChain: optimism,
 					supportedChains: [optimism],
 					appearance: {

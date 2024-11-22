@@ -9,6 +9,6 @@ export interface Writer {
 	authors: string[];
 }
 
-export type CreateNewBucketInputs = {
-	title: string;
+export type BlockCreateInput = {
+	value: string;
 };

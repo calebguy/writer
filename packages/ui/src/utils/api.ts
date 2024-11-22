@@ -49,7 +49,7 @@ export async function createWithChunk({
 	chunkCount: number;
 	chunkContent: string;
 }) {
-	const res = await client.api.writer[":address"].createWithChunk.$post({
+	const res = await client.api.writer[":address"].create.$post({
 		param: { address },
 		json,
 	});
@@ -62,3 +62,4 @@ export async function createWithChunk({
 export type GetWritersResponse = InferResponseType<
 	(typeof client.api.author)[":address"]["$get"]
 >;
+export type Writer = GetWritersResponse["writers"][number];
