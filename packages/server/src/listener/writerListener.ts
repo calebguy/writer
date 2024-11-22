@@ -9,8 +9,10 @@ class WriterListener {
 
 	async init() {
 		this.title = await this.getTitle();
-		await this.syncState();
+		return Promise.all([this.syncState(), this.listen()]);
 	}
+
+	listen() {}
 
 	async syncState() {
 		const entryIds = await this.getEntryIds();

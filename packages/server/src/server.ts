@@ -37,21 +37,24 @@ const api = app
 				entries: true,
 				transaction: true,
 			},
+			orderBy: {
+				onChainId: "desc",
+			},
 		});
 		return c.json(writer ? writerToJsonSafe(writer) : null);
 	})
 	.get("/author/:address", async (c) => {
 		const address = getAddress(c.req.param("address"));
 		const writers = await prisma.writer.findMany({
-			orderBy: {
-				createdAt: "desc",
-			},
 			where: {
 				admin: address,
 			},
 			include: {
 				entries: true,
 				transaction: true,
+			},
+			orderBy: {
+				onChainId: "desc",
 			},
 		});
 		return c.json({
