@@ -14,11 +14,9 @@ class WriterListener {
 
 	async syncState() {
 		const entryIds = await this.getEntryIds();
-		console.log("[got-entry-ids]", entryIds);
 		for (const entryId of entryIds) {
 			const entry = await this.getEntry(entryId);
 			const content = await this.getEntryContent(entryId);
-			console.log("[entry-content]", this.address, content);
 			const writer = await prisma.writer.findUnique({
 				where: {
 					address: this.address,

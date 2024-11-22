@@ -60,9 +60,8 @@ class FactoryListener extends LogFetcher implements Listener {
 
 	async onLogs(logs: Log[] | AbiEvent[]) {
 		for (const log of logs) {
-			console.log(log);
 			// @ts-expect-error
-			const { blockNumber, transactionHash } = log;
+			const { transactionHash } = log;
 			const { id, writerAddress, storeAddress, admin, managers, title } =
 				// @ts-expect-error
 				log.args;
