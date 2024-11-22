@@ -66,9 +66,6 @@ const api = app
 		zValidator("json", createWriterSchema),
 		async (c) => {
 			const { admin, managers, title } = c.req.valid("json");
-			console.log(
-				`creating new writing with admin: ${admin} and managers: ${managers}`,
-			);
 			const args = { title, admin, managers };
 			const { transactionId } = await syndicate.transact.sendTransaction({
 				projectId: env.SYNDICATE_PROJECT_ID,
@@ -77,7 +74,6 @@ const api = app
 				functionSignature: CREATE_FUNCTION_SIGNATURE,
 				args,
 			});
-			console.log("got transaction id", transactionId);
 			await prisma.syndicateTransaction.create({
 				data: {
 					id: transactionId,
@@ -100,7 +96,6 @@ const api = app
 					transaction: true,
 				},
 			});
-			console.log("created new writer", writer);
 			return c.json({ writer: writerToJsonSafe(writer) }, 200);
 		},
 	)
@@ -125,22 +120,17 @@ const api = app
 			// @note TODO: you should also check that the userAddress has WRITER_ROLE on the contract
 
 			const contractAddress = getAddress(c.req.param("address"));
-			console.log("contractAddress", contractAddress);
 			const writer = await prisma.writer.findFirst({
 				where: {
 					address: getAddress(contractAddress),
 				},
 			});
-			console.log("writer", writer);
 			if (!writer) {
 				return c.json({ error: "writer not found" }, 404);
 			}
 
 			const { signature, nonce, chunkCount, chunkContent } =
 				c.req.valid("json");
-			console.log(
-				`creating new entry on writer: ${contractAddress}, chunkCount: ${chunkCount}, content: ${chunkContent}`,
-			);
 			const args = { signature, nonce, chunkCount, chunkContent };
 			const { transactionId } = await syndicate.transact.sendTransaction({
 				projectId: env.SYNDICATE_PROJECT_ID,
@@ -149,7 +139,6 @@ const api = app
 				functionSignature: CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
 				args,
 			});
-			console.log("got transaction id", transactionId);
 			await prisma.syndicateTransaction.create({
 				data: {
 					id: transactionId,

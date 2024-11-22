@@ -39,7 +39,6 @@ class FactoryListener extends LogFetcher implements Listener {
 			abi: this.abi,
 			eventName: this.eventName,
 			onLogs: async (logs) => {
-				console.log("[writer-factory] history");
 				await this.onLogs(logs);
 			},
 		});
@@ -52,7 +51,6 @@ class FactoryListener extends LogFetcher implements Listener {
 			abi: this.abi,
 			eventName: this.eventName,
 			onLogs: async (logs) => {
-				console.log("[writer-factory] listener");
 				await this.onLogs(logs);
 			},
 		});
