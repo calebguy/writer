@@ -115,7 +115,7 @@ export function Writer() {
 				<Block
 					key={entry.id}
 					href={`/writer/${data.address}/${entry.id}`}
-					title={entry.content?.substring(0, 10) ?? "n/a"}
+					title={entry.content ?? "n/a"}
 					id={entry.id.toString()}
 				/>
 			))}

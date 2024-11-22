@@ -65,7 +65,7 @@ function Home() {
 								key={writer.id}
 								href={`/writer/${writer.address}`}
 								title={writer.title}
-								id={writer.id.toString()}
+								id={writer.entries.length.toString()}
 							/>
 						))}
 				</div>

@@ -11,50 +11,28 @@ import Home from "./routes/Home.tsx";
 import { Writer } from "./routes/Writer.tsx";
 
 import "./index.scss";
+import Entry from "./routes/Entry.tsx";
 
 const PRIVY_APP_ID = "clzekejfs079912zv96ahfm5a";
 const queryClient = new QueryClient();
 
+function getRouteWithErrorBoundry(path: string, element: React.ReactNode) {
+	return {
+		path,
+		element: <AppLayout>{element}</AppLayout>,
+		errorElement: (
+			<AppLayout>
+				<ErrorPage />
+			</AppLayout>
+		),
+	};
+}
+
 const router = createBrowserRouter([
-	{
-		path: "/",
-		element: (
-			<AppLayout>
-				<Home />
-			</AppLayout>
-		),
-		errorElement: (
-			<AppLayout>
-				<ErrorPage />
-			</AppLayout>
-		),
-	},
-	{
-		path: "/account/:address",
-		element: (
-			<AppLayout>
-				<Account />
-			</AppLayout>
-		),
-		errorElement: (
-			<AppLayout>
-				<ErrorPage />
-			</AppLayout>
-		),
-	},
-	{
-		path: "/writer/:address",
-		element: (
-			<AppLayout>
-				<Writer />
-			</AppLayout>
-		),
-		errorElement: (
-			<AppLayout>
-				<ErrorPage />
-			</AppLayout>
-		),
-	},
+	getRouteWithErrorBoundry("/", <Home />),
+	getRouteWithErrorBoundry("/account/:address", <Account />),
+	getRouteWithErrorBoundry("/writer/:address", <Writer />),
+	getRouteWithErrorBoundry("/writer/:address/:id", <Entry />),
 ]);
 
 // biome-ignore lint/style/noNonNullAssertion: 🫚
