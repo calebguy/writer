@@ -44,8 +44,8 @@ function Home() {
 				>
 					<BlockCreateForm
 						isLoading={isPending}
-						hoverLabel="Create a Collection"
-						activeLabel="Name your Collection"
+						hoverLabel="Create a Writer"
+						activeLabel="Name your Writer"
 						onSubmit={(data) =>
 							mutateAsync({
 								title: data.value,
@@ -65,7 +65,9 @@ function Home() {
 								key={writer.id}
 								href={`/writer/${writer.address}`}
 								title={writer.title}
-								id={writer.entries.length.toString()}
+								id={
+									writer.onChainId ? writer.onChainId.toString() : "loading..."
+								}
 							/>
 						))}
 				</div>
