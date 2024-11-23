@@ -4,7 +4,7 @@ import { useContext, useMemo } from "react";
 import type { Hex } from "viem";
 import Block from "../components/Block";
 import BlockCreateForm from "../components/BlockCreateForm";
-import { HeaderContext } from "../layouts/App.layout";
+import { WriterContext } from "../layouts/App.layout";
 import { createFromFactory, getAuthor } from "../utils/api";
 
 function Home() {
@@ -12,7 +12,7 @@ function Home() {
 	const wallet = wallets[0];
 	const address = wallet?.address;
 
-	const { setHeaderContent } = useContext(HeaderContext);
+	const { setWriter } = useContext(WriterContext);
 
 	const { data, refetch } = useQuery({
 		queryFn: () => getAuthor(wallet?.address as Hex),
@@ -60,7 +60,7 @@ function Home() {
 						data?.writers?.map((writer) => (
 							<Block
 								onClick={() => {
-									setHeaderContent(writer.title);
+									setWriter(writer);
 								}}
 								key={writer.id}
 								href={`/writer/${writer.address}`}

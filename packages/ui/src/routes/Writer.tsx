@@ -1,19 +1,27 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useContext, useEffect } from "react";
 import { useParams } from "react-router";
 import { TARGET_CHAIN_ID } from "server/src/constants";
 import { type Hex, getAddress } from "viem";
 import Block from "../components/Block";
 import BlockCreateForm from "../components/BlockCreateForm";
+import { WriterContext } from "../layouts/App.layout";
 import { createWithChunk, getWriter } from "../utils/api";
 import { useFirstWallet } from "../utils/hooks";
 
 export function Writer() {
 	const { address } = useParams();
+	const { setWriter } = useContext(WriterContext);
 	const { data, refetch } = useQuery({
 		queryFn: () => getWriter(address as Hex),
 		queryKey: ["get-writer", address],
 		enabled: !!address,
 	});
+	useEffect(() => {
+		if (data) {
+			setWriter(data);
+		}
+	}, [data, setWriter]);
 	const { mutateAsync, isPending } = useMutation({
 		mutationFn: createWithChunk,
 		mutationKey: ["create-with-chunk", address],
@@ -70,7 +78,6 @@ export function Writer() {
 			method,
 			params: [wallet.address, JSON.stringify(payload)],
 		});
-		console.log({ signature, nonce, chunkCount, chunkContent });
 		return mutateAsync({ address, signature, nonce, chunkCount, chunkContent });
 	};
 
@@ -114,7 +121,7 @@ export function Writer() {
 					key={entry.id}
 					href={`/writer/${data.address}/${entry.onChainId}`}
 					title={entry.content ?? "n/a"}
-					id={entry.id.toString()}
+					id={entry.onChainId?.toString() ?? "loading..."}
 				/>
 			))}
 		</div>

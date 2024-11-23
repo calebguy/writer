@@ -1,15 +1,16 @@
 import { usePrivy } from "@privy-io/react-auth";
 import { useContext } from "react";
-import { Link } from "react-router-dom";
-import { HeaderContext } from "../layouts/App.layout";
+import { Link, useLocation } from "react-router-dom";
+import { WriterContext } from "../layouts/App.layout";
 import { cn } from "../utils/cn";
 import { Button, ButtonVariant } from "./Button";
 import { Blob } from "./icons/Blob";
 
 export function Header() {
 	const { ready, authenticated, login, logout } = usePrivy();
-	const { headerContent, setHeaderContent } = useContext(HeaderContext);
-
+	// const navigate = useNavigate();
+	const location = useLocation();
+	const { writer } = useContext(WriterContext);
 	const isLoggedIn = ready && authenticated;
 
 	return (
@@ -17,7 +18,6 @@ export function Header() {
 			<div className="flex justify-between items-center w-full">
 				<div className="flex items-end gap-2">
 					<Link
-						onClick={() => setHeaderContent(null)}
 						to="/"
 						className={cn(
 							"text-3xl active:-translate-x-[1px] active:translate-y-[1px]",
@@ -27,7 +27,7 @@ export function Header() {
 							},
 						)}
 					>
-						{headerContent ?? "Writer"}
+						{location.pathname === "/" ? "Writer" : writer?.title}
 					</Link>
 				</div>
 				<Button
