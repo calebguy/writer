@@ -131,6 +131,7 @@ class WriterListener extends LogFetcher {
 		const entryIds = await this.getEntryIds();
 		for (const entryId of entryIds) {
 			const receipt = await this.getTransactionReceipt(entryId);
+			console.log("got receipt", receipt);
 			if (!receipt) {
 				console.error("[writer-listener] no receipt", entryId);
 				return;
@@ -198,6 +199,7 @@ class WriterListener extends LogFetcher {
 		}
 	}
 
+	// @note This needs to be refactored to be more efficient
 	private async getTransactionReceipt(entryId: bigint) {
 		let receipt: TransactionReceipt | undefined;
 		await this.fetchLogsFromBlock({

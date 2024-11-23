@@ -34,7 +34,11 @@ const api = app
 				address,
 			},
 			include: {
-				entries: true,
+				entries: {
+					orderBy: {
+						onChainId: "desc",
+					},
+				},
 				transaction: true,
 			},
 			orderBy: {
@@ -50,7 +54,11 @@ const api = app
 				admin: address,
 			},
 			include: {
-				entries: true,
+				entries: {
+					orderBy: {
+						onChainId: "desc",
+					},
+				},
 				transaction: true,
 			},
 			orderBy: {

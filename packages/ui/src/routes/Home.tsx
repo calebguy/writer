@@ -44,8 +44,8 @@ function Home() {
 				>
 					<BlockCreateForm
 						isLoading={isPending}
-						hoverLabel="Create a Writer"
-						activeLabel="Name your Writer"
+						hoverLabel="Create Writer"
+						activeLabel="Name Writer"
 						onSubmit={(data) =>
 							mutateAsync({
 								title: data.value,

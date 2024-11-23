@@ -20,7 +20,7 @@ export function Header() {
 		title = "Writer";
 	} else if (writer) {
 		if (id) {
-			title = `${writer.title} / ${id}`;
+			title = `${writer.title} - ${id}`;
 		} else {
 			title = writer.title;
 		}

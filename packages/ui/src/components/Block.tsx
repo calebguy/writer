@@ -18,7 +18,9 @@ export default function Block({ title, id, href, onClick }: BlockProps) {
 	const renderChildren = useCallback(() => {
 		return (
 			<>
-				<div className="text-left text-neutral-200">{title}</div>
+				<div className="text-left text-neutral-200 whitespace-pre text-wrap">
+					{title}
+				</div>
 				<div className="text-right text-neutral-600">{id}</div>
 			</>
 		);
