@@ -17,7 +17,7 @@ import { Markdown } from "tiptap-markdown";
 const lowlight = createLowlight(all);
 
 interface EditorProps {
-	content?: string;
+	content?: string | null;
 	onChange?: (editor: TiptapEditor) => void;
 }
 

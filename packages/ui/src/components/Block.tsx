@@ -12,16 +12,16 @@ interface BlockProps {
 
 export default function Block({ title, id, href, onClick }: BlockProps) {
 	const className = cn(
-		"border-0 hover:cursor-zoom-in border-neutral-700 px-3 py-2 bg-neutral-900 aspect-square flex flex-col justify-between",
+		"border-0 hover:cursor-zoom-in border-neutral-700 px-3 py-2 bg-neutral-900 aspect-square flex flex-col justify-between overflow-auto",
 	);
 
 	const renderChildren = useCallback(() => {
 		return (
 			<>
-				<div className="text-left text-neutral-200 whitespace-pre text-wrap">
+				<div className="text-left text-neutral-200 whitespace-pre text-wrap overflow-auto">
 					{title}
 				</div>
-				<div className="text-right text-neutral-600">{id}</div>
+				<div className="text-right text-neutral-600 mt-1">{id}</div>
 			</>
 		);
 	}, [title, id]);

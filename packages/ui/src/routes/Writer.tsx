@@ -103,7 +103,7 @@ export function Writer() {
 
 	return (
 		<div
-			className="mt-10 grid gap-2 gap-y-4"
+			className="grid gap-2 gap-y-4"
 			style={{
 				gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
 			}}
@@ -120,7 +120,8 @@ export function Writer() {
 				<Block
 					key={entry.id}
 					href={`/writer/${data.address}/${entry.onChainId}`}
-					title={entry.content ?? "n/a"}
+					// We want the preview to overflow if it is long enough but we don't want to render the entire content
+					title={entry.content ? `${entry.content.slice(0, 2_000)}` : "n/a"}
 					id={entry.onChainId?.toString() ?? "loading..."}
 				/>
 			))}

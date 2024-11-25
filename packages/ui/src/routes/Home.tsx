@@ -37,7 +37,7 @@ function Home() {
 		<>
 			{address && (
 				<div
-					className="mt-10 grid gap-2 gap-y-4"
+					className="grid gap-2 gap-y-4"
 					style={{
 						gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
 					}}

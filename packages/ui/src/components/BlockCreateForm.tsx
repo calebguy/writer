@@ -9,6 +9,10 @@ import { cn } from "../utils/cn";
 import { useFirstWallet, useIsMac } from "../utils/hooks";
 import { Blob } from "./icons/Blob";
 
+// @note this needs to take a prop that declares it as either
+// markdown or raw text
+// raw text: Writers
+// markdown: Entries
 interface CreateBucketFormProps {
 	isLoading: boolean;
 	onSubmit: (data: BlockCreateInput) => Promise<unknown>;

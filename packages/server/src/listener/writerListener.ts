@@ -1,12 +1,6 @@
 import type { TransactionStatus } from "@prisma/client";
 import type { InputJsonValue } from "@prisma/client/runtime/library";
-import {
-	type AbiEvent,
-	type Hex,
-	type Log,
-	type TransactionReceipt,
-	getAddress,
-} from "viem";
+import { type AbiEvent, type Hex, type Log, getAddress } from "viem";
 import { writerAbi } from "../abi/writer";
 import { writerStorageAbi } from "../abi/writerStorage";
 import { prisma } from "../db";
@@ -131,7 +125,6 @@ class WriterListener extends LogFetcher {
 		const entryIds = await this.getEntryIds();
 		for (const entryId of entryIds) {
 			const receipt = await this.getTransactionReceipt(entryId);
-			console.log("got receipt", receipt);
 			if (!receipt) {
 				console.error("[writer-listener] no receipt", entryId);
 				return;
@@ -199,34 +192,23 @@ class WriterListener extends LogFetcher {
 		}
 	}
 
-	// @note This needs to be refactored to be more efficient
 	private async getTransactionReceipt(entryId: bigint) {
-		let receipt: TransactionReceipt | undefined;
-		await this.fetchLogsFromBlock({
+		const logs = await chain.client.getContractEvents({
 			address: this.storageAddress,
 			abi: writerStorageAbi,
-			eventName: "EntryCreated",
 			fromBlock: env.FACTORY_FROM_BLOCK,
+			eventName: "EntryCreated",
 			args: {
 				id: entryId,
 			},
-			onLogs: async (logs) => {
-				if (logs.length > 0) {
-					const hash = logs[0].transactionHash;
-					if (!hash) {
-						return;
-					}
-					try {
-						receipt = await chain.client.getTransactionReceipt({
-							hash,
-						});
-					} catch (e) {
-						console.error("[writer-listener] error getting receipt", e);
-					}
-				}
-			},
 		});
-		return receipt;
+		const hash = logs[0]?.transactionHash;
+		if (!hash) {
+			throw new Error("No receipt found for entry");
+		}
+		return chain.client.getTransactionReceipt({
+			hash,
+		});
 	}
 
 	private getEntryIds() {
