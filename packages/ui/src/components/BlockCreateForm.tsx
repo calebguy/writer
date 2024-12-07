@@ -56,7 +56,7 @@ export default function BlockCreateForm({
 			<div
 				className={cn("flex justify-center items-center h-full", {
 					"items-start justify-start": isActive,
-					"group-hover:items-start group-hover:justify-start px-3 py-2":
+					"group-hover:items-start group-hover:justify-start px-3 py-2 border-[1px] border-transparent":
 						!isActive,
 				})}
 			>

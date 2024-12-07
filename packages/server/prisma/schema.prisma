@@ -59,7 +59,7 @@ model SyndicateTransaction {
   id String @id @default(uuid())
   chainId BigInt
   blockNumber BigInt?
-  hash String? @unique
+  hash String?
   projectId String
   status TransactionStatus @default(PENDING)
   functionSignature String

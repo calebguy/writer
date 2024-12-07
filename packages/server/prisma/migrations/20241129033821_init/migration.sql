@@ -67,9 +67,6 @@ CREATE UNIQUE INDEX "Entry_transactionId_key" ON "Entry"("transactionId");
 -- CreateIndex
 CREATE UNIQUE INDEX "Entry_onChainId_writerId_key" ON "Entry"("onChainId", "writerId");
 
--- CreateIndex
-CREATE UNIQUE INDEX "SyndicateTransaction_hash_key" ON "SyndicateTransaction"("hash");
-
 -- AddForeignKey
 ALTER TABLE "Writer" ADD CONSTRAINT "Writer_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "SyndicateTransaction"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 

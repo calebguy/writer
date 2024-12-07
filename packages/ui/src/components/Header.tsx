@@ -32,8 +32,6 @@ export function Header() {
 		}
 	}, [data, setWriter]);
 
-	console.log({ writer, id, location });
-
 	let title = "Writer";
 	if (location.pathname === "/") {
 		title = "Writer";

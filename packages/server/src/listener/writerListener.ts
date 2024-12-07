@@ -1,4 +1,4 @@
-import type { TransactionStatus } from "@prisma/client";
+import type { TransactionStatus, Writer } from "@prisma/client";
 import type { InputJsonValue } from "@prisma/client/runtime/library";
 import { type AbiEvent, type Hex, type Log, getAddress } from "viem";
 import { writerAbi } from "../abi/writer";
@@ -9,6 +9,8 @@ import { getSynIdFromRawInput, syndicate } from "../syndicate";
 import chain from "./chain";
 import { LogFetcher } from "./logFetcher";
 
+// @note TODO: we need to provide a way to sync all history for all writers in-case
+// new entries have been addded. This could happen if the server spun down and then back up
 class WriterListener extends LogFetcher {
 	private title: string | null = null;
 	constructor(
@@ -112,6 +114,7 @@ class WriterListener extends LogFetcher {
 		}
 	}
 
+	// @note Rename this to sync 
 	async syncState() {
 		const writer = await prisma.writer.findUnique({
 			where: {
@@ -123,73 +126,81 @@ class WriterListener extends LogFetcher {
 			return;
 		}
 		const entryIds = await this.getEntryIds();
-		for (const entryId of entryIds) {
-			const receipt = await this.getTransactionReceipt(entryId);
-			if (!receipt) {
-				console.error("[writer-listener] no receipt", entryId);
-				return;
-			}
-			const { input } = await chain.client.getTransaction({
-				hash: receipt.transactionHash,
-			});
-			const transactionId = getSynIdFromRawInput(input);
-			if (transactionId) {
-				const synTx = await syndicate.wallet.getTransactionRequest(
-					env.SYNDICATE_PROJECT_ID,
-					transactionId,
-				);
-				const tx = synTx.transactionAttempts?.filter((tx) =>
-					["SUBMITTED", "CONFIRMED"].includes(tx.status),
-				)[0];
+		console.log("[writer-listener] entryIds", entryIds);
+		return Promise.all(
+			entryIds.map((id) => this.syncStateForEntry(id, writer)),
+		);
+	}
 
-				// console.log("syndicate tx for entry", tx);
-				await prisma.syndicateTransaction.upsert({
-					create: {
-						id: transactionId,
-						chainId: synTx.chainId,
-						projectId: env.SYNDICATE_PROJECT_ID,
-						functionSignature: synTx.functionSignature,
-						args: synTx.decodedData as InputJsonValue,
-						blockNumber: tx?.block,
-						hash: tx?.hash,
-						status: tx?.status as TransactionStatus,
-					},
-					update: {
-						updatedAt: new Date(),
-						hash: tx?.hash,
-					},
-					where: {
-						id: transactionId,
-					},
-				});
-			}
+	private async syncStateForEntry(entryId: bigint, writer: Writer) {
+		console.log("[writer-listener] syncing entry", entryId);
+		const receipt = await this.getTransactionReceipt(entryId);
+		if (!receipt) {
+			console.error("[writer-listener] no receipt", entryId);
+			return;
+		}
+		const { input } = await chain.client.getTransaction({
+			hash: receipt.transactionHash,
+		});
+		const transactionId = getSynIdFromRawInput(input);
+		if (transactionId) {
+			const synTx = await syndicate.wallet.getTransactionRequest(
+				env.SYNDICATE_PROJECT_ID,
+				transactionId,
+			);
+			const tx = synTx.transactionAttempts?.filter((tx) =>
+				["SUBMITTED", "CONFIRMED"].includes(tx.status),
+			)[0];
 
-			const entry = await this.getEntry(entryId);
-			const content = await this.getEntryContent(entryId);
-			await prisma.entry.upsert({
+			// console.log("syndicate tx for entry", tx);
+			await prisma.syndicateTransaction.upsert({
 				create: {
-					exists: true,
-					onChainId: entryId,
-					writerId: writer.id,
-					createdAtHash: receipt.transactionHash,
-					transactionId,
-					content,
+					id: transactionId,
+					chainId: synTx.chainId,
+					projectId: env.SYNDICATE_PROJECT_ID,
+					functionSignature: synTx.functionSignature,
+					args: synTx.decodedData as InputJsonValue,
+					blockNumber: tx?.block,
+					hash: tx?.hash,
+					status: tx?.status as TransactionStatus,
 				},
 				update: {
-					createdAtHash: receipt.transactionHash,
-					content,
-					onChainId: entryId,
+					updatedAt: new Date(),
+					hash: tx?.hash,
 				},
-				where: transactionId
-					? { transactionId }
-					: {
-							onChainId_writerId: {
-								onChainId: entryId,
-								writerId: writer.id,
-							},
-						},
+				where: {
+					id: transactionId,
+				},
 			});
 		}
+
+		const entry = await this.getEntry(entryId);
+		const content = await this.getEntryContent(entryId);
+		console.log("[writer-listener] entry", entry);
+		console.log("[writer-listener] content", content);
+		await prisma.entry.upsert({
+			create: {
+				exists: true,
+				onChainId: entryId,
+				writerId: writer.id,
+				createdAtHash: receipt.transactionHash,
+				transactionId,
+				content,
+			},
+			update: {
+				createdAtHash: receipt.transactionHash,
+				content,
+				onChainId: entryId,
+			},
+			where: transactionId
+				? { transactionId }
+				: {
+						onChainId_writerId: {
+							onChainId: entryId,
+							writerId: writer.id,
+						},
+					},
+		});
 	}
 
 	private async getTransactionReceipt(entryId: bigint) {

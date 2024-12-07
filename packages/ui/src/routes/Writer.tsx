@@ -110,8 +110,8 @@ export function Writer() {
 		>
 			<BlockCreateForm
 				isLoading={isPending}
-				hoverLabel="Create Entry"
-				activeLabel="Write Entry"
+				hoverLabel={`Write in ${data?.title}`}
+				activeLabel={`Write in ${data?.title}`}
 				onSubmit={({ value }) => {
 					return handleSubmit(value).then(() => refetch());
 				}}

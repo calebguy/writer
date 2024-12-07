@@ -86,6 +86,14 @@ contract Writer is AccessControl, VerifyTypedData {
         return content;
     }
 
+    function getEntryChunk(uint256 id, uint256 index) external view returns (string memory) {
+        return store.getEntry(id).chunks[index];
+    }
+
+    function getEntryTotalChunks(uint256 id) external view returns (uint256) {
+        return store.getEntryTotalChunks(id);
+    }
+
     function setTitle(string calldata newTitle) external onlyRole(DEFAULT_ADMIN_ROLE) {
         title = newTitle;
     }

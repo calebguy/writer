@@ -8,11 +8,22 @@ interface BlockProps {
 	id: string;
 	href?: string;
 	onClick?: MouseEventHandler<HTMLAnchorElement>;
+	isLoading?: boolean;
 }
 
-export default function Block({ title, id, href, onClick }: BlockProps) {
+export default function Block({
+	title,
+	id,
+	href,
+	onClick,
+	isLoading,
+}: BlockProps) {
 	const className = cn(
-		"border-0 hover:cursor-zoom-in border-neutral-700 px-3 py-2 bg-neutral-900 aspect-square flex flex-col justify-between overflow-auto",
+		"border-0 border-neutral-700 px-3 py-2 bg-neutral-900 aspect-square flex flex-col justify-between overflow-auto",
+		{
+			"hover:cursor-not-allowed": isLoading,
+			"hover:cursor-zoom-in": !isLoading,
+		},
 	);
 
 	const renderChildren = useCallback(() => {
@@ -25,7 +36,7 @@ export default function Block({ title, id, href, onClick }: BlockProps) {
 			</>
 		);
 	}, [title, id]);
-	return href ? (
+	return href && !isLoading ? (
 		<Link onClick={onClick} to={href} key={id} className={className}>
 			{renderChildren()}
 		</Link>

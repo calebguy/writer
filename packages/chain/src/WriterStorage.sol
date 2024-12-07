@@ -4,6 +4,9 @@ pragma solidity ^0.8.13;
 import {AccessControl} from "oz/access/AccessControl.sol";
 // import "forge-std/console.sol";
 
+// @note commit reveal may be used for private messages
+// https://www.gitcoin.co/blog/commit-reveal-scheme-on-ethereum
+
 contract WriterStorage is AccessControl {
     address public logic;
 
@@ -128,6 +131,10 @@ contract WriterStorage is AccessControl {
 
     function getEntry(uint256 id) public view returns (Entry memory) {
         return entries[id];
+    }
+
+    function getEntryTotalChunks(uint256 id) public view returns (uint256) {
+        return entries[id].totalChunks;
     }
 
     function _create(uint256 totalChunks, address author) internal returns (uint256, Entry memory) {
