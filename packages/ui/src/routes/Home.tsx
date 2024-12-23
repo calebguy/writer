@@ -4,10 +4,9 @@ import { useContext, useEffect, useMemo, useState } from "react";
 import type { Hex } from "viem";
 import Block from "../components/Block";
 import BlockCreateForm from "../components/BlockCreateForm";
+import { POLLING_INTERVAL } from "../constants";
 import { WriterContext } from "../layouts/App.layout";
 import { createFromFactory, getAuthor } from "../utils/api";
-
-const POLLING_INTERVAL = 1_000;
 
 function Home() {
 	const { wallets, ready } = useWallets();
@@ -71,20 +70,26 @@ function Home() {
 
 					{wallet &&
 						hasWriters &&
-						data?.writers?.map((writer) => (
-							<Block
-								onClick={() => {
-									setWriter(writer);
-								}}
-								key={writer.id}
-								href={`/writer/${writer.address}`}
-								title={writer.title}
-								isLoading={!writer.onChainId}
-								id={
-									writer.onChainId ? writer.onChainId.toString() : "loading..."
-								}
-							/>
-						))}
+						data?.writers?.map((writer) => {
+							let id: undefined | string = undefined;
+							if (!writer.onChainId) {
+								id = "loading...";
+							} else if (writer.entries.length > 0) {
+								id = writer.entries.length.toString();
+							}
+							return (
+								<Block
+									onClick={() => {
+										setWriter(writer);
+									}}
+									key={writer.id}
+									href={`/writer/${writer.address}`}
+									title={writer.title}
+									isLoading={!writer.onChainId}
+									id={id}
+								/>
+							);
+						})}
 				</div>
 			)}
 			{!address && ready && (

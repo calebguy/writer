@@ -98,6 +98,14 @@ class FactoryListener extends LogFetcher implements Listener {
 				});
 			}
 
+			const tx = await this.chain.client.getTransaction({
+				hash: transactionHash as Hex,
+			});
+
+			const block = await this.chain.client.getBlock({
+				blockNumber: tx.blockNumber,
+			});
+
 			await prisma.writer.upsert({
 				create: {
 					title,
@@ -108,6 +116,7 @@ class FactoryListener extends LogFetcher implements Listener {
 					admin: admin as string,
 					managers: managers as string[],
 					createdAtHash: transactionHash,
+					createdAtBlockDatetime: new Date(Number(block.timestamp) * 1000),
 				},
 				update: {
 					onChainId: BigInt(id),
@@ -116,6 +125,7 @@ class FactoryListener extends LogFetcher implements Listener {
 					admin: admin as string,
 					managers: managers as string[],
 					createdAtHash: transactionHash,
+					createdAtBlockDatetime: new Date(Number(block.timestamp) * 1000),
 					updatedAt: new Date(),
 				},
 				where: transactionId ? { transactionId } : { onChainId: BigInt(id) },

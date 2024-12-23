@@ -12,6 +12,7 @@ import { Writer } from "./routes/Writer.tsx";
 
 import "./index.scss";
 import Entry from "./routes/Entry.tsx";
+import { Create } from "./routes/Create.tsx";
 
 const PRIVY_APP_ID = "clzekejfs079912zv96ahfm5a";
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ const router = createBrowserRouter([
 	getRouteWithErrorBoundry("/account/:address", <Account />),
 	getRouteWithErrorBoundry("/writer/:address", <Writer />),
 	getRouteWithErrorBoundry("/writer/:address/:id", <Entry />),
+	getRouteWithErrorBoundry("/writer/:address/create", <Create />),
 ]);
 
 // biome-ignore lint/style/noNonNullAssertion: 🫚

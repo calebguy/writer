@@ -90,6 +90,15 @@ class WriterListener extends LogFetcher {
 				);
 				return;
 			}
+
+			const tx = await this.chain.client.getTransaction({
+				hash: transactionHash as Hex,
+			});
+
+			const block = await this.chain.client.getBlock({
+				blockNumber: tx.blockNumber,
+			});
+
 			await prisma.entry.upsert({
 				create: {
 					exists: true,
@@ -97,10 +106,12 @@ class WriterListener extends LogFetcher {
 					writerId: writer.id,
 					createdAtHash: transactionHash,
 					transactionId,
+					createdAtBlockDatetime: new Date(Number(block.timestamp) * 1000),
 				},
 				update: {
 					onChainId: BigInt(id),
 					createdAtHash: transactionHash,
+					createdAtBlockDatetime: new Date(Number(block.timestamp) * 1000),
 				},
 				where: transactionId
 					? { transactionId }
@@ -114,7 +125,7 @@ class WriterListener extends LogFetcher {
 		}
 	}
 
-	// @note Rename this to sync 
+	// @note Rename this to sync
 	async syncState() {
 		const writer = await prisma.writer.findUnique({
 			where: {
@@ -152,7 +163,6 @@ class WriterListener extends LogFetcher {
 				["SUBMITTED", "CONFIRMED"].includes(tx.status),
 			)[0];
 
-			// console.log("syndicate tx for entry", tx);
 			await prisma.syndicateTransaction.upsert({
 				create: {
 					id: transactionId,
@@ -178,6 +188,10 @@ class WriterListener extends LogFetcher {
 		const content = await this.getEntryContent(entryId);
 		console.log("[writer-listener] entry", entry);
 		console.log("[writer-listener] content", content);
+
+		const block = await this.chain.client.getBlock({
+			blockNumber: receipt.blockNumber,
+		});
 		await prisma.entry.upsert({
 			create: {
 				exists: true,
@@ -186,11 +200,13 @@ class WriterListener extends LogFetcher {
 				createdAtHash: receipt.transactionHash,
 				transactionId,
 				content,
+				createdAtBlockDatetime: new Date(Number(block.timestamp) * 1000),
 			},
 			update: {
 				createdAtHash: receipt.transactionHash,
 				content,
 				onChainId: entryId,
+				createdAtBlockDatetime: new Date(Number(block.timestamp) * 1000),
 			},
 			where: transactionId
 				? { transactionId }

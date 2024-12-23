@@ -1,21 +1,27 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useContext, useEffect } from "react";
-import { useParams } from "react-router";
+import { format } from "date-fns";
+import { useContext, useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { TARGET_CHAIN_ID } from "server/src/constants";
 import { type Hex, getAddress } from "viem";
 import Block from "../components/Block";
 import BlockCreateForm from "../components/BlockCreateForm";
+import { POLLING_INTERVAL } from "../constants";
 import { WriterContext } from "../layouts/App.layout";
 import { createWithChunk, getWriter } from "../utils/api";
 import { useFirstWallet } from "../utils/hooks";
 
 export function Writer() {
+	const navigate = useNavigate();
 	const { address } = useParams();
 	const { setWriter } = useContext(WriterContext);
+	const wallet = useFirstWallet();
+	const [isPolling, setIsPolling] = useState(false);
 	const { data, refetch } = useQuery({
 		queryFn: () => getWriter(address as Hex),
 		queryKey: ["get-writer", address],
 		enabled: !!address,
+		refetchInterval: isPolling ? POLLING_INTERVAL : false,
 	});
 	useEffect(() => {
 		if (data) {
@@ -27,8 +33,14 @@ export function Writer() {
 		mutationKey: ["create-with-chunk", address],
 	});
 
-	const wallet = useFirstWallet();
-
+	useEffect(() => {
+		const isAllOnChain = data?.entries.every((e) => e.onChainId);
+		if (isAllOnChain) {
+			setIsPolling(false);
+		} else if (!isPolling) {
+			setIsPolling(true);
+		}
+	}, [data, isPolling]);
 	const handleSubmit = async (content: string) => {
 		if (!address) {
 			console.debug("Could not get contract address when submitting form");
@@ -81,26 +93,6 @@ export function Writer() {
 		return mutateAsync({ address, signature, nonce, chunkCount, chunkContent });
 	};
 
-	// return (
-	// 	<div className="flex-grow text-left mt-10 py-2 flex flex-col">
-	// 		<div className="text-xl mb-2 text-white">{data?.title}</div>
-	// 		<form onSubmit={handleSubmit} className="grow flex flex-col">
-	// 			<Editor
-	// 				onChange={(editor) =>
-	// 					setContent(editor.storage.markdown.getMarkdown())
-	// 				}
-	// 			/>
-	// 			<Button
-	// 				disabled={isPending || isLoading}
-	// 				className="mt-2 bg-neutral-900"
-	// 				type="submit"
-	// 			>
-	// 				{isPending || isLoading ? "Saving..." : "Save"}
-	// 			</Button>
-	// 		</form>
-	// 	</div>
-	// );
-
 	return (
 		<div
 			className="grid gap-2 gap-y-4"
@@ -109,22 +101,34 @@ export function Writer() {
 			}}
 		>
 			<BlockCreateForm
+				expandTo={`/writer/${data?.address}/create`}
 				isLoading={isPending}
 				hoverLabel={`Write in ${data?.title}`}
 				activeLabel={`Write in ${data?.title}`}
-				onSubmit={({ value }) => {
-					return handleSubmit(value).then(() => refetch());
-				}}
+				onSubmit={({ value }) => handleSubmit(value).then(() => refetch())}
 			/>
-			{data?.entries.map((entry) => (
-				<Block
-					key={entry.id}
-					href={`/writer/${data.address}/${entry.onChainId}`}
-					// We want the preview to overflow if it is long enough but we don't want to render the entire content
-					title={entry.content ? `${entry.content.slice(0, 2_000)}` : "n/a"}
-					id={entry.onChainId?.toString() ?? "loading..."}
-				/>
-			))}
+			{data?.entries.map((entry) => {
+				let id = "loading";
+				if (entry.createdAtBlockDatetime) {
+					id = format(new Date(entry.createdAtBlockDatetime), "MM-dd-yyyy");
+				} else {
+					id = format(new Date(entry.createdAt), "MM/dd/yyyy");
+				}
+
+				// We want the preview to overflow if it is long enough but we don't want to render the entire content
+				const title = entry.content
+					? `${entry.content.slice(0, 2_000)}`
+					: "n/a";
+				return (
+					<Block
+						key={entry.id}
+						href={`/writer/${data.address}/${entry.onChainId}`}
+						isLoading={!entry.onChainId}
+						title={title}
+						id={id}
+					/>
+				);
+			})}
 		</div>
 	);
 }

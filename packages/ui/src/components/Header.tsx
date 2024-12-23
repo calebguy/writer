@@ -46,6 +46,8 @@ export function Header() {
 	let to = "/";
 	if (address && id) {
 		to = `/writer/${address}`;
+	} else if (address && location.pathname.includes("create")) {
+		to = `/writer/${address}`;
 	}
 
 	return (

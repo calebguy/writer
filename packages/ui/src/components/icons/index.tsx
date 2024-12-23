@@ -1,1 +1,3 @@
-export interface SvgProps extends React.SVGProps<SVGSVGElement> {}
+export interface SvgProps extends React.SVGProps<SVGSVGElement> {
+	title?: string;
+}

@@ -4,9 +4,11 @@ import { useState } from "react";
 
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { Link, type To } from "react-router-dom";
 import type { BlockCreateInput } from "../interfaces";
 import { cn } from "../utils/cn";
 import { useFirstWallet, useIsMac } from "../utils/hooks";
+import { Arrow } from "./icons/Arrow";
 import { Blob } from "./icons/Blob";
 
 // @note this needs to take a prop that declares it as either
@@ -18,6 +20,7 @@ interface CreateBucketFormProps {
 	onSubmit: (data: BlockCreateInput) => Promise<unknown>;
 	hoverLabel?: string;
 	activeLabel?: string;
+	expandTo?: To;
 }
 
 export default function BlockCreateForm({
@@ -25,6 +28,7 @@ export default function BlockCreateForm({
 	activeLabel,
 	onSubmit,
 	isLoading,
+	expandTo,
 }: CreateBucketFormProps) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isActive, setIsActive] = useState(false);
@@ -70,6 +74,7 @@ export default function BlockCreateForm({
 				)}
 				{isActive && (
 					<CreateForm
+						expandTo={expandTo}
 						isLoading={isLoading || isSubmitting}
 						placeholder={activeLabel}
 						onSubmit={async (data) => {
@@ -90,6 +95,8 @@ interface CreateFormProps {
 	onCancel: () => void;
 	placeholder?: string;
 	isLoading: boolean;
+	expand?: boolean;
+	expandTo?: To;
 }
 
 function CreateForm({
@@ -97,36 +104,16 @@ function CreateForm({
 	placeholder,
 	onSubmit,
 	isLoading,
+	expandTo,
 }: CreateFormProps) {
 	const isMac = useIsMac();
 	const address = useFirstWallet()?.address;
 	const inputName = "value";
 	const { register, handleSubmit, setFocus, reset, getValues } =
 		useForm<BlockCreateInput>();
-	// const onSubmit: SubmitHandler<CreateNewBucketInputs> = useCallback(
-	// 	(data) => {
-	// 		mutate({
-	// 			title: data[inputName],
-	// 			admin: address,
-	// 			managers: [address],
-	// 		});
-	// 	},
-	// 	// eslint-disable-next-line react-hooks/exhaustive-deps
-	// 	[address],
-	// );
-
-	// const { mutate, isPending } = useMutation({
-	// 	mutationFn: createFromFactory,
-	// 	mutationKey: ["create-from-factory"],
-	// 	onSuccess: () => {
-	// 		reset();
-	// 		onSuccess();
-	// 	},
-	// });
-
 	useEffect(() => {
 		const handleKeyDown = (event: KeyboardEvent) => {
-			// Submit form
+			// Submit on cmd + enter
 			if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
 				event.preventDefault();
 				handleSubmit((data) => {
@@ -157,7 +144,7 @@ function CreateForm({
 			<textarea
 				disabled={!address || isLoading}
 				className={cn(
-					"w-full h-full text-base bg-neutral-900 disabled:opacity-30 placeholder:text-neutral-700 px-3 py-2 outline-none border-[1px] border-dashed border-lime resize-none ants",
+					"w-full h-full text-base bg-neutral-900 disabled:opacity-30 placeholder:text-neutral-700 px-3 py-2 outline-none border-[1px] border-dashed border-lime resize-none",
 				)}
 				placeholder={placeholder}
 				{...register(inputName)}
@@ -173,10 +160,25 @@ function CreateForm({
 				</div>
 			)}
 			{!isLoading && (
-				<div className="text-neutral-700 text-sm leading-[16px] mt-1 absolute bottom-3 left-1/2 -translate-x-1/2">
-					<div>{isMac ? "⌘" : "ctrl"} + ↵</div>
-					<div>to create</div>
-				</div>
+				<>
+					<div className="text-neutral-700 text-sm leading-[16px] absolute translate-y-1/2 bottom-1/2 left-1/2 -translate-x-1/2">
+						<div>{isMac ? "⌘" : "ctrl"} + ↵</div>
+						<div>to create</div>
+					</div>
+					{expandTo && (
+						<div className="absolute bottom-2 right-2 flex justify-end">
+							<Link
+								to={expandTo}
+								state={{
+									value: getValues(inputName),
+								}}
+								className="text-neutral-400 hover:text-lime"
+							>
+								<Arrow title="expand" className="w-4 h-4 rotate-90" />
+							</Link>
+						</div>
+					)}
+				</>
 			)}
 		</form>
 	);

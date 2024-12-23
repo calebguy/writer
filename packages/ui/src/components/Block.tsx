@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 
 interface BlockProps {
 	title: string;
-	id: string;
+	id?: string;
 	href?: string;
 	onClick?: MouseEventHandler<HTMLAnchorElement>;
 	isLoading?: boolean;
@@ -32,7 +32,7 @@ export default function Block({
 				<div className="text-left text-neutral-200 whitespace-pre text-wrap overflow-auto">
 					{title}
 				</div>
-				<div className="text-right text-neutral-600 mt-1">{id}</div>
+				<div className="text-right text-neutral-600 mt-1 text-sm">{id}</div>
 			</>
 		);
 	}, [title, id]);

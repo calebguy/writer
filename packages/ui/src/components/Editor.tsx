@@ -12,20 +12,28 @@ import {
 	useEditor,
 } from "@tiptap/react";
 import { all, createLowlight } from "lowlight";
+import { useEffect } from "react";
 import { Markdown } from "tiptap-markdown";
 
 const lowlight = createLowlight(all);
 
 interface EditorProps {
-	content?: string | null;
+	initialContent?: string | null;
 	onChange?: (editor: TiptapEditor) => void;
+	disabled?: boolean;
 }
 
-export function Editor({ content, onChange }: EditorProps) {
+export function Editor({
+	initialContent: content,
+	onChange,
+	disabled,
+}: EditorProps) {
 	const editor = useEditor({
+		editable: !disabled,
 		editorProps: {
 			attributes: {
-				class: "grow flex flex-col",
+				class:
+					"grow flex flex-col border-[1px] border-dashed focus:border-lime border-transparent",
 			},
 		},
 		extensions: [
@@ -44,5 +52,17 @@ export function Editor({ content, onChange }: EditorProps) {
 		content,
 	});
 
-	return <EditorContent editor={editor} className="grow flex flex-col" />;
+	useEffect(() => {
+		if (editor) {
+			editor.commands.focus();
+		}
+	}, [editor]);
+
+	return (
+		<EditorContent
+			disabled={disabled}
+			editor={editor}
+			className="grow flex flex-col"
+		/>
+	);
 }
