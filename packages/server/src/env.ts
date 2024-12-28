@@ -21,6 +21,7 @@ z.setErrorMap(logNameExpectedReceived);
 
 const schema = z.object({
 	APP_ENV: z.enum([AppEnv.Development, AppEnv.Staging, AppEnv.Production]),
+	DATABASE_URL: minString(),
 	RPC_URL: minString(),
 	FACTORY_ADDRESS: minString(),
 	SYNDICATE_API_KEY: minString(),

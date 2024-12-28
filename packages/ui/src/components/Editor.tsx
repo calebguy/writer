@@ -33,7 +33,7 @@ export function Editor({
 		editorProps: {
 			attributes: {
 				class:
-					"grow flex flex-col border-[1px] border-dashed focus:border-lime border-transparent",
+					"grow flex flex-col border-[1px] border-dashed focus:border-lime border-transparent px-2 py-1 hover:bg-neutral-900 h-full caret-lime focuse:outline-none",
 			},
 		},
 		extensions: [

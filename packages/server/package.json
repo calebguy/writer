@@ -3,25 +3,18 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "./dev.sh",
-    "dev:server": "bun run --hot src/server.ts",
+    "dev": "bun run --hot src/server.ts",
     "start": "bun run src/server.ts",
-    "prisma:generate": "bunx prisma generate",
-    "prisma:reset": "bunx prisma migrate reset",
-    "prisma:migrate:dev": "bunx prisma migrate dev",
-    "prisma:migrate:deploy": "bunx prisma migrate deploy",
-    "prisma:push": "bunx prisma db push",
-    "prisma:seed": "bunx prisma db seed",
-    "prisma:studio": "bunx prisma studio"
+    "typecheck": "tsc"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.2.2",
-    "@prisma/client": "^5.19.0",
     "@privy-io/server-auth": "^1.16.4",
     "@syndicateio/syndicate-node": "^1.0.1",
     "@types/uuid": "^10.0.0",
+    "db": "workspace:*",
     "hono": "^4.4.2",
-    "prisma": "^5.19.0",
+    "utils": "workspace:*",
     "uuid": "^10.0.0",
     "viem": "^2.21.35",
     "zod": "^3.23.8"

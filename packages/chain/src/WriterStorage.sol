@@ -2,7 +2,6 @@
 pragma solidity ^0.8.13;
 
 import {AccessControl} from "oz/access/AccessControl.sol";
-// import "forge-std/console.sol";
 
 // @note commit reveal may be used for private messages
 // https://www.gitcoin.co/blog/commit-reveal-scheme-on-ethereum
@@ -53,10 +52,10 @@ contract WriterStorage is AccessControl {
     event EntryCompleted(uint256 indexed id, address author);
 
     event ChunkReceived(
-        uint256 indexed entryId, uint256 indexed chunkIndex, string chunkContent, address indexed author
+        address indexed author, uint256 indexed entryId, uint256 indexed chunkIndex, string chunkContent
     );
 
-    function setNewAdmin(address newAdmin) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function replaceAdmin(address newAdmin) public onlyRole(DEFAULT_ADMIN_ROLE) {
         _grantRole(DEFAULT_ADMIN_ROLE, newAdmin);
         _revokeRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
@@ -135,6 +134,21 @@ contract WriterStorage is AccessControl {
 
     function getEntryTotalChunks(uint256 id) public view returns (uint256) {
         return entries[id].totalChunks;
+    }
+
+    function getEntryContent(uint256 id) external view returns (string memory) {
+        WriterStorage.Entry memory entry = this.getEntry(id);
+        string memory content = "";
+        uint256 length = entry.chunks.length;
+        for (uint256 i = 0; i < length; i++) {
+            string memory chunk = entry.chunks[i];
+            if (i == 0) {
+                content = chunk;
+            } else {
+                content = string(abi.encodePacked(content, " ", chunk));
+            }
+        }
+        return content;
     }
 
     function _create(uint256 totalChunks, address author) internal returns (uint256, Entry memory) {

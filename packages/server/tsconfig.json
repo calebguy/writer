@@ -5,6 +5,10 @@
 		"jsxImportSource": "hono/jsx",
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata": true,
-		"esModuleInterop": true
-	}
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+    "noEmit": true,
+	},
+	"include": ["src/**/*.ts"],
+	"exclude": ["node_modules"],
 }

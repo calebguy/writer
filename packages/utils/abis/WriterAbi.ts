@@ -1,4 +1,4 @@
-export const writerAbi = [
+export const WriterAbi = [
 	{
 		type: "constructor",
 		inputs: [
@@ -166,6 +166,16 @@ export const writerAbi = [
 	},
 	{
 		type: "function",
+		name: "getEntryChunk",
+		inputs: [
+			{ name: "id", type: "uint256", internalType: "uint256" },
+			{ name: "index", type: "uint256", internalType: "uint256" },
+		],
+		outputs: [{ name: "", type: "string", internalType: "string" }],
+		stateMutability: "view",
+	},
+	{
+		type: "function",
 		name: "getEntryContent",
 		inputs: [{ name: "id", type: "uint256", internalType: "uint256" }],
 		outputs: [{ name: "", type: "string", internalType: "string" }],
@@ -183,6 +193,13 @@ export const writerAbi = [
 		name: "getEntryIds",
 		inputs: [],
 		outputs: [{ name: "", type: "uint256[]", internalType: "uint256[]" }],
+		stateMutability: "view",
+	},
+	{
+		type: "function",
+		name: "getEntryTotalChunks",
+		inputs: [{ name: "id", type: "uint256", internalType: "uint256" }],
+		outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
 		stateMutability: "view",
 	},
 	{

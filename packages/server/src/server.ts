@@ -1,6 +1,6 @@
 import { zValidator } from "@hono/zod-validator";
-import { TransactionStatus } from "@prisma/client";
 import { PrivyClient, type WalletWithMetadata } from "@privy-io/server-auth";
+import { Db } from "db";
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { getCookie } from "hono/cookie";
@@ -10,9 +10,7 @@ import {
 	CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
 	TARGET_CHAIN_ID,
 } from "./constants";
-import { prisma, writerToJsonSafe } from "./db";
 import { env } from "./env";
-import factoryListener from "./listener/factoryListener";
 import { createWithChunkSchema, createWriterSchema } from "./requestSchema";
 import { syndicate } from "./syndicate";
 
@@ -21,53 +19,24 @@ const app = new Hono();
 app.use("*", serveStatic({ root: "../ui/dist" }));
 app.use("*", serveStatic({ path: "../ui/dist/index.html" }));
 
-factoryListener.init();
-
 const privy = new PrivyClient(env.PRIVY_APP_ID, env.PRIVY_SECRET);
+const db = new Db(env.DATABASE_URL);
 
 const api = app
 	.basePath("/api")
 	.get("/writer/:address", async (c) => {
 		const address = getAddress(c.req.param("address"));
-		const writer = await prisma.writer.findFirst({
-			where: {
-				address,
-			},
-			include: {
-				entries: {
-					orderBy: {
-						onChainId: "desc",
-					},
-				},
-				transaction: true,
-			},
-			orderBy: {
-				onChainId: "desc",
-			},
-		});
-		return c.json(writer ? writerToJsonSafe(writer) : null);
+		const writer = await db.getWriter(address);
+		return c.json(writer);
+		// return c.json(writer ? writerToJsonSafe(writer) : null);
 	})
 	.get("/author/:address", async (c) => {
 		const address = getAddress(c.req.param("address"));
-		const writers = await prisma.writer.findMany({
-			where: {
-				admin: address,
-			},
-			include: {
-				entries: {
-					orderBy: {
-						onChainId: "desc",
-					},
-				},
-				transaction: true,
-			},
-			orderBy: {
-				onChainId: "desc",
-			},
-		});
-		return c.json({
-			writers: writers.map(writerToJsonSafe),
-		});
+		const writers = await db.getWriters(address);
+		return c.json(writers);
+		// return c.json({
+		// 	writers: writers.map(writerToJsonSafe),
+		// });
 	})
 	.post(
 		"/factory/create",
@@ -82,29 +51,21 @@ const api = app
 				functionSignature: CREATE_FUNCTION_SIGNATURE,
 				args,
 			});
-			await prisma.syndicateTransaction.create({
-				data: {
-					id: transactionId,
-					chainId: TARGET_CHAIN_ID,
-					projectId: env.SYNDICATE_PROJECT_ID,
-					functionSignature: CREATE_FUNCTION_SIGNATURE,
-					args,
-					status: TransactionStatus.PENDING,
-				},
+			await db.createTx({
+				id: transactionId,
+				chainId: BigInt(TARGET_CHAIN_ID),
+				functionSignature: CREATE_FUNCTION_SIGNATURE,
+				args,
+				status: "PENDING",
 			});
-			const writer = await prisma.writer.create({
-				data: {
-					title,
-					admin,
-					managers,
-					transactionId,
-				},
-				include: {
-					entries: true,
-					transaction: true,
-				},
+			const writer = await db.createWriter({
+				title,
+				admin,
+				managers,
+				transactionId,
 			});
-			return c.json({ writer: writerToJsonSafe(writer) }, 200);
+			return c.json(writer);
+			// return c.json({ writer: writerToJsonSafe(writer) }, 200);
 		},
 	)
 	.post(
@@ -128,11 +89,7 @@ const api = app
 			// @note TODO: you should also check that the userAddress has WRITER_ROLE on the contract
 
 			const contractAddress = getAddress(c.req.param("address"));
-			const writer = await prisma.writer.findFirst({
-				where: {
-					address: getAddress(contractAddress),
-				},
-			});
+			const writer = await db.getWriter(contractAddress);
 			if (!writer) {
 				return c.json({ error: "writer not found" }, 404);
 			}
@@ -147,23 +104,19 @@ const api = app
 				functionSignature: CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
 				args,
 			});
-			await prisma.syndicateTransaction.create({
-				data: {
-					id: transactionId,
-					chainId: TARGET_CHAIN_ID,
-					projectId: env.SYNDICATE_PROJECT_ID,
-					functionSignature: CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
-					args,
-					status: TransactionStatus.PENDING,
-				},
+			await db.createTx({
+				id: transactionId,
+				chainId: BigInt(TARGET_CHAIN_ID),
+				functionSignature: CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
+				args,
+				status: "PENDING",
 			});
-			const entry = await prisma.entry.create({
-				data: {
-					exists: true,
-					writerId: writer.id,
-					transactionId,
-					content: chunkContent,
-				},
+
+			const entry = await db.createEntry({
+				exists: true,
+				writerId: writer.id,
+				transactionId,
+				content: chunkContent,
 			});
 			return c.json({ entry }, 200);
 		},

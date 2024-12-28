@@ -49,7 +49,7 @@ contract Writer is AccessControl, VerifyTypedData {
         emit StorageSet(storageAddress);
     }
 
-    function setNewAdmin(address newAdmin) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function replaceAdmin(address newAdmin) external onlyRole(DEFAULT_ADMIN_ROLE) {
         _grantRole(DEFAULT_ADMIN_ROLE, newAdmin);
         _revokeRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
@@ -72,18 +72,7 @@ contract Writer is AccessControl, VerifyTypedData {
     }
 
     function getEntryContent(uint256 id) external view returns (string memory) {
-        WriterStorage.Entry memory entry = store.getEntry(id);
-        string memory content = "";
-        uint256 length = entry.chunks.length;
-        for (uint256 i = 0; i < length; i++) {
-            string memory chunk = entry.chunks[i];
-            if (i == 0) {
-                content = chunk;
-            } else {
-                content = string(abi.encodePacked(content, " ", chunk));
-            }
-        }
-        return content;
+        return store.getEntryContent(id);
     }
 
     function getEntryChunk(uint256 id, uint256 index) external view returns (string memory) {

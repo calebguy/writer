@@ -1,4 +1,4 @@
-export const writerStorageAbi = [
+export const WriterStorageAbi = [
 	{ type: "constructor", inputs: [], stateMutability: "nonpayable" },
 	{
 		type: "function",
@@ -127,6 +127,13 @@ export const writerStorageAbi = [
 	},
 	{
 		type: "function",
+		name: "getEntryContent",
+		inputs: [{ name: "id", type: "uint256", internalType: "uint256" }],
+		outputs: [{ name: "", type: "string", internalType: "string" }],
+		stateMutability: "view",
+	},
+	{
+		type: "function",
 		name: "getEntryCount",
 		inputs: [],
 		outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
@@ -137,6 +144,13 @@ export const writerStorageAbi = [
 		name: "getEntryIds",
 		inputs: [],
 		outputs: [{ name: "", type: "uint256[]", internalType: "uint256[]" }],
+		stateMutability: "view",
+	},
+	{
+		type: "function",
+		name: "getEntryTotalChunks",
+		inputs: [{ name: "id", type: "uint256", internalType: "uint256" }],
+		outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
 		stateMutability: "view",
 	},
 	{
@@ -240,11 +254,16 @@ export const writerStorageAbi = [
 		type: "event",
 		name: "ChunkReceived",
 		inputs: [
-			{ name: "id", type: "uint256", indexed: true, internalType: "uint256" },
+			{
+				name: "entryId",
+				type: "uint256",
+				indexed: true,
+				internalType: "uint256",
+			},
 			{
 				name: "chunkIndex",
 				type: "uint256",
-				indexed: false,
+				indexed: true,
 				internalType: "uint256",
 			},
 			{
@@ -256,7 +275,7 @@ export const writerStorageAbi = [
 			{
 				name: "author",
 				type: "address",
-				indexed: false,
+				indexed: true,
 				internalType: "address",
 			},
 		],

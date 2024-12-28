@@ -1,4 +1,4 @@
-export const writerFactoryAbi = [
+export const WriterFactoryAbi = [
 	{
 		type: "function",
 		name: "create",

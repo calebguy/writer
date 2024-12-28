@@ -95,16 +95,6 @@ html, body, #root {
   box-shadow: none;
 }
 
-.ProseMirror {
-  background-color: theme('colors.neutral.900');
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
-  padding-top: 0.25rem;
-  padding-bottom: 0.25rem;
-  height: 100%;
-  caret-color: theme('colors.lime');
-}
-
 .ProseMirror-focused {
   outline: none;
 }

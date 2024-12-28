@@ -172,7 +172,7 @@ function CreateForm({
 								state={{
 									value: getValues(inputName),
 								}}
-								className="text-neutral-400 hover:text-lime"
+								className="text-white hover:text-lime"
 							>
 								<Arrow title="expand" className="w-4 h-4 rotate-90" />
 							</Link>
