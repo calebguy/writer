@@ -70,13 +70,9 @@ contract WriterStorage is AccessControl {
         require(totalChunks > 0, "WriterStorage: Total chunks must be greater than 0");
         require(bytes(content).length > 0, "WriterStorage: Chunk content cannot be empty");
 
-        (uint256 id, Entry memory entry) = _create(totalChunks, author);
+        (uint256 id,) = _create(totalChunks, author);
         Entry memory updatedEntry = _addChunk(id, 0, content, author);
         return (id, updatedEntry);
-    }
-
-    function update(uint256 entryId, uint256 index, string calldata content, address author) public onlyLogic {
-        _addChunk(entryId, index, content, author);
     }
 
     function remove(uint256 id, address author) public onlyLogic {

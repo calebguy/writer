@@ -130,54 +130,6 @@ contract WriterDirectCallerTest is TestBase {
         assertEq(content, "Hello World");
     }
 
-    function test_UpdateChunk() public {
-        vm.startPrank(user);
-        uint256 size = 3;
-        writer.create(size);
-
-        uint256 entryId = 0;
-
-        writer.addChunk(entryId, 0, "Writer");
-        writer.addChunk(entryId, 1, "is");
-        writer.addChunk(entryId, 2, "here");
-
-        WriterStorage.Entry memory entry = writer.getEntry(entryId);
-        string[] memory expectedChunks = new string[](3);
-        expectedChunks[0] = "Writer";
-        expectedChunks[1] = "is";
-        expectedChunks[2] = "here";
-        WriterStorage.Entry memory expectedEntry = WriterStorage.Entry({
-            createdAtBlock: block.number,
-            updatedAtBlock: block.number,
-            totalChunks: size,
-            receivedChunks: size,
-            exists: true,
-            chunks: expectedChunks
-        });
-        entryEq(entry, expectedEntry);
-
-        string memory totalContent = writer.getEntryContent(entryId);
-        assertEq(totalContent, "Writer is here");
-
-        vm.expectEmit();
-        emit WriterStorage.EntryUpdated(0, user);
-        emit WriterStorage.ChunkReceived(user, 0, 1, "was");
-        writer.update(entryId, 1, "was");
-        vm.stopPrank();
-
-        entry = writer.getEntry(entryId);
-        expectedChunks[1] = "was";
-        expectedEntry = WriterStorage.Entry({
-            createdAtBlock: block.number,
-            updatedAtBlock: block.number,
-            totalChunks: size,
-            receivedChunks: size + 1,
-            exists: true,
-            chunks: expectedChunks
-        });
-        entryEq(entry, expectedEntry);
-    }
-
     function test_Remove() public {
         vm.startPrank(user);
         writer.create(2);
@@ -241,7 +193,6 @@ contract WriterWithSigTest is TestBase {
         // set signer private key
         userPrivateKey = uint256(keccak256(abi.encodePacked("USER_PRIVATE_KEY")));
         user = vm.createWallet(userPrivateKey);
-
         address[] memory managers = new address[](1);
         managers[0] = user.addr;
         store = new WriterStorage();
@@ -278,7 +229,11 @@ contract WriterWithSigTest is TestBase {
         signature = _sign(
             userPrivateKey,
             address(writer),
-            keccak256(abi.encode(writer.ADD_CHUNK_TYPEHASH(), nonce, entryId, chunkIndex1, content1))
+            keccak256(
+                abi.encode(
+                    writer.ADD_CHUNK_TYPEHASH(), nonce, entryId, chunkIndex1, keccak256(abi.encodePacked(content1))
+                )
+            )
         );
 
         vm.expectEmit();
@@ -291,7 +246,11 @@ contract WriterWithSigTest is TestBase {
         signature = _sign(
             userPrivateKey,
             address(writer),
-            keccak256(abi.encode(writer.ADD_CHUNK_TYPEHASH(), nonce, entryId, chunkIndex2, content2))
+            keccak256(
+                abi.encode(
+                    writer.ADD_CHUNK_TYPEHASH(), nonce, entryId, chunkIndex2, keccak256(abi.encodePacked(content2))
+                )
+            )
         );
 
         vm.expectEmit();
@@ -321,7 +280,11 @@ contract WriterWithSigTest is TestBase {
         bytes memory signature = _sign(
             userPrivateKey,
             address(writer),
-            keccak256(abi.encode(writer.CREATE_WITH_CHUNK_TYPEHASH(), nonce, chunkCount, chunkContent))
+            keccak256(
+                abi.encode(
+                    writer.CREATE_WITH_CHUNK_TYPEHASH(), nonce, chunkCount, keccak256(abi.encodePacked(chunkContent))
+                )
+            )
         );
 
         vm.expectEmit();
@@ -337,69 +300,6 @@ contract WriterWithSigTest is TestBase {
             updatedAtBlock: block.number,
             totalChunks: chunkCount,
             receivedChunks: chunkCount,
-            exists: true,
-            chunks: expectedChunks
-        });
-        entryEq(entry, expectedEntry);
-    }
-
-    function test_UpdateWithSig() public {
-        uint256 nonce = 0;
-        uint256 size = 1;
-        uint256 entryId = 0;
-        bytes memory signature =
-            _sign(userPrivateKey, address(writer), keccak256(abi.encode(writer.CREATE_TYPEHASH(), nonce, size)));
-
-        vm.expectEmit();
-        emit WriterStorage.EntryCreated(entryId, user.addr);
-        writer.createWithSig(signature, nonce, size);
-
-        string memory content = "Writer";
-        uint256 chunkIndex1 = 0;
-        signature = _sign(
-            userPrivateKey,
-            address(writer),
-            keccak256(abi.encode(writer.ADD_CHUNK_TYPEHASH(), nonce, entryId, chunkIndex1, content))
-        );
-
-        vm.expectEmit();
-        emit WriterStorage.ChunkReceived(user.addr, entryId, chunkIndex1, content);
-        emit WriterStorage.EntryUpdated(entryId, user.addr);
-        writer.addChunkWithSig(signature, nonce, entryId, chunkIndex1, content);
-
-        WriterStorage.Entry memory entry = writer.getEntry(0);
-        string[] memory expectedChunks = new string[](size);
-        expectedChunks[0] = content;
-        WriterStorage.Entry memory expectedEntry = WriterStorage.Entry({
-            createdAtBlock: block.number,
-            updatedAtBlock: block.number,
-            totalChunks: size,
-            receivedChunks: size,
-            exists: true,
-            chunks: expectedChunks
-        });
-        entryEq(entry, expectedEntry);
-
-        string memory newContent = "WRITER";
-        uint256 chunkIndex = 0;
-        signature = _sign(
-            userPrivateKey,
-            address(writer),
-            keccak256(abi.encode(writer.UPDATE_TYPEHASH(), nonce, entryId, chunkIndex, newContent))
-        );
-
-        vm.expectEmit();
-        emit WriterStorage.ChunkReceived(user.addr, entryId, chunkIndex, newContent);
-        emit WriterStorage.EntryUpdated(entryId, user.addr);
-        writer.updateWithSig(signature, nonce, entryId, chunkIndex, newContent);
-
-        entry = writer.getEntry(0);
-        expectedChunks[0] = newContent;
-        expectedEntry = WriterStorage.Entry({
-            createdAtBlock: block.number,
-            updatedAtBlock: block.number,
-            totalChunks: size,
-            receivedChunks: size + 1,
             exists: true,
             chunks: expectedChunks
         });
@@ -422,7 +322,11 @@ contract WriterWithSigTest is TestBase {
         signature = _sign(
             userPrivateKey,
             address(writer),
-            keccak256(abi.encode(writer.ADD_CHUNK_TYPEHASH(), nonce, entryId, chunkIndex1, content1))
+            keccak256(
+                abi.encode(
+                    writer.ADD_CHUNK_TYPEHASH(), nonce, entryId, chunkIndex1, keccak256(abi.encodePacked(content1))
+                )
+            )
         );
 
         vm.expectEmit();
@@ -435,7 +339,11 @@ contract WriterWithSigTest is TestBase {
         signature = _sign(
             userPrivateKey,
             address(writer),
-            keccak256(abi.encode(writer.ADD_CHUNK_TYPEHASH(), nonce, entryId, chunkIndex2, content2))
+            keccak256(
+                abi.encode(
+                    writer.ADD_CHUNK_TYPEHASH(), nonce, entryId, chunkIndex2, keccak256(abi.encodePacked(content2))
+                )
+            )
         );
 
         vm.expectEmit();
