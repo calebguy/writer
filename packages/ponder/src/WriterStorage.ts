@@ -1,6 +1,7 @@
 import { ponder } from "ponder:registry";
 import { WriterStorageAbi } from "utils/abis";
-import { publicClient } from "../utils/viem";
+import { publicClient } from "utils/viem";
+import { db } from ".";
 
 ponder.on("WriterStorage:EntryCompleted", async ({ event }) => {
 	console.log(`Writer new Entry Completed @ ${event.log.address}`);
@@ -11,15 +12,15 @@ ponder.on("WriterStorage:EntryCompleted", async ({ event }) => {
 		functionName: "getEntryContent",
 		args: [event.args.id],
 	});
-	// await db.upsertEntry({
-	// 	exists: true,
-	// 	onChainId: event.args.id,
-	// 	content,
-	// 	createdAtHash: event.transaction.hash,
-	// 	createdAtBlock: event.block.number,
-	// 	createdAtBlockDatetime: new Date(Number(event.block.timestamp) * 1000),
-	// 	writerId: event.args.writerId,
-	// });
+	await db.upsertEntry({
+		storageAddress: event.log.address,
+		exists: true,
+		onChainId: event.args.id,
+		content,
+		createdAtHash: event.transaction.hash,
+		createdAtBlock: event.block.number,
+		createdAtBlockDatetime: new Date(Number(event.block.timestamp) * 1000),
+	});
 });
 
 // @note TODO: we need to provide a way to sync all history for all writers in-case

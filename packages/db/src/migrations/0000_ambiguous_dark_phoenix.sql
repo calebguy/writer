@@ -9,12 +9,12 @@ CREATE TABLE "entry" (
 	"created_at_block_datetime" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone NOT NULL,
-	"writer_id" integer NOT NULL,
+	"storage_address" varchar(42) NOT NULL,
 	"transaction_id" varchar(255),
 	CONSTRAINT "entry_transactionId_unique" UNIQUE("transaction_id")
 );
 --> statement-breakpoint
-CREATE TABLE "syndicate_transaction" (
+CREATE TABLE "syndicate_tx" (
 	"id" varchar(255) PRIMARY KEY NOT NULL,
 	"chain_id" bigint NOT NULL,
 	"block_number" bigint,
@@ -27,26 +27,21 @@ CREATE TABLE "syndicate_transaction" (
 );
 --> statement-breakpoint
 CREATE TABLE "writer" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"title" text NOT NULL,
-	"address" varchar(42),
+	"address" varchar(42) PRIMARY KEY NOT NULL,
 	"storage_address" varchar(42),
+	"title" text NOT NULL,
 	"admin" text NOT NULL,
 	"managers" text[] NOT NULL,
-	"on_chain_id" bigint,
 	"created_at_hash" text,
 	"created_at_block" bigint,
 	"created_at_block_datetime" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone NOT NULL,
 	"transaction_id" varchar(255),
-	CONSTRAINT "writer_address_unique" UNIQUE("address"),
 	CONSTRAINT "writer_storageAddress_unique" UNIQUE("storage_address"),
-	CONSTRAINT "writer_onChainId_unique" UNIQUE("on_chain_id"),
 	CONSTRAINT "writer_transactionId_unique" UNIQUE("transaction_id")
 );
 --> statement-breakpoint
-ALTER TABLE "entry" ADD CONSTRAINT "entry_writer_id_writer_id_fk" FOREIGN KEY ("writer_id") REFERENCES "public"."writer"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "entry" ADD CONSTRAINT "entry_transaction_id_syndicate_transaction_id_fk" FOREIGN KEY ("transaction_id") REFERENCES "public"."syndicate_transaction"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "writer" ADD CONSTRAINT "writer_transaction_id_syndicate_transaction_id_fk" FOREIGN KEY ("transaction_id") REFERENCES "public"."syndicate_transaction"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-CREATE UNIQUE INDEX "entries_on_chain_writer_idx" ON "entry" USING btree ("on_chain_id","writer_id");
+ALTER TABLE "entry" ADD CONSTRAINT "entry_transaction_id_syndicate_tx_id_fk" FOREIGN KEY ("transaction_id") REFERENCES "public"."syndicate_tx"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "writer" ADD CONSTRAINT "writer_transaction_id_syndicate_tx_id_fk" FOREIGN KEY ("transaction_id") REFERENCES "public"."syndicate_tx"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+CREATE UNIQUE INDEX "entries_on_chain_writer_idx" ON "entry" USING btree ("on_chain_id","storage_address");

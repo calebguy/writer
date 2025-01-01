@@ -18,6 +18,8 @@
     "dev": "./dev.sh",
     "gen-migration": "drizzle-kit generate --config=./drizzle.config.ts",
     "migrate": "drizzle-kit migrate --config=./drizzle.config.ts",
-    "pull": "drizzle-kit pull --config=./drizzle.config.ts"
+    "pull": "drizzle-kit pull --config=./drizzle.config.ts",
+    "up": "docker compose up -d --wait",
+    "down": "docker compose down -v --remove-orphans"
   }
 }

@@ -1,5 +1,5 @@
 {
-  "id": "dfef4278-44ea-4e5d-b020-99cdd8c49ac7",
+  "id": "642311c9-93ae-404d-a66b-78e7eee04bab",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -63,9 +63,9 @@
           "primaryKey": false,
           "notNull": true
         },
-        "writer_id": {
-          "name": "writer_id",
-          "type": "integer",
+        "storage_address": {
+          "name": "storage_address",
+          "type": "varchar(42)",
           "primaryKey": false,
           "notNull": true
         },
@@ -87,7 +87,7 @@
               "nulls": "last"
             },
             {
-              "expression": "writer_id",
+              "expression": "storage_address",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -100,23 +100,10 @@
         }
       },
       "foreignKeys": {
-        "entry_writer_id_writer_id_fk": {
-          "name": "entry_writer_id_writer_id_fk",
+        "entry_transaction_id_syndicate_tx_id_fk": {
+          "name": "entry_transaction_id_syndicate_tx_id_fk",
           "tableFrom": "entry",
-          "tableTo": "writer",
-          "columnsFrom": [
-            "writer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "entry_transaction_id_syndicate_transaction_id_fk": {
-          "name": "entry_transaction_id_syndicate_transaction_id_fk",
-          "tableFrom": "entry",
-          "tableTo": "syndicate_transaction",
+          "tableTo": "syndicate_tx",
           "columnsFrom": [
             "transaction_id"
           ],
@@ -141,8 +128,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.syndicate_transaction": {
-      "name": "syndicate_transaction",
+    "public.syndicate_tx": {
+      "name": "syndicate_tx",
       "schema": "",
       "columns": {
         "id": {
@@ -215,29 +202,23 @@
       "name": "writer",
       "schema": "",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "title": {
-          "name": "title",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
         "address": {
           "name": "address",
           "type": "varchar(42)",
-          "primaryKey": false,
-          "notNull": false
+          "primaryKey": true,
+          "notNull": true
         },
         "storage_address": {
           "name": "storage_address",
           "type": "varchar(42)",
           "primaryKey": false,
           "notNull": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
         },
         "admin": {
           "name": "admin",
@@ -250,12 +231,6 @@
           "type": "text[]",
           "primaryKey": false,
           "notNull": true
-        },
-        "on_chain_id": {
-          "name": "on_chain_id",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": false
         },
         "created_at_hash": {
           "name": "created_at_hash",
@@ -297,10 +272,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "writer_transaction_id_syndicate_transaction_id_fk": {
-          "name": "writer_transaction_id_syndicate_transaction_id_fk",
+        "writer_transaction_id_syndicate_tx_id_fk": {
+          "name": "writer_transaction_id_syndicate_tx_id_fk",
           "tableFrom": "writer",
-          "tableTo": "syndicate_transaction",
+          "tableTo": "syndicate_tx",
           "columnsFrom": [
             "transaction_id"
           ],
@@ -313,25 +288,11 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "writer_address_unique": {
-          "name": "writer_address_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "address"
-          ]
-        },
         "writer_storageAddress_unique": {
           "name": "writer_storageAddress_unique",
           "nullsNotDistinct": false,
           "columns": [
             "storage_address"
-          ]
-        },
-        "writer_onChainId_unique": {
-          "name": "writer_onChainId_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "on_chain_id"
           ]
         },
         "writer_transactionId_unique": {

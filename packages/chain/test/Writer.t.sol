@@ -103,12 +103,12 @@ contract WriterDirectCallerTest is TestBase {
 
         vm.expectEmit();
         emit WriterStorage.EntryUpdated(0, user);
-        emit WriterStorage.ChunkReceived(0, 0, "Hello", user);
+        emit WriterStorage.ChunkReceived(user, 0, 0, "Hello");
         writer.addChunk(0, 0, "Hello");
 
         vm.expectEmit();
         emit WriterStorage.EntryCompleted(0, user);
-        emit WriterStorage.ChunkReceived(0, 0, "World", user);
+        emit WriterStorage.ChunkReceived(user, 0, 0, "World");
         writer.addChunk(0, 1, "World");
         vm.stopPrank();
 
@@ -161,7 +161,7 @@ contract WriterDirectCallerTest is TestBase {
 
         vm.expectEmit();
         emit WriterStorage.EntryUpdated(0, user);
-        emit WriterStorage.ChunkReceived(0, 1, "was", user);
+        emit WriterStorage.ChunkReceived(user, 0, 1, "was");
         writer.update(entryId, 1, "was");
         vm.stopPrank();
 
@@ -282,7 +282,7 @@ contract WriterWithSigTest is TestBase {
         );
 
         vm.expectEmit();
-        emit WriterStorage.ChunkReceived(entryId, chunkIndex1, content1, user.addr);
+        emit WriterStorage.ChunkReceived(user.addr, entryId, chunkIndex1, content1);
         emit WriterStorage.EntryUpdated(entryId, user.addr);
         writer.addChunkWithSig(signature, nonce, entryId, chunkIndex1, content1);
 
@@ -295,7 +295,7 @@ contract WriterWithSigTest is TestBase {
         );
 
         vm.expectEmit();
-        emit WriterStorage.ChunkReceived(entryId, chunkIndex2, content2, user.addr);
+        emit WriterStorage.ChunkReceived(user.addr, entryId, chunkIndex2, content2);
         emit WriterStorage.EntryCompleted(entryId, user.addr);
         writer.addChunkWithSig(signature, nonce, entryId, chunkIndex2, content2);
 
@@ -326,7 +326,7 @@ contract WriterWithSigTest is TestBase {
 
         vm.expectEmit();
         emit WriterStorage.EntryCreated(0, user.addr);
-        emit WriterStorage.ChunkReceived(0, 0, chunkContent, user.addr);
+        emit WriterStorage.ChunkReceived(user.addr, 0, 0, chunkContent);
         writer.createWithChunkWithSig(signature, nonce, chunkCount, chunkContent);
 
         WriterStorage.Entry memory entry = writer.getEntry(0);
@@ -363,7 +363,7 @@ contract WriterWithSigTest is TestBase {
         );
 
         vm.expectEmit();
-        emit WriterStorage.ChunkReceived(entryId, chunkIndex1, content, user.addr);
+        emit WriterStorage.ChunkReceived(user.addr, entryId, chunkIndex1, content);
         emit WriterStorage.EntryUpdated(entryId, user.addr);
         writer.addChunkWithSig(signature, nonce, entryId, chunkIndex1, content);
 
@@ -389,7 +389,7 @@ contract WriterWithSigTest is TestBase {
         );
 
         vm.expectEmit();
-        emit WriterStorage.ChunkReceived(entryId, chunkIndex, newContent, user.addr);
+        emit WriterStorage.ChunkReceived(user.addr, entryId, chunkIndex, newContent);
         emit WriterStorage.EntryUpdated(entryId, user.addr);
         writer.updateWithSig(signature, nonce, entryId, chunkIndex, newContent);
 
@@ -426,7 +426,7 @@ contract WriterWithSigTest is TestBase {
         );
 
         vm.expectEmit();
-        emit WriterStorage.ChunkReceived(entryId, chunkIndex1, content1, user.addr);
+        emit WriterStorage.ChunkReceived(user.addr, entryId, chunkIndex1, content1);
         emit WriterStorage.EntryUpdated(entryId, user.addr);
         writer.addChunkWithSig(signature, nonce, entryId, chunkIndex1, content1);
 
@@ -439,7 +439,7 @@ contract WriterWithSigTest is TestBase {
         );
 
         vm.expectEmit();
-        emit WriterStorage.ChunkReceived(entryId, chunkIndex2, content2, user.addr);
+        emit WriterStorage.ChunkReceived(user.addr, entryId, chunkIndex2, content2);
         emit WriterStorage.EntryCompleted(entryId, user.addr);
         writer.addChunkWithSig(signature, nonce, entryId, chunkIndex2, content2);
 

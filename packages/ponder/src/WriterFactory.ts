@@ -4,8 +4,7 @@ import { env } from "../env";
 import { getSynIdFromRawInput, syndicate } from "../utils/syndicate";
 import { db } from "./index";
 ponder.on("WriterFactory:WriterCreated", async ({ event, context }) => {
-	const { id, writerAddress, storeAddress, admin, managers, title } =
-		event.args;
+	const { writerAddress, storeAddress, admin, managers, title } = event.args;
 	const transactionId = getSynIdFromRawInput(event.transaction.input);
 	if (transactionId) {
 		const tx = await syndicate.wallet.getTransactionRequest(
@@ -35,7 +34,6 @@ ponder.on("WriterFactory:WriterCreated", async ({ event, context }) => {
 		admin,
 		managers: managers.map((m) => m.toString()),
 		title,
-		onChainId: id,
 		createdAtHash: event.transaction.hash,
 		createdAtBlock: event.block.number,
 		createdAtBlockDatetime: new Date(Number(event.block.timestamp) * 1000),

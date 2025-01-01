@@ -1,7 +1,6 @@
 import {
 	bigint,
 	boolean,
-	integer,
 	jsonb,
 	pgEnum,
 	pgTable,
@@ -13,13 +12,11 @@ import {
 } from "drizzle-orm/pg-core";
 
 export const writer = pgTable("writer", {
-	id: serial().primaryKey(),
-	title: text().notNull(),
-	address: varchar({ length: 42 }).unique(),
+	address: varchar({ length: 42 }).primaryKey(),
 	storageAddress: varchar({ length: 42 }).unique(),
+	title: text().notNull(),
 	admin: text().notNull(),
 	managers: text().array().notNull(),
-	onChainId: bigint({ mode: "bigint" }).unique(),
 	createdAtHash: text(),
 	createdAtBlock: bigint({ mode: "bigint" }),
 	createdAtBlockDatetime: timestamp({
@@ -29,7 +26,7 @@ export const writer = pgTable("writer", {
 	updatedAt: timestamp({ withTimezone: true }).notNull(),
 	transactionId: varchar({ length: 255 })
 		.unique()
-		.references(() => syndicateTransaction.id),
+		.references(() => syndicateTx.id),
 });
 
 export const entry = pgTable(
@@ -46,17 +43,18 @@ export const entry = pgTable(
 		}),
 		createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
 		updatedAt: timestamp({ withTimezone: true }).notNull(),
-		writerId: integer()
-			.notNull()
-			.references(() => writer.id),
+		// - intentionally not a foreign key because we don't want to enforce that the writer exists
+		//   so we are able to seed data in an async manner
+		// - we reference the storage address of the writer as the entries exist on the writer's storage
+		storageAddress: varchar({ length: 42 }).notNull(),
 		transactionId: varchar({ length: 255 })
 			.unique()
-			.references(() => syndicateTransaction.id),
+			.references(() => syndicateTx.id),
 	},
 	(entries) => ({
 		onChainWriterIndex: uniqueIndex("entries_on_chain_writer_idx").on(
 			entries.onChainId,
-			entries.writerId,
+			entries.storageAddress,
 		),
 	}),
 );
@@ -70,7 +68,7 @@ export const requestStatus = pgEnum("request_status", [
 	"ABANDONED",
 ]);
 
-export const syndicateTransaction = pgTable("syndicate_transaction", {
+export const syndicateTx = pgTable("syndicate_tx", {
 	id: varchar("id", { length: 255 }).primaryKey(),
 	chainId: bigint({ mode: "bigint" }).notNull(),
 	blockNumber: bigint({ mode: "bigint" }),
@@ -81,8 +79,3 @@ export const syndicateTransaction = pgTable("syndicate_transaction", {
 	createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
 	updatedAt: timestamp({ withTimezone: true }).notNull(),
 });
-
-// Relations (to be handled in your ORM logic or queries)
-// Writer.entries -> Entry.writerId
-// Writer.transactionId -> SyndicateTransaction.id
-// Entry.transactionId -> SyndicateTransaction.id

@@ -1,36 +1,108 @@
 export const WriterFactoryAbi = [
 	{
 		type: "function",
+		name: "computeWriterAddress",
+		inputs: [
+			{
+				name: "title",
+				type: "string",
+				internalType: "string",
+			},
+			{
+				name: "admin",
+				type: "address",
+				internalType: "address",
+			},
+			{
+				name: "managers",
+				type: "address[]",
+				internalType: "address[]",
+			},
+			{
+				name: "salt",
+				type: "bytes32",
+				internalType: "bytes32",
+			},
+		],
+		outputs: [
+			{
+				name: "",
+				type: "address",
+				internalType: "address",
+			},
+		],
+		stateMutability: "view",
+	},
+	{
+		type: "function",
+		name: "computeWriterStorageAddress",
+		inputs: [
+			{
+				name: "salt",
+				type: "bytes32",
+				internalType: "bytes32",
+			},
+		],
+		outputs: [
+			{
+				name: "",
+				type: "address",
+				internalType: "address",
+			},
+		],
+		stateMutability: "view",
+	},
+	{
+		type: "function",
 		name: "create",
 		inputs: [
-			{ name: "title", type: "string", internalType: "string" },
-			{ name: "admin", type: "address", internalType: "address" },
-			{ name: "managers", type: "address[]", internalType: "address[]" },
+			{
+				name: "title",
+				type: "string",
+				internalType: "string",
+			},
+			{
+				name: "admin",
+				type: "address",
+				internalType: "address",
+			},
+			{
+				name: "managers",
+				type: "address[]",
+				internalType: "address[]",
+			},
+			{
+				name: "salt",
+				type: "bytes32",
+				internalType: "bytes32",
+			},
 		],
-		outputs: [{ name: "", type: "address", internalType: "address" }],
+		outputs: [
+			{
+				name: "writerAddress",
+				type: "address",
+				internalType: "address",
+			},
+			{
+				name: "storeAddress",
+				type: "address",
+				internalType: "address",
+			},
+		],
 		stateMutability: "nonpayable",
-	},
-	{
-		type: "function",
-		name: "get",
-		inputs: [{ name: "author", type: "address", internalType: "address" }],
-		outputs: [{ name: "", type: "address[]", internalType: "address[]" }],
-		stateMutability: "view",
-	},
-	{
-		type: "function",
-		name: "writerIdCounter",
-		inputs: [],
-		outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
-		stateMutability: "view",
 	},
 	{
 		type: "event",
 		name: "WriterCreated",
 		inputs: [
-			{ name: "id", type: "uint256", indexed: true, internalType: "uint256" },
 			{
 				name: "writerAddress",
+				type: "address",
+				indexed: true,
+				internalType: "address",
+			},
+			{
+				name: "storeAddress",
 				type: "address",
 				indexed: true,
 				internalType: "address",
@@ -46,12 +118,6 @@ export const WriterFactoryAbi = [
 				type: "string",
 				indexed: false,
 				internalType: "string",
-			},
-			{
-				name: "storeAddress",
-				type: "address",
-				indexed: false,
-				internalType: "address",
 			},
 			{
 				name: "managers",
