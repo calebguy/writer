@@ -51,9 +51,7 @@ contract WriterStorage is AccessControl {
     event EntryRemoved(uint256 indexed id, address author);
     event EntryCompleted(uint256 indexed id, address author);
 
-    event ChunkReceived(
-        address indexed author, uint256 indexed entryId, uint256 indexed chunkIndex, string chunkContent
-    );
+    event ChunkReceived(address indexed author, uint256 indexed id, uint256 indexed index, string content);
 
     function replaceAdmin(address newAdmin) public onlyRole(DEFAULT_ADMIN_ROLE) {
         _grantRole(DEFAULT_ADMIN_ROLE, newAdmin);
@@ -64,25 +62,17 @@ contract WriterStorage is AccessControl {
         return _create(totalChunks, author);
     }
 
-    function createWithChunk(uint256 totalChunks, string calldata chunkContent, address author)
+    function createWithChunk(uint256 totalChunks, string calldata content, address author)
         public
         onlyLogic
         returns (uint256, Entry memory)
     {
         require(totalChunks > 0, "WriterStorage: Total chunks must be greater than 0");
-        require(bytes(chunkContent).length > 0, "WriterStorage: Chunk content cannot be empty");
+        require(bytes(content).length > 0, "WriterStorage: Chunk content cannot be empty");
 
-        (uint256 entryId, Entry memory entry) = _create(totalChunks, author);
-        _addChunk(entryId, 0, chunkContent, author);
-        return (entryId, entry);
-    }
-
-    function update(uint256 entryId, uint256 chunkIndex, string calldata chunkContent, address author)
-        public
-        onlyLogic
-    {
-        _addChunk(entryId, chunkIndex, chunkContent, author);
-        emit EntryUpdated(entryId, author);
+        (uint256 id,) = _create(totalChunks, author);
+        Entry memory updatedEntry = _addChunk(id, 0, content, author);
+        return (id, updatedEntry);
     }
 
     function remove(uint256 id, address author) public onlyLogic {
@@ -105,19 +95,10 @@ contract WriterStorage is AccessControl {
         emit EntryRemoved(id, author);
     }
 
-    function addChunk(uint256 entryId, uint256 chunkIndex, string calldata chunkContent, address author)
-        public
-        onlyLogic
-    {
-        require(bytes(getEntry(entryId).chunks[chunkIndex]).length == 0, "WriterStorage: Chunk already exists");
+    function addChunk(uint256 id, uint256 index, string calldata content, address author) public onlyLogic {
+        require(bytes(getEntry(id).chunks[index]).length == 0, "WriterStorage: Chunk already exists");
 
-        Entry storage entry = _addChunk(entryId, chunkIndex, chunkContent, author);
-
-        if (entry.receivedChunks == entry.totalChunks) {
-            emit EntryCompleted(entryId, author);
-        } else {
-            emit EntryUpdated(entryId, author);
-        }
+        _addChunk(id, index, content, author);
     }
 
     function getEntryCount() public view returns (uint256) {
@@ -168,19 +149,26 @@ contract WriterStorage is AccessControl {
         return (id, entries[id]);
     }
 
-    function _addChunk(uint256 entryId, uint256 chunkIndex, string calldata chunkContent, address author)
+    function _addChunk(uint256 id, uint256 index, string calldata content, address author)
         internal
         returns (Entry storage)
     {
-        Entry storage entry = entries[entryId];
+        Entry storage entry = entries[id];
         require(entry.exists, "WriterStorage: Entry does not exist");
-        require(chunkIndex < entry.totalChunks, "WriterStorage: Invalid chunk index");
+        require(index < entry.totalChunks, "WriterStorage: Invalid chunk index");
 
-        entry.chunks[chunkIndex] = chunkContent;
+        entry.chunks[index] = content;
         entry.updatedAtBlock = block.number;
         entry.receivedChunks++;
 
-        emit ChunkReceived(entryId, chunkIndex, chunkContent, author);
+        emit ChunkReceived(author, id, index, content);
+
+        if (entry.receivedChunks == entry.totalChunks) {
+            emit EntryCompleted(id, author);
+        } else {
+            emit EntryUpdated(id, author);
+        }
+
         return entry;
     }
 }

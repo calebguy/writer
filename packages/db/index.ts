@@ -6,7 +6,7 @@ import {
 	syndicateTransactionRelations,
 	writerRelations,
 } from "./src/relations";
-import { entry, syndicateTransaction, writer } from "./src/schema";
+import { entry, syndicateTx, writer } from "./src/schema";
 
 class Db {
 	private pg;
@@ -17,7 +17,7 @@ class Db {
 			schema: {
 				writer,
 				entry,
-				syndicateTransaction,
+				syndicateTransaction: syndicateTx,
 				writerRelations,
 				entryRelations,
 				syndicateTransactionRelations,
@@ -51,7 +51,7 @@ class Db {
 
 	createTx(tx: Omit<InsertSyndicateTransaction, "updatedAt" | "createdAt">) {
 		return this.pg
-			.insert(syndicateTransaction)
+			.insert(syndicateTx)
 			.values({
 				...tx,
 				updatedAt: new Date(),
@@ -62,13 +62,13 @@ class Db {
 
 	upsertTx(item: InsertSyndicateTransaction) {
 		return this.pg
-			.insert(syndicateTransaction)
+			.insert(syndicateTx)
 			.values({
 				...item,
 				updatedAt: new Date(),
 			})
 			.onConflictDoUpdate({
-				target: [syndicateTransaction.id],
+				target: [syndicateTx.id],
 				set: { ...item, updatedAt: new Date() },
 			})
 			.returning();
@@ -158,7 +158,7 @@ class Db {
 
 type InsertWriter = Omit<typeof writer.$inferInsert, "createdAt" | "updatedAt">;
 type InsertSyndicateTransaction = Omit<
-	typeof syndicateTransaction.$inferInsert,
+	typeof syndicateTx.$inferInsert,
 	"updatedAt" | "createdAt"
 >;
 type InsertEntry = Omit<typeof entry.$inferInsert, "createdAt" | "updatedAt">;

@@ -4,7 +4,9 @@ import { Db } from "db";
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { getCookie } from "hono/cookie";
-import { getAddress } from "viem";
+import { randomBytes } from "node:crypto";
+import { computeWriterAddress, computeWriterStorageAddress } from "utils";
+import { type Hex, getAddress, toHex } from "viem";
 import {
 	CREATE_FUNCTION_SIGNATURE,
 	CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
@@ -28,22 +30,32 @@ const api = app
 		const address = getAddress(c.req.param("address"));
 		const writer = await db.getWriter(address);
 		return c.json(writer);
-		// return c.json(writer ? writerToJsonSafe(writer) : null);
 	})
 	.get("/author/:address", async (c) => {
 		const address = getAddress(c.req.param("address"));
 		const writers = await db.getWriters(address);
 		return c.json(writers);
-		// return c.json({
-		// 	writers: writers.map(writerToJsonSafe),
-		// });
 	})
 	.post(
 		"/factory/create",
 		zValidator("json", createWriterSchema),
 		async (c) => {
 			const { admin, managers, title } = c.req.valid("json");
-			const args = { title, admin, managers };
+			const salt = toHex(randomBytes(32));
+			const args = { title, admin, managers, salt };
+			const [address, storageAddress] = await Promise.all([
+				computeWriterAddress({
+					address: env.FACTORY_ADDRESS as Hex,
+					salt,
+					title,
+					admin: getAddress(admin),
+					managers: managers.map(getAddress),
+				}),
+				computeWriterStorageAddress({
+					address: env.FACTORY_ADDRESS as Hex,
+					salt,
+				}),
+			]);
 			const { transactionId } = await syndicate.transact.sendTransaction({
 				projectId: env.SYNDICATE_PROJECT_ID,
 				contractAddress: env.FACTORY_ADDRESS,
@@ -63,9 +75,10 @@ const api = app
 				admin,
 				managers,
 				transactionId,
+				address,
+				storageAddress,
 			});
 			return c.json(writer);
-			// return c.json({ writer: writerToJsonSafe(writer) }, 200);
 		},
 	)
 	.post(
@@ -114,7 +127,7 @@ const api = app
 
 			const entry = await db.createEntry({
 				exists: true,
-				writerId: writer.id,
+				storageAddress: contractAddress,
 				transactionId,
 				content: chunkContent,
 			});

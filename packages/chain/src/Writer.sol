@@ -9,8 +9,6 @@ contract Writer is AccessControl, VerifyTypedData {
     bytes32 public constant CREATE_TYPEHASH = keccak256("Create(uint256 nonce,uint256 chunkCount)");
     bytes32 public constant CREATE_WITH_CHUNK_TYPEHASH =
         keccak256("CreateWithChunk(uint256 nonce,uint256 chunkCount,string chunkContent)");
-    bytes32 public constant UPDATE_TYPEHASH =
-        keccak256("Update(uint256 nonce,uint256 entryId,uint256 chunkIndex,string chunkContent)");
     bytes32 public constant REMOVE_TYPEHASH = keccak256("Remove(uint256 nonce,uint256 id)");
     bytes32 public constant ADD_CHUNK_TYPEHASH =
         keccak256("AddChunk(uint256 nonce,uint256 entryId,uint256 chunkIndex,string chunkContent)");
@@ -95,7 +93,7 @@ contract Writer is AccessControl, VerifyTypedData {
     }
 
     function create(uint256 chunkCount) external onlyRole(WRITER_ROLE) {
-        _create(chunkCount, msg.sender);
+        store.create(chunkCount, msg.sender);
     }
 
     function createWithSig(bytes memory signature, uint256 nonce, uint256 chunkCount)
@@ -103,11 +101,11 @@ contract Writer is AccessControl, VerifyTypedData {
         authedBySig(signature, keccak256(abi.encode(CREATE_TYPEHASH, nonce, chunkCount)))
     {
         address signer = getSigner(signature, keccak256(abi.encode(CREATE_TYPEHASH, nonce, chunkCount)));
-        _create(chunkCount, signer);
+        store.create(chunkCount, signer);
     }
 
     function createWithChunk(uint256 chunkCount, string calldata chunkContent) external onlyRole(WRITER_ROLE) {
-        _createWithChunk(chunkCount, chunkContent, msg.sender);
+        store.createWithChunk(chunkCount, chunkContent, msg.sender);
     }
 
     function createWithChunkWithSig(
@@ -128,52 +126,26 @@ contract Writer is AccessControl, VerifyTypedData {
                 abi.encode(CREATE_WITH_CHUNK_TYPEHASH, nonce, chunkCount, keccak256(abi.encodePacked(chunkContent)))
             )
         );
-        _createWithChunk(chunkCount, chunkContent, signer);
+        store.createWithChunk(chunkCount, chunkContent, signer);
     }
 
-    function update(uint256 entryId, uint256 chunkIndex, string calldata chunkContent) external onlyRole(WRITER_ROLE) {
-        _update(entryId, chunkIndex, chunkContent, msg.sender);
+    function remove(uint256 id) external onlyRole(WRITER_ROLE) {
+        store.remove(id, msg.sender);
     }
 
-    function updateWithSig(
-        bytes memory signature,
-        uint256 nonce,
-        uint256 entryId,
-        uint256 chunkIndex,
-        string calldata chunkContent
-    )
+    function removeWithSig(bytes memory signature, uint256 nonce, uint256 id)
         external
-        authedBySig(
-            signature,
-            keccak256(abi.encode(UPDATE_TYPEHASH, nonce, entryId, chunkIndex, keccak256(abi.encodePacked(chunkContent))))
-        )
+        authedBySig(signature, keccak256(abi.encode(REMOVE_TYPEHASH, nonce, id)))
     {
-        address signer = getSigner(
-            signature,
-            keccak256(
-                abi.encode(UPDATE_TYPEHASH, nonce, entryId, chunkIndex, keccak256(abi.encodePacked(chunkContent)))
-            )
-        );
-        _update(entryId, chunkIndex, chunkContent, signer);
-    }
-
-    function remove(uint256 entryId) external onlyRole(WRITER_ROLE) {
-        _remove(entryId, msg.sender);
-    }
-
-    function removeWithSig(bytes memory signature, uint256 nonce, uint256 entryId)
-        external
-        authedBySig(signature, keccak256(abi.encode(REMOVE_TYPEHASH, nonce, entryId)))
-    {
-        address signer = getSigner(signature, keccak256(abi.encode(REMOVE_TYPEHASH, nonce, entryId)));
-        _remove(entryId, signer);
+        address signer = getSigner(signature, keccak256(abi.encode(REMOVE_TYPEHASH, nonce, id)));
+        store.remove(id, signer);
     }
 
     function addChunk(uint256 entryId, uint256 chunkIndex, string calldata chunkContent)
         external
         onlyRole(WRITER_ROLE)
     {
-        _addChunk(entryId, chunkIndex, chunkContent, msg.sender);
+        store.addChunk(entryId, chunkIndex, chunkContent, msg.sender);
     }
 
     function addChunkWithSig(
@@ -195,26 +167,6 @@ contract Writer is AccessControl, VerifyTypedData {
                 abi.encode(ADD_CHUNK_TYPEHASH, nonce, entryId, chunkIndex, keccak256(abi.encodePacked(chunkContent)))
             )
         );
-        _addChunk(entryId, chunkIndex, chunkContent, signer);
-    }
-
-    function _create(uint256 chunkCount, address author) private {
-        store.create(chunkCount, author);
-    }
-
-    function _createWithChunk(uint256 chunkCount, string calldata chunkContent, address author) private {
-        store.createWithChunk(chunkCount, chunkContent, author);
-    }
-
-    function _update(uint256 entryId, uint256 chunkIndex, string calldata chunkContent, address author) private {
-        store.update(entryId, chunkIndex, chunkContent, author);
-    }
-
-    function _remove(uint256 id, address author) private {
-        store.remove(id, author);
-    }
-
-    function _addChunk(uint256 entryId, uint256 chunkIndex, string calldata chunkContent, address author) private {
-        store.addChunk(entryId, chunkIndex, chunkContent, author);
+        store.addChunk(entryId, chunkIndex, chunkContent, signer);
     }
 }
