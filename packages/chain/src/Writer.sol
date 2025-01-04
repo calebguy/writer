@@ -104,29 +104,22 @@ contract Writer is AccessControl, VerifyTypedData {
         store.create(chunkCount, signer);
     }
 
-    function createWithChunk(uint256 chunkCount, string calldata chunkContent) external onlyRole(WRITER_ROLE) {
-        store.createWithChunk(chunkCount, chunkContent, msg.sender);
+    function createWithChunk(uint256 chunkCount, string calldata content) external onlyRole(WRITER_ROLE) {
+        store.createWithChunk(chunkCount, content, msg.sender);
     }
 
-    function createWithChunkWithSig(
-        bytes memory signature,
-        uint256 nonce,
-        uint256 chunkCount,
-        string calldata chunkContent
-    )
+    function createWithChunkWithSig(bytes memory signature, uint256 nonce, uint256 chunkCount, string calldata content)
         external
         authedBySig(
             signature,
-            keccak256(abi.encode(CREATE_WITH_CHUNK_TYPEHASH, nonce, chunkCount, keccak256(abi.encodePacked(chunkContent))))
+            keccak256(abi.encode(CREATE_WITH_CHUNK_TYPEHASH, nonce, chunkCount, keccak256(abi.encodePacked(content))))
         )
     {
         address signer = getSigner(
             signature,
-            keccak256(
-                abi.encode(CREATE_WITH_CHUNK_TYPEHASH, nonce, chunkCount, keccak256(abi.encodePacked(chunkContent)))
-            )
+            keccak256(abi.encode(CREATE_WITH_CHUNK_TYPEHASH, nonce, chunkCount, keccak256(abi.encodePacked(content))))
         );
-        store.createWithChunk(chunkCount, chunkContent, signer);
+        store.createWithChunk(chunkCount, content, signer);
     }
 
     function remove(uint256 id) external onlyRole(WRITER_ROLE) {
@@ -141,32 +134,20 @@ contract Writer is AccessControl, VerifyTypedData {
         store.remove(id, signer);
     }
 
-    function addChunk(uint256 entryId, uint256 chunkIndex, string calldata chunkContent)
-        external
-        onlyRole(WRITER_ROLE)
-    {
-        store.addChunk(entryId, chunkIndex, chunkContent, msg.sender);
+    function addChunk(uint256 id, uint256 index, string calldata content) external onlyRole(WRITER_ROLE) {
+        store.addChunk(id, index, content, msg.sender);
     }
 
-    function addChunkWithSig(
-        bytes memory signature,
-        uint256 nonce,
-        uint256 entryId,
-        uint256 chunkIndex,
-        string calldata chunkContent
-    )
+    function addChunkWithSig(bytes memory signature, uint256 nonce, uint256 id, uint256 index, string calldata content)
         external
         authedBySig(
             signature,
-            keccak256(abi.encode(ADD_CHUNK_TYPEHASH, nonce, entryId, chunkIndex, keccak256(abi.encodePacked(chunkContent))))
+            keccak256(abi.encode(ADD_CHUNK_TYPEHASH, nonce, id, index, keccak256(abi.encodePacked(content))))
         )
     {
         address signer = getSigner(
-            signature,
-            keccak256(
-                abi.encode(ADD_CHUNK_TYPEHASH, nonce, entryId, chunkIndex, keccak256(abi.encodePacked(chunkContent)))
-            )
+            signature, keccak256(abi.encode(ADD_CHUNK_TYPEHASH, nonce, id, index, keccak256(abi.encodePacked(content))))
         );
-        store.addChunk(entryId, chunkIndex, chunkContent, signer);
+        store.addChunk(id, index, content, signer);
     }
 }

@@ -2,11 +2,10 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { TARGET_CHAIN_ID } from "server/src/constants";
 import { type Hex, getAddress } from "viem";
 import Block from "../components/Block";
 import BlockCreateForm from "../components/BlockCreateForm";
-import { POLLING_INTERVAL } from "../constants";
+import { POLLING_INTERVAL, TARGET_CHAIN_ID } from "../constants";
 import { WriterContext } from "../layouts/App.layout";
 import { createWithChunk, getWriter } from "../utils/api";
 import { useFirstWallet } from "../utils/hooks";
@@ -122,7 +121,7 @@ export function Writer() {
 				return (
 					<Block
 						key={entry.id}
-						href={`/writer/${data.address}/${entry.onChainId}`}
+						href={`/writer/${data.address}/entry/${entry.onChainId}`}
 						isLoading={!entry.onChainId}
 						title={title}
 						id={id}

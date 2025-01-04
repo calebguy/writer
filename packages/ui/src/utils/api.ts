@@ -12,17 +12,17 @@ export async function getWriter(address: Hex) {
 	if (!res.ok) {
 		throw new Error(res.statusText);
 	}
-	return res.json();
+	return (await res.json()).writer;
 }
 
-export async function getAuthor(address: Hex) {
-	const res = await client.api.author[":address"].$get({
+export async function getWritersByManager(address: Hex) {
+	const res = await client.api.manager[":address"].$get({
 		param: { address },
 	});
 	if (!res.ok) {
 		throw new Error(res.statusText);
 	}
-	return res.json();
+	return (await res.json()).writers;
 }
 
 export async function createFromFactory(json: {
@@ -49,7 +49,7 @@ export async function createWithChunk({
 	chunkCount: number;
 	chunkContent: string;
 }) {
-	const res = await client.api.writer[":address"].create.$post({
+	const res = await client.api.writer[":address"].createWithChunk.$post({
 		param: { address },
 		json,
 	});
@@ -60,6 +60,6 @@ export async function createWithChunk({
 }
 
 export type GetWritersResponse = InferResponseType<
-	(typeof client.api.author)[":address"]["$get"]
+	(typeof client.api.manager)[":address"]["$get"]
 >;
 export type Writer = GetWritersResponse["writers"][number];

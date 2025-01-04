@@ -1,4 +1,3 @@
-import type { TransactionStatus } from "@syndicateio/syndicate-node/api/resources/wallet/types";
 import { ponder } from "ponder:registry";
 import { env } from "../env";
 import { getSynIdFromRawInput, syndicate } from "../utils/syndicate";
@@ -11,32 +10,29 @@ ponder.on("WriterFactory:WriterCreated", async ({ event, context }) => {
 			env.SYNDICATE_PROJECT_ID,
 			transactionId,
 		);
-		const confirmedTx = tx.transactionAttempts?.filter((tx) =>
-			["SUBMITTED", "CONFIRMED"].includes(tx.status),
-		)[0];
-		if (!confirmedTx) {
-			throw new Error("Transaction not confirmed");
-		}
 		await db.upsertTx({
 			id: transactionId,
 			chainId: BigInt(10),
 			functionSignature: tx.functionSignature,
 			args: tx.decodedData,
-			blockNumber: BigInt(confirmedTx.block),
-			hash: confirmedTx.hash,
-			status: confirmedTx.status as TransactionStatus,
+			blockNumber: event.block.number,
+			hash: event.transaction.hash,
+			// syndicate's internal status may not be "CONFIRMED" but we can assume it
+			// is confirmed since we are only listening to onchain events
+			status: "CONFIRMED",
 		});
 	}
 
 	await db.upsertWriter({
 		address: writerAddress,
 		storageAddress: storeAddress,
+		title,
 		admin,
 		managers: managers.map((m) => m.toString()),
-		title,
 		createdAtHash: event.transaction.hash,
 		createdAtBlock: event.block.number,
 		createdAtBlockDatetime: new Date(Number(event.block.timestamp) * 1000),
+		transactionId,
 	});
 
 	console.log(`Writer new Writer Created @ ${event.log.address}`);

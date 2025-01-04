@@ -131,19 +131,6 @@ export const WriterAbi = [
 	},
 	{
 		type: "function",
-		name: "UPDATE_TYPEHASH",
-		inputs: [],
-		outputs: [
-			{
-				name: "",
-				type: "bytes32",
-				internalType: "bytes32",
-			},
-		],
-		stateMutability: "view",
-	},
-	{
-		type: "function",
 		name: "WRITER_ROLE",
 		inputs: [],
 		outputs: [
@@ -160,17 +147,17 @@ export const WriterAbi = [
 		name: "addChunk",
 		inputs: [
 			{
-				name: "entryId",
+				name: "id",
 				type: "uint256",
 				internalType: "uint256",
 			},
 			{
-				name: "chunkIndex",
+				name: "index",
 				type: "uint256",
 				internalType: "uint256",
 			},
 			{
-				name: "chunkContent",
+				name: "content",
 				type: "string",
 				internalType: "string",
 			},
@@ -193,17 +180,17 @@ export const WriterAbi = [
 				internalType: "uint256",
 			},
 			{
-				name: "entryId",
+				name: "id",
 				type: "uint256",
 				internalType: "uint256",
 			},
 			{
-				name: "chunkIndex",
+				name: "index",
 				type: "uint256",
 				internalType: "uint256",
 			},
 			{
-				name: "chunkContent",
+				name: "content",
 				type: "string",
 				internalType: "string",
 			},
@@ -234,7 +221,7 @@ export const WriterAbi = [
 				internalType: "uint256",
 			},
 			{
-				name: "chunkContent",
+				name: "content",
 				type: "string",
 				internalType: "string",
 			},
@@ -262,7 +249,7 @@ export const WriterAbi = [
 				internalType: "uint256",
 			},
 			{
-				name: "chunkContent",
+				name: "content",
 				type: "string",
 				internalType: "string",
 			},
@@ -498,7 +485,7 @@ export const WriterAbi = [
 		name: "remove",
 		inputs: [
 			{
-				name: "entryId",
+				name: "id",
 				type: "uint256",
 				internalType: "uint256",
 			},
@@ -521,7 +508,7 @@ export const WriterAbi = [
 				internalType: "uint256",
 			},
 			{
-				name: "entryId",
+				name: "id",
 				type: "uint256",
 				internalType: "uint256",
 			},
@@ -690,62 +677,6 @@ export const WriterAbi = [
 			},
 		],
 		stateMutability: "view",
-	},
-	{
-		type: "function",
-		name: "update",
-		inputs: [
-			{
-				name: "entryId",
-				type: "uint256",
-				internalType: "uint256",
-			},
-			{
-				name: "chunkIndex",
-				type: "uint256",
-				internalType: "uint256",
-			},
-			{
-				name: "chunkContent",
-				type: "string",
-				internalType: "string",
-			},
-		],
-		outputs: [],
-		stateMutability: "nonpayable",
-	},
-	{
-		type: "function",
-		name: "updateWithSig",
-		inputs: [
-			{
-				name: "signature",
-				type: "bytes",
-				internalType: "bytes",
-			},
-			{
-				name: "nonce",
-				type: "uint256",
-				internalType: "uint256",
-			},
-			{
-				name: "entryId",
-				type: "uint256",
-				internalType: "uint256",
-			},
-			{
-				name: "chunkIndex",
-				type: "uint256",
-				internalType: "uint256",
-			},
-			{
-				name: "chunkContent",
-				type: "string",
-				internalType: "string",
-			},
-		],
-		outputs: [],
-		stateMutability: "nonpayable",
 	},
 	{
 		type: "event",

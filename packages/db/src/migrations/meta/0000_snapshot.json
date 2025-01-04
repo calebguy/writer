@@ -1,5 +1,5 @@
 {
-  "id": "642311c9-93ae-404d-a66b-78e7eee04bab",
+  "id": "e0d4ebe6-82b8-45e3-8483-c1263019d293",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -212,7 +212,7 @@
           "name": "storage_address",
           "type": "varchar(42)",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "title": {
           "name": "title",

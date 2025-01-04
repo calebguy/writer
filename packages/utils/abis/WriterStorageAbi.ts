@@ -22,17 +22,17 @@ export const WriterStorageAbi = [
 		name: "addChunk",
 		inputs: [
 			{
-				name: "entryId",
+				name: "id",
 				type: "uint256",
 				internalType: "uint256",
 			},
 			{
-				name: "chunkIndex",
+				name: "index",
 				type: "uint256",
 				internalType: "uint256",
 			},
 			{
-				name: "chunkContent",
+				name: "content",
 				type: "string",
 				internalType: "string",
 			},
@@ -116,7 +116,7 @@ export const WriterStorageAbi = [
 				internalType: "uint256",
 			},
 			{
-				name: "chunkContent",
+				name: "content",
 				type: "string",
 				internalType: "string",
 			},
@@ -551,34 +551,6 @@ export const WriterStorageAbi = [
 		stateMutability: "view",
 	},
 	{
-		type: "function",
-		name: "update",
-		inputs: [
-			{
-				name: "entryId",
-				type: "uint256",
-				internalType: "uint256",
-			},
-			{
-				name: "chunkIndex",
-				type: "uint256",
-				internalType: "uint256",
-			},
-			{
-				name: "chunkContent",
-				type: "string",
-				internalType: "string",
-			},
-			{
-				name: "author",
-				type: "address",
-				internalType: "address",
-			},
-		],
-		outputs: [],
-		stateMutability: "nonpayable",
-	},
-	{
 		type: "event",
 		name: "ChunkReceived",
 		inputs: [
@@ -589,19 +561,19 @@ export const WriterStorageAbi = [
 				internalType: "address",
 			},
 			{
-				name: "entryId",
+				name: "id",
 				type: "uint256",
 				indexed: true,
 				internalType: "uint256",
 			},
 			{
-				name: "chunkIndex",
+				name: "index",
 				type: "uint256",
 				indexed: true,
 				internalType: "uint256",
 			},
 			{
-				name: "chunkContent",
+				name: "content",
 				type: "string",
 				indexed: false,
 				internalType: "string",

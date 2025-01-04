@@ -1,4 +1,4 @@
-import { usePrivy } from "@privy-io/react-auth";
+import { useLogin, usePrivy } from "@privy-io/react-auth";
 import { useQuery } from "@tanstack/react-query";
 import { useContext, useEffect } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
@@ -10,7 +10,12 @@ import { Button, ButtonVariant } from "./Button";
 import { Blob } from "./icons/Blob";
 
 export function Header() {
-	const { ready, authenticated, login, logout } = usePrivy();
+	const { login } = useLogin({
+		onComplete: () => {
+			console.log("login complete, call GET /me");
+		},
+	});
+	const { ready, authenticated, logout } = usePrivy();
 	const location = useLocation();
 	const { address, id } = useParams();
 	const { writer } = useContext(WriterContext);

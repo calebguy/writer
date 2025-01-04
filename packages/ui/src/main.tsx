@@ -6,13 +6,12 @@ import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import { optimism } from "viem/chains";
 import ErrorPage from "./error-page.tsx";
 import { AppLayout } from "./layouts/App.layout.tsx";
-import { Account } from "./routes/Account.tsx";
 import Home from "./routes/Home.tsx";
 import { Writer } from "./routes/Writer.tsx";
 
 import "./index.scss";
-import Entry from "./routes/Entry.tsx";
 import { Create } from "./routes/Create.tsx";
+import Entry from "./routes/Entry.tsx";
 
 const PRIVY_APP_ID = "clzekejfs079912zv96ahfm5a";
 const queryClient = new QueryClient();
@@ -31,9 +30,8 @@ function getRouteWithErrorBoundry(path: string, element: React.ReactNode) {
 
 const router = createBrowserRouter([
 	getRouteWithErrorBoundry("/", <Home />),
-	getRouteWithErrorBoundry("/account/:address", <Account />),
 	getRouteWithErrorBoundry("/writer/:address", <Writer />),
-	getRouteWithErrorBoundry("/writer/:address/:id", <Entry />),
+	getRouteWithErrorBoundry("/writer/:address/entry/:id", <Entry />),
 	getRouteWithErrorBoundry("/writer/:address/create", <Create />),
 ]);
 

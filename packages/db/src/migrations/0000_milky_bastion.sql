@@ -28,7 +28,7 @@ CREATE TABLE "syndicate_tx" (
 --> statement-breakpoint
 CREATE TABLE "writer" (
 	"address" varchar(42) PRIMARY KEY NOT NULL,
-	"storage_address" varchar(42),
+	"storage_address" varchar(42) NOT NULL,
 	"title" text NOT NULL,
 	"admin" text NOT NULL,
 	"managers" text[] NOT NULL,

@@ -1,9 +1,9 @@
-import { eq } from "drizzle-orm";
+import { arrayContains, eq, inArray } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import type { Hex } from "viem";
 import {
 	entryRelations,
-	syndicateTransactionRelations,
+	syndicateTxRelations,
 	writerRelations,
 } from "./src/relations";
 import { entry, syndicateTx, writer } from "./src/schema";
@@ -13,40 +13,53 @@ class Db {
 
 	constructor(private readonly connectionUrl: string) {
 		this.pg = drizzle({
+			casing: "snake_case",
 			connection: this.connectionUrl,
 			schema: {
 				writer,
 				entry,
-				syndicateTransaction: syndicateTx,
+				syndicateTx,
 				writerRelations,
 				entryRelations,
-				syndicateTransactionRelations,
+				syndicateTransactionRelations: syndicateTxRelations,
 			},
 		});
 	}
 
-	getWriter(address: Hex) {
-		return this.pg.query.writer.findFirst({
+	async getWritersByManager(address: Hex) {
+		const writers = await this.pg.query.writer.findMany({
+			where: arrayContains(writer.managers, [address]),
+			orderBy: (writer, { desc }) => [desc(writer.createdAt)],
+		});
+		const entries = await this.pg.query.entry.findMany({
+			where: inArray(
+				entry.storageAddress,
+				writers
+					.filter((w) => w.storageAddress !== null)
+					.map((w) => w.storageAddress) as string[],
+			),
+			orderBy: (entry, { desc }) => [desc(entry.createdAt)],
+		});
+		return writers.map((w) => ({
+			...w,
+			entries: entries.filter((e) => e.storageAddress === w.storageAddress),
+		}));
+	}
+
+	async getWriter(address: Hex) {
+		const data = await this.pg.query.writer.findFirst({
 			where: eq(writer.address, address),
-			with: {
-				entries: {
-					orderBy: (entries, { desc }) => [desc(entries.onChainId)],
-				},
-				syndicateTransaction: true,
-			},
 		});
-	}
-
-	getWriters(address: Hex) {
-		return this.pg.query.writer.findMany({
-			where: eq(writer.admin, address),
-			with: {
-				entries: {
-					orderBy: (entries, { desc }) => [desc(entries.onChainId)],
-				},
-				syndicateTransaction: true,
-			},
+		if (!data) {
+			return null;
+		}
+		const entries = await this.pg.query.entry.findMany({
+			where: eq(entry.storageAddress, address),
 		});
+		return {
+			...data,
+			entries,
+		};
 	}
 
 	createTx(tx: Omit<InsertSyndicateTransaction, "updatedAt" | "createdAt">) {
@@ -74,17 +87,6 @@ class Db {
 			.returning();
 	}
 
-	createWriter(item: InsertWriter) {
-		return this.pg
-			.insert(writer)
-			.values({
-				...item,
-				updatedAt: new Date(),
-				createdAt: new Date(),
-			})
-			.returning();
-	}
-
 	upsertWriter(item: InsertWriter) {
 		return this.pg
 			.insert(writer)
@@ -99,17 +101,6 @@ class Db {
 					...item,
 					updatedAt: new Date(),
 				},
-			})
-			.returning();
-	}
-
-	createEntry(item: InsertEntry) {
-		return this.pg
-			.insert(entry)
-			.values({
-				...item,
-				updatedAt: new Date(),
-				createdAt: new Date(),
 			})
 			.returning();
 	}
@@ -133,29 +124,22 @@ class Db {
 	}
 }
 
-// export function writerToJsonSafe({
-// 	onChainId,
-// 	...writer
-// }: Prisma.WriterGetPayload<{
-// 	include: { transaction: true; entries: true };
-// }>) {
-// 	return {
-// 		...writer,
-// 		onChainId: onChainId?.toString(),
-// 		transaction: writer.transaction
-// 			? {
-// 					...writer.transaction,
-// 					chainId: writer.transaction.chainId.toString(),
-// 					blockNumber: writer.transaction.blockNumber?.toString(),
-// 				}
-// 			: null,
-// 		entries: writer.entries.map((entry) => ({
-// 			...entry,
-// 			onChainId: entry.onChainId?.toString(),
-// 		})),
-// 	};
-// }
+export function writerToJsonSafe(data: SelectWriter) {
+	return {
+		...data,
+		createdAtBlock: data.createdAtBlock?.toString(),
+	};
+}
 
+export function entryToJsonSafe(data: typeof entry.$inferSelect) {
+	return {
+		...data,
+		onChainId: data.onChainId?.toString(),
+		createdAtBlock: data.createdAtBlock?.toString(),
+	};
+}
+
+type SelectWriter = typeof writer.$inferSelect;
 type InsertWriter = Omit<typeof writer.$inferInsert, "createdAt" | "updatedAt">;
 type InsertSyndicateTransaction = Omit<
 	typeof syndicateTx.$inferInsert,

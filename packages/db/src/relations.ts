@@ -6,22 +6,14 @@ export const writerRelations = relations(writer, ({ one, many }) => ({
 		fields: [writer.transactionId],
 		references: [syndicateTx.id],
 	}),
+}));
+
+export const syndicateTxRelations = relations(syndicateTx, ({ many }) => ({
+	writers: many(writer),
 	entries: many(entry),
 }));
 
-export const syndicateTransactionRelations = relations(
-	syndicateTx,
-	({ many }) => ({
-		writers: many(writer),
-		entries: many(entry),
-	}),
-);
-
 export const entryRelations = relations(entry, ({ one }) => ({
-	writer: one(writer, {
-		fields: [entry.writerId],
-		references: [writer.id],
-	}),
 	syndicateTransaction: one(syndicateTx, {
 		fields: [entry.transactionId],
 		references: [syndicateTx.id],

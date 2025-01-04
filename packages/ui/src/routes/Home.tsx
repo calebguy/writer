@@ -6,7 +6,7 @@ import Block from "../components/Block";
 import BlockCreateForm from "../components/BlockCreateForm";
 import { POLLING_INTERVAL } from "../constants";
 import { WriterContext } from "../layouts/App.layout";
-import { createFromFactory, getAuthor } from "../utils/api";
+import { createFromFactory, getWritersByManager } from "../utils/api";
 
 function Home() {
 	const { wallets, ready } = useWallets();
@@ -17,7 +17,7 @@ function Home() {
 	const { setWriter } = useContext(WriterContext);
 
 	const { data, refetch } = useQuery({
-		queryFn: () => getAuthor(wallet?.address as Hex),
+		queryFn: () => getWritersByManager(wallet?.address as Hex),
 		queryKey: ["get-writers", wallet?.address],
 		enabled: !!wallet?.address,
 		refetchInterval: isPolling ? POLLING_INTERVAL : false,
@@ -32,13 +32,10 @@ function Home() {
 		},
 	});
 
-	const hasWriters = useMemo(
-		() => (data ? data.writers.length > 0 : false),
-		[data],
-	);
+	const hasWriters = useMemo(() => (data ? data.length > 0 : false), [data]);
 
 	useEffect(() => {
-		const isAllOnChain = data?.writers.every((writer) => writer.onChainId);
+		const isAllOnChain = data?.every((writer) => writer.createdAtHash);
 		if (isAllOnChain) {
 			setIsPolling(false);
 		} else if (!isPolling) {
@@ -70,9 +67,9 @@ function Home() {
 
 					{wallet &&
 						hasWriters &&
-						data?.writers?.map((writer) => {
+						data?.map((writer) => {
 							let id: undefined | string = undefined;
-							if (!writer.onChainId) {
+							if (!writer.createdAtHash) {
 								id = "loading...";
 							} else if (writer.entries.length > 0) {
 								id = writer.entries.length.toString();
@@ -82,10 +79,10 @@ function Home() {
 									onClick={() => {
 										setWriter(writer);
 									}}
-									key={writer.id}
+									key={writer.address}
 									href={`/writer/${writer.address}`}
 									title={writer.title}
-									isLoading={!writer.onChainId}
+									isLoading={!writer.createdAtHash}
 									id={id}
 								/>
 							);

@@ -13,7 +13,7 @@ import {
 
 export const writer = pgTable("writer", {
 	address: varchar({ length: 42 }).primaryKey(),
-	storageAddress: varchar({ length: 42 }).unique(),
+	storageAddress: varchar({ length: 42 }).unique().notNull(),
 	title: text().notNull(),
 	admin: text().notNull(),
 	managers: text().array().notNull(),
