@@ -6,6 +6,10 @@ import { http, type Hex } from "viem";
 import { WriterAbi } from "../utils/abis/WriterAbi";
 import { env } from "./env";
 
+const writerCreatedEvent = parseAbiItem(
+	"event WriterCreated(address indexed writerAddress,address indexed storeAddress,address indexed admin,string title,address[] managers)",
+);
+
 export default createConfig({
 	networks: {
 		op: {
@@ -25,9 +29,7 @@ export default createConfig({
 			abi: WriterAbi,
 			address: factory({
 				address: env.FACTORY_ADDRESS as Hex,
-				event: parseAbiItem(
-					"event WriterCreated(uint256 indexed id,address indexed writerAddress,address indexed admin,string title,address storeAddress,address[] managers)",
-				),
+				event: writerCreatedEvent,
 				parameter: "writerAddress",
 			}),
 			startBlock: 128163471,
@@ -37,9 +39,7 @@ export default createConfig({
 			abi: WriterStorageAbi,
 			address: factory({
 				address: env.FACTORY_ADDRESS as Hex,
-				event: parseAbiItem(
-					"event WriterCreated(uint256 indexed id,address indexed writerAddress,address indexed admin,string title,address storeAddress,address[] managers)",
-				),
+				event: writerCreatedEvent,
 				parameter: "storeAddress",
 			}),
 			startBlock: 128163471,

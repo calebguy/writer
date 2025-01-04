@@ -4,6 +4,8 @@ import { getSynIdFromRawInput, syndicate } from "../utils/syndicate";
 import { db } from "./index";
 ponder.on("WriterFactory:WriterCreated", async ({ event, context }) => {
 	const { writerAddress, storeAddress, admin, managers, title } = event.args;
+	console.log(`Writer new Writer Created @ ${event.log.address}`);
+
 	const transactionId = getSynIdFromRawInput(event.transaction.input);
 	if (transactionId) {
 		const tx = await syndicate.wallet.getTransactionRequest(
@@ -34,7 +36,4 @@ ponder.on("WriterFactory:WriterCreated", async ({ event, context }) => {
 		createdAtBlockDatetime: new Date(Number(event.block.timestamp) * 1000),
 		transactionId,
 	});
-
-	console.log(`Writer new Writer Created @ ${event.log.address}`);
-	console.log("writer created", event);
 });
