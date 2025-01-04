@@ -107,8 +107,10 @@ export function Writer() {
 				onSubmit={({ value }) => handleSubmit(value).then(() => refetch())}
 			/>
 			{data?.entries.map((entry) => {
-				let id = "loading";
-				if (entry.createdAtBlockDatetime) {
+				let id: undefined | string = undefined;
+				if (!entry.createdAtHash) {
+					id = "loading...";
+				} else if (entry.createdAtBlockDatetime) {
 					id = format(new Date(entry.createdAtBlockDatetime), "MM-dd-yyyy");
 				} else {
 					id = format(new Date(entry.createdAt), "MM/dd/yyyy");

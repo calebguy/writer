@@ -75,7 +75,7 @@ const api = app
 
 			const data = await db.upsertEntry({
 				exists: true,
-				storageAddress: contractAddress,
+				storageAddress: writer.storageAddress,
 				transactionId,
 				content: chunkContent,
 			});

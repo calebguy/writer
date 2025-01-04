@@ -115,7 +115,9 @@ class Db {
 				createdAt: new Date(),
 			})
 			.onConflictDoUpdate({
-				target: [entry.storageAddress, entry.onChainId],
+				target: item.transactionId
+					? [entry.transactionId]
+					: [entry.storageAddress, entry.onChainId],
 				set: {
 					...item,
 					updatedAt: new Date(),
