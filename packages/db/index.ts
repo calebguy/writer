@@ -54,7 +54,8 @@ class Db {
 			return null;
 		}
 		const entries = await this.pg.query.entry.findMany({
-			where: eq(entry.storageAddress, address),
+			where: eq(entry.storageAddress, data.storageAddress),
+			orderBy: (entry, { desc }) => [desc(entry.createdAt)],
 		});
 		return {
 			...data,
@@ -114,7 +115,7 @@ class Db {
 				createdAt: new Date(),
 			})
 			.onConflictDoUpdate({
-				target: [entry.onChainId],
+				target: [entry.storageAddress, entry.onChainId],
 				set: {
 					...item,
 					updatedAt: new Date(),
