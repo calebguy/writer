@@ -2,6 +2,7 @@ import BulletList from "@tiptap/extension-bullet-list";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import Document from "@tiptap/extension-document";
 import Heading from "@tiptap/extension-heading";
+import Image from "@tiptap/extension-image";
 import ListItem from "@tiptap/extension-list-item";
 import Paragraph from "@tiptap/extension-paragraph";
 
@@ -48,6 +49,10 @@ export function Editor({
 			Markdown,
 			BulletList,
 			ListItem,
+			Image.configure({
+				allowBase64: true,
+				inline: true,
+			}),
 			CodeBlockLowlight.configure({ lowlight }),
 			Heading.configure({ levels: [1, 2, 3] }),
 		],
