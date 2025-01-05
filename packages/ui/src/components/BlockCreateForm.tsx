@@ -3,11 +3,12 @@ import { useRef } from "react";
 import { useState } from "react";
 
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { Link, type To } from "react-router-dom";
 import type { BlockCreateInput } from "../interfaces";
 import { cn } from "../utils/cn";
 import { useFirstWallet, useIsMac } from "../utils/hooks";
+import { Editor } from "./Editor";
 import { Arrow } from "./icons/Arrow";
 import { Blob } from "./icons/Blob";
 
@@ -21,6 +22,7 @@ interface CreateBucketFormProps {
 	hoverLabel?: string;
 	activeLabel?: string;
 	expandTo?: To;
+	markdown?: boolean;
 }
 
 export default function BlockCreateForm({
@@ -29,6 +31,7 @@ export default function BlockCreateForm({
 	onSubmit,
 	isLoading,
 	expandTo,
+	markdown,
 }: CreateBucketFormProps) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isActive, setIsActive] = useState(false);
@@ -83,6 +86,7 @@ export default function BlockCreateForm({
 							setIsSubmitting(false);
 						}}
 						onCancel={() => setIsActive(false)}
+						markdown={markdown}
 					/>
 				)}
 			</div>
@@ -97,6 +101,7 @@ interface CreateFormProps {
 	isLoading: boolean;
 	expand?: boolean;
 	expandTo?: To;
+	markdown?: boolean;
 }
 
 function CreateForm({
@@ -105,11 +110,12 @@ function CreateForm({
 	onSubmit,
 	isLoading,
 	expandTo,
+	markdown,
 }: CreateFormProps) {
 	const isMac = useIsMac();
 	const address = useFirstWallet()?.address;
 	const inputName = "value";
-	const { register, handleSubmit, setFocus, reset, getValues } =
+	const { register, handleSubmit, setFocus, reset, getValues, control } =
 		useForm<BlockCreateInput>();
 	useEffect(() => {
 		const handleKeyDown = (event: KeyboardEvent) => {
@@ -140,15 +146,33 @@ function CreateForm({
 	}, [setFocus]);
 
 	return (
-		<form className="w-full h-full relative">
-			<textarea
-				disabled={!address || isLoading}
-				className={cn(
-					"w-full h-full text-base bg-neutral-900 disabled:opacity-30 placeholder:text-neutral-700 px-3 py-2 outline-none border-[1px] border-dashed border-lime resize-none",
-				)}
-				placeholder={placeholder}
-				{...register(inputName)}
-			/>
+		<form className="w-full h-full relative flex flex-col">
+			{!markdown && (
+				<textarea
+					disabled={!address || isLoading}
+					className={cn(
+						"w-full h-full text-base bg-neutral-900 disabled:opacity-30 placeholder:text-neutral-700 px-3 py-2 outline-none border-[1px] border-dashed border-lime resize-none",
+					)}
+					placeholder={placeholder}
+					{...register(inputName)}
+				/>
+			)}
+			{markdown && (
+				<Controller
+					control={control}
+					name={inputName}
+					render={({ field }) => (
+						<Editor
+							// @note TODO possibly support forwarding refs here
+							// {...field}
+							onChange={(editor) =>
+								field.onChange(editor.storage.markdown.getMarkdown())
+							}
+							className="z-10 overflow-y-auto border-[1px] border-dashed focus:border-lime border-transparent"
+						/>
+					)}
+				/>
+			)}
 			{isLoading && (
 				<div className="absolute inset-0 bg-lime text-black flex flex-col items-center justify-between py-2 px-3">
 					<div className="text-[#b5db29] w-full text-left">

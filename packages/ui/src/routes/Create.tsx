@@ -32,7 +32,10 @@ export function Create() {
 
 	return (
 		<div className="flex-grow flex flex-col">
-			<Editor initialContent={location.state?.value} />
+			<Editor
+				initialContent={location.state?.value}
+				className="hover:bg-neutral-900 focus:outline-none"
+			/>
 		</div>
 	);
 }

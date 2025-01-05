@@ -105,6 +105,7 @@ export function Writer() {
 				hoverLabel={`Write in ${data?.title}`}
 				activeLabel={`Write in ${data?.title}`}
 				onSubmit={({ value }) => handleSubmit(value).then(() => refetch())}
+				markdown
 			/>
 			{data?.entries.map((entry) => {
 				let id: undefined | string = undefined;

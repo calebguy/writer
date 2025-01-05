@@ -2,6 +2,7 @@ import { type MouseEventHandler, useCallback } from "react";
 import { cn } from "../utils/cn";
 
 import { Link } from "react-router-dom";
+import { Editor } from "./Editor";
 
 interface BlockProps {
 	title: string;
@@ -19,7 +20,7 @@ export default function Block({
 	isLoading,
 }: BlockProps) {
 	const className = cn(
-		"border-0 border-neutral-700 px-3 py-2 bg-neutral-900 aspect-square flex flex-col justify-between overflow-auto",
+		"border-0 border-neutral-700 bg-neutral-900 aspect-square flex flex-col justify-between overflow-auto",
 		{
 			"hover:cursor-not-allowed": isLoading,
 			"hover:cursor-zoom-in": !isLoading,
@@ -29,10 +30,10 @@ export default function Block({
 	const renderChildren = useCallback(() => {
 		return (
 			<>
-				<div className="text-left text-neutral-200 whitespace-pre text-wrap overflow-auto">
-					{title}
+				<Editor initialContent={title} disabled />
+				<div className="text-right text-neutral-600 mt-1 text-sm px-2 py-1">
+					{id}
 				</div>
-				<div className="text-right text-neutral-600 mt-1 text-sm">{id}</div>
 			</>
 		);
 	}, [title, id]);
