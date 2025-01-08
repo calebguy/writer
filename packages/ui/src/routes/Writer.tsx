@@ -1,17 +1,16 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useContext, useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { type Hex, getAddress } from "viem";
 import Block from "../components/Block";
-import BlockCreateForm from "../components/BlockCreateForm";
+import BlockForm from "../components/BlockForm";
 import { POLLING_INTERVAL, TARGET_CHAIN_ID } from "../constants";
 import { WriterContext } from "../layouts/App.layout";
 import { createWithChunk, getWriter } from "../utils/api";
 import { useFirstWallet } from "../utils/hooks";
 
 export function Writer() {
-	const navigate = useNavigate();
 	const { address } = useParams();
 	const { setWriter } = useContext(WriterContext);
 	const wallet = useFirstWallet();
@@ -99,7 +98,7 @@ export function Writer() {
 				gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
 			}}
 		>
-			<BlockCreateForm
+			<BlockForm
 				expand
 				isLoading={isPending}
 				placeholder={`Write in ${data?.title}`}
@@ -122,7 +121,7 @@ export function Writer() {
 				return (
 					<Block
 						key={entry.id}
-						href={`/writer/${data.address}/entry/${entry.onChainId}`}
+						href={`/writer/${data.address}/${entry.onChainId}`}
 						isLoading={!entry.onChainId}
 						title={title}
 						id={id}

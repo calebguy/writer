@@ -31,7 +31,7 @@ function getRouteWithErrorBoundry(path: string, element: React.ReactNode) {
 const router = createBrowserRouter([
 	getRouteWithErrorBoundry("/", <Home />),
 	getRouteWithErrorBoundry("/writer/:address", <Writer />),
-	getRouteWithErrorBoundry("/writer/:address/entry/:id", <Entry />),
+	getRouteWithErrorBoundry("/writer/:address/:id", <Entry />),
 ]);
 
 // biome-ignore lint/style/noNonNullAssertion: 🫚
@@ -41,7 +41,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 			<PrivyProvider
 				appId={PRIVY_APP_ID}
 				config={{
-					loginMethods: ["sms"],
+					loginMethods: ["sms", "email"],
 					defaultChain: optimism,
 					supportedChains: [optimism],
 					appearance: {

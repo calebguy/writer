@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useContext, useEffect, useMemo, useState } from "react";
 import type { Hex } from "viem";
 import Block from "../components/Block";
-import BlockCreateForm from "../components/BlockCreateForm";
+import BlockForm from "../components/BlockForm";
 import { POLLING_INTERVAL } from "../constants";
 import { WriterContext } from "../layouts/App.layout";
 import { createFromFactory, getWritersByManager } from "../utils/api";
@@ -13,7 +13,6 @@ function Home() {
 	const wallet = wallets[0];
 	const address = wallet?.address;
 	const [isPolling, setIsPolling] = useState(false);
-
 	const { setWriter } = useContext(WriterContext);
 
 	const { data, refetch } = useQuery({
@@ -52,9 +51,9 @@ function Home() {
 						gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
 					}}
 				>
-					<BlockCreateForm
-						isLoading={isPending}
+					<BlockForm
 						placeholder="Create a Writer"
+						isLoading={isPending}
 						onSubmit={(data) =>
 							mutateAsync({
 								title: data.value,

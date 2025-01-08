@@ -137,6 +137,10 @@ html, body, #root {
 }
 
 .tiptap {
+  ol.tight {
+    margin: 0
+  }
+
   h1 {
     font-size: 2rem;
   }
