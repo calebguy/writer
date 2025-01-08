@@ -149,6 +149,14 @@ html, body, #root {
     font-size: 1.25rem;
   }
 
+  p.is-editor-empty:first-child::before {
+    color: theme('colors.neutral.700');
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+  }
+
 
   /* Code styling */
   .hljs-comment,
@@ -203,9 +211,13 @@ html, body, #root {
     font-weight: 700;
   }
 
+  // Code block styling
   pre {
-    background-color: theme('colors.neutral.900');
-    padding: 0.5rem;
+    background-color: transparent;
+    font-size: 0.8rem;
+    // TODO: maybe padding here??
+    // padding-left: 0.5rem;
+    // padding-right: 0.5rem;
   }
 
   /* List styles */

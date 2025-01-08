@@ -100,12 +100,10 @@ export function Writer() {
 			}}
 		>
 			<BlockCreateForm
-				expandTo={`/writer/${data?.address}/create`}
+				expand
 				isLoading={isPending}
-				hoverLabel={`Write in ${data?.title}`}
-				activeLabel={`Write in ${data?.title}`}
+				placeholder={`Write in ${data?.title}`}
 				onSubmit={({ value }) => handleSubmit(value).then(() => refetch())}
-				markdown
 			/>
 			{data?.entries.map((entry) => {
 				let id: undefined | string = undefined;

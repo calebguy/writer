@@ -9,7 +9,7 @@ import { WriterContext } from "../layouts/App.layout";
 import { createFromFactory, getWritersByManager } from "../utils/api";
 
 function Home() {
-	const { wallets, ready } = useWallets();
+	const { wallets } = useWallets();
 	const wallet = wallets[0];
 	const address = wallet?.address;
 	const [isPolling, setIsPolling] = useState(false);
@@ -54,8 +54,7 @@ function Home() {
 				>
 					<BlockCreateForm
 						isLoading={isPending}
-						hoverLabel="Create a Writer"
-						activeLabel="Create a Writer"
+						placeholder="Create a Writer"
 						onSubmit={(data) =>
 							mutateAsync({
 								title: data.value,
@@ -87,11 +86,6 @@ function Home() {
 								/>
 							);
 						})}
-				</div>
-			)}
-			{!address && ready && (
-				<div className="text-xl text-lime mt-8 grow flex justify-center items-center">
-					<div>CLICK THE BLOB</div>
 				</div>
 			)}
 		</>

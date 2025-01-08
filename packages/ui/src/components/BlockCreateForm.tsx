@@ -4,10 +4,9 @@ import { useState } from "react";
 
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { Link, type To } from "react-router-dom";
 import type { BlockCreateInput } from "../interfaces";
 import { cn } from "../utils/cn";
-import { useFirstWallet, useIsMac } from "../utils/hooks";
+import { useIsMac } from "../utils/hooks";
 import { Editor } from "./Editor";
 import { Arrow } from "./icons/Arrow";
 import { Blob } from "./icons/Blob";
@@ -19,30 +18,26 @@ import { Blob } from "./icons/Blob";
 interface CreateBucketFormProps {
 	isLoading: boolean;
 	onSubmit: (data: BlockCreateInput) => Promise<unknown>;
-	hoverLabel?: string;
-	activeLabel?: string;
-	expandTo?: To;
-	markdown?: boolean;
+	placeholder?: string;
+	expand?: boolean;
 }
 
 export default function BlockCreateForm({
-	hoverLabel,
-	activeLabel,
+	placeholder,
 	onSubmit,
 	isLoading,
-	expandTo,
-	markdown,
+	expand,
 }: CreateBucketFormProps) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [isActive, setIsActive] = useState(false);
+	const [hasFocus, setFocus] = useState(false);
 	const ref = useRef<HTMLInputElement>(null);
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
 			if (ref.current) {
 				if (!ref.current.contains(event.target as Node)) {
-					setIsActive(false);
+					setFocus(false);
 				} else {
-					setIsActive(true);
+					setFocus(true);
 				}
 			}
 		};
@@ -56,37 +51,36 @@ export default function BlockCreateForm({
 		<div
 			ref={ref}
 			className={cn("aspect-square border border-neutral-900 group", {
-				"bg-neutral-900": isActive,
-				"hover:bg-neutral-900 hover:cursor-text bg-transparent": !isActive,
+				"bg-neutral-900": hasFocus,
+				"hover:bg-neutral-900 hover:cursor-text bg-transparent": !hasFocus,
 			})}
 		>
 			<div
 				className={cn("flex justify-center items-center h-full", {
-					"items-start justify-start": isActive,
-					"group-hover:items-start group-hover:justify-start px-3 py-2 border-[1px] border-transparent":
-						!isActive,
+					"items-start justify-start": hasFocus,
+					"group-hover:items-start group-hover:justify-start p-2 border-[1px] border-transparent":
+						!hasFocus,
 				})}
 			>
-				{!isActive && (
+				{!hasFocus && (
 					<>
 						<div className="text-2xl text-lime group-hover:hidden">+</div>
-						<div className="text-base text-neutral-700 hidden group-hover:block text-left">
-							{hoverLabel}
+						<div className="text-base text-neutral-700 hidden group-hover:block text-left break-words">
+							{placeholder}
 						</div>
 					</>
 				)}
-				{isActive && (
-					<CreateForm
-						expandTo={expandTo}
+				{hasFocus && (
+					<Form
+						expand={expand}
 						isLoading={isLoading || isSubmitting}
-						placeholder={activeLabel}
+						placeholder={placeholder}
 						onSubmit={async (data) => {
 							setIsSubmitting(true);
-							await onSubmit(data).then(() => setIsActive(false));
+							await onSubmit(data).then(() => setFocus(false));
 							setIsSubmitting(false);
 						}}
-						onCancel={() => setIsActive(false)}
-						markdown={markdown}
+						onCancel={() => setFocus(false)}
 					/>
 				)}
 			</div>
@@ -94,26 +88,23 @@ export default function BlockCreateForm({
 	);
 }
 
-interface CreateFormProps {
+interface FormProps {
 	onSubmit: (data: BlockCreateInput) => Promise<unknown>;
 	onCancel: () => void;
 	placeholder?: string;
 	isLoading: boolean;
 	expand?: boolean;
-	expandTo?: To;
 	markdown?: boolean;
 }
 
-function CreateForm({
+function Form({
 	onCancel,
-	placeholder,
 	onSubmit,
 	isLoading,
-	expandTo,
-	markdown,
-}: CreateFormProps) {
+	expand,
+	placeholder,
+}: FormProps) {
 	const isMac = useIsMac();
-	const address = useFirstWallet()?.address;
 	const inputName = "value";
 	const { register, handleSubmit, setFocus, reset, getValues, control } =
 		useForm<BlockCreateInput>();
@@ -122,11 +113,11 @@ function CreateForm({
 			// Submit on cmd + enter
 			if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
 				event.preventDefault();
-				handleSubmit((data) => {
+				handleSubmit((data) =>
 					onSubmit(data).then(() => {
 						reset();
-					});
-				})();
+					}),
+				)();
 			} else if (event.key === "Escape") {
 				onCancel();
 			}
@@ -147,32 +138,21 @@ function CreateForm({
 
 	return (
 		<form className="w-full h-full relative flex flex-col">
-			{!markdown && (
-				<textarea
-					disabled={!address || isLoading}
-					className={cn(
-						"w-full h-full text-base bg-neutral-900 disabled:opacity-30 placeholder:text-neutral-700 px-3 py-2 outline-none border-[1px] border-dashed border-lime resize-none",
-					)}
-					placeholder={placeholder}
-					{...register(inputName)}
-				/>
-			)}
-			{markdown && (
-				<Controller
-					control={control}
-					name={inputName}
-					render={({ field }) => (
-						<Editor
-							// @note TODO possibly support forwarding refs here
-							// {...field}
-							onChange={(editor) =>
-								field.onChange(editor.storage.markdown.getMarkdown())
-							}
-							className="z-10 overflow-y-auto border-[1px] border-dashed focus:border-lime border-transparent"
-						/>
-					)}
-				/>
-			)}
+			<Controller
+				control={control}
+				name={inputName}
+				render={({ field }) => (
+					<Editor
+						// @note TODO possibly support forwarding refs here
+						// {...field}
+						placeholder={placeholder}
+						onChange={(editor) =>
+							field.onChange(editor.storage.markdown.getMarkdown())
+						}
+						className="z-10 overflow-y-auto border-[1px] border-dashed focus:border-lime border-transparent"
+					/>
+				)}
+			/>
 			{isLoading && (
 				<div className="absolute inset-0 bg-lime text-black flex flex-col items-center justify-between py-2 px-3">
 					<div className="text-[#b5db29] w-full text-left">
@@ -189,17 +169,11 @@ function CreateForm({
 						<div>{isMac ? "⌘" : "ctrl"} + ↵</div>
 						<div>to create</div>
 					</div>
-					{expandTo && (
-						<div className="absolute bottom-2 right-2 flex justify-end">
-							<Link
-								to={expandTo}
-								state={{
-									value: getValues(inputName),
-								}}
-								className="text-white hover:text-lime"
-							>
+					{expand && (
+						<div className="absolute bottom-2 right-2 flex justify-end z-20">
+							<button type="button" className="hover:text-lime">
 								<Arrow title="expand" className="w-4 h-4 rotate-90" />
-							</Link>
+							</button>
 						</div>
 					)}
 				</>

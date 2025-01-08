@@ -129,7 +129,7 @@ contract WriterStorage is AccessControl {
                 content = string(abi.encodePacked(content, " ", chunk));
             }
         }
-        return content;
+        return content;x
     }
 
     function _create(uint256 totalChunks, address author) internal returns (uint256, Entry memory) {

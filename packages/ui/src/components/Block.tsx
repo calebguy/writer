@@ -22,7 +22,7 @@ export default function Block({
 	const className = cn(
 		"border-0 border-neutral-700 bg-neutral-900 aspect-square flex flex-col justify-between overflow-auto",
 		{
-			"hover:cursor-not-allowed": isLoading,
+			"hover:cursor-wait": isLoading,
 			"hover:cursor-zoom-in": !isLoading,
 		},
 	);
