@@ -29,12 +29,10 @@ export default function Block({
 
 	const renderChildren = useCallback(() => {
 		return (
-			<>
-				<Editor initialContent={title} disabled />
-				<div className="text-right text-neutral-600 mt-1 text-sm px-2 py-1">
-					{id}
-				</div>
-			</>
+			<div className="p-2 flex flex-col grow h-1">
+				<Editor content={title} disabled />
+				<div className="text-right text-neutral-600 text-sm">{id}</div>
+			</div>
 		);
 	}, [title, id]);
 	return href && !isLoading ? (

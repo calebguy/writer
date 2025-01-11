@@ -23,14 +23,13 @@ import {
 	useEditor,
 } from "@tiptap/react";
 import { all, createLowlight } from "lowlight";
-import { useEffect } from "react";
 import { Markdown } from "tiptap-markdown";
 import { cn } from "../utils/cn";
 
 const lowlight = createLowlight(all);
 
 interface EditorProps {
-	initialContent?: string | null;
+	content?: string | null;
 	onChange?: (editor: TiptapEditor) => void;
 	disabled?: boolean;
 	className?: string;
@@ -38,7 +37,7 @@ interface EditorProps {
 }
 
 export function Editor({
-	initialContent: content,
+	content,
 	onChange,
 	disabled,
 	className,
@@ -49,7 +48,7 @@ export function Editor({
 		editorProps: {
 			attributes: {
 				class: cn(
-					"grow flex flex-col p-2 h-full caret-lime overflow-y-auto",
+					"grow flex flex-col h-full caret-lime overflow-y-auto",
 					className,
 				),
 			},
@@ -98,14 +97,9 @@ export function Editor({
 		content,
 	});
 
-	useEffect(() => {
-		if (editor) {
-			editor.commands.focus();
-		}
-	}, [editor]);
-
 	return (
 		<EditorContent
+			placeholder={placeholder}
 			disabled={disabled}
 			editor={editor}
 			className="grow flex flex-col overflow-auto"

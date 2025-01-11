@@ -2,13 +2,14 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { type Hex, getAddress } from "viem";
+import type { Hex } from "viem";
 import Block from "../components/Block";
 import BlockForm from "../components/BlockForm";
-import { POLLING_INTERVAL, TARGET_CHAIN_ID } from "../constants";
+import { POLLING_INTERVAL } from "../constants";
 import { WriterContext } from "../layouts/App.layout";
 import { createWithChunk, getWriter } from "../utils/api";
 import { useFirstWallet } from "../utils/hooks";
+import { signCreateWithChunk } from "../utils/signer";
 
 export function Writer() {
 	const { address } = useParams();
@@ -21,15 +22,16 @@ export function Writer() {
 		enabled: !!address,
 		refetchInterval: isPolling ? POLLING_INTERVAL : false,
 	});
+	const { mutateAsync, isPending } = useMutation({
+		mutationFn: createWithChunk,
+		mutationKey: ["create-with-chunk", address],
+	});
+
 	useEffect(() => {
 		if (data) {
 			setWriter(data);
 		}
 	}, [data, setWriter]);
-	const { mutateAsync, isPending } = useMutation({
-		mutationFn: createWithChunk,
-		mutationKey: ["create-with-chunk", address],
-	});
 
 	useEffect(() => {
 		const isAllOnChain = data?.entries.every((e) => e.onChainId);
@@ -39,6 +41,7 @@ export function Writer() {
 			setIsPolling(true);
 		}
 	}, [data, isPolling]);
+
 	const handleSubmit = async (content: string) => {
 		if (!address) {
 			console.debug("Could not get contract address when submitting form");
@@ -50,44 +53,12 @@ export function Writer() {
 			return;
 		}
 
-		const provider = await wallet.getEthereumProvider();
-		const method = "eth_signTypedData_v4";
-		// To avoid signature collision, a random nonce is used
-		const nonce = Math.floor(Math.random() * 1000000000000);
-		const chunkCount = 1;
-		const chunkContent = content;
-		const payload = {
-			domain: {
-				name: "Writer",
-				version: "1",
-				chainId: TARGET_CHAIN_ID,
-				verifyingContract: getAddress(address),
-			},
-			message: {
-				nonce,
-				chunkCount,
-				chunkContent,
-			},
-			primaryType: "CreateWithChunk",
-			types: {
-				EIP712Domain: [
-					{ name: "name", type: "string" },
-					{ name: "version", type: "string" },
-					{ name: "chainId", type: "uint256" },
-					{ name: "verifyingContract", type: "address" },
-				],
-				CreateWithChunk: [
-					{ name: "nonce", type: "uint256" },
-					{ name: "chunkCount", type: "uint256" },
-					{ name: "chunkContent", type: "string" },
-				],
-			},
-		};
+		const { signature, nonce, chunkCount, chunkContent } =
+			await signCreateWithChunk(wallet, {
+				content,
+				address,
+			});
 
-		const signature = await provider.request({
-			method,
-			params: [wallet.address, JSON.stringify(payload)],
-		});
 		return mutateAsync({ address, signature, nonce, chunkCount, chunkContent });
 	};
 
@@ -101,7 +72,7 @@ export function Writer() {
 			<BlockForm
 				expand
 				isLoading={isPending}
-				placeholder={`Write in ${data?.title}`}
+				placeholder={data?.title}
 				onSubmit={({ value }) => handleSubmit(value).then(() => refetch())}
 			/>
 			{data?.entries.map((entry) => {

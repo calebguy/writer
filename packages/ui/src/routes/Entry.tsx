@@ -14,7 +14,7 @@ export default function Entry() {
 	const entry = data?.entries.find((e) => e.onChainId === id);
 	return (
 		<div className="flex-grow flex flex-col">
-			<Editor initialContent={entry?.content} disabled />
+			<Editor content={entry?.content} disabled />
 		</div>
 	);
 }

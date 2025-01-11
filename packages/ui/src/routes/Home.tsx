@@ -43,7 +43,7 @@ function Home() {
 	}, [data, isPolling]);
 
 	return (
-		<>
+		<div>
 			{address && (
 				<div
 					className="grid gap-2 gap-y-4"
@@ -87,7 +87,7 @@ function Home() {
 						})}
 				</div>
 			)}
-		</>
+		</div>
 	);
 }
 

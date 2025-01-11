@@ -62,7 +62,8 @@ export default function BlockForm({
 					<>
 						<div className="text-2xl text-lime group-hover:hidden">+</div>
 						<div className="text-base text-neutral-700 hidden group-hover:block text-left break-words">
-							{placeholder}
+							{/* wait to render placeholder until it is set as editor will not rerender */}
+							{placeholder && <Editor content={placeholder} className="p-0" />}
 						</div>
 					</>
 				)}
@@ -136,8 +137,8 @@ function Form({
 		<form className="w-full h-full relative flex flex-col">
 			{isLoading && (
 				<div className="absolute inset-0 bg-lime text-black flex flex-col items-center justify-between">
-					<div className="text-[#b5db29] w-full text-left break-words">
-						<Editor initialContent={getValues(inputName)} />
+					<div className="text-[#b5db29] w-full text-left break-words p-2 overflow-hidden">
+						<Editor content={getValues(inputName)} />
 					</div>
 					<div className="text-sm absolute inset-0 flex justify-center items-center">
 						<Blob className="w-6 h-6 rotating" />
@@ -157,7 +158,7 @@ function Form({
 								onChange={(editor) =>
 									field.onChange(editor.storage.markdown.getMarkdown())
 								}
-								className="z-10 overflow-y-auto border-[1px] border-dashed focus:border-lime border-transparent"
+								className="z-10 overflow-y-auto border-[1px] border-dashed focus:border-lime border-transparent p-2"
 							/>
 						)}
 					/>
