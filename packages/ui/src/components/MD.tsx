@@ -2,7 +2,7 @@ import ReactMarkdown from "react-markdown";
 import { cn } from "../utils/cn";
 
 interface MDProps {
-	children: string;
+	children?: string;
 	className?: string;
 }
 

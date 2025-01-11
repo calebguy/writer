@@ -53,18 +53,20 @@ export default function BlockForm({
 			})}
 		>
 			<div
-				className={cn("flex justify-center items-center h-full", {
-					"items-start justify-start": hasFocus,
-					"group-hover:items-start group-hover:justify-start p-2 border-[1px] border-transparent":
-						!hasFocus,
-				})}
+				className={cn(
+					"flex justify-center items-center h-full overflow-hidden",
+					{
+						"items-start justify-start": hasFocus,
+						"group-hover:items-start group-hover:justify-start p-2 border-[1px] border-transparent":
+							!hasFocus,
+					},
+				)}
 			>
 				{!hasFocus && (
 					<>
 						<div className="text-2xl text-lime group-hover:hidden">+</div>
 						<div className="text-base text-neutral-700 hidden group-hover:block text-left break-words">
-							{/* wait to render placeholder until it is set as editor will not rerender */}
-							{placeholder && <Editor content={placeholder} className="p-0" />}
+							<MD>{placeholder}</MD>
 						</div>
 					</>
 				)}
@@ -72,7 +74,6 @@ export default function BlockForm({
 					<Form
 						expand={expand}
 						isLoading={isLoading || isSubmitting}
-						placeholder={placeholder}
 						onSubmit={async (data) => {
 							setIsSubmitting(true);
 							await onSubmit(data).then(() => setFocus(false));
@@ -89,19 +90,12 @@ export default function BlockForm({
 interface FormProps {
 	onSubmit: (data: BlockCreateInput) => Promise<unknown>;
 	onCancel: () => void;
-	placeholder?: string;
 	isLoading: boolean;
 	expand?: boolean;
 	markdown?: boolean;
 }
 
-function Form({
-	onCancel,
-	onSubmit,
-	isLoading,
-	expand,
-	placeholder,
-}: FormProps) {
+function Form({ onCancel, onSubmit, isLoading, expand }: FormProps) {
 	const isMac = useIsMac();
 	const inputName = "value";
 	const { handleSubmit, setFocus, reset, getValues, control } =
@@ -155,7 +149,6 @@ function Form({
 							<Editor
 								// @note TODO possibly support forwarding refs here
 								// {...field}
-								placeholder={placeholder}
 								onChange={(editor) =>
 									field.onChange(editor.storage.markdown.getMarkdown())
 								}

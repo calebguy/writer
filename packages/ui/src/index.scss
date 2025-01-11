@@ -137,6 +137,11 @@ html, body, #root {
 }
 
 .md, .tiptap {
+  a {
+    text-decoration: underline;
+    color: theme('colors.lime');
+  }
+
    h1 {
     font-size: 2rem;
   }
