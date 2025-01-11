@@ -8,6 +8,7 @@ import type { BlockCreateInput } from "../interfaces";
 import { cn } from "../utils/cn";
 import { useIsMac } from "../utils/hooks";
 import { Editor } from "./Editor";
+import { MD } from "./MD";
 import { Arrow } from "./icons/Arrow";
 import { Blob } from "./icons/Blob";
 
@@ -138,7 +139,7 @@ function Form({
 			{isLoading && (
 				<div className="absolute inset-0 bg-lime text-black flex flex-col items-center justify-between">
 					<div className="text-[#b5db29] w-full text-left break-words p-2 overflow-hidden">
-						<Editor content={getValues(inputName)} />
+						<MD>{getValues(inputName)}</MD>
 					</div>
 					<div className="text-sm absolute inset-0 flex justify-center items-center">
 						<Blob className="w-6 h-6 rotating" />

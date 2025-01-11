@@ -7,6 +7,7 @@ import { WriterContext } from "../layouts/App.layout";
 import { getWriter } from "../utils/api";
 import { cn } from "../utils/cn";
 import { Button, ButtonVariant } from "./Button";
+import { MD } from "./MD";
 import { Blob } from "./icons/Blob";
 
 export function Header() {
@@ -42,7 +43,7 @@ export function Header() {
 		title = "Writer";
 	} else if (writer) {
 		if (id) {
-			title = `${writer.title} - ${id}`;
+			title = `${writer.title}, Entry: ${id}`;
 		} else {
 			title = writer.title;
 		}
@@ -69,7 +70,7 @@ export function Header() {
 							},
 						)}
 					>
-						{title}
+						<MD>{title}</MD>
 					</Link>
 				</div>
 				<Button

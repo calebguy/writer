@@ -72,7 +72,7 @@ export function Writer() {
 			<BlockForm
 				expand
 				isLoading={isPending}
-				placeholder={data?.title}
+				placeholder={data?.title ? `Write in ${data?.title}` : undefined}
 				onSubmit={({ value }) => handleSubmit(value).then(() => refetch())}
 			/>
 			{data?.entries.map((entry) => {

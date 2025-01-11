@@ -136,12 +136,8 @@ html, body, #root {
   }
 }
 
-.tiptap {
-  ol.tight {
-    margin: 0
-  }
-
-  h1 {
+.md, .tiptap {
+   h1 {
     font-size: 2rem;
   }
 
@@ -151,6 +147,41 @@ html, body, #root {
 
   h3 {
     font-size: 1.25rem;
+  }
+
+  // Code block styling
+  pre {
+    background-color: transparent;
+    font-size: 0.8rem;
+    // TODO: maybe padding here??
+    // padding-left: 0.5rem;
+    // padding-right: 0.5rem;
+  }
+
+  /* List styles */
+  ul, 
+  ol {
+    padding: 0 1rem;
+    margin: 1rem 1rem 1rem 0.4rem;
+  }
+
+  ul {
+    list-style-type: disc;
+  }
+
+  ol {
+    list-style-type: decimal;
+  }
+
+  li p {
+    margin-top: 0.25em;
+    margin-bottom: 0.25em;
+  }
+}
+
+.tiptap {
+  ol.tight {
+    margin: 0
   }
 
   p.is-editor-empty:first-child::before {
@@ -213,34 +244,5 @@ html, body, #root {
 
   .hljs-strong {
     font-weight: 700;
-  }
-
-  // Code block styling
-  pre {
-    background-color: transparent;
-    font-size: 0.8rem;
-    // TODO: maybe padding here??
-    // padding-left: 0.5rem;
-    // padding-right: 0.5rem;
-  }
-
-  /* List styles */
-  ul, 
-  ol {
-    padding: 0 1rem;
-    margin: 1rem 1rem 1rem 0.4rem;
-  }
-
-  ul {
-    list-style-type: disc;
-  }
-
-  ol {
-    list-style-type: decimal;
-  }
-
-  li p {
-    margin-top: 0.25em;
-    margin-bottom: 0.25em;
   }
 }

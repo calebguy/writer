@@ -2,7 +2,7 @@ import { type MouseEventHandler, useCallback } from "react";
 import { cn } from "../utils/cn";
 
 import { Link } from "react-router-dom";
-import { Editor } from "./Editor";
+import { MD } from "./MD";
 
 interface BlockProps {
 	title: string;
@@ -30,7 +30,7 @@ export default function Block({
 	const renderChildren = useCallback(() => {
 		return (
 			<div className="p-2 flex flex-col grow h-1">
-				<Editor content={title} disabled />
+				<MD className="grow">{title}</MD>
 				<div className="text-right text-neutral-600 text-sm">{id}</div>
 			</div>
 		);
