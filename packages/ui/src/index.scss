@@ -182,21 +182,6 @@ html, body, #root {
     margin-top: 0.25em;
     margin-bottom: 0.25em;
   }
-}
-
-.tiptap {
-  ol.tight {
-    margin: 0
-  }
-
-  p.is-editor-empty:first-child::before {
-    color: theme('colors.neutral.700');
-    content: attr(data-placeholder);
-    float: left;
-    height: 0;
-    pointer-events: none;
-  }
-
 
   /* Code styling */
   .hljs-comment,
@@ -249,5 +234,19 @@ html, body, #root {
 
   .hljs-strong {
     font-weight: 700;
+  }
+}
+
+.tiptap {
+  ol.tight {
+    margin: 0
+  }
+
+  p.is-editor-empty:first-child::before {
+    color: theme('colors.neutral.700');
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
   }
 }

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import type { Hex } from "viem";
-import { Editor } from "../components/Editor";
+import { MD } from "../components/MD";
 import { getWriter } from "../utils/api";
 
 export default function Entry() {
@@ -14,7 +14,7 @@ export default function Entry() {
 	const entry = data?.entries.find((e) => e.onChainId === id);
 	return (
 		<div className="flex-grow flex flex-col">
-			<Editor content={entry?.content} disabled />
+			<MD>{entry?.content}</MD>
 		</div>
 	);
 }

@@ -66,7 +66,7 @@ export default function BlockForm({
 					<>
 						<div className="text-2xl text-lime group-hover:hidden">+</div>
 						<div className="text-base text-neutral-700 hidden group-hover:block text-left break-words">
-							<MD>{placeholder}</MD>
+							<MD className="pointer-events-none">{placeholder}</MD>
 						</div>
 					</>
 				)}
