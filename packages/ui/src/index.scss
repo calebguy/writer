@@ -99,6 +99,17 @@ html, body, #root {
   outline: none;
 }
 
+.break-anywhere {
+  overflow-wrap: anywhere;
+}
+
+.header {
+  img {
+    max-width: 100px;
+    display: inline-block;
+  }
+}
+
 .rotating {
   -webkit-animation: rotating 0.95s linear infinite;
   -moz-animation: rotating 0.95s linear infinite;

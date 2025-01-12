@@ -43,7 +43,7 @@ export function Header() {
 		title = "Writer";
 	} else if (writer) {
 		if (id) {
-			title = `${writer.title}, Entry: ${id}`;
+			title = `${writer.title}: ${id}`;
 		} else {
 			title = writer.title;
 		}
@@ -57,7 +57,7 @@ export function Header() {
 	}
 
 	return (
-		<div className="flex mb-10">
+		<div className="flex mb-10 header">
 			<div className="flex justify-between items-center w-full">
 				<div className="flex items-end gap-2">
 					<Link
@@ -69,6 +69,7 @@ export function Header() {
 								"text-neutral-500": !isLoggedIn,
 							},
 						)}
+						style={{ overflowWrap: "anywhere" }}
 					>
 						<MD>{title}</MD>
 					</Link>
