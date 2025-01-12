@@ -46,26 +46,32 @@ export default function Entry() {
 				/>
 			)}
 			{canEdit && (
-				<div className="mt-2 flex gap-2">
-					<Button
-						onClick={() => {
-							if (isEditing) {
-								setContent(entry?.content);
-								setIsEditing(false);
-							} else {
-								setIsEditing(true);
-							}
-						}}
-					>
-						{isEditing ? "Cancel" : "Edit"}
-					</Button>
-					{isEditing && (
+				<div className="mt-2 flex gap-2 justify-between">
+					<div className="flex gap-2">
 						<Button
-							disabled={!isContentChanged}
-							onClick={() => setIsEditing(false)}
+							onClick={() => {
+								if (isEditing) {
+									setContent(entry?.content);
+									setIsEditing(false);
+								} else {
+									setIsEditing(true);
+								}
+							}}
 						>
-							Save
+							{isEditing ? "Cancel" : "Edit"}
 						</Button>
+						{isEditing && (
+							<Button
+								className="hover:bg-lime hover:text-black"
+								disabled={!isContentChanged}
+								onClick={() => setIsEditing(false)}
+							>
+								Save
+							</Button>
+						)}
+					</div>
+					{isEditing && (
+						<Button className="bg-red-700 hover:bg-red-950">Delete</Button>
 					)}
 				</div>
 			)}
