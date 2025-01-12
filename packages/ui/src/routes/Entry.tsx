@@ -71,7 +71,7 @@ export default function Entry() {
 						)}
 					</div>
 					{isEditing && (
-						<Button className="bg-red-700 hover:bg-red-950">Delete</Button>
+						<Button className="bg-neutral-800 hover:bg-red-700">Delete</Button>
 					)}
 				</div>
 			)}
