@@ -1,4 +1,4 @@
-import { arrayContains, eq, inArray } from "drizzle-orm";
+import { and, arrayContains, eq, inArray, isNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import type { Hex } from "viem";
 import {
@@ -32,11 +32,14 @@ class Db {
 			orderBy: (writer, { desc }) => [desc(writer.createdAt)],
 		});
 		const entries = await this.pg.query.entry.findMany({
-			where: inArray(
-				entry.storageAddress,
-				writers
-					.filter((w) => w.storageAddress !== null)
-					.map((w) => w.storageAddress) as string[],
+			where: and(
+				inArray(
+					entry.storageAddress,
+					writers
+						.filter((w) => w.storageAddress !== null)
+						.map((w) => w.storageAddress) as string[],
+				),
+				isNull(entry.deletedAt),
 			),
 			orderBy: (entry, { desc }) => [desc(entry.createdAt)],
 		});
@@ -54,7 +57,10 @@ class Db {
 			return null;
 		}
 		const entries = await this.pg.query.entry.findMany({
-			where: eq(entry.storageAddress, data.storageAddress),
+			where: and(
+				eq(entry.storageAddress, data.storageAddress),
+				isNull(entry.deletedAt),
+			),
 			orderBy: (entry, { desc }) => [desc(entry.createdAt)],
 		});
 		return {
@@ -115,8 +121,8 @@ class Db {
 				createdAt: new Date(),
 			})
 			.onConflictDoUpdate({
-				target: item.transactionId
-					? [entry.transactionId]
+				target: item.createdAtTransactionId
+					? [entry.createdAtTransactionId]
 					: [entry.storageAddress, entry.onChainId],
 				set: {
 					...item,
@@ -124,6 +130,13 @@ class Db {
 				},
 			})
 			.returning();
+	}
+
+	deleteEntry(address: Hex, id: bigint, transactionId: string) {
+		return this.pg
+			.update(entry)
+			.set({ deletedAt: new Date(), deletedAtTransactionId: transactionId })
+			.where(and(eq(entry.storageAddress, address), eq(entry.id, Number(id))));
 	}
 }
 
@@ -139,6 +152,7 @@ export function entryToJsonSafe(data: typeof entry.$inferSelect) {
 		...data,
 		onChainId: data.onChainId?.toString(),
 		createdAtBlock: data.createdAtBlock?.toString(),
+		deletedAtBlock: data.deletedAtBlock?.toString(),
 	};
 }
 

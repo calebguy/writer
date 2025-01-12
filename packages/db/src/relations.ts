@@ -14,8 +14,12 @@ export const syndicateTxRelations = relations(syndicateTx, ({ many }) => ({
 }));
 
 export const entryRelations = relations(entry, ({ one }) => ({
-	syndicateTransaction: one(syndicateTx, {
-		fields: [entry.transactionId],
+	createdAtTransaction: one(syndicateTx, {
+		fields: [entry.createdAtTransactionId],
+		references: [syndicateTx.id],
+	}),
+	deletedAtTransaction: one(syndicateTx, {
+		fields: [entry.deletedAtTransactionId],
 		references: [syndicateTx.id],
 	}),
 }));

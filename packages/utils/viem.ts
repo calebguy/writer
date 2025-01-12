@@ -1,6 +1,7 @@
 import { createPublicClient, http, type Hex } from "viem";
 import { optimism } from "viem/chains";
 import { WriterFactoryAbi } from "./abis/WriterFactoryAbi";
+import { WriterStorageAbi } from "./abis/WriterStorageAbi";
 
 const rpcUrl = process.env.RPC_URL;
 
@@ -44,4 +45,18 @@ export function computeWriterAddress({
 		functionName: "computeWriterAddress",
 		args: [title, admin, managers, salt],
 	});
+}
+
+export async function getDoesEntryExist({
+	address,
+	id,
+}: { address: Hex; id: bigint }) {
+	const entry = await publicClient.readContract({
+		address,
+		abi: WriterStorageAbi,
+		functionName: "getEntry",
+		args: [id],
+	});
+	console.log("entry", entry);
+	return entry.exists;
 }

@@ -41,21 +41,29 @@ export const entry = pgTable(
 		createdAtBlockDatetime: timestamp({
 			withTimezone: true,
 		}),
+		deletedAtHash: text(),
+		deletedAtBlock: bigint({ mode: "bigint" }),
+		deletedAtBlockDatetime: timestamp({
+			withTimezone: true,
+		}),
 		createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
 		updatedAt: timestamp({ withTimezone: true }).notNull(),
+		deletedAt: timestamp({ withTimezone: true }),
 		// - intentionally not a foreign key because we don't want to enforce that the writer exists
 		//   so we are able to seed data in an async manner
 		// - we reference the storage address of the writer as the entries exist on the writer's storage
 		storageAddress: varchar({ length: 42 }).notNull(),
-		transactionId: varchar({ length: 255 })
+		createdAtTransactionId: varchar({ length: 255 })
+			.unique()
+			.references(() => syndicateTx.id),
+		deletedAtTransactionId: varchar({ length: 255 })
 			.unique()
 			.references(() => syndicateTx.id),
 	},
 	(entries) => ({
-		onChainWriterIndex: uniqueIndex("entries_on_chain_writer_idx").on(
-			entries.onChainId,
-			entries.storageAddress,
-		),
+		onChainStorageAddressIndex: uniqueIndex(
+			"on_chain_id_storage_address_idx",
+		).on(entries.onChainId, entries.storageAddress),
 	}),
 );
 

@@ -7,11 +7,17 @@ CREATE TABLE "entry" (
 	"created_at_hash" text,
 	"created_at_block" bigint,
 	"created_at_block_datetime" timestamp with time zone,
+	"deleted_at_hash" text,
+	"deleted_at_block" bigint,
+	"deleted_at_block_datetime" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone NOT NULL,
+	"deleted_at" timestamp with time zone,
 	"storage_address" varchar(42) NOT NULL,
-	"transaction_id" varchar(255),
-	CONSTRAINT "entry_transactionId_unique" UNIQUE("transaction_id")
+	"created_at_transaction_id" varchar(255),
+	"deleted_at_transaction_id" varchar(255),
+	CONSTRAINT "entry_createdAtTransactionId_unique" UNIQUE("created_at_transaction_id"),
+	CONSTRAINT "entry_deletedAtTransactionId_unique" UNIQUE("deleted_at_transaction_id")
 );
 --> statement-breakpoint
 CREATE TABLE "syndicate_tx" (
@@ -42,6 +48,7 @@ CREATE TABLE "writer" (
 	CONSTRAINT "writer_transactionId_unique" UNIQUE("transaction_id")
 );
 --> statement-breakpoint
-ALTER TABLE "entry" ADD CONSTRAINT "entry_transaction_id_syndicate_tx_id_fk" FOREIGN KEY ("transaction_id") REFERENCES "public"."syndicate_tx"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "entry" ADD CONSTRAINT "entry_created_at_transaction_id_syndicate_tx_id_fk" FOREIGN KEY ("created_at_transaction_id") REFERENCES "public"."syndicate_tx"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "entry" ADD CONSTRAINT "entry_deleted_at_transaction_id_syndicate_tx_id_fk" FOREIGN KEY ("deleted_at_transaction_id") REFERENCES "public"."syndicate_tx"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "writer" ADD CONSTRAINT "writer_transaction_id_syndicate_tx_id_fk" FOREIGN KEY ("transaction_id") REFERENCES "public"."syndicate_tx"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-CREATE UNIQUE INDEX "entries_on_chain_writer_idx" ON "entry" USING btree ("on_chain_id","storage_address");
+CREATE UNIQUE INDEX "on_chain_id_storage_address_idx" ON "entry" USING btree ("on_chain_id","storage_address");

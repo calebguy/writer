@@ -1,6 +1,6 @@
 import { ponder } from "ponder:registry";
 import { WriterStorageAbi } from "utils/abis";
-import { publicClient } from "utils/viem";
+import { getDoesEntryExist, publicClient } from "utils/viem";
 import { db } from ".";
 import { env } from "../env";
 import { getSynIdFromRawInput, syndicate } from "../utils/syndicate";
@@ -24,12 +24,20 @@ ponder.on("WriterStorage:EntryCompleted", async ({ event }) => {
 			status: "CONFIRMED",
 		});
 	}
-	const content = await publicClient.readContract({
+	const exists = await getDoesEntryExist({
 		address: event.log.address,
-		abi: WriterStorageAbi,
-		functionName: "getEntryContent",
-		args: [event.args.id],
+		id: event.args.id,
 	});
+
+	let content = "";
+	if (exists) {
+		content = await publicClient.readContract({
+			address: event.log.address,
+			abi: WriterStorageAbi,
+			functionName: "getEntryContent",
+			args: [event.args.id],
+		});
+	}
 	await db.upsertEntry({
 		storageAddress: event.log.address,
 		exists: true,
@@ -38,6 +46,40 @@ ponder.on("WriterStorage:EntryCompleted", async ({ event }) => {
 		createdAtHash: event.transaction.hash,
 		createdAtBlock: event.block.number,
 		createdAtBlockDatetime: new Date(Number(event.block.timestamp) * 1000),
-		transactionId,
+		createdAtTransactionId: transactionId,
+	});
+});
+
+ponder.on("WriterStorage:EntryRemoved", async ({ event }) => {
+	console.log("entry removed", event);
+	const transactionId = getSynIdFromRawInput(event.transaction.input);
+	if (transactionId) {
+		const tx = await syndicate.wallet.getTransactionRequest(
+			env.SYNDICATE_PROJECT_ID,
+			transactionId,
+		);
+		await db.upsertTx({
+			id: transactionId,
+			chainId: BigInt(10),
+			functionSignature: tx.functionSignature,
+			args: tx.decodedData,
+			blockNumber: event.block.number,
+			hash: event.transaction.hash,
+			// syndicate's internal status may not be "CONFIRMED" but we can assume it
+			// is confirmed since we are only listening to onchain events
+			status: "CONFIRMED",
+		});
+	}
+
+	const deletedAt = new Date(Number(event.block.timestamp) * 1000);
+	await db.upsertEntry({
+		storageAddress: event.log.address,
+		exists: false,
+		onChainId: event.args.id,
+		deletedAtHash: event.transaction.hash,
+		deletedAtBlock: event.block.number,
+		deletedAtBlockDatetime: deletedAt,
+		deletedAt,
+		deletedAtTransactionId: transactionId,
 	});
 });
