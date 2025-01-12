@@ -76,7 +76,14 @@ const api = app
 				status: "PENDING",
 			});
 			await db.deleteEntry(address, id, transactionId);
-			const writer = await db.getWriter(address);
+			const newData = await db.getWriter(address);
+			if (!newData) {
+				return c.json({ error: "writer not found" }, 404);
+			}
+			const writer = {
+				...writerToJsonSafe(newData),
+				entries: newData.entries.map(entryToJsonSafe),
+			};
 			return c.json({ writer });
 		},
 	)
