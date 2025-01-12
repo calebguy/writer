@@ -40,11 +40,9 @@ export default function Entry() {
 				<Editor
 					className="border-[1px] border-lime border-dashed p-2 bg-neutral-900"
 					content={content}
-					onChange={(editor) => {
-						const markdown = editor.storage.markdown.getMarkdown();
-						console.log(JSON.stringify(markdown, null, 2));
-						setContent(markdown);
-					}}
+					onChange={(editor) =>
+						setContent(editor.storage.markdown.getMarkdown())
+					}
 				/>
 			)}
 			{canEdit && (
@@ -52,7 +50,7 @@ export default function Entry() {
 					<Button
 						onClick={() => {
 							if (isEditing) {
-								// setContent(entry?.content);
+								setContent(entry?.content);
 								setIsEditing(false);
 							} else {
 								setIsEditing(true);
