@@ -19,6 +19,7 @@ const className = {
 		baseStyles,
 		"bg-neutral-700",
 		"hover:bg-neutral-900",
+		"disabled:bg-neutral-800",
 	),
 	[ButtonVariant.Secondary]: cn(baseStyles, "bg-black"),
 	[ButtonVariant.Empty]: "outline-none",
