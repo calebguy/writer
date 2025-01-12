@@ -31,22 +31,43 @@ export default function Entry() {
 
 	return (
 		<div className="flex-grow flex flex-col">
-			{!isEditing && <MD>{entry?.content}</MD>}
+			{!isEditing && (
+				<MD className="border-[1px] border-transparent p-2">
+					{entry?.content}
+				</MD>
+			)}
 			{isEditing && (
 				<Editor
+					className="border-[1px] border-lime border-dashed p-2 bg-neutral-900"
 					content={content}
-					onChange={(editor) =>
-						setContent(editor.storage.markdown.getMarkdown())
-					}
+					onChange={(editor) => {
+						const markdown = editor.storage.markdown.getMarkdown();
+						console.log(JSON.stringify(markdown, null, 2));
+						setContent(markdown);
+					}}
 				/>
 			)}
 			{canEdit && (
-				<div>
-					<Button onClick={() => setIsEditing(!isEditing)}>
+				<div className="mt-2 flex gap-2">
+					<Button
+						onClick={() => {
+							if (isEditing) {
+								// setContent(entry?.content);
+								setIsEditing(false);
+							} else {
+								setIsEditing(true);
+							}
+						}}
+					>
 						{isEditing ? "Cancel" : "Edit"}
 					</Button>
 					{isEditing && (
-						<Button disabled={!isContentChanged} onClick={() => setIsEditing(false)}>Save</Button>
+						<Button
+							disabled={!isContentChanged}
+							onClick={() => setIsEditing(false)}
+						>
+							Save
+						</Button>
 					)}
 				</div>
 			)}
