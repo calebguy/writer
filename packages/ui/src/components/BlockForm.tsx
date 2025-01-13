@@ -16,23 +16,26 @@ interface BlockFormProps {
 	onSubmit: (data: BlockCreateInput) => Promise<unknown>;
 	isLoading?: boolean;
 	placeholder?: string;
-	expand?: boolean;
+	canExpand?: boolean;
 }
 
 export default function BlockForm({
 	placeholder,
 	onSubmit,
 	isLoading,
-	expand,
+	canExpand,
 }: BlockFormProps) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [hasFocus, setFocus] = useState(false);
+	const [isExpanded, setIsExpanded] = useState(false);
+	const toggleExpanded = () => setIsExpanded(!isExpanded);
 	const ref = useRef<HTMLInputElement>(null);
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
 			if (ref.current) {
 				if (!ref.current.contains(event.target as Node)) {
 					setFocus(false);
+					setIsExpanded(false);
 				} else {
 					setFocus(true);
 				}
@@ -50,6 +53,7 @@ export default function BlockForm({
 			className={cn("aspect-square border border-neutral-900 group", {
 				"bg-neutral-900": hasFocus,
 				"hover:bg-neutral-900 hover:cursor-text bg-transparent": !hasFocus,
+				"absolute inset-0": isExpanded,
 			})}
 		>
 			<div
@@ -62,7 +66,7 @@ export default function BlockForm({
 					},
 				)}
 			>
-				{!hasFocus && (
+				{!hasFocus && !isExpanded && (
 					<>
 						<div className="text-2xl text-lime group-hover:hidden">+</div>
 						<div className="text-base text-neutral-700 hidden group-hover:block text-left break-words">
@@ -71,16 +75,39 @@ export default function BlockForm({
 					</>
 				)}
 				{hasFocus && (
-					<Form
-						expand={expand}
-						isLoading={isLoading || isSubmitting}
-						onSubmit={async (data) => {
-							setIsSubmitting(true);
-							await onSubmit(data).then(() => setFocus(false));
-							setIsSubmitting(false);
-						}}
-						onCancel={() => setFocus(false)}
-					/>
+					<div className="relative w-full h-full">
+						<Form
+							isLoading={isLoading || isSubmitting}
+							onSubmit={async (data) => {
+								setIsSubmitting(true);
+								await onSubmit(data);
+								setFocus(false);
+								setIsSubmitting(false);
+								setIsExpanded(false);
+							}}
+							onCancel={() => {
+								setFocus(false);
+								setIsExpanded(false);
+							}}
+						/>
+						{canExpand && (
+							<div className="absolute bottom-2 right-2 flex justify-end z-20">
+								<button
+									type="button"
+									className="hover:text-lime"
+									onClick={toggleExpanded}
+								>
+									<Arrow
+										title="expand"
+										className={cn("w-4 h-4", {
+											"rotate-90": !isExpanded,
+											"-rotate-90": isExpanded,
+										})}
+									/>
+								</button>
+							</div>
+						)}
+					</div>
 				)}
 			</div>
 		</div>
@@ -91,11 +118,10 @@ interface FormProps {
 	onSubmit: (data: BlockCreateInput) => Promise<unknown>;
 	onCancel: () => void;
 	isLoading: boolean;
-	expand?: boolean;
 	markdown?: boolean;
 }
 
-function Form({ onCancel, onSubmit, isLoading, expand }: FormProps) {
+function Form({ onCancel, onSubmit, isLoading }: FormProps) {
 	const isMac = useIsMac();
 	const inputName = "value";
 	const { handleSubmit, setFocus, reset, getValues, control } =
@@ -160,13 +186,6 @@ function Form({ onCancel, onSubmit, isLoading, expand }: FormProps) {
 						<div>{isMac ? "⌘" : "ctrl"} + ↵</div>
 						<div>to create</div>
 					</div>
-					{expand && (
-						<div className="absolute bottom-2 right-2 flex justify-end z-20">
-							<button type="button" className="hover:text-lime">
-								<Arrow title="expand" className="w-4 h-4 rotate-90" />
-							</button>
-						</div>
-					)}
 				</>
 			)}
 		</form>

@@ -64,13 +64,13 @@ export function Writer() {
 
 	return (
 		<div
-			className="grid gap-2 gap-y-4"
+			className="grid gap-2 gap-y-4 relative"
 			style={{
 				gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
 			}}
 		>
 			<BlockForm
-				expand
+				canExpand
 				isLoading={isPending}
 				placeholder={`Write in \n\n${data?.title}`}
 				onSubmit={({ value }) => handleSubmit(value).then(() => refetch())}
