@@ -5,6 +5,7 @@ export enum ButtonVariant {
 	Primary = "primary",
 	Secondary = "secondary",
 	Empty = "empty",
+	LimeHover = "lime-hover",
 }
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -12,9 +13,9 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 	bounce?: boolean;
 }
 
-const baseStyles = cn("inline", "px-2", "py-1", "outline-none");
+const baseStyles = cn("inline", "px-2", "py-1", "outline-none", "text-white");
 
-const className = {
+const classes = {
 	[ButtonVariant.Primary]: cn(
 		baseStyles,
 		"bg-neutral-700",
@@ -23,17 +24,26 @@ const className = {
 	),
 	[ButtonVariant.Secondary]: cn(baseStyles, "bg-black"),
 	[ButtonVariant.Empty]: "outline-none",
+	[ButtonVariant.LimeHover]: cn(
+		baseStyles,
+		"bg-neutral-800",
+		"hover:bg-lime",
+		"hover:text-black",
+		"disabled:bg-neutral-800",
+		"disabled:hover:text-white",
+	),
 };
 
 export function Button({
 	variant = ButtonVariant.Primary,
 	bounce,
+	className,
 	...props
 }: ButtonProps) {
 	return (
 		<button
 			{...props}
-			className={cn(className[variant], props.className, {
+			className={cn(className, classes[variant], {
 				"active:-translate-x-[1px] active:translate-y-[1px]": bounce,
 			})}
 		/>

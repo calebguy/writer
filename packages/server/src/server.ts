@@ -75,7 +75,7 @@ const api = app
 				args,
 				status: "PENDING",
 			});
-			await db.deleteEntry(address, id, transactionId);
+			await db.deleteEntry(data.storageAddress as Hex, id, transactionId);
 			const newData = await db.getWriter(address);
 			if (!newData) {
 				return c.json({ error: "writer not found" }, 404);

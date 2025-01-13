@@ -136,7 +136,7 @@ class Db {
 		return this.pg
 			.update(entry)
 			.set({ deletedAt: new Date(), deletedAtTransactionId: transactionId })
-			.where(and(eq(entry.storageAddress, address), eq(entry.id, Number(id))));
+			.where(and(eq(entry.storageAddress, address), eq(entry.onChainId, id)));
 	}
 }
 

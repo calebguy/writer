@@ -14,7 +14,7 @@ import Home from "./routes/Home.tsx";
 import { Writer } from "./routes/Writer.tsx";
 
 const PRIVY_APP_ID = "clzekejfs079912zv96ahfm5a";
-const queryClient = new QueryClient();
+export const queryClient = new QueryClient();
 
 function getRouteWithErrorBoundry(path: string, element: React.ReactNode) {
 	return {
