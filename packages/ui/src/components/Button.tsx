@@ -13,7 +13,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 	bounce?: boolean;
 }
 
-const baseStyles = cn("inline", "px-2", "py-1", "outline-none", "text-white");
+const baseStyles = cn("inline", "px-2", "py-1", "outline-none");
 
 const classes = {
 	[ButtonVariant.Primary]: cn(
@@ -21,12 +21,15 @@ const classes = {
 		"bg-neutral-700",
 		"hover:bg-neutral-900",
 		"disabled:bg-neutral-800",
+		"text-white",
 	),
-	[ButtonVariant.Secondary]: cn(baseStyles, "bg-black"),
-	[ButtonVariant.Empty]: "outline-none",
+	[ButtonVariant.Secondary]: cn(baseStyles, "bg-black", "text-white"),
+	[ButtonVariant.Empty]: cn("outline-none", "text-white"),
 	[ButtonVariant.LimeHover]: cn(
 		baseStyles,
-		"bg-neutral-800",
+		"hover:bg-lime",
+		"text-white",
+		"bg-neutral-700",
 		"hover:bg-lime",
 		"hover:text-black",
 		"disabled:bg-neutral-800",

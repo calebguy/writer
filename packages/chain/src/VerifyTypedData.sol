@@ -2,10 +2,10 @@
 pragma solidity ^0.8.13;
 
 abstract contract VerifyTypedData {
-    bytes32 private DOMAIN_SEPERATOR;
+    bytes32 private immutable DOMAIN_SEPARATOR;
 
     constructor(bytes memory name, bytes memory version) {
-        DOMAIN_SEPERATOR = keccak256(
+        DOMAIN_SEPARATOR = keccak256(
             abi.encode(
                 keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
                 keccak256(name), // name
@@ -16,14 +16,14 @@ abstract contract VerifyTypedData {
         );
     }
 
-    function getSigner(bytes memory signature, bytes32 typeHash) internal view returns (address) {
+    function getSigner(bytes memory signature, bytes32 structHash) internal view returns (address) {
         return _getSigner(
             signature,
             keccak256(
                 abi.encodePacked(
                     "\x19\x01", // EIP-191 header
-                    DOMAIN_SEPERATOR,
-                    typeHash
+                    DOMAIN_SEPARATOR,
+                    structHash
                 )
             )
         );

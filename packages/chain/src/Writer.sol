@@ -32,6 +32,7 @@ contract Writer is AccessControl, VerifyTypedData {
     }
 
     event StorageSet(address indexed storageAddress);
+    event TitleSet(string indexed title);
 
     constructor(string memory newTitle, address storageAddress, address admin, address[] memory writers)
         VerifyTypedData(DOMAIN_NAME, DOMAIN_VERSION)
@@ -45,6 +46,7 @@ contract Writer is AccessControl, VerifyTypedData {
             _grantRole(WRITER_ROLE, writers[i]);
         }
         emit StorageSet(storageAddress);
+        emit TitleSet(newTitle);
     }
 
     function replaceAdmin(address newAdmin) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -83,6 +85,7 @@ contract Writer is AccessControl, VerifyTypedData {
 
     function setTitle(string calldata newTitle) external onlyRole(DEFAULT_ADMIN_ROLE) {
         title = newTitle;
+        emit TitleSet(newTitle);
     }
 
     function setTitleWithSig(bytes memory signature, uint256 nonce, string calldata newTitle)
@@ -90,6 +93,7 @@ contract Writer is AccessControl, VerifyTypedData {
         authedBySig(signature, keccak256(abi.encode(SET_TITLE_TYPEHASH, nonce, keccak256(abi.encodePacked(newTitle)))))
     {
         title = newTitle;
+        emit TitleSet(newTitle);
     }
 
     function create(uint256 chunkCount) external onlyRole(WRITER_ROLE) {
