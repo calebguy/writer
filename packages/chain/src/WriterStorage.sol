@@ -76,22 +76,29 @@ contract WriterStorage is AccessControl {
     }
 
     function remove(uint256 id, address author) public onlyLogic {
+        // Ensure the entry exists
         require(entries[id].exists, "WriterStorage: Entry does not exist");
 
+        // Get the index of the entry to be removed
         uint256 index = entryIdToEntryIdsIndex[id];
-        uint256 lastIndex = entryIds[entryIds.length - 1];
-        require(index < entryIds.length, "WriterStorage: Index out of bounds");
+        uint256 lastIndex = entryIds.length - 1;
 
+        // Delete the entry and its index mapping
         delete entries[id];
         delete entryIdToEntryIdsIndex[id];
 
+        // If the entry to be removed is not the last entry in the array
         if (index != lastIndex) {
+            // Move the last element into the place of the entry being removed
             uint256 lastId = entryIds[lastIndex];
             entryIds[index] = lastId;
             entryIdToEntryIdsIndex[lastId] = index;
         }
 
+        // Remove the last element from the array
         entryIds.pop();
+
+        // Emit the event for the removal
         emit EntryRemoved(id, author);
     }
 
