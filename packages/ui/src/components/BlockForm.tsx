@@ -53,7 +53,7 @@ export default function BlockForm({
 			className={cn("aspect-square border border-neutral-900 group", {
 				"bg-neutral-900": hasFocus,
 				"hover:bg-neutral-900 hover:cursor-text bg-transparent": !hasFocus,
-				"absolute inset-0": isExpanded,
+				"absolute w-full h-full": isExpanded,
 			})}
 		>
 			<div
