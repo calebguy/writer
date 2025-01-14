@@ -47,6 +47,7 @@ ponder.on("WriterStorage:EntryCompleted", async ({ event }) => {
 		createdAtBlock: event.block.number,
 		createdAtBlockDatetime: new Date(Number(event.block.timestamp) * 1000),
 		createdAtTransactionId: transactionId,
+		author: event.args.author,
 	});
 });
 
@@ -81,5 +82,6 @@ ponder.on("WriterStorage:EntryRemoved", async ({ event }) => {
 		deletedAtBlockDatetime: deletedAt,
 		deletedAt,
 		deletedAtTransactionId: transactionId,
+		author: event.args.author,
 	});
 });

@@ -93,6 +93,7 @@ const api = app
 		privyAuthMiddleware,
 		async (c) => {
 			const contractAddress = getAddress(c.req.param("address"));
+			const privyUserAddress = c.get("privyUserAddress");
 			const writer = await db.getWriter(contractAddress);
 			if (!writer) {
 				return c.json({ error: "writer not found" }, 404);
@@ -121,6 +122,7 @@ const api = app
 				storageAddress: writer.storageAddress,
 				createdAtTransactionId: transactionId,
 				content: chunkContent,
+				author: privyUserAddress,
 			});
 			const entry = entryToJsonSafe(data[0]);
 			return c.json({ entry }, 201);
