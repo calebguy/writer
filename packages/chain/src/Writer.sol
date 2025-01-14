@@ -12,6 +12,8 @@ contract Writer is AccessControl, VerifyTypedData {
     bytes32 public constant REMOVE_TYPEHASH = keccak256("Remove(uint256 nonce,uint256 id)");
     bytes32 public constant ADD_CHUNK_TYPEHASH =
         keccak256("AddChunk(uint256 nonce,uint256 entryId,uint256 chunkIndex,string chunkContent)");
+    bytes32 public constant UPDATE_TYPEHASH =
+        keccak256("Update(uint256 nonce,uint256 entryId,uint256 totalChunks,string content)");
     bytes32 public constant SET_TITLE_TYPEHASH = keccak256("SetTitle(uint256 nonce,string title)");
 
     bytes public DOMAIN_NAME = "Writer";
@@ -150,18 +152,6 @@ contract Writer is AccessControl, VerifyTypedData {
         store.createWithChunk(chunkCount, content, signer);
     }
 
-    function remove(uint256 id) external onlyAuthorWithRole(id, WRITER_ROLE) {
-        store.remove(id, msg.sender);
-    }
-
-    function removeWithSig(bytes memory signature, uint256 nonce, uint256 id)
-        external
-        signedByAuthorWithRole(signature, keccak256(abi.encode(REMOVE_TYPEHASH, nonce, id)), id, WRITER_ROLE)
-    {
-        address signer = getSigner(signature, keccak256(abi.encode(REMOVE_TYPEHASH, nonce, id)));
-        store.remove(id, signer);
-    }
-
     function addChunk(uint256 id, uint256 index, string calldata content)
         external
         onlyAuthorWithRole(id, WRITER_ROLE)
@@ -182,5 +172,46 @@ contract Writer is AccessControl, VerifyTypedData {
             signature, keccak256(abi.encode(ADD_CHUNK_TYPEHASH, nonce, id, index, keccak256(abi.encodePacked(content))))
         );
         store.addChunk(id, index, content, signer);
+    }
+
+    function remove(uint256 id) external onlyAuthorWithRole(id, WRITER_ROLE) {
+        store.remove(id, msg.sender);
+    }
+
+    function removeWithSig(bytes memory signature, uint256 nonce, uint256 id)
+        external
+        signedByAuthorWithRole(signature, keccak256(abi.encode(REMOVE_TYPEHASH, nonce, id)), id, WRITER_ROLE)
+    {
+        address signer = getSigner(signature, keccak256(abi.encode(REMOVE_TYPEHASH, nonce, id)));
+        store.remove(id, signer);
+    }
+
+    function update(uint256 id, uint256 totalChunks, string calldata content)
+        external
+        onlyAuthorWithRole(id, WRITER_ROLE)
+    {
+        store.update(id, totalChunks, content, msg.sender);
+    }
+
+    function updateWithSig(
+        bytes memory signature,
+        uint256 nonce,
+        uint256 id,
+        uint256 totalChunks,
+        string calldata content
+    )
+        external
+        signedByAuthorWithRole(
+            signature,
+            keccak256(abi.encode(UPDATE_TYPEHASH, nonce, id, totalChunks, keccak256(abi.encodePacked(content)))),
+            id,
+            WRITER_ROLE
+        )
+    {
+        address signer = getSigner(
+            signature,
+            keccak256(abi.encode(UPDATE_TYPEHASH, nonce, id, totalChunks, keccak256(abi.encodePacked(content))))
+        );
+        store.update(id, totalChunks, content, signer);
     }
 }

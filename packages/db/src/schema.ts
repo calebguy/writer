@@ -36,6 +36,7 @@ export const entry = pgTable(
 		exists: boolean().notNull(),
 		onChainId: bigint({ mode: "bigint" }),
 		content: text(),
+		author: text().notNull(),
 		createdAtHash: text(),
 		createdAtBlock: bigint({ mode: "bigint" }),
 		createdAtBlockDatetime: timestamp({
@@ -57,6 +58,9 @@ export const entry = pgTable(
 			.unique()
 			.references(() => syndicateTx.id),
 		deletedAtTransactionId: varchar({ length: 255 })
+			.unique()
+			.references(() => syndicateTx.id),
+		updatedAtTransactionId: varchar({ length: 255 })
 			.unique()
 			.references(() => syndicateTx.id),
 	},

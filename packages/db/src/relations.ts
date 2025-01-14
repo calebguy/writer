@@ -22,4 +22,8 @@ export const entryRelations = relations(entry, ({ one }) => ({
 		fields: [entry.deletedAtTransactionId],
 		references: [syndicateTx.id],
 	}),
+	updatedAtTransaction: one(syndicateTx, {
+		fields: [entry.updatedAtTransactionId],
+		references: [syndicateTx.id],
+	}),
 }));

@@ -1,5 +1,5 @@
 {
-  "id": "6f75b2d6-62fb-486d-84fb-ab97d0dc3d21",
+  "id": "8df4f529-7856-403b-9e5b-8221cf4fa27e",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -31,6 +31,12 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "author": {
+          "name": "author",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
         },
         "created_at_hash": {
           "name": "created_at_hash",
@@ -104,6 +110,12 @@
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": false
+        },
+        "updated_at_transaction_id": {
+          "name": "updated_at_transaction_id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -155,6 +167,19 @@
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
+        },
+        "entry_updated_at_transaction_id_syndicate_tx_id_fk": {
+          "name": "entry_updated_at_transaction_id_syndicate_tx_id_fk",
+          "tableFrom": "entry",
+          "tableTo": "syndicate_tx",
+          "columnsFrom": [
+            "updated_at_transaction_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -171,6 +196,13 @@
           "nullsNotDistinct": false,
           "columns": [
             "deleted_at_transaction_id"
+          ]
+        },
+        "entry_updatedAtTransactionId_unique": {
+          "name": "entry_updatedAtTransactionId_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "updated_at_transaction_id"
           ]
         }
       },

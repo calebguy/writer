@@ -180,4 +180,17 @@ contract WriterStorage is AccessControl {
 
         return entry;
     }
+
+    function update(uint256 id, uint256 totalChunks, string calldata content, address author) public onlyLogic {
+        Entry storage entry = entries[id];
+        require(entry.exists, "WriterStorage: Entry does not exist");
+        require(totalChunks > 0, "WriterStorage: Total chunks must be greater than 0");
+        require(bytes(content).length > 0, "WriterStorage: Content cannot be empty");
+
+        entry.chunks[0] = content;
+        entry.totalChunks = totalChunks;
+        entry.updatedAtBlock = block.number;
+        entry.receivedChunks = 1;
+        emit EntryUpdated(id, author);
+    }
 }
