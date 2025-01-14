@@ -101,6 +101,11 @@ export const WriterStorageAbi = [
 						type: "bool",
 						internalType: "bool",
 					},
+					{
+						name: "author",
+						type: "address",
+						internalType: "address",
+					},
 				],
 			},
 		],
@@ -167,6 +172,11 @@ export const WriterStorageAbi = [
 						type: "bool",
 						internalType: "bool",
 					},
+					{
+						name: "author",
+						type: "address",
+						internalType: "address",
+					},
 				],
 			},
 		],
@@ -207,6 +217,11 @@ export const WriterStorageAbi = [
 				name: "exists",
 				type: "bool",
 				internalType: "bool",
+			},
+			{
+				name: "author",
+				type: "address",
+				internalType: "address",
 			},
 		],
 		stateMutability: "view",
@@ -307,6 +322,11 @@ export const WriterStorageAbi = [
 						name: "exists",
 						type: "bool",
 						internalType: "bool",
+					},
+					{
+						name: "author",
+						type: "address",
+						internalType: "address",
 					},
 				],
 			},
@@ -549,6 +569,34 @@ export const WriterStorageAbi = [
 			},
 		],
 		stateMutability: "view",
+	},
+	{
+		type: "function",
+		name: "update",
+		inputs: [
+			{
+				name: "id",
+				type: "uint256",
+				internalType: "uint256",
+			},
+			{
+				name: "totalChunks",
+				type: "uint256",
+				internalType: "uint256",
+			},
+			{
+				name: "content",
+				type: "string",
+				internalType: "string",
+			},
+			{
+				name: "author",
+				type: "address",
+				internalType: "address",
+			},
+		],
+		outputs: [],
+		stateMutability: "nonpayable",
 	},
 	{
 		type: "event",

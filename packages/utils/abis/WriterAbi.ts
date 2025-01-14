@@ -131,6 +131,19 @@ export const WriterAbi = [
 	},
 	{
 		type: "function",
+		name: "UPDATE_TYPEHASH",
+		inputs: [],
+		outputs: [
+			{
+				name: "",
+				type: "bytes32",
+				internalType: "bytes32",
+			},
+		],
+		stateMutability: "view",
+	},
+	{
+		type: "function",
 		name: "WRITER_ROLE",
 		inputs: [],
 		outputs: [
@@ -325,6 +338,11 @@ export const WriterAbi = [
 						name: "exists",
 						type: "bool",
 						internalType: "bool",
+					},
+					{
+						name: "author",
+						type: "address",
+						internalType: "address",
 					},
 				],
 			},
@@ -679,6 +697,62 @@ export const WriterAbi = [
 		stateMutability: "view",
 	},
 	{
+		type: "function",
+		name: "update",
+		inputs: [
+			{
+				name: "id",
+				type: "uint256",
+				internalType: "uint256",
+			},
+			{
+				name: "totalChunks",
+				type: "uint256",
+				internalType: "uint256",
+			},
+			{
+				name: "content",
+				type: "string",
+				internalType: "string",
+			},
+		],
+		outputs: [],
+		stateMutability: "nonpayable",
+	},
+	{
+		type: "function",
+		name: "updateWithSig",
+		inputs: [
+			{
+				name: "signature",
+				type: "bytes",
+				internalType: "bytes",
+			},
+			{
+				name: "nonce",
+				type: "uint256",
+				internalType: "uint256",
+			},
+			{
+				name: "id",
+				type: "uint256",
+				internalType: "uint256",
+			},
+			{
+				name: "totalChunks",
+				type: "uint256",
+				internalType: "uint256",
+			},
+			{
+				name: "content",
+				type: "string",
+				internalType: "string",
+			},
+		],
+		outputs: [],
+		stateMutability: "nonpayable",
+	},
+	{
 		type: "event",
 		name: "RoleAdminChanged",
 		inputs: [
@@ -762,6 +836,19 @@ export const WriterAbi = [
 				type: "address",
 				indexed: true,
 				internalType: "address",
+			},
+		],
+		anonymous: false,
+	},
+	{
+		type: "event",
+		name: "TitleSet",
+		inputs: [
+			{
+				name: "title",
+				type: "string",
+				indexed: true,
+				internalType: "string",
 			},
 		],
 		anonymous: false,
