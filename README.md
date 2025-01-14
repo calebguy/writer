@@ -3,3 +3,4 @@
 
 
 <!-- @note TODO: add a feature for favoriting -->
+<!-- @note TODO: only authors of the post should be able to edit it -->

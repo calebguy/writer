@@ -23,12 +23,31 @@ contract Writer is AccessControl, VerifyTypedData {
 
     string public title;
 
-    modifier authedBySig(bytes memory signature, bytes32 structHash) {
+    modifier signedByWithRole(bytes memory signature, bytes32 structHash, bytes32 role) {
         address signer = getSigner(signature, structHash);
-        require(hasRole(WRITER_ROLE, signer), "Writer: Signer is not a manager");
-        require(!signatureWasExecuted[keccak256(signature)], "Writer: Signature has already been executed");
+        require(hasRole(role, signer), "Writer: Invalid signer role");
+        _validateAndMarkSignature(signature);
         _;
-        signatureWasExecuted[keccak256(signature)] = true;
+    }
+
+    modifier signedByAuthorWithRole(bytes memory signature, bytes32 structHash, uint256 id, bytes32 role) {
+        address signer = getSigner(signature, structHash);
+        require(store.getEntry(id).author == signer, "Writer: Signer must be the author");
+        require(hasRole(role, signer), "Writer: Signer must be a writer");
+        _validateAndMarkSignature(signature);
+        _;
+    }
+
+    modifier onlyAuthorWithRole(uint256 id, bytes32 role) {
+        require(store.getEntry(id).author == msg.sender, "Writer: Only author can perform this action");
+        require(hasRole(role, msg.sender), "Writer: Author must be a writer");
+        _;
+    }
+
+    function _validateAndMarkSignature(bytes memory signature) internal {
+        bytes32 signatureHash = keccak256(signature);
+        require(!signatureWasExecuted[signatureHash], "Writer: Signature has already been executed");
+        signatureWasExecuted[signatureHash] = true;
     }
 
     event StorageSet(address indexed storageAddress);
@@ -59,6 +78,23 @@ contract Writer is AccessControl, VerifyTypedData {
         emit StorageSet(storageAddress);
     }
 
+    function setTitle(string calldata newTitle) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        title = newTitle;
+        emit TitleSet(newTitle);
+    }
+
+    function setTitleWithSig(bytes memory signature, uint256 nonce, string calldata newTitle)
+        external
+        signedByWithRole(
+            signature,
+            keccak256(abi.encode(SET_TITLE_TYPEHASH, nonce, keccak256(abi.encodePacked(newTitle)))),
+            DEFAULT_ADMIN_ROLE
+        )
+    {
+        title = newTitle;
+        emit TitleSet(newTitle);
+    }
+
     function getEntryCount() external view returns (uint256) {
         return store.getEntryCount();
     }
@@ -83,26 +119,13 @@ contract Writer is AccessControl, VerifyTypedData {
         return store.getEntryTotalChunks(id);
     }
 
-    function setTitle(string calldata newTitle) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        title = newTitle;
-        emit TitleSet(newTitle);
-    }
-
-    function setTitleWithSig(bytes memory signature, uint256 nonce, string calldata newTitle)
-        external
-        authedBySig(signature, keccak256(abi.encode(SET_TITLE_TYPEHASH, nonce, keccak256(abi.encodePacked(newTitle)))))
-    {
-        title = newTitle;
-        emit TitleSet(newTitle);
-    }
-
     function create(uint256 chunkCount) external onlyRole(WRITER_ROLE) {
         store.create(chunkCount, msg.sender);
     }
 
     function createWithSig(bytes memory signature, uint256 nonce, uint256 chunkCount)
         external
-        authedBySig(signature, keccak256(abi.encode(CREATE_TYPEHASH, nonce, chunkCount)))
+        signedByWithRole(signature, keccak256(abi.encode(CREATE_TYPEHASH, nonce, chunkCount)), WRITER_ROLE)
     {
         address signer = getSigner(signature, keccak256(abi.encode(CREATE_TYPEHASH, nonce, chunkCount)));
         store.create(chunkCount, signer);
@@ -114,9 +137,10 @@ contract Writer is AccessControl, VerifyTypedData {
 
     function createWithChunkWithSig(bytes memory signature, uint256 nonce, uint256 chunkCount, string calldata content)
         external
-        authedBySig(
+        signedByWithRole(
             signature,
-            keccak256(abi.encode(CREATE_WITH_CHUNK_TYPEHASH, nonce, chunkCount, keccak256(abi.encodePacked(content))))
+            keccak256(abi.encode(CREATE_WITH_CHUNK_TYPEHASH, nonce, chunkCount, keccak256(abi.encodePacked(content)))),
+            WRITER_ROLE
         )
     {
         address signer = getSigner(
@@ -126,27 +150,32 @@ contract Writer is AccessControl, VerifyTypedData {
         store.createWithChunk(chunkCount, content, signer);
     }
 
-    function remove(uint256 id) external onlyRole(WRITER_ROLE) {
+    function remove(uint256 id) external onlyAuthorWithRole(id, WRITER_ROLE) {
         store.remove(id, msg.sender);
     }
 
     function removeWithSig(bytes memory signature, uint256 nonce, uint256 id)
         external
-        authedBySig(signature, keccak256(abi.encode(REMOVE_TYPEHASH, nonce, id)))
+        signedByAuthorWithRole(signature, keccak256(abi.encode(REMOVE_TYPEHASH, nonce, id)), id, WRITER_ROLE)
     {
         address signer = getSigner(signature, keccak256(abi.encode(REMOVE_TYPEHASH, nonce, id)));
         store.remove(id, signer);
     }
 
-    function addChunk(uint256 id, uint256 index, string calldata content) external onlyRole(WRITER_ROLE) {
+    function addChunk(uint256 id, uint256 index, string calldata content)
+        external
+        onlyAuthorWithRole(id, WRITER_ROLE)
+    {
         store.addChunk(id, index, content, msg.sender);
     }
 
     function addChunkWithSig(bytes memory signature, uint256 nonce, uint256 id, uint256 index, string calldata content)
         external
-        authedBySig(
+        signedByAuthorWithRole(
             signature,
-            keccak256(abi.encode(ADD_CHUNK_TYPEHASH, nonce, id, index, keccak256(abi.encodePacked(content))))
+            keccak256(abi.encode(ADD_CHUNK_TYPEHASH, nonce, id, index, keccak256(abi.encodePacked(content)))),
+            id,
+            WRITER_ROLE
         )
     {
         address signer = getSigner(

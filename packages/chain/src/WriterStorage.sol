@@ -44,6 +44,7 @@ contract WriterStorage is AccessControl {
         uint256 totalChunks;
         uint256 receivedChunks;
         bool exists;
+        address author;
     }
 
     event EntryCreated(uint256 indexed id, address author);
@@ -71,8 +72,8 @@ contract WriterStorage is AccessControl {
         require(bytes(content).length > 0, "WriterStorage: Chunk content cannot be empty");
 
         (uint256 id,) = _create(totalChunks, author);
-        Entry memory updatedEntry = _addChunk(id, 0, content, author);
-        return (id, updatedEntry);
+        Entry memory entryWithContent = _addChunk(id, 0, content, author);
+        return (id, entryWithContent);
     }
 
     function remove(uint256 id, address author) public onlyLogic {
@@ -147,7 +148,8 @@ contract WriterStorage is AccessControl {
             chunks: new string[](totalChunks),
             totalChunks: totalChunks,
             receivedChunks: 0,
-            exists: true
+            exists: true,
+            author: author
         });
         entryIds.push(id);
         entryIdToEntryIdsIndex[id] = entryIds.length - 1;
