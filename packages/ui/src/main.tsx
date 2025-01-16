@@ -9,6 +9,7 @@ import { optimism } from "viem/chains";
 import ErrorPage from "./error-page.tsx";
 import { AppLayout } from "./layouts/App.layout.tsx";
 
+import { Author } from "./routes/Author.tsx";
 import Entry from "./routes/Entry.tsx";
 import Home from "./routes/Home.tsx";
 import { Writer } from "./routes/Writer.tsx";
@@ -32,6 +33,7 @@ const router = createBrowserRouter([
 	getRouteWithErrorBoundry("/", <Home />),
 	getRouteWithErrorBoundry("/writer/:address", <Writer />),
 	getRouteWithErrorBoundry("/writer/:address/:id", <Entry />),
+	getRouteWithErrorBoundry("/account/:address", <Author />),
 ]);
 
 // biome-ignore lint/style/noNonNullAssertion: 🫚

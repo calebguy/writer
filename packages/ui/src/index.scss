@@ -148,6 +148,23 @@ html, body, #root {
 }
 
 .md, .tiptap {
+
+  ol {
+    margin: 0!important;
+    p {
+      margin-top: 2px;
+      margin-bottom: 2px;
+    }
+  }
+
+  ul {
+    margin: 0px!important;
+    p {
+      margin-top: 2px;
+      margin-bottom: 2px;
+    }
+  }
+
   a {
     text-decoration: underline;
     color: theme('colors.lime');
@@ -250,10 +267,6 @@ html, body, #root {
 }
 
 .tiptap {
-  ol.tight {
-    margin: 0
-  }
-
   p.is-editor-empty:first-child::before {
     color: theme('colors.neutral.700');
     content: attr(data-placeholder);

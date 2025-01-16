@@ -10,6 +10,11 @@ interface MDProps {
 export function MD({ children, className }: MDProps) {
 	return (
 		<ReactMarkdown
+			components={{
+				a: (props) => (
+					<a {...props} target="_blank" rel="noopener noreferrer" />
+				),
+			}}
 			rehypePlugins={[rehypeHighlight]}
 			className={cn(
 				className,
