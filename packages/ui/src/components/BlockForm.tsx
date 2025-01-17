@@ -50,9 +50,9 @@ export default function BlockForm({
 	return (
 		<div
 			ref={ref}
-			className={cn("aspect-square border-neutral-900 group border-[1px]", {
-				"bg-neutral-900 border-dashed border-primary": hasFocus,
-				"hover:bg-neutral-900 hover:cursor-text bg-transparent border-neutral-900":
+			className={cn("aspect-square group", {
+				"bg-neutral-900": hasFocus,
+				"hover:bg-neutral-900 hover:cursor-text bg-transparent border-neutral-900 border":
 					!hasFocus,
 				"absolute w-full h-full": isExpanded,
 			})}
@@ -178,7 +178,7 @@ function Form({ onCancel, onSubmit, isLoading }: FormProps) {
 								onChange={(editor) =>
 									field.onChange(editor.storage.markdown.getMarkdown())
 								}
-								className="z-10 overflow-y-auto p-2"
+								className="z-10 overflow-y-auto p-2 focus:border-primary border-dashed border border-transparent"
 							/>
 						)}
 					/>
