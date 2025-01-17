@@ -4,8 +4,8 @@ export default {
 	theme: {
 		extend: {
 			colors: {
-				lime: "#d2ff2e",
-				limeSecondary: "#485900",
+				primary: "rgb(var(--color-primary))",
+				secondary: "rgb(var(--color-secondary))",
 			},
 		},
 	},

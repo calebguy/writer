@@ -48,7 +48,7 @@ export function Header() {
 						className={cn(
 							"text-3xl active:-translate-x-[1px] active:translate-y-[1px]",
 							{
-								"text-lime": isLoggedIn,
+								"text-primary": isLoggedIn,
 								"text-neutral-500": !isLoggedIn,
 							},
 						)}
@@ -70,7 +70,7 @@ export function Header() {
 				>
 					<Blob
 						className={cn("h-8", {
-							"text-lime": isLoggedIn,
+							"text-primary": isLoggedIn,
 							"text-neutral-500": !isLoggedIn,
 						})}
 					/>

@@ -48,7 +48,7 @@ export function Editor({
 		editorProps: {
 			attributes: {
 				class: cn(
-					"grow flex flex-col h-full caret-lime overflow-y-auto",
+					"grow flex flex-col h-full caret-primary overflow-y-auto",
 					className,
 				),
 			},
@@ -75,7 +75,7 @@ export function Editor({
 				HTMLAttributes: {
 					target: "_blank",
 					rel: "noopener noreferrer",
-					class: "text-lime underline",
+					class: "text-primary underline",
 				},
 			}),
 			Placeholder.configure({ placeholder }),

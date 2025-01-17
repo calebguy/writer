@@ -67,7 +67,7 @@ export default function Entry() {
 			{isEditing && (
 				<div className="flex-grow flex flex-col relative">
 					<Editor
-						className="border-[1px] border-lime border-dashed p-2 bg-neutral-900"
+						className="border-[1px] border-primary border-dashed p-2 bg-neutral-900"
 						content={content}
 						onChange={(editor) =>
 							setContent(editor.storage.markdown.getMarkdown())
@@ -85,7 +85,7 @@ export default function Entry() {
 					{/* <span>by:</span> */}
 					<Link
 						to={`/account/${entry.author}`}
-						className="text-lime underline cursor-pointer"
+						className="text-primary underline cursor-pointer"
 					>
 						{shortenAddress(entry.author as Hex)}
 					</Link>

@@ -2,9 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    --color-primary: 255 138 233;
+    --color-secondary: color-mix(in srgb, rgb(var(--color-primary)) 80%, black 90%);
+  }
+}
+
 @font-face {
   font-family: 'LTRemark';
-  src: url('src/fonts/LTRemark-Regular.otf') format('opentype');
+  src: url('./fonts/LTRemark-Regular.otf') format('opentype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -12,7 +19,7 @@
 
 @font-face {
   font-family: 'LTRemark';
-  src: url('src/fonts/LTRemark-Italic.otf') format('opentype');
+  src: url('./fonts/LTRemark-Italic.otf') format('opentype');
   font-weight: 400;
   font-style: italic;
   font-display: swap;
@@ -20,7 +27,7 @@
 
 @font-face {
   font-family: 'LTRemark';
-  src: url('src/fonts/LTRemark-Bold.otf') format('opentype');
+  src: url('./fonts/LTRemark-Bold.otf') format('opentype');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -28,7 +35,7 @@
 
 @font-face {
   font-family: 'LTRemark';
-  src: url('src/fonts/LTRemark-BoldItalic.otf') format('opentype');
+  src: url('./fonts/LTRemark-BoldItalic.otf') format('opentype');
   font-weight: 700;
   font-style: italic;
   font-display: swap;
@@ -36,7 +43,7 @@
 
 @font-face {
   font-family: 'LTRemark';
-  src: url('src/fonts/LTRemark-Black.otf') format('opentype');
+  src: url('./fonts/LTRemark-Black.otf') format('opentype');
   font-weight: 900;
   font-style: normal;
   font-display: swap;
@@ -44,16 +51,14 @@
 
 @font-face {
   font-family: 'LTRemark';
-  src: url('src/fonts/LTRemark-BlackItalic.otf') format('opentype');
+  src: url('./fonts/LTRemark-BlackItalic.otf') format('opentype');
   font-weight: 900;
   font-style: italic;
   font-display: swap;
 }
 
 ::selection {
-  // text-decoration: underline;
-  // outline: 1px solid theme('colors.limeSecondary');
-  background-color: theme('colors.limeSecondary');
+  background-color: var(--color-secondary);
 }
 
 :root {
@@ -167,7 +172,7 @@ html, body, #root {
 
   a {
     text-decoration: underline;
-    color: theme('colors.lime');
+    color: rgb(var(--color-primary));
   }
 
    h1 {

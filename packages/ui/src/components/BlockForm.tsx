@@ -50,9 +50,10 @@ export default function BlockForm({
 	return (
 		<div
 			ref={ref}
-			className={cn("aspect-square border border-neutral-900 group", {
-				"bg-neutral-900": hasFocus,
-				"hover:bg-neutral-900 hover:cursor-text bg-transparent": !hasFocus,
+			className={cn("aspect-square border-neutral-900 group border-[1px]", {
+				"bg-neutral-900 border-dashed border-primary": hasFocus,
+				"hover:bg-neutral-900 hover:cursor-text bg-transparent border-neutral-900":
+					!hasFocus,
 				"absolute w-full h-full": isExpanded,
 			})}
 		>
@@ -61,14 +62,13 @@ export default function BlockForm({
 					"flex justify-center items-center h-full overflow-hidden",
 					{
 						"items-start justify-start": hasFocus,
-						"group-hover:items-start group-hover:justify-start p-2 border-[1px] border-transparent":
-							!hasFocus,
+						"group-hover:items-start group-hover:justify-start p-2": !hasFocus,
 					},
 				)}
 			>
 				{!hasFocus && !isExpanded && (
 					<>
-						<div className="text-2xl text-lime group-hover:hidden">+</div>
+						<div className="text-2xl text-primary group-hover:hidden">+</div>
 						<div className="text-base text-neutral-700 hidden group-hover:block text-left break-words">
 							<MD className="pointer-events-none">{placeholder}</MD>
 						</div>
@@ -91,10 +91,10 @@ export default function BlockForm({
 							}}
 						/>
 						{canExpand && (
-							<div className="absolute bottom-2 right-2 flex justify-end z-20">
+							<div className="absolute bottom-1 right-1 flex justify-end z-20">
 								<button
 									type="button"
-									className="hover:text-lime"
+									className="hover:text-primary"
 									onClick={toggleExpanded}
 								>
 									<Arrow
@@ -178,7 +178,7 @@ function Form({ onCancel, onSubmit, isLoading }: FormProps) {
 								onChange={(editor) =>
 									field.onChange(editor.storage.markdown.getMarkdown())
 								}
-								className="z-10 overflow-y-auto border-[1px] border-dashed focus:border-lime border-transparent p-2"
+								className="z-10 overflow-y-auto p-2"
 							/>
 						)}
 					/>
