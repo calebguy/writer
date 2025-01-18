@@ -27,10 +27,9 @@ const classes = {
 	[ButtonVariant.Empty]: cn("outline-none", "text-white"),
 	[ButtonVariant.LimeHover]: cn(
 		baseStyles,
-		"hover:bg-lime",
+		"hover:bg-primary",
 		"text-white",
 		"bg-neutral-700",
-		"hover:bg-lime",
 		"hover:text-black",
 		"disabled:bg-neutral-800",
 		"disabled:hover:text-white",

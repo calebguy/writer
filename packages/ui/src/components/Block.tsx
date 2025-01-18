@@ -31,7 +31,9 @@ export default function Block({
 		return (
 			<div className="p-2 flex flex-col grow h-1">
 				<MD className="grow">{title}</MD>
-				<div className="text-right text-neutral-600 text-sm">{id}</div>
+				<div className="text-right text-neutral-600 text-sm leading-3 pt-2">
+					{id}
+				</div>
 			</div>
 		);
 	}, [title, id]);

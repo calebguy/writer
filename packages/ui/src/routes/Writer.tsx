@@ -65,7 +65,7 @@ export function Writer() {
 	return (
 		<div className="relative grow">
 			<div
-				className="grid gap-2 gap-y-4"
+				className="grid gap-2"
 				style={{
 					gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
 				}}

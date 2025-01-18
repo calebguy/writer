@@ -53,7 +53,8 @@ contract WriterDirectCallerTest is TestBase {
             totalChunks: 2,
             receivedChunks: 0,
             exists: true,
-            chunks: new string[](2)
+            chunks: new string[](2),
+            author: user
         });
         entryEq(entry, expectedEntry);
 
@@ -86,7 +87,8 @@ contract WriterDirectCallerTest is TestBase {
             totalChunks: totalChunks,
             receivedChunks: totalChunks,
             exists: true,
-            chunks: expectedChunks
+            chunks: expectedChunks,
+            author: user
         });
 
         entryEq(entry, expectedEntry);
@@ -122,7 +124,8 @@ contract WriterDirectCallerTest is TestBase {
             totalChunks: size,
             receivedChunks: size,
             exists: true,
-            chunks: expectedChunks
+            chunks: expectedChunks,
+            author: user
         });
         entryEq(entry, expectedEntry);
 
@@ -150,7 +153,8 @@ contract WriterDirectCallerTest is TestBase {
             totalChunks: 0,
             receivedChunks: 0,
             exists: false,
-            chunks: new string[](0)
+            chunks: new string[](0),
+            author: user
         });
         entryEq(entry, expectedEntry);
 
@@ -268,7 +272,8 @@ contract WriterWithSigTest is TestBase {
             totalChunks: size,
             receivedChunks: size,
             exists: true,
-            chunks: expectedChunks
+            chunks: expectedChunks,
+            author: user.addr
         });
         entryEq(entry, expectedEntry);
     }
@@ -301,7 +306,8 @@ contract WriterWithSigTest is TestBase {
             totalChunks: chunkCount,
             receivedChunks: chunkCount,
             exists: true,
-            chunks: expectedChunks
+            chunks: expectedChunks,
+            author: user.addr
         });
         entryEq(entry, expectedEntry);
     }
@@ -364,7 +370,8 @@ contract WriterWithSigTest is TestBase {
             totalChunks: 0,
             receivedChunks: 0,
             exists: false,
-            chunks: new string[](0)
+            chunks: new string[](0),
+            author: user.addr
         });
         entryEq(entry, expectedEntry);
     }

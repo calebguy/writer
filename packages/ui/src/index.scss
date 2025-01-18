@@ -4,8 +4,14 @@
 
 @layer base {
   :root {
-    --color-primary: 255 138 233;
-    --color-secondary: color-mix(in srgb, rgb(var(--color-primary)) 80%, black 90%);
+    --color-primary-h: 44; /* Hue */
+    --color-primary-s: 98%; /* Saturation */
+    --color-primary-l: 50%; /* Lightness */
+
+    /* Secondary is darker by reducing lightness */
+    --color-secondary-h: var(--color-primary-h);
+    --color-secondary-s: calc(var(--color-primary-s) - 20%);
+    --color-secondary-l: calc(var(--color-primary-l) - 20%);
   }
 }
 
@@ -58,7 +64,7 @@
 }
 
 ::selection {
-  background-color: var(--color-secondary);
+  background-color: theme('colors.secondary');
 }
 
 :root {
