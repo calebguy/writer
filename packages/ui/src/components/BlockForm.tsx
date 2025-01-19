@@ -2,6 +2,7 @@ import { useRef } from "react";
 
 import { useState } from "react";
 
+import type { Editor as TiptapEditor } from "@tiptap/react";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import type { BlockCreateInput } from "../interfaces";
@@ -33,11 +34,12 @@ export default function BlockForm({
 	const [loadingContent, setLoadingContent] = useState<string | undefined>(
 		undefined,
 	);
-	const ref = useRef<HTMLInputElement>(null);
+	const containerRef = useRef<HTMLInputElement>(null);
+	const editorRef = useRef<TiptapEditor>(null);
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
-			if (ref.current) {
-				if (!ref.current.contains(event.target as Node)) {
+			if (containerRef.current) {
+				if (!containerRef.current.contains(event.target as Node)) {
 					setFocus(false);
 					setIsExpanded(false);
 					onExpand?.(false);
@@ -54,10 +56,9 @@ export default function BlockForm({
 	}, [onExpand]);
 
 	const isLoadingOrSubmitting = isLoading || isSubmitting;
-
 	return (
 		<div
-			ref={ref}
+			ref={containerRef}
 			className={cn("aspect-square group", {
 				"bg-neutral-900": hasFocus,
 				"hover:bg-neutral-900 hover:cursor-text bg-transparent border":
@@ -100,6 +101,7 @@ export default function BlockForm({
 					{hasFocus && (
 						<div className="relative w-full h-full">
 							<Form
+								editorRef={editorRef}
 								onSubmit={async (data) => {
 									setLoadingContent(data.value);
 									setIsSubmitting(true);
@@ -120,9 +122,11 @@ export default function BlockForm({
 									<button
 										type="button"
 										className="hover:text-primary text-neutral-600"
-										onClick={() => {
+										onClick={(e) => {
+											e.preventDefault();
 											setIsExpanded(!isExpanded);
 											onExpand?.(!isExpanded);
+											editorRef?.current?.commands.focus();
 										}}
 									>
 										<Arrow
@@ -147,13 +151,13 @@ interface FormProps {
 	onSubmit: (data: BlockCreateInput) => Promise<unknown>;
 	onCancel: () => void;
 	markdown?: boolean;
+	editorRef?: React.Ref<TiptapEditor>;
 }
 
-function Form({ onCancel, onSubmit }: FormProps) {
+function Form({ onCancel, onSubmit, editorRef }: FormProps) {
 	const isMac = useIsMac();
 	const inputName = "value";
-	const { handleSubmit, setFocus, reset, control } =
-		useForm<BlockCreateInput>();
+	const { handleSubmit, reset, control } = useForm<BlockCreateInput>();
 	useEffect(() => {
 		const handleKeyDown = (event: KeyboardEvent) => {
 			// Submit on cmd + enter
@@ -175,13 +179,6 @@ function Form({ onCancel, onSubmit }: FormProps) {
 		};
 	}, [handleSubmit, onSubmit, reset, onCancel]);
 
-	useEffect(() => {
-		const timeoutId = setTimeout(() => {
-			setFocus(inputName);
-		}, 0);
-		return () => clearTimeout(timeoutId);
-	}, [setFocus]);
-
 	return (
 		<form className="w-full h-full relative flex flex-col">
 			<Controller
@@ -189,6 +186,7 @@ function Form({ onCancel, onSubmit }: FormProps) {
 				name={inputName}
 				render={({ field }) => (
 					<Editor
+						editorRef={editorRef}
 						// @note TODO possibly support forwarding refs here
 						// {...field}
 						onChange={(editor) =>

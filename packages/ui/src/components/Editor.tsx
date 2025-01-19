@@ -22,6 +22,7 @@ import {
 	useEditor,
 } from "@tiptap/react";
 import { all, createLowlight } from "lowlight";
+import { useImperativeHandle } from "react";
 import { Markdown } from "tiptap-markdown";
 import { cn } from "../utils/cn";
 
@@ -33,6 +34,7 @@ interface EditorProps {
 	disabled?: boolean;
 	className?: string;
 	placeholder?: string;
+	editorRef?: React.Ref<TiptapEditor>;
 }
 
 export function Editor({
@@ -41,6 +43,7 @@ export function Editor({
 	disabled,
 	className,
 	placeholder,
+	editorRef,
 }: EditorProps) {
 	const editor = useEditor({
 		editable: !disabled,
@@ -94,6 +97,10 @@ export function Editor({
 		},
 		content,
 	});
+	useImperativeHandle<TiptapEditor | null, TiptapEditor | null>(
+		editorRef,
+		() => editor,
+	);
 
 	return (
 		<EditorContent
