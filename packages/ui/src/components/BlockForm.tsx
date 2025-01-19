@@ -122,10 +122,12 @@ export default function BlockForm({
 									<button
 										type="button"
 										className="hover:text-primary text-neutral-600"
-										onClick={(e) => {
-											e.preventDefault();
+										onClick={() => {
 											setIsExpanded(!isExpanded);
 											onExpand?.(!isExpanded);
+										}}
+										onMouseDown={(e) => {
+											e.preventDefault();
 											editorRef?.current?.commands.focus();
 										}}
 									>
