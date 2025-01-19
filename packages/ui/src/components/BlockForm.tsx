@@ -75,7 +75,12 @@ export default function BlockForm({
 						<MD>{loadingContent}</MD>
 					</div>
 					<div className="text-sm absolute inset-0 flex justify-center items-center text-secondary">
-						<Blob className="w-6 h-6 rotating" />
+						<Blob
+							className={cn("rotating", {
+								"w-6 h-6": !isExpanded,
+								"w-8 h-8": isExpanded,
+							})}
+						/>
 					</div>
 				</div>
 			)}

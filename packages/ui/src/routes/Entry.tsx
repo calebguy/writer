@@ -21,6 +21,7 @@ export default function Entry() {
 	const { setWriter } = useContext(WriterContext);
 	const [isEditing, setIsEditing] = useState(false);
 	const [isDeleting, setIsDeleting] = useState(false);
+	const [deleteClicked, setDeleteClicked] = useState(false);
 	const { data } = useQuery({
 		queryFn: () => getWriter(address as Hex),
 		queryKey: ["get-writer", address],
@@ -73,9 +74,9 @@ export default function Entry() {
 							setContent(editor.storage.markdown.getMarkdown())
 						}
 					/>
-					{isPending && (
+					{(isPending || deleteClicked) && (
 						<div className="absolute w-full h-full flex justify-center items-center bg-red-700 z-20">
-							<Blob className="w-6 h-6 rotating text-red-900" />
+							<Blob className="w-8 h-8 rotating text-red-900" />
 						</div>
 					)}
 				</div>
@@ -91,9 +92,7 @@ export default function Entry() {
 						<div className="flex gap-2">
 							<button
 								type="button"
-								className={cn("text-neutral-600", {
-									"hover:text-secondary": isEditing,
-								})}
+								className={cn("text-neutral-600 hover:text-secondary")}
 								onClick={() => {
 									if (isEditing) {
 										setContent(entry?.content);
@@ -118,7 +117,7 @@ export default function Entry() {
 							)}
 						</div>
 						{isEditing && (
-							<>
+							<div className="ml-2">
 								{!isDeleting && (
 									<button
 										type="button"
@@ -133,6 +132,7 @@ export default function Entry() {
 										type="button"
 										className="text-red-700 hover:text-red-900"
 										onClick={async () => {
+											setDeleteClicked(true);
 											const { signature, nonce } = await signDelete(wallet, {
 												id: Number(id),
 												address: address as Hex,
@@ -143,12 +143,13 @@ export default function Entry() {
 												signature,
 												nonce,
 											});
+											setDeleteClicked(false);
 										}}
 									>
-										Do it
+										do it
 									</button>
 								)}
-							</>
+							</div>
 						)}
 					</div>
 				)}
