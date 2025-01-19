@@ -5,7 +5,7 @@ export enum ButtonVariant {
 	Primary = "primary",
 	Secondary = "secondary",
 	Empty = "empty",
-	LimeHover = "lime-hover",
+	PrimaryColor = "primary-color",
 }
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -25,7 +25,7 @@ const classes = {
 	),
 	[ButtonVariant.Secondary]: cn(baseStyles, "bg-black", "text-white"),
 	[ButtonVariant.Empty]: cn("outline-none", "text-white"),
-	[ButtonVariant.LimeHover]: cn(
+	[ButtonVariant.PrimaryColor]: cn(
 		baseStyles,
 		"hover:bg-primary",
 		"text-white",
