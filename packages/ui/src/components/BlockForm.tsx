@@ -17,6 +17,7 @@ interface BlockFormProps {
 	isLoading?: boolean;
 	placeholder?: string;
 	canExpand?: boolean;
+	onExpand?: (isExpanded: boolean) => void;
 }
 
 export default function BlockForm({
@@ -24,6 +25,7 @@ export default function BlockForm({
 	onSubmit,
 	isLoading,
 	canExpand,
+	onExpand,
 }: BlockFormProps) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [hasFocus, setFocus] = useState(false);
@@ -31,7 +33,6 @@ export default function BlockForm({
 	const [loadingContent, setLoadingContent] = useState<string | undefined>(
 		undefined,
 	);
-	const toggleExpanded = () => setIsExpanded(!isExpanded);
 	const ref = useRef<HTMLInputElement>(null);
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
@@ -39,6 +40,7 @@ export default function BlockForm({
 				if (!ref.current.contains(event.target as Node)) {
 					setFocus(false);
 					setIsExpanded(false);
+					onExpand?.(false);
 				} else {
 					setFocus(true);
 				}
@@ -49,7 +51,7 @@ export default function BlockForm({
 		return () => {
 			document.removeEventListener("mousedown", handleClickOutside);
 		};
-	}, []);
+	}, [onExpand]);
 
 	const isLoadingOrSubmitting = isLoading || isSubmitting;
 
@@ -105,18 +107,23 @@ export default function BlockForm({
 									setFocus(false);
 									setIsSubmitting(false);
 									setIsExpanded(false);
+									onExpand?.(false);
 								}}
 								onCancel={() => {
 									setFocus(false);
 									setIsExpanded(false);
+									onExpand?.(false);
 								}}
 							/>
 							{canExpand && !isLoading && (
 								<div className="absolute bottom-1 right-1 flex justify-end z-20">
 									<button
 										type="button"
-										className="hover:text-secondary text-primary"
-										onClick={toggleExpanded}
+										className="hover:text-primary text-neutral-600"
+										onClick={() => {
+											setIsExpanded(!isExpanded);
+											onExpand?.(!isExpanded);
+										}}
 									>
 										<Arrow
 											title="expand"

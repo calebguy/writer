@@ -16,6 +16,7 @@ export function Writer() {
 	const { setWriter } = useContext(WriterContext);
 	const wallet = useFirstWallet();
 	const [isPolling, setIsPolling] = useState(false);
+	const [isExpanded, setIsExpanded] = useState(false);
 	const { data, refetch } = useQuery({
 		queryFn: () => getWriter(address as Hex),
 		queryKey: ["get-writer", address],
@@ -75,31 +76,33 @@ export function Writer() {
 					isLoading={isPending}
 					placeholder={`Write in \n\n${data?.title}`}
 					onSubmit={({ value }) => handleSubmit(value).then(() => refetch())}
+					onExpand={setIsExpanded}
 				/>
-				{data?.entries.map((entry) => {
-					let id: undefined | string = undefined;
-					if (!entry.createdAtHash) {
-						id = "loading...";
-					} else if (entry.createdAtBlockDatetime) {
-						id = format(new Date(entry.createdAtBlockDatetime), "MM-dd-yyyy");
-					} else {
-						id = format(new Date(entry.createdAt), "MM/dd/yyyy");
-					}
+				{!isExpanded &&
+					data?.entries.map((entry) => {
+						let id: undefined | string = undefined;
+						if (!entry.createdAtHash) {
+							id = "loading...";
+						} else if (entry.createdAtBlockDatetime) {
+							id = format(new Date(entry.createdAtBlockDatetime), "MM-dd-yyyy");
+						} else {
+							id = format(new Date(entry.createdAt), "MM/dd/yyyy");
+						}
 
-					// We want the preview to overflow if it is long enough but we don't want to render the entire content
-					const title = entry.content
-						? `${entry.content.slice(0, 2_000)}`
-						: "n/a";
-					return (
-						<Block
-							key={entry.id}
-							href={`/writer/${data.address}/${entry.onChainId}`}
-							isLoading={!entry.onChainId}
-							title={title}
-							id={id}
-						/>
-					);
-				})}
+						// We want the preview to overflow if it is long enough but we don't want to render the entire content
+						const title = entry.content
+							? `${entry.content.slice(0, 2_000)}`
+							: "n/a";
+						return (
+							<Block
+								key={entry.id}
+								href={`/writer/${data.address}/${entry.onChainId}`}
+								isLoading={!entry.onChainId}
+								title={title}
+								id={id}
+							/>
+						);
+					})}
 			</div>
 		</div>
 	);
