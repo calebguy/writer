@@ -65,26 +65,18 @@ function Home() {
 
 					{wallet &&
 						hasWriters &&
-						data?.map((writer) => {
-							let id: undefined | string = undefined;
-							if (!writer.createdAtHash) {
-								id = "loading...";
-							} else if (writer.entries.length > 0) {
-								id = writer.entries.length.toString();
-							}
-							return (
-								<Block
-									onClick={() => {
-										setWriter(writer);
-									}}
-									key={writer.address}
-									href={`/writer/${writer.address}`}
-									title={writer.title}
-									isLoading={!writer.createdAtHash}
-									id={id}
-								/>
-							);
-						})}
+						data?.map((writer) => (
+							<Block
+								key={writer.address}
+								onClick={() => {
+									setWriter(writer);
+								}}
+								href={`/writer/${writer.address}`}
+								title={writer.title}
+								isLoading={!writer.createdAtHash}
+								id={writer.entries.length.toString()}
+							/>
+						))}
 				</div>
 			)}
 		</div>

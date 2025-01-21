@@ -3,6 +3,7 @@ import { cn } from "../utils/cn";
 
 import { Link } from "react-router-dom";
 import { MD } from "./MD";
+import { Blob } from "./icons/Blob";
 
 interface BlockProps {
 	title: string;
@@ -32,11 +33,17 @@ export default function Block({
 			<div className="p-2 flex flex-col grow h-1">
 				<MD className="grow">{title}</MD>
 				<div className="text-right text-neutral-600 text-sm leading-3 pt-2">
-					{id}
+					{isLoading ? (
+						<span>
+							<Blob className="rotating h-5 w-5 inline-block" />
+						</span>
+					) : (
+						id
+					)}
 				</div>
 			</div>
 		);
-	}, [title, id]);
+	}, [title, id, isLoading]);
 	return href && !isLoading ? (
 		<Link onClick={onClick} to={href} key={id} className={className}>
 			{renderChildren()}

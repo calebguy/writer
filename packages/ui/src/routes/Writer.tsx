@@ -81,9 +81,7 @@ export function Writer() {
 				{!isExpanded &&
 					data?.entries.map((entry) => {
 						let id: undefined | string = undefined;
-						if (!entry.createdAtHash) {
-							id = "loading...";
-						} else if (entry.createdAtBlockDatetime) {
+						if (entry.createdAtBlockDatetime) {
 							id = format(new Date(entry.createdAtBlockDatetime), "MM-dd-yyyy");
 						} else {
 							id = format(new Date(entry.createdAt), "MM/dd/yyyy");
