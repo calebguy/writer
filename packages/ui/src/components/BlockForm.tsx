@@ -29,7 +29,7 @@ export default function BlockForm({
 	onExpand,
 }: BlockFormProps) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [hasFocus, setFocus] = useState(false);
+	const [hasFocus, setHasFocus] = useState(false);
 	const [isExpanded, setIsExpanded] = useState(false);
 	const [loadingContent, setLoadingContent] = useState<string | undefined>(
 		undefined,
@@ -40,11 +40,11 @@ export default function BlockForm({
 		const handleClickOutside = (event: MouseEvent) => {
 			if (containerRef.current) {
 				if (!containerRef.current.contains(event.target as Node)) {
-					setFocus(false);
+					setHasFocus(false);
 					setIsExpanded(false);
 					onExpand?.(false);
 				} else {
-					setFocus(true);
+					setHasFocus(true);
 				}
 			}
 		};
@@ -54,6 +54,13 @@ export default function BlockForm({
 			document.removeEventListener("mousedown", handleClickOutside);
 		};
 	}, [onExpand]);
+
+	useEffect(() => {
+		// @note this is a hack to focus the editor when the form is clicked
+		if (hasFocus && editorRef.current) {
+			editorRef.current.commands.focus();
+		}
+	}, [hasFocus]);
 
 	const isLoadingOrSubmitting = isLoading || isSubmitting;
 	return (
@@ -96,12 +103,12 @@ export default function BlockForm({
 					)}
 				>
 					{!hasFocus && !isExpanded && (
-						<>
+						<div>
 							<div className="text-2xl text-primary group-hover:hidden">+</div>
 							<div className="text-base text-neutral-700 hidden group-hover:block text-left break-words">
 								<MD className="pointer-events-none">{placeholder}</MD>
 							</div>
-						</>
+						</div>
 					)}
 					{hasFocus && (
 						<div className="relative w-full h-full">
@@ -111,13 +118,13 @@ export default function BlockForm({
 									setLoadingContent(data.value);
 									setIsSubmitting(true);
 									await onSubmit(data);
-									setFocus(false);
+									setHasFocus(false);
 									setIsSubmitting(false);
 									setIsExpanded(false);
 									onExpand?.(false);
 								}}
 								onCancel={() => {
-									setFocus(false);
+									setHasFocus(false);
 									setIsExpanded(false);
 									onExpand?.(false);
 								}}
