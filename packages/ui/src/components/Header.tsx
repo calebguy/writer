@@ -1,10 +1,11 @@
 import { useLogin, usePrivy } from "@privy-io/react-auth";
-import { useContext } from "react";
+import { useContext, useMemo } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { WriterContext } from "../layouts/App.layout";
 import { cn } from "../utils/cn";
 import { Button, ButtonVariant } from "./Button";
 import { MD } from "./MD";
+import { Arrow } from "./icons/Arrow";
 import { Blob } from "./icons/Blob";
 
 export function Header() {
@@ -18,6 +19,10 @@ export function Header() {
 	const { address, id } = useParams();
 	const { writer } = useContext(WriterContext);
 	const isLoggedIn = ready && authenticated;
+
+	const isEntry = useMemo(() => {
+		return writer && id;
+	}, [writer, id]);
 
 	let title = "Writer";
 	if (location.pathname === "/") {
@@ -54,7 +59,12 @@ export function Header() {
 						)}
 						style={{ overflowWrap: "anywhere" }}
 					>
-						<MD>{title}</MD>
+						<div className="flex items-center gap-2">
+							{(writer || id) && location.pathname !== "/" && (
+								<Arrow className="w-6 h-6 -rotate-[135deg]" />
+							)}
+							{!id && <MD>{title}</MD>}
+						</div>
 					</Link>
 				</div>
 				<Button
