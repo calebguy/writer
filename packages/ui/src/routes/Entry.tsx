@@ -8,10 +8,10 @@ import { MD } from "../components/MD";
 import { Blob } from "../components/icons/Blob";
 import { WriterContext } from "../layouts/App.layout";
 import { queryClient } from "../main";
-import { deleteEntry, getWriter } from "../utils/api";
+import { deleteEntry, editEntry, getWriter } from "../utils/api";
 import { cn } from "../utils/cn";
 import { useFirstWallet } from "../utils/hooks";
-import { signDelete } from "../utils/signer";
+import { signDelete, signEdit } from "../utils/signer";
 import { shortenAddress } from "../utils/utils";
 
 export default function Entry() {
@@ -21,23 +21,36 @@ export default function Entry() {
 	const { setWriter } = useContext(WriterContext);
 	const [isEditing, setIsEditing] = useState(false);
 	const [isDeleting, setIsDeleting] = useState(false);
-	const [deleteClicked, setDeleteClicked] = useState(false);
+	const [deleteSubmitted, setDeletedSubmitted] = useState(false);
+	const [editSubmitted, setEditSubmitted] = useState(false);
 	const { data } = useQuery({
 		queryFn: () => getWriter(address as Hex),
 		queryKey: ["get-writer", address],
 		enabled: !!address,
 	});
 
-	const { mutateAsync, isPending } = useMutation({
-		mutationFn: deleteEntry,
-		mutationKey: ["delete-entry", address, id],
-		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: ["get-writer", address],
-			});
-			navigate(`/writer/${address}`);
-		},
-	});
+	const { mutateAsync: mutateAsyncDelete, isPending: isPendingDelete } =
+		useMutation({
+			mutationFn: deleteEntry,
+			mutationKey: ["delete-entry", address, id],
+			onSuccess: () => {
+				queryClient.invalidateQueries({
+					queryKey: ["get-writer", address],
+				});
+				navigate(`/writer/${address}`);
+			},
+		});
+
+	const { mutateAsync: mutateAsyncEdit, isPending: isPendingEdit } =
+		useMutation({
+			mutationFn: editEntry,
+			mutationKey: ["edit-entry", address, id],
+			onSuccess: () => {
+				queryClient.invalidateQueries({
+					queryKey: ["get-writer", address],
+				});
+			},
+		});
 
 	useEffect(() => {
 		if (data) {
@@ -52,10 +65,14 @@ export default function Entry() {
 		return data?.managers.includes(wallet?.address);
 	}, [data?.managers, wallet?.address]);
 
-	const [content, setContent] = useState(entry?.content);
+	const [editedContent, setEditedContent] = useState(entry?.content);
 	const isContentChanged = useMemo(() => {
-		return content !== entry?.content;
-	}, [content, entry?.content]);
+		return editedContent !== entry?.content;
+	}, [editedContent, entry?.content]);
+
+	const isEditPending = useMemo(() => {
+		return isPendingDelete || isPendingEdit || deleteSubmitted || editSubmitted;
+	}, [isPendingDelete, isPendingEdit, deleteSubmitted, editSubmitted]);
 
 	if (!entry) {
 		return <div>Entry not found</div>;
@@ -69,14 +86,25 @@ export default function Entry() {
 				<div className="flex-grow flex flex-col relative">
 					<Editor
 						className="border-[1px] border-primary border-dashed p-2 bg-neutral-900"
-						content={content}
+						content={editedContent}
 						onChange={(editor) =>
-							setContent(editor.storage.markdown.getMarkdown())
+							setEditedContent(editor.storage.markdown.getMarkdown())
 						}
 					/>
-					{(isPending || deleteClicked) && (
-						<div className="absolute w-full h-full flex justify-center items-center bg-red-700 z-20">
-							<Blob className="w-8 h-8 rotating text-red-900" />
+					{isEditPending && (
+						<div
+							className={cn(
+								"absolute w-full h-full flex justify-center items-center z-20",
+								{ "bg-red-700": isPendingDelete },
+								{ "bg-primary": isPendingEdit },
+							)}
+						>
+							<Blob
+								className={cn("w-8 h-8 rotating", {
+									"text-red-900": isPendingDelete,
+									"text-secondary": isPendingEdit,
+								})}
+							/>
 						</div>
 					)}
 				</div>
@@ -95,7 +123,7 @@ export default function Entry() {
 								className={cn("text-neutral-600 hover:text-secondary")}
 								onClick={() => {
 									if (isEditing) {
-										setContent(entry?.content);
+										setEditedContent(entry?.content);
 										setIsEditing(false);
 										setIsDeleting(false);
 									} else {
@@ -109,7 +137,25 @@ export default function Entry() {
 								<button
 									type="button"
 									disabled={!isContentChanged}
-									onClick={() => setIsEditing(false)}
+									onClick={async () => {
+										setEditSubmitted(true);
+										const { signature, nonce, entryId, totalChunks, content } =
+											await signEdit(wallet, {
+												entryId: Number(id),
+												address: address as Hex,
+												content: editedContent as string,
+											});
+										mutateAsyncEdit({
+											address: address as Hex,
+											id: entryId,
+											signature,
+											nonce,
+											totalChunks,
+											content,
+										});
+										setEditSubmitted(false);
+										setIsEditing(false);
+									}}
 									className="text-primary disabled:text-neutral-600 hover:text-secondary"
 								>
 									save
@@ -132,18 +178,18 @@ export default function Entry() {
 										type="button"
 										className="text-red-700 hover:text-red-900"
 										onClick={async () => {
-											setDeleteClicked(true);
+											setDeletedSubmitted(true);
 											const { signature, nonce } = await signDelete(wallet, {
 												id: Number(id),
 												address: address as Hex,
 											});
-											mutateAsync({
+											mutateAsyncDelete({
 												address: address as Hex,
 												id: Number(id),
 												signature,
 												nonce,
 											});
-											setDeleteClicked(false);
+											setDeletedSubmitted(false);
 										}}
 									>
 										do it

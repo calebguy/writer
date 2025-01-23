@@ -15,6 +15,31 @@ export async function getWriter(address: Hex) {
 	return (await res.json()).writer;
 }
 
+export async function editEntry({
+	address,
+	id,
+	signature,
+	nonce,
+	totalChunks,
+	content,
+}: {
+	address: string;
+	id: number;
+	signature: string;
+	nonce: number;
+	totalChunks: number;
+	content: string;
+}) {
+	const res = await client.api.writer[":address"].entry[":id"].update.$post({
+		param: { address, id: String(id) },
+		json: { signature, nonce, totalChunks, content },
+	});
+	if (!res.ok) {
+		throw new Error(res.statusText);
+	}
+	return res.json();
+}
+
 export async function deleteEntry({
 	address,
 	id,

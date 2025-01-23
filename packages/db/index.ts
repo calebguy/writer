@@ -69,6 +69,13 @@ class Db {
 		};
 	}
 
+	async getEntry(address: Hex, id: bigint) {
+		const data = await this.pg.query.entry.findFirst({
+			where: and(eq(entry.storageAddress, address), eq(entry.onChainId, id)),
+		});
+		return data;
+	}
+
 	createTx(tx: Omit<InsertSyndicateTransaction, "updatedAt" | "createdAt">) {
 		return this.pg
 			.insert(syndicateTx)

@@ -9,15 +9,18 @@ import {
 	CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
 	DELETE_ENTRY_FUNCTION_SIGNATURE,
 	TARGET_CHAIN_ID,
+	UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE,
 	db,
 } from "./constants";
 import { env } from "./env";
 import { privyAuthMiddleware } from "./helpers";
 import {
+	addressAndIDParamSchema,
+	addressParamSchema,
 	createWithChunkJsonValidator,
 	deleteEntryJsonValidator,
 	factoryCreateJsonValidator,
-	postDeleteEntryParamSchema,
+	updateEntryJsonValidator,
 } from "./middleware";
 import { syndicate } from "./syndicate";
 
@@ -51,8 +54,9 @@ const api = app
 	})
 	.post(
 		"/writer/:address/entry/:id/delete",
-		postDeleteEntryParamSchema,
+		addressAndIDParamSchema,
 		deleteEntryJsonValidator,
+		privyAuthMiddleware,
 		async (c) => {
 			const { address, id } = c.req.valid("param");
 			const { signature, nonce } = c.req.valid("json");
@@ -89,10 +93,11 @@ const api = app
 	)
 	.post(
 		"/writer/:address/createWithChunk",
+		addressParamSchema,
 		createWithChunkJsonValidator,
 		privyAuthMiddleware,
 		async (c) => {
-			const contractAddress = getAddress(c.req.param("address"));
+			const contractAddress = getAddress(c.req.valid("param").address);
 			const privyUserAddress = c.get("privyUserAddress");
 			const writer = await db.getWriter(contractAddress);
 			if (!writer) {
@@ -126,6 +131,55 @@ const api = app
 			});
 			const entry = entryToJsonSafe(data[0]);
 			return c.json({ entry }, 201);
+		},
+	)
+	.post(
+		"/writer/:address/entry/:id/update",
+		addressAndIDParamSchema,
+		updateEntryJsonValidator,
+		privyAuthMiddleware,
+		async (c) => {
+			const { address, id } = c.req.valid("param");
+			const privyUserAddress = c.get("privyUserAddress");
+			const { signature, nonce, totalChunks, content } = c.req.valid("json");
+
+			const contractAddress = getAddress(address);
+			const writer = await db.getWriter(address);
+			if (!writer) {
+				return c.json({ error: "writer not found" }, 404);
+			}
+
+			const entry = await db.getEntry(contractAddress, id);
+			if (!entry) {
+				return c.json({ error: "entry not found" }, 404);
+			}
+
+			const args = { signature, nonce, totalChunks, content, id: Number(id) };
+			const { transactionId } = await syndicate.transact.sendTransaction({
+				projectId: env.SYNDICATE_PROJECT_ID,
+				contractAddress,
+				chainId: TARGET_CHAIN_ID,
+				functionSignature: UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE,
+				args,
+			});
+			await db.createTx({
+				id: transactionId,
+				chainId: BigInt(TARGET_CHAIN_ID),
+				functionSignature: UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE,
+				args,
+				status: "PENDING",
+			});
+
+			const data = await db.upsertEntry({
+				id: entry.id,
+				exists: true,
+				storageAddress: writer.storageAddress,
+				createdAtTransactionId: transactionId,
+				content,
+				author: privyUserAddress,
+				updatedAtTransactionId: transactionId,
+			});
+			return c.json({ entry: entryToJsonSafe(data[0]) }, 201);
 		},
 	)
 	.post("/factory/create", factoryCreateJsonValidator, async (c) => {

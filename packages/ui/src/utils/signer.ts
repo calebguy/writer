@@ -8,7 +8,7 @@ export async function signDelete(
 ) {
 	const provider = await wallet.getEthereumProvider();
 	const method = "eth_signTypedData_v4";
-	const nonce = Math.floor(Math.random() * 1000000000000);
+	const nonce = getRandomNonce();
 	const payload = {
 		domain: {
 			name: "Writer",
@@ -46,17 +46,73 @@ export async function signDelete(
 	};
 }
 
+export async function signEdit(
+	wallet: ConnectedWallet,
+	{
+		entryId,
+		address,
+		content,
+	}: { entryId: number; address: string; content: string },
+) {
+	const totalChunks = 1;
+	const nonce = getRandomNonce();
+
+	const provider = await wallet.getEthereumProvider();
+	const method = "eth_signTypedData_v4";
+	const payload = {
+		domain: {
+			name: "Writer",
+			version: "1",
+			chainId: TARGET_CHAIN_ID,
+			verifyingContract: getAddress(address),
+		},
+		message: {
+			nonce,
+			entryId,
+			totalChunks,
+			content,
+		},
+		primaryType: "Update",
+		types: {
+			EIP712Domain: [
+				{ name: "name", type: "string" },
+				{ name: "version", type: "string" },
+				{ name: "chainId", type: "uint256" },
+				{ name: "verifyingContract", type: "address" },
+			],
+			Update: [
+				{ name: "nonce", type: "uint256" },
+				{ name: "entryId", type: "uint256" },
+				{ name: "totalChunks", type: "uint256" },
+				{ name: "content", type: "string" },
+			],
+		},
+	};
+
+	const signature = await provider.request({
+		method,
+		params: [wallet.address, JSON.stringify(payload)],
+	});
+
+	return {
+		signature,
+		nonce,
+		entryId,
+		totalChunks,
+		content,
+	};
+}
+
 export async function signCreateWithChunk(
 	wallet: ConnectedWallet,
 	{ content, address }: { content: string; address: string },
 ) {
 	const chunkCount = 1;
-	const nonce = Math.floor(Math.random() * 1000000000000);
+	const nonce = getRandomNonce();
 	const chunkContent = content;
 
 	const provider = await wallet.getEthereumProvider();
 	const method = "eth_signTypedData_v4";
-	// To avoid signature collision, a random nonce is used
 	const payload = {
 		domain: {
 			name: "Writer",
@@ -96,4 +152,8 @@ export async function signCreateWithChunk(
 		chunkCount,
 		chunkContent,
 	};
+}
+
+function getRandomNonce() {
+	return Math.floor(Math.random() * 1000000000000);
 }

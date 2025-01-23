@@ -1,10 +1,12 @@
 import { useLogin, usePrivy } from "@privy-io/react-auth";
-import { useContext, useMemo } from "react";
+import { useContext, useMemo, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { WriterContext } from "../layouts/App.layout";
 import { cn } from "../utils/cn";
 import { Button, ButtonVariant } from "./Button";
+import { Dropdown, DropdownItem } from "./Dropdown";
 import { MD } from "./MD";
+import { Modal } from "./Modal";
 import { Arrow } from "./icons/Arrow";
 import { Blob } from "./icons/Blob";
 
@@ -19,6 +21,8 @@ export function Header() {
 	const { address, id } = useParams();
 	const { writer } = useContext(WriterContext);
 	const isLoggedIn = ready && authenticated;
+
+	const [open, setOpen] = useState(false);
 
 	const isEntry = useMemo(() => {
 		return writer && id;
@@ -67,24 +71,48 @@ export function Header() {
 						</div>
 					</Link>
 				</div>
-				<Button
-					bounce
-					variant={ButtonVariant.Empty}
-					onClick={() => {
-						if (isLoggedIn) {
-							logout();
-						} else {
-							login();
+				{!authenticated && (
+					<Button
+						bounce
+						variant={ButtonVariant.Empty}
+						onClick={() => {
+							if (isLoggedIn) {
+								logout();
+							} else {
+								login();
+							}
+						}}
+					>
+						<Blob
+							className={cn("h-8", {
+								"text-primary": isLoggedIn,
+								"text-neutral-500": !isLoggedIn,
+							})}
+						/>
+					</Button>
+				)}
+
+				{authenticated && (
+					<Dropdown
+						trigger={
+							<Blob
+								className={cn("h-8", {
+									"text-primary": isLoggedIn,
+									"text-neutral-500": !isLoggedIn,
+								})}
+							/>
 						}
-					}}
-				>
-					<Blob
-						className={cn("h-8", {
-							"text-primary": isLoggedIn,
-							"text-neutral-500": !isLoggedIn,
-						})}
-					/>
-				</Button>
+					>
+						<DropdownItem onClick={() => setOpen(true)}>
+							<div className="flex items-center justify-between gap-2 w-full">
+								<span>Color</span>
+								<span className="w-2 h-2 bg-primary" />
+							</div>
+						</DropdownItem>
+						<DropdownItem onClick={() => logout()}>Sign Out</DropdownItem>
+					</Dropdown>
+				)}
+				<Modal open={open} onClose={() => setOpen(false)} />
 			</div>
 		</div>
 	);

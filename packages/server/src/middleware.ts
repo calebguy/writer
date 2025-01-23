@@ -35,7 +35,14 @@ export const createEntrySchema = z.object({
 	content: z.string(),
 });
 
-export const postDeleteEntryParamSchema = zValidator(
+export const addressParamSchema = zValidator(
+	"param",
+	z.object({
+		address: ethAddress,
+	}),
+);
+
+export const addressAndIDParamSchema = zValidator(
 	"param",
 	z.object({
 		address: ethAddress,
@@ -50,6 +57,16 @@ export const createWithChunkJsonValidator = zValidator(
 		nonce: z.number(),
 		chunkCount: z.number(),
 		chunkContent: z.string(),
+	}),
+);
+
+export const updateEntryJsonValidator = zValidator(
+	"json",
+	z.object({
+		signature: z.string(),
+		nonce: z.number(),
+		totalChunks: z.number(),
+		content: z.string(),
 	}),
 );
 

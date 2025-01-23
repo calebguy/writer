@@ -13,6 +13,7 @@ import { Author } from "./routes/Author.tsx";
 import Entry from "./routes/Entry.tsx";
 import Home from "./routes/Home.tsx";
 import { Writer } from "./routes/Writer.tsx";
+import { getRootVariableAsHex } from "./utils/utils.ts";
 
 const PRIVY_APP_ID = "clzekejfs079912zv96ahfm5a";
 export const queryClient = new QueryClient();
@@ -37,26 +38,35 @@ const router = createBrowserRouter([
 ]);
 
 // biome-ignore lint/style/noNonNullAssertion: 🫚
-ReactDOM.createRoot(document.getElementById("root")!).render(
-	<React.StrictMode>
-		<QueryClientProvider client={queryClient}>
-			<PrivyProvider
-				appId={PRIVY_APP_ID}
-				config={{
-					loginMethods: ["sms", "email"],
-					defaultChain: optimism,
-					supportedChains: [optimism],
-					appearance: {
-						theme: "dark",
-						accentColor: "#d2ff2e",
-					},
-					embeddedWallets: {
-						createOnLogin: "users-without-wallets",
-					},
-				}}
-			>
-				<RouterProvider router={router} />
-			</PrivyProvider>
-		</QueryClientProvider>
-	</React.StrictMode>,
-);
+ReactDOM.createRoot(document.getElementById("root")!).render(<App />);
+
+function App() {
+	const primaryHexColor = getRootVariableAsHex(
+		"--color-primary-h",
+		"--color-primary-s",
+		"--color-primary-l",
+	);
+	return (
+		<React.StrictMode>
+			<QueryClientProvider client={queryClient}>
+				<PrivyProvider
+					appId={PRIVY_APP_ID}
+					config={{
+						loginMethods: ["sms", "email"],
+						defaultChain: optimism,
+						supportedChains: [optimism],
+						appearance: {
+							theme: "dark",
+							accentColor: primaryHexColor,
+						},
+						embeddedWallets: {
+							createOnLogin: "users-without-wallets",
+						},
+					}}
+				>
+					<RouterProvider router={router} />
+				</PrivyProvider>
+			</QueryClientProvider>
+		</React.StrictMode>
+	);
+}
