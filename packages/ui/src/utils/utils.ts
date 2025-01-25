@@ -132,3 +132,9 @@ export function setCSSVariableFromRGB(variable: string, rgb: RGB) {
 		`${rgb[0]} ${rgb[1]} ${rgb[2]}`,
 	);
 }
+
+export function setPrimaryAndSecondaryCSSVariables(rgb: RGB) {
+	setCSSVariableFromRGB("--color-primary", rgb);
+	const secondaryColor = rgb.map((c) => c - 100);
+	setCSSVariableFromRGB("--color-secondary", secondaryColor as RGB);
+}

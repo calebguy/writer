@@ -7,10 +7,9 @@ import { setColor as setColorApi } from "../utils/api";
 import { useFirstWallet } from "../utils/hooks";
 import { signSetColor } from "../utils/signer";
 import {
-	type RGB,
 	RGBToHex,
 	hexColorToBytes32,
-	setCSSVariableFromRGB,
+	setPrimaryAndSecondaryCSSVariables,
 } from "../utils/utils";
 import { Modal, ModalDescription, ModalTitle } from "./Modal";
 import { Blob } from "./icons/Blob";
@@ -35,12 +34,14 @@ export function ColorModal({ open, onClose }: ModalProps) {
 	});
 
 	useEffect(() => {
-		setRgbColor({
-			r: primaryColor[0],
-			g: primaryColor[1],
-			b: primaryColor[2],
-		});
-	}, [primaryColor]);
+		if (open) {
+			setRgbColor({
+				r: primaryColor[0],
+				g: primaryColor[1],
+				b: primaryColor[2],
+			});
+		}
+	}, [primaryColor, open]);
 
 	return (
 		<Modal open={open} onClose={onClose}>
@@ -54,10 +55,7 @@ export function ColorModal({ open, onClose }: ModalProps) {
 					color={rgbColor}
 					onChange={(c) => {
 						setRgbColor(c);
-						const rgb: RGB = [c.r, c.g, c.b];
-						setCSSVariableFromRGB("--color-primary", rgb);
-						const secondaryColor = rgb.map((c) => c - 100);
-						setCSSVariableFromRGB("--color-secondary", secondaryColor as RGB);
+						setPrimaryAndSecondaryCSSVariables([c.r, c.g, c.b]);
 					}}
 				/>
 				<div className="flex flex-col items-center justify-center ml-6">
@@ -69,19 +67,12 @@ export function ColorModal({ open, onClose }: ModalProps) {
 					type="button"
 					className="border border-transparent hover:border-primary border-dashed text-primary p-2 w-full bold text-xl"
 					onClick={() => {
-						const rgb: RGB = [
-							primaryColor[0],
-							primaryColor[1],
-							primaryColor[2],
-						];
 						setRgbColor({
-							r: rgb[0],
-							g: rgb[1],
-							b: rgb[2],
+							r: primaryColor[0],
+							g: primaryColor[1],
+							b: primaryColor[2],
 						});
-						setCSSVariableFromRGB("--color-primary", rgb);
-						const secondaryColor = rgb.map((c) => c - 100);
-						setCSSVariableFromRGB("--color-secondary", secondaryColor as RGB);
+						setPrimaryAndSecondaryCSSVariables(primaryColor);
 					}}
 				>
 					reset

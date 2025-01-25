@@ -15,11 +15,10 @@ import Entry from "./routes/Entry.tsx";
 import Home from "./routes/Home.tsx";
 import { Writer } from "./routes/Writer.tsx";
 import {
-	RGB,
 	RGBToHex,
 	bytes32ToHexColor,
 	hexToRGB,
-	setCSSVariableFromRGB,
+	setPrimaryAndSecondaryCSSVariables,
 } from "./utils/utils.ts";
 
 const PRIVY_APP_ID = "clzekejfs079912zv96ahfm5a";
@@ -75,24 +74,12 @@ export function App() {
 							primaryColor,
 							setPrimaryColor: (rgb) => {
 								setPrimaryColor(rgb);
-								setCSSVariableFromRGB("--color-primary", rgb);
-
-								const secondaryColor = rgb.map((c) => c - 100);
-								setCSSVariableFromRGB(
-									"--color-secondary",
-									secondaryColor as RGB,
-								);
+								setPrimaryAndSecondaryCSSVariables(rgb);
 							},
 							setPrimaryFromLongHex: (hex) => {
 								const rgb = hexToRGB(bytes32ToHexColor(hex));
 								setPrimaryColor(rgb);
-								setCSSVariableFromRGB("--color-primary", rgb);
-
-								const secondaryColor = rgb.map((c) => c - 100);
-								setCSSVariableFromRGB(
-									"--color-secondary",
-									secondaryColor as RGB,
-								);
+								setPrimaryAndSecondaryCSSVariables(rgb);
 							},
 						}}
 					>
