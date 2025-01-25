@@ -91,3 +91,10 @@ export const syndicateTx = pgTable("syndicate_tx", {
 	createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
 	updatedAt: timestamp({ withTimezone: true }).notNull(),
 });
+
+export const user = pgTable("user", {
+	address: varchar({ length: 42 }).primaryKey(),
+	color: text(),
+	createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+	updatedAt: timestamp({ withTimezone: true }).notNull(),
+});

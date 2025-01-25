@@ -1,0 +1,158 @@
+export const ColorRegistryAbi = [
+	{
+		type: "constructor",
+		inputs: [],
+		stateMutability: "nonpayable",
+	},
+	{
+		type: "function",
+		name: "DOMAIN_NAME",
+		inputs: [],
+		outputs: [
+			{
+				name: "",
+				type: "bytes",
+				internalType: "bytes",
+			},
+		],
+		stateMutability: "view",
+	},
+	{
+		type: "function",
+		name: "DOMAIN_VERSION",
+		inputs: [],
+		outputs: [
+			{
+				name: "",
+				type: "bytes",
+				internalType: "bytes",
+			},
+		],
+		stateMutability: "view",
+	},
+	{
+		type: "function",
+		name: "SET_PRIMARY_TYPEHASH",
+		inputs: [],
+		outputs: [
+			{
+				name: "",
+				type: "bytes32",
+				internalType: "bytes32",
+			},
+		],
+		stateMutability: "view",
+	},
+	{
+		type: "function",
+		name: "getPrimary",
+		inputs: [
+			{
+				name: "user",
+				type: "address",
+				internalType: "address",
+			},
+		],
+		outputs: [
+			{
+				name: "",
+				type: "bytes32",
+				internalType: "bytes32",
+			},
+		],
+		stateMutability: "view",
+	},
+	{
+		type: "function",
+		name: "setHex",
+		inputs: [
+			{
+				name: "hexColor",
+				type: "bytes32",
+				internalType: "bytes32",
+			},
+		],
+		outputs: [],
+		stateMutability: "nonpayable",
+	},
+	{
+		type: "function",
+		name: "setHexWithSig",
+		inputs: [
+			{
+				name: "signature",
+				type: "bytes",
+				internalType: "bytes",
+			},
+			{
+				name: "nonce",
+				type: "uint256",
+				internalType: "uint256",
+			},
+			{
+				name: "hexColor",
+				type: "bytes32",
+				internalType: "bytes32",
+			},
+		],
+		outputs: [],
+		stateMutability: "nonpayable",
+	},
+	{
+		type: "function",
+		name: "signatureWasExecuted",
+		inputs: [
+			{
+				name: "",
+				type: "bytes32",
+				internalType: "bytes32",
+			},
+		],
+		outputs: [
+			{
+				name: "",
+				type: "bool",
+				internalType: "bool",
+			},
+		],
+		stateMutability: "view",
+	},
+	{
+		type: "function",
+		name: "userToHex",
+		inputs: [
+			{
+				name: "",
+				type: "address",
+				internalType: "address",
+			},
+		],
+		outputs: [
+			{
+				name: "",
+				type: "bytes32",
+				internalType: "bytes32",
+			},
+		],
+		stateMutability: "view",
+	},
+	{
+		type: "event",
+		name: "HexSet",
+		inputs: [
+			{
+				name: "user",
+				type: "address",
+				indexed: true,
+				internalType: "address",
+			},
+			{
+				name: "hexColor",
+				type: "bytes32",
+				indexed: true,
+				internalType: "bytes32",
+			},
+		],
+		anonymous: false,
+	},
+] as const;

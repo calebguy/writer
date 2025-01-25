@@ -5,6 +5,32 @@ import type { Hex } from "viem";
 
 const client = hc<Api>("/");
 
+export async function getMe() {
+	const res = await client.api.me.$get();
+	if (!res.ok) {
+		throw new Error(res.statusText);
+	}
+	return res.json();
+}
+
+export async function setColor({
+	signature,
+	nonce,
+	hexColor,
+}: {
+	signature: string;
+	nonce: number;
+	hexColor: string;
+}) {
+	const res = await client.api["color-registry"].set.$post({
+		json: { signature, nonce, hexColor },
+	});
+	if (!res.ok) {
+		throw new Error(res.statusText);
+	}
+	return res.json();
+}
+
 export async function getWriter(address: Hex) {
 	const res = await client.api.writer[":address"].$get({
 		param: { address },

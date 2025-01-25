@@ -2,6 +2,52 @@ import type { ConnectedWallet } from "@privy-io/react-auth";
 import { getAddress } from "viem";
 import { TARGET_CHAIN_ID } from "../constants";
 
+export async function signSetColor(
+	wallet: ConnectedWallet,
+	{ hexColor }: { hexColor: string },
+) {
+	const provider = await wallet.getEthereumProvider();
+	const method = "eth_signTypedData_v4";
+	const nonce = getRandomNonce();
+	const payload = {
+		domain: {
+			name: "ColorRegistry",
+			version: "1",
+			chainId: TARGET_CHAIN_ID,
+			verifyingContract: getAddress(
+				"0x7Bf5B616f5431725bCE61E397173cd6FbFaAC6F1",
+			),
+		},
+		message: {
+			nonce,
+			hexColor,
+		},
+		primaryType: "SetHex",
+		types: {
+			EIP712Domain: [
+				{ name: "name", type: "string" },
+				{ name: "version", type: "string" },
+				{ name: "chainId", type: "uint256" },
+				{ name: "verifyingContract", type: "address" },
+			],
+			SetHex: [
+				{ name: "nonce", type: "uint256" },
+				{ name: "hexColor", type: "bytes32" },
+			],
+		},
+	};
+	const signature = await provider.request({
+		method,
+		params: [wallet.address, JSON.stringify(payload)],
+	});
+
+	return {
+		signature,
+		nonce,
+		hexColor,
+	};
+}
+
 export async function signDelete(
 	wallet: ConnectedWallet,
 	{ id, address }: { id: number; address: string },

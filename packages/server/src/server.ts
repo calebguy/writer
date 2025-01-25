@@ -8,6 +8,7 @@ import {
 	CREATE_FUNCTION_SIGNATURE,
 	CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
 	DELETE_ENTRY_FUNCTION_SIGNATURE,
+	SET_HEX_FUNCTION_SIGNATURE,
 	TARGET_CHAIN_ID,
 	UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE,
 	db,
@@ -17,6 +18,7 @@ import { privyAuthMiddleware } from "./helpers";
 import {
 	addressAndIDParamSchema,
 	addressParamSchema,
+	colorRegistrySetJsonValidator,
 	createWithChunkJsonValidator,
 	deleteEntryJsonValidator,
 	factoryCreateJsonValidator,
@@ -223,6 +225,45 @@ const api = app
 		});
 		const writer = writerToJsonSafe(data[0]);
 		return c.json({ writer }, 201);
+	})
+	.post(
+		"/color-registry/set",
+		colorRegistrySetJsonValidator,
+		privyAuthMiddleware,
+		async (c) => {
+			const { signature, nonce, hexColor } = c.req.valid("json");
+			const privyUserAddress = c.get("privyUserAddress");
+			const args = {
+				signature,
+				nonce: Number(nonce),
+				hexColor,
+			};
+			console.log(args);
+			const { transactionId } = await syndicate.transact.sendTransaction({
+				projectId: env.SYNDICATE_PROJECT_ID,
+				contractAddress: env.COLOR_REGISTRY_ADDRESS,
+				chainId: TARGET_CHAIN_ID,
+				functionSignature: SET_HEX_FUNCTION_SIGNATURE,
+				args,
+			});
+			await db.createTx({
+				id: transactionId,
+				chainId: BigInt(TARGET_CHAIN_ID),
+				functionSignature: SET_HEX_FUNCTION_SIGNATURE,
+				args,
+				status: "PENDING",
+			});
+			const user = await db.upsertUser({
+				address: privyUserAddress,
+				color: hexColor,
+			});
+			return c.json({ user });
+		},
+	)
+	.get("/me", privyAuthMiddleware, async (c) => {
+		const privyUserAddress = c.get("privyUserAddress");
+		const user = await db.getUser(privyUserAddress);
+		return c.json({ user });
 	});
 
 export type Api = typeof api;

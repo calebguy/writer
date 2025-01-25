@@ -12,6 +12,8 @@ export const UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE =
 	"updateWithSig(bytes signature, uint256 nonce, uint256 id, uint256 totalChunks, string content)";
 export const DELETE_ENTRY_FUNCTION_SIGNATURE =
 	"removeWithSig(bytes signature, uint256 nonce, uint256 id)";
+export const SET_HEX_FUNCTION_SIGNATURE =
+	"setHexWithSig(bytes signature, uint256 nonce, bytes32 hexColor)";
 
 export const privy = new PrivyClient(env.PRIVY_APP_ID, env.PRIVY_SECRET);
 export const db = new Db(env.DATABASE_URL);

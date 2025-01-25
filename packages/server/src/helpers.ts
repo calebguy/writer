@@ -41,6 +41,7 @@ export const getPrivyUserAddress = async (c: Context) => {
 	return userAddress;
 };
 
+// @note TODO: calculate the user address from the signature
 export const privyAuthMiddleware = createMiddleware<{
 	Variables: {
 		privyUserAddress: Hex;

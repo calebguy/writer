@@ -57,3 +57,68 @@ export function getRootVariableAsHex(h: string, s: string, l: string) {
 	const lightness = rootStyles.getPropertyValue(l).trim().replace("%", "");
 	return hslToHex(Number(hue), Number(saturation), Number(lightness));
 }
+
+export function hexColorToBytes32(hexColor: string) {
+	// Remove the '#' prefix
+	const hexWithoutHash = hexColor.slice(1);
+
+	// Pad the hex value to 64 characters to make it a valid bytes32
+	const paddedHex = hexWithoutHash.padStart(64, "0");
+
+	return `0x${paddedHex}`;
+}
+
+export function RGBToHex(r: number, g: number, b: number): `#${string}` {
+	// Validate that RGB values are in the correct range
+	if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {
+		throw new Error("RGB values must be in the range 0-255.");
+	}
+
+	// Convert each RGB component to a 2-digit HEX value
+	const toHex = (value: number) => value.toString(16).padStart(2, "0");
+
+	// Combine into a HEX string
+	return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+export function hexToRGB(hex: string): { r: number; g: number; b: number } {
+	// Validate the input to ensure it is a valid HEX color
+	const hexRegex = /^#?([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$/;
+	if (!hexRegex.test(hex)) {
+		throw new Error("Invalid HEX color format. Expected #RRGGBB or #RGB.");
+	}
+
+	// Remove the `#` if present
+	let hexWithoutHash = hex.replace(/^#/, "");
+
+	// Expand shorthand HEX (e.g., #RGB to #RRGGBB)
+	if (hex.length === 3) {
+		hexWithoutHash = hex
+			.split("")
+			.map((char) => char + char)
+			.join("");
+	}
+
+	// Parse the RGB values
+	const r = Number.parseInt(hexWithoutHash.substring(0, 2), 16);
+	const g = Number.parseInt(hexWithoutHash.substring(2, 4), 16);
+	const b = Number.parseInt(hexWithoutHash.substring(4, 6), 16);
+
+	return { r, g, b };
+}
+
+export function bytes32ToHexColor(bytes32: string): string {
+	// Validate the input
+	const bytes32Regex = /^0x[0-9a-fA-F]{64}$/;
+	if (!bytes32Regex.test(bytes32)) {
+		throw new Error(
+			"Invalid bytes32 format. Expected a 64-character hexadecimal string prefixed with '0x'.",
+		);
+	}
+
+	// Extract the last 6 characters
+	const hexColor = bytes32.slice(-6);
+
+	// Convert to a HEX color string
+	return `#${hexColor}`;
+}

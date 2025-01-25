@@ -2,19 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --color-primary-h: 44; /* Hue */
-    --color-primary-s: 98%; /* Saturation */
-    --color-primary-l: 50%; /* Lightness */
-
-    /* Secondary is darker by reducing lightness */
-    --color-secondary-h: var(--color-primary-h);
-    --color-secondary-s: calc(var(--color-primary-s) - 20);
-    --color-secondary-l: calc(var(--color-primary-l) - 20);
-  }
-}
-
 @font-face {
   font-family: 'LTRemark';
   src: url('./fonts/LTRemark-Regular.otf') format('opentype');
@@ -63,22 +50,27 @@
   font-display: swap;
 }
 
-::selection {
-  background-color: theme('colors.secondary');
+@layer base {
+  :root {
+    --color-primary: 252 186 3;
+    --color-secondary: 120 98 40;
+
+    font-family: "LTRemark";
+    line-height: 1.5;
+    font-weight: 400;
+
+    color: rgba(255, 255, 255, 0.87);
+    background-color: theme('colors.neutral.800');
+
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }
 
-:root {
-  font-family: "LTRemark";
-  line-height: 1.5;
-  font-weight: 400;
-
-  color: rgba(255, 255, 255, 0.87);
-  background-color: theme('colors.neutral.800');
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+::selection {
+  background-color: theme('colors.secondary');
 }
 
 #root {

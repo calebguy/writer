@@ -77,11 +77,11 @@ export default function BlockForm({
 			})}
 		>
 			{isLoadingOrSubmitting && (
-				<div className="absolute inset-0 bg-primary flex flex-col items-center justify-between">
-					<div className="text-secondary w-full text-left break-words p-2 overflow-hidden">
+				<div className="absolute inset-0 bg-secondary flex flex-col items-center justify-between">
+					<div className="text-primary w-full text-left break-words p-2 overflow-hidden">
 						<MD>{loadingContent}</MD>
 					</div>
-					<div className="text-sm absolute inset-0 flex justify-center items-center text-secondary">
+					<div className="text-sm absolute inset-0 flex justify-center items-center text-primary">
 						<Blob
 							className={cn("rotating", {
 								"w-6 h-6": !isExpanded,

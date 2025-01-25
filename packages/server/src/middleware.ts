@@ -14,6 +14,12 @@ export const bigIntSafe = z
 	})
 	.pipe(z.bigint());
 
+const bytes32ColorRegex = /^0x[0-9a-fA-F]{64}$/;
+
+const hexColor = z.string().refine((color) => bytes32ColorRegex.test(color), {
+	message: "Invalid HEX color format. Use #RRGGBB or #RGB.",
+});
+
 const ethAddress = z
 	.string()
 	.refine(
@@ -84,5 +90,14 @@ export const deleteEntryJsonValidator = zValidator(
 	z.object({
 		signature: z.string(),
 		nonce: bigIntSafe,
+	}),
+);
+
+export const colorRegistrySetJsonValidator = zValidator(
+	"json",
+	z.object({
+		signature: z.string(),
+		nonce: bigIntSafe,
+		hexColor: hexColor,
 	}),
 );

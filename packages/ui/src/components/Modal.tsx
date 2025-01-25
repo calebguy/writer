@@ -1,53 +1,52 @@
 import * as Dialog from "@radix-ui/react-dialog";
+import { useMutation } from "@tanstack/react-query";
 import { VisuallyHidden } from "radix-ui";
 import { useEffect, useState } from "react";
-import { HslStringColorPicker } from "react-colorful";
+import { type RgbColor, RgbColorPicker } from "react-colorful";
+import { setColor as setColorApi } from "../utils/api";
 import { cn } from "../utils/cn";
+import color from "../utils/color";
+import { useFirstWallet } from "../utils/hooks";
+import { signSetColor } from "../utils/signer";
+import { RGBToHex, hexColorToBytes32 } from "../utils/utils";
 import { Blob } from "./icons/Blob";
 import { Close } from "./icons/Close";
-
 interface ModalProps {
 	open: boolean;
 	onClose: () => void;
 }
 
 export function Modal({ open, onClose }: ModalProps) {
-	const rootStyles = getComputedStyle(document.documentElement);
-	const h = rootStyles.getPropertyValue("--color-primary-h").trim();
-	const s = rootStyles.getPropertyValue("--color-primary-s").trim();
-	const l = rootStyles.getPropertyValue("--color-primary-l").trim();
-	const hsl = `hsl(${h}, ${s}, ${l})`;
-	const [color, setColor] = useState(hsl);
+	const wallet = useFirstWallet();
+	const [saveClicked, setSaveClicked] = useState(false);
+	const { mutateAsync, isPending } = useMutation({
+		mutationFn: setColorApi,
+		mutationKey: ["set-color"],
+		onSuccess: () => {
+			setSaveClicked(false);
+			onClose();
+		},
+	});
+
+	const [rgbColor, setRgbColor] = useState<RgbColor>({
+		r: color.primaryColor[0],
+		g: color.primaryColor[1],
+		b: color.primaryColor[2],
+	});
 
 	useEffect(() => {
-		// Regular expression to extract HSL components
-		const hslRegex = /hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/;
-		const match = color.match(hslRegex);
-		if (match) {
-			const hue = Number.parseInt(match[1], 10); // 137
-			const saturation = Number.parseInt(match[2], 10); // 90
-			const lightness = Number.parseInt(match[3], 10); // 50
-
-			document.documentElement.style.setProperty(
-				"--color-primary-h",
-				hue.toString(),
-			);
-			document.documentElement.style.setProperty(
-				"--color-primary-s",
-				saturation.toString(),
-			);
-			document.documentElement.style.setProperty(
-				"--color-primary-l",
-				lightness.toString(),
-			);
-		}
-	}, [color]);
+		setRgbColor({
+			r: color.primaryColor[0],
+			g: color.primaryColor[1],
+			b: color.primaryColor[2],
+		});
+	}, [color.primaryColor]);
 
 	return (
 		<Dialog.Root open={open} onOpenChange={onClose}>
 			<Dialog.Portal>
 				<Dialog.Overlay className="DialogOverlay" />
-				<Dialog.Content className={cn("DialogContent", "bg-neutral-800")}>
+				<Dialog.Content className={cn("DialogContent", "bg-secondary")}>
 					<VisuallyHidden.Root>
 						<Dialog.Title className="DialogTitle">Set Color</Dialog.Title>
 						<Dialog.Description className="DialogDescription">
@@ -55,22 +54,38 @@ export function Modal({ open, onClose }: ModalProps) {
 						</Dialog.Description>
 					</VisuallyHidden.Root>
 					<div className="flex items-center justify-center py-4">
-						<HslStringColorPicker color={color} onChange={setColor} />
-						<div className="flex flex-col items-center justify-center ml-8 bg-secondary py-9 px-6">
-							<span className="text-primary text-5xl mb-3">Writer</span>
-							<Blob className="w-24 h-24 text-primary rounded-lg" />
+						<RgbColorPicker
+							className="!border-primary !border-dashed !border"
+							color={rgbColor}
+							onChange={(c) => {
+								setRgbColor(c);
+								color.setColorFromRGB([c.r, c.g, c.b]);
+							}}
+						/>
+						<div className="flex flex-col items-center justify-center ml-6">
+							<Blob className="w-44 h-44 text-primary" />
 						</div>
 					</div>
 					<button
 						type="button"
-						className="hover:bg-secondary hover:text-primary p-2 w-full bold text-xl mt-4"
+						className="border border-transparent hover:border-primary border-dashed text-primary p-2 w-full bold text-xl"
+						onClick={async () => {
+							setSaveClicked(true);
+							const hexColor = hexColorToBytes32(
+								RGBToHex(rgbColor.r, rgbColor.g, rgbColor.b),
+							);
+							const { signature, nonce } = await signSetColor(wallet, {
+								hexColor,
+							});
+							await mutateAsync({ signature, nonce, hexColor });
+						}}
 					>
-						Save
+						{isPending || saveClicked ? "..." : "Save"}
 					</button>
 					<Dialog.Close asChild>
 						<button
 							type="button"
-							className="IconButton text-primary hover:text-secondary"
+							className="IconButton text-primary hover:text-primary/50"
 							aria-label="Close"
 						>
 							<Close className="w-4 h-4" />

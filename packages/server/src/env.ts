@@ -24,6 +24,7 @@ const schema = z.object({
 	DATABASE_URL: minString(),
 	RPC_URL: minString(),
 	FACTORY_ADDRESS: minString(),
+	COLOR_REGISTRY_ADDRESS: minString(),
 	SYNDICATE_API_KEY: minString(),
 	SYNDICATE_PROJECT_ID: minString(),
 	PRIVY_APP_ID: minString(),

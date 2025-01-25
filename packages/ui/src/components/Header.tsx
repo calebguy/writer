@@ -1,8 +1,11 @@
 import { useLogin, usePrivy } from "@privy-io/react-auth";
-import { useContext, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useContext, useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { WriterContext } from "../layouts/App.layout";
+import { getMe } from "../utils/api";
 import { cn } from "../utils/cn";
+import color from "../utils/color";
 import { Button, ButtonVariant } from "./Button";
 import { Dropdown, DropdownItem } from "./Dropdown";
 import { MD } from "./MD";
@@ -11,22 +14,33 @@ import { Arrow } from "./icons/Arrow";
 import { Blob } from "./icons/Blob";
 
 export function Header() {
-	const { login } = useLogin({
-		onComplete: () => {
-			console.log("login complete, call GET /me");
-		},
-	});
 	const { ready, authenticated, logout } = usePrivy();
 	const location = useLocation();
 	const { address, id } = useParams();
 	const { writer } = useContext(WriterContext);
 	const isLoggedIn = ready && authenticated;
 
-	const [open, setOpen] = useState(false);
+	const { data } = useQuery({
+		queryKey: ["me"],
+		queryFn: () => getMe(),
+		enabled: isLoggedIn,
+	});
 
-	const isEntry = useMemo(() => {
-		return writer && id;
-	}, [writer, id]);
+	useEffect(() => {
+		if (data?.user?.color) {
+			color.setColorFromLongHex(data.user.color);
+		} else {
+			color.setColorFromRGB(color.defaultColor);
+		}
+	}, [data]);
+
+	const { login } = useLogin({
+		onComplete: (user) => {
+			console.log("login complete, call GET /me", user);
+		},
+	});
+
+	const [open, setOpen] = useState(false);
 
 	let title = "Writer";
 	if (location.pathname === "/") {
@@ -109,7 +123,7 @@ export function Header() {
 								<span className="w-2 h-2 bg-primary" />
 							</div>
 						</DropdownItem>
-						<DropdownItem onClick={() => logout()}>Sign Out</DropdownItem>
+						<DropdownItem onClick={() => logout()}>Leave</DropdownItem>
 					</Dropdown>
 				)}
 				<Modal open={open} onClose={() => setOpen(false)} />

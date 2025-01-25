@@ -6,7 +6,7 @@ import {
 	syndicateTxRelations,
 	writerRelations,
 } from "./src/relations";
-import { entry, syndicateTx, writer } from "./src/schema";
+import { entry, syndicateTx, user, writer } from "./src/schema";
 
 class Db {
 	private pg;
@@ -19,6 +19,7 @@ class Db {
 				writer,
 				entry,
 				syndicateTx,
+				user,
 				writerRelations,
 				entryRelations,
 				syndicateTransactionRelations: syndicateTxRelations,
@@ -145,6 +146,27 @@ class Db {
 			.set({ deletedAt: new Date(), deletedAtTransactionId: transactionId })
 			.where(and(eq(entry.storageAddress, address), eq(entry.onChainId, id)));
 	}
+
+	upsertUser(item: InsertUser) {
+		return this.pg
+			.insert(user)
+			.values({
+				...item,
+				updatedAt: new Date(),
+			})
+			.onConflictDoUpdate({
+				target: [user.address],
+				set: { ...item, updatedAt: new Date() },
+			})
+			.returning();
+	}
+
+	async getUser(address: Hex) {
+		const data = await this.pg.query.user.findFirst({
+			where: eq(user.address, address),
+		});
+		return data;
+	}
 }
 
 export function writerToJsonSafe(data: SelectWriter) {
@@ -170,5 +192,5 @@ type InsertSyndicateTransaction = Omit<
 	"updatedAt" | "createdAt"
 >;
 type InsertEntry = Omit<typeof entry.$inferInsert, "createdAt" | "updatedAt">;
-
+type InsertUser = Omit<typeof user.$inferInsert, "createdAt" | "updatedAt">;
 export { Db };

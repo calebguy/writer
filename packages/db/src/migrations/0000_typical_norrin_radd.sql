@@ -35,6 +35,13 @@ CREATE TABLE "syndicate_tx" (
 	"updated_at" timestamp with time zone NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "user" (
+	"address" varchar(42) PRIMARY KEY NOT NULL,
+	"color" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "writer" (
 	"address" varchar(42) PRIMARY KEY NOT NULL,
 	"storage_address" varchar(42) NOT NULL,
