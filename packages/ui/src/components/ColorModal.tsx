@@ -65,7 +65,7 @@ export function ColorModal({ open, onClose }: ModalProps) {
 			<div className="flex items-center justify-center gap-2">
 				<button
 					type="button"
-					className="border border-transparent hover:border-primary border-dashed text-primary p-2 w-full bold text-xl"
+					className="border border-transparent hover:border-primary border-dashed text-primary p-2 w-full bold text-xl disabled:hover:border-transparent disabled:opacity-30"
 					onClick={() => {
 						setRgbColor({
 							r: primaryColor[0],
@@ -74,12 +74,22 @@ export function ColorModal({ open, onClose }: ModalProps) {
 						});
 						setPrimaryAndSecondaryCSSVariables(primaryColor);
 					}}
+					disabled={
+						rgbColor.r === primaryColor[0] &&
+						rgbColor.g === primaryColor[1] &&
+						rgbColor.b === primaryColor[2]
+					}
 				>
 					reset
 				</button>
 				<button
 					type="button"
-					className="border border-transparent hover:border-primary border-dashed text-primary p-2 w-full bold text-xl"
+					className="border border-transparent hover:border-primary border-dashed text-primary p-2 w-full bold text-xl disabled:hover:border-transparent disabled:opacity-30"
+					disabled={
+						rgbColor.r === primaryColor[0] &&
+						rgbColor.g === primaryColor[1] &&
+						rgbColor.b === primaryColor[2]
+					}
 					onClick={async () => {
 						setSaveClicked(true);
 						setPrimaryColor([rgbColor.r, rgbColor.g, rgbColor.b]);
