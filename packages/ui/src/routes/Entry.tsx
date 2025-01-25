@@ -7,7 +7,7 @@ import { queryClient } from "../app";
 import { Editor } from "../components/Editor";
 import { MD } from "../components/MD";
 import { Blob } from "../components/icons/Blob";
-import { WriterContext } from "../layouts/App.layout";
+import { WriterContext } from "../context";
 import { deleteEntry, editEntry, getWriter } from "../utils/api";
 import { cn } from "../utils/cn";
 import { useFirstWallet } from "../utils/hooks";

@@ -6,7 +6,7 @@ import type { Hex } from "viem";
 import Block from "../components/Block";
 import BlockForm from "../components/BlockForm";
 import { POLLING_INTERVAL } from "../constants";
-import { WriterContext } from "../layouts/App.layout";
+import { WriterContext } from "../context";
 import { createWithChunk, getWriter } from "../utils/api";
 import { useFirstWallet } from "../utils/hooks";
 import { signCreateWithChunk } from "../utils/signer";

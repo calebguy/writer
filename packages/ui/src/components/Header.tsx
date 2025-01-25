@@ -2,22 +2,23 @@ import { useLogin, usePrivy } from "@privy-io/react-auth";
 import { useQuery } from "@tanstack/react-query";
 import { useContext, useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import { WriterContext } from "../layouts/App.layout";
+import { WriterContext } from "../context";
 import { getMe } from "../utils/api";
 import { cn } from "../utils/cn";
-import color from "../utils/color";
 import { Button, ButtonVariant } from "./Button";
+import { ColorModal } from "./ColorModal";
 import { Dropdown, DropdownItem } from "./Dropdown";
 import { MD } from "./MD";
-import { Modal } from "./Modal";
 import { Arrow } from "./icons/Arrow";
 import { Blob } from "./icons/Blob";
 
 export function Header() {
 	const { ready, authenticated, logout } = usePrivy();
+	const { login } = useLogin();
 	const location = useLocation();
 	const { address, id } = useParams();
-	const { writer } = useContext(WriterContext);
+	const [open, setOpen] = useState(false);
+	const { writer, setPrimaryFromLongHex } = useContext(WriterContext);
 	const isLoggedIn = ready && authenticated;
 
 	const { data } = useQuery({
@@ -26,21 +27,14 @@ export function Header() {
 		enabled: isLoggedIn,
 	});
 
+	// Set the user's color when they login
+	// @ts-ignore
 	useEffect(() => {
 		if (data?.user?.color) {
-			color.setColorFromLongHex(data.user.color);
-		} else {
-			color.setColorFromRGB(color.defaultColor);
+			console.log("setting color", data.user.color);
+			setPrimaryFromLongHex(data.user.color);
 		}
-	}, [data]);
-
-	const { login } = useLogin({
-		onComplete: (user) => {
-			console.log("login complete, call GET /me", user);
-		},
-	});
-
-	const [open, setOpen] = useState(false);
+	}, [data?.user?.color]);
 
 	let title = "Writer";
 	if (location.pathname === "/") {
@@ -126,7 +120,7 @@ export function Header() {
 						<DropdownItem onClick={() => logout()}>Leave</DropdownItem>
 					</Dropdown>
 				)}
-				<Modal open={open} onClose={() => setOpen(false)} />
+				<ColorModal open={open} onClose={() => setOpen(false)} />
 			</div>
 		</div>
 	);

@@ -68,7 +68,8 @@ export function hexColorToBytes32(hexColor: string) {
 	return `0x${paddedHex}`;
 }
 
-export function RGBToHex(r: number, g: number, b: number): `#${string}` {
+export function RGBToHex(rgb: RGB): `#${string}` {
+	const [r, g, b] = rgb;
 	// Validate that RGB values are in the correct range
 	if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {
 		throw new Error("RGB values must be in the range 0-255.");
@@ -81,7 +82,9 @@ export function RGBToHex(r: number, g: number, b: number): `#${string}` {
 	return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
-export function hexToRGB(hex: string): { r: number; g: number; b: number } {
+export type RGB = [number, number, number];
+
+export function hexToRGB(hex: string): RGB {
 	// Validate the input to ensure it is a valid HEX color
 	const hexRegex = /^#?([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$/;
 	if (!hexRegex.test(hex)) {
@@ -104,7 +107,7 @@ export function hexToRGB(hex: string): { r: number; g: number; b: number } {
 	const g = Number.parseInt(hexWithoutHash.substring(2, 4), 16);
 	const b = Number.parseInt(hexWithoutHash.substring(4, 6), 16);
 
-	return { r, g, b };
+	return [r, g, b];
 }
 
 export function bytes32ToHexColor(bytes32: string): string {
@@ -121,4 +124,11 @@ export function bytes32ToHexColor(bytes32: string): string {
 
 	// Convert to a HEX color string
 	return `#${hexColor}`;
+}
+
+export function setCSSVariableFromRGB(variable: string, rgb: RGB) {
+	document.documentElement.style.setProperty(
+		variable,
+		`${rgb[0]} ${rgb[1]} ${rgb[2]}`,
+	);
 }

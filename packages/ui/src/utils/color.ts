@@ -1,7 +1,5 @@
-import { RGBToHex, bytes32ToHexColor, hexToRGB } from "./utils";
-
 class Color {
-	defaultColor = [252, 186, 3];
+	defaultColor = [255, 255, 255];
 	primaryColor = this.defaultColor;
 
 	setColorFromRGB(primaryRGB: Array<number>) {
@@ -16,29 +14,8 @@ class Color {
 		);
 	}
 
-	setColorFromLongHex(hexColor: string) {
-		const rgb = hexToRGB(bytes32ToHexColor(hexColor));
-		this.setColorFromRGB([rgb.r, rgb.g, rgb.b]);
-	}
-
 	get secondaryColor() {
 		return this.primaryColor.map((c) => c - 100);
-	}
-
-	get primaryHex() {
-		return RGBToHex(
-			this.primaryColor[0],
-			this.primaryColor[1],
-			this.primaryColor[2],
-		);
-	}
-
-	get secondaryHex() {
-		return RGBToHex(
-			this.secondaryColor[0],
-			this.secondaryColor[1],
-			this.secondaryColor[2],
-		);
 	}
 }
 

@@ -5,7 +5,7 @@ import type { Hex } from "viem";
 import Block from "../components/Block";
 import BlockForm from "../components/BlockForm";
 import { POLLING_INTERVAL } from "../constants";
-import { WriterContext } from "../layouts/App.layout";
+import { WriterContext } from "../context";
 import { createFromFactory, getWritersByManager } from "../utils/api";
 
 function Home() {
