@@ -133,8 +133,6 @@ const api = app
 				content = decompressBrotli(content.slice(3));
 			}
 
-			console.log({ content });
-
 			const data = await db.upsertEntry({
 				exists: true,
 				storageAddress: writer.storageAddress,
@@ -249,7 +247,6 @@ const api = app
 				nonce: Number(nonce),
 				hexColor,
 			};
-			console.log(args);
 			const { transactionId } = await syndicate.transact.sendTransaction({
 				projectId: env.SYNDICATE_PROJECT_ID,
 				contractAddress: env.COLOR_REGISTRY_ADDRESS,

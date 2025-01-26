@@ -57,6 +57,5 @@ export async function getDoesEntryExist({
 		functionName: "getEntry",
 		args: [id],
 	});
-	console.log("entry", entry);
 	return entry.exists;
 }

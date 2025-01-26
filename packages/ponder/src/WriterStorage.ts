@@ -60,7 +60,6 @@ ponder.on("WriterStorage:EntryCompleted", async ({ event }) => {
 });
 
 ponder.on("WriterStorage:EntryRemoved", async ({ event }) => {
-	console.log("entry removed", event);
 	const transactionId = getSynIdFromRawInput(event.transaction.input);
 	if (transactionId) {
 		const tx = await syndicate.wallet.getTransactionRequest(

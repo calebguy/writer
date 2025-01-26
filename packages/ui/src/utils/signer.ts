@@ -213,6 +213,5 @@ export async function getDerivedSigningKey(wallet: ConnectedWallet) {
 		method,
 		params: [encodedMessage, wallet.address],
 	});
-	console.log("signature", signature);
 	return signature;
 }
