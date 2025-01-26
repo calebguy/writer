@@ -30,11 +30,37 @@ export function Writer() {
 		mutationKey: ["create-with-chunk", address],
 	});
 
+	const [processedData, setProcessedData] = useState<Entry[]>([]);
+
 	useEffect(() => {
 		if (data) {
 			setWriter(data);
 		}
 	}, [data, setWriter]);
+
+	useEffect(() => {
+		const checkDecompression = async () => {
+			if (data) {
+				const key = await getDerivedSigningKey(wallet);
+				const processedEntries = [];
+				for (const entry of data.entries) {
+					if (entry.content?.startsWith("enc:br:")) {
+						const content = entry.content.slice(7);
+						const decrypted = await decrypt(key, content);
+						const decompressed = await decompress(decrypted);
+						processedEntries.push({
+							...entry,
+							content: decompressed,
+						});
+					} else {
+						processedEntries.push(entry);
+					}
+				}
+				setProcessedData(processedEntries);
+			}
+		};
+		checkDecompression();
+	}, [data, wallet]);
 
 	useEffect(() => {
 		const isAllOnChain = data?.entries.every((e) => e.onChainId);
@@ -97,7 +123,7 @@ export function Writer() {
 					onExpand={setIsExpanded}
 				/>
 				{!isExpanded &&
-					data?.entries.map((entry) => {
+					processedData.map((entry) => {
 						let id: undefined | string = undefined;
 						if (entry.createdAtBlockDatetime) {
 							id = format(new Date(entry.createdAtBlockDatetime), "MM-dd-yyyy");
@@ -116,7 +142,7 @@ export function Writer() {
 						return (
 							<Block
 								key={entry.id}
-								href={`/writer/${data.address}/${entry.onChainId}`}
+								href={`/writer/${data?.address}/${entry.onChainId}`}
 								isLoading={!entry.onChainId}
 								title={entry.content}
 								id={id}
