@@ -71,7 +71,7 @@ export function Writer() {
 		}
 	}, [data, isPolling]);
 
-	const encrypted = true;
+	const encrypted = false;
 
 	const handleSubmit = async ({ value }: BlockCreateInput) => {
 		const content = value;
@@ -90,10 +90,6 @@ export function Writer() {
 		if (encrypted) {
 			const key = await getDerivedSigningKey(wallet);
 			const encrypted = await encrypt(key, compressedContent);
-			const decrypted = await decrypt(key, encrypted);
-			const decompressed = await decompress(decrypted);
-			console.log("decompressed", decompressed);
-
 			versionedCompressedContent = `enc:br:${encrypted}`;
 		}
 

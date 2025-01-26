@@ -38,12 +38,14 @@ ponder.on("WriterStorage:EntryCompleted", async ({ event }) => {
 			functionName: "getEntryContent",
 			args: [event.args.id],
 		});
-		if (content.startsWith("v1:")) {
+		if (content.startsWith("br:")) {
 			try {
 				content = decompressBrotli(content.slice(3));
 			} catch (e) {
 				console.error("Failed to decompress brotli", e);
 			}
+		} else if (content.startsWith("enc:")) {
+			console.warn("Encrypted content found");
 		}
 	}
 	await db.upsertEntry({
