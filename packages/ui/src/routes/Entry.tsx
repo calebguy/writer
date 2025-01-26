@@ -12,7 +12,7 @@ import type { Entry as EntryType } from "../utils/api";
 import { deleteEntry, editEntry, getWriter } from "../utils/api";
 import { cn } from "../utils/cn";
 import { useFirstWallet } from "../utils/hooks";
-import { getDerivedSigningKey, signDelete, signEdit } from "../utils/signer";
+import { getDerivedSigningKey, signRemove, signUpdate } from "../utils/signer";
 import { processEntry, shortenAddress } from "../utils/utils";
 
 export default function Entry() {
@@ -177,7 +177,7 @@ export default function Entry() {
 												entryId,
 												totalChunks,
 												content,
-											} = await signEdit(wallet, {
+											} = await signUpdate(wallet, {
 												entryId: Number(id),
 												address: address as Hex,
 												content: editedContent as string,
@@ -217,11 +217,11 @@ export default function Entry() {
 										className="text-red-700 hover:text-red-900"
 										onClick={async () => {
 											setDeletedSubmitted(true);
-											const { signature, nonce } = await signDelete(wallet, {
+											const { signature, nonce } = await signRemove(wallet, {
 												id: Number(id),
 												address: address as Hex,
 											});
-											mutateAsyncDelete({
+											await mutateAsyncDelete({
 												address: address as Hex,
 												id: Number(id),
 												signature,

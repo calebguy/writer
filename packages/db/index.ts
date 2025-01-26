@@ -68,9 +68,12 @@ class Db {
 		};
 	}
 
-	async getEntry(address: Hex, id: bigint) {
+	async getEntry(storageAddress: Hex, id: bigint) {
 		const data = await this.pg.query.entry.findFirst({
-			where: and(eq(entry.storageAddress, address), eq(entry.onChainId, id)),
+			where: and(
+				eq(entry.storageAddress, storageAddress),
+				eq(entry.onChainId, id),
+			),
 		});
 		return data;
 	}

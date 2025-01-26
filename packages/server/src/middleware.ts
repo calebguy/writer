@@ -82,6 +82,7 @@ export const factoryCreateJsonValidator = zValidator(
 		title: z.string(),
 		admin: z.string(),
 		managers: z.array(z.string()),
+		isPrivate: z.boolean().optional(),
 	}),
 );
 

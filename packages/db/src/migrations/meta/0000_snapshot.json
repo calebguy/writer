@@ -1,5 +1,5 @@
 {
-  "id": "2f72cf47-9fcb-428e-b682-b60db3deaa58",
+  "id": "15980a09-71d0-4684-96db-251776625a81",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -379,8 +379,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "private": {
-          "name": "private",
+        "is_private": {
+          "name": "is_private",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,

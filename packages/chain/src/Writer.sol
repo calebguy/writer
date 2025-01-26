@@ -9,6 +9,7 @@ contract Writer is AccessControl, VerifyTypedData {
     bytes32 public constant CREATE_TYPEHASH = keccak256("Create(uint256 nonce,uint256 chunkCount)");
     bytes32 public constant CREATE_WITH_CHUNK_TYPEHASH =
         keccak256("CreateWithChunk(uint256 nonce,uint256 chunkCount,string chunkContent)");
+    // @note TODO sync entryId & id in typehashes here
     bytes32 public constant REMOVE_TYPEHASH = keccak256("Remove(uint256 nonce,uint256 id)");
     bytes32 public constant ADD_CHUNK_TYPEHASH =
         keccak256("AddChunk(uint256 nonce,uint256 entryId,uint256 chunkIndex,string chunkContent)");

@@ -18,7 +18,7 @@ export const writer = pgTable("writer", {
 	title: text().notNull(),
 	admin: text().notNull(),
 	managers: text().array().notNull(),
-	private: boolean().notNull().default(false),
+	isPrivate: boolean().notNull().default(false),
 	createdAtHash: text(),
 	createdAtBlock: bigint({ mode: "bigint" }),
 	createdAtBlockDatetime: timestamp({

@@ -48,7 +48,7 @@ export async function signSetColor(
 	};
 }
 
-export async function signDelete(
+export async function signRemove(
 	wallet: ConnectedWallet,
 	{ id, address }: { id: number; address: string },
 ) {
@@ -92,7 +92,7 @@ export async function signDelete(
 	};
 }
 
-export async function signEdit(
+export async function signUpdate(
 	wallet: ConnectedWallet,
 	{
 		entryId,

@@ -50,7 +50,7 @@ CREATE TABLE "writer" (
 	"title" text NOT NULL,
 	"admin" text NOT NULL,
 	"managers" text[] NOT NULL,
-	"private" boolean DEFAULT false NOT NULL,
+	"is_private" boolean DEFAULT false NOT NULL,
 	"created_at_hash" text,
 	"created_at_block" bigint,
 	"created_at_block_datetime" timestamp with time zone,

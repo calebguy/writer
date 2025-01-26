@@ -1,4 +1,4 @@
-import { type Hex, getAddress } from "viem";
+import { type Hex, getAddress, recoverTypedDataAddress } from "viem";
 
 import type { WalletWithMetadata } from "@privy-io/server-auth";
 
@@ -6,8 +6,7 @@ import type { Context } from "hono";
 import { createMiddleware } from "hono/factory";
 
 import { getCookie } from "hono/cookie";
-import { decompressBrotli } from "utils/brotli";
-import { privy } from "./constants";
+import { TARGET_CHAIN_ID, privy } from "./constants";
 
 export class PrivyUserNotFoundError extends Error {
 	constructor(message: string) {
@@ -42,7 +41,7 @@ export const getPrivyUserAddress = async (c: Context) => {
 	return userAddress;
 };
 
-// @note TODO: calculate the user address from the signature
+// @note: Currently we do not using privy auth, rather we grab the user address from the signature
 export const privyAuthMiddleware = createMiddleware<{
 	Variables: {
 		privyUserAddress: Hex;
@@ -54,11 +53,181 @@ export const privyAuthMiddleware = createMiddleware<{
 		await next();
 	} catch (e) {
 		if (e instanceof PrivyUserNotFoundError) {
-			return c.json({ error: "privy-id-token not found" }, 401);
+			console.log("privy-id-token not found");
 		}
 		if (e instanceof PrivyUserAddressNotFoundError) {
-			return c.json({ error: "user address not found" }, 401);
+			console.log("user address not found");
 		}
-		return c.json({ error: "internal server error" }, 500);
+		console.log("internal server error");
 	}
 });
+
+export function recoverCreateWithChunkSigner({
+	signature,
+	nonce,
+	chunkContent,
+	chunkCount,
+	address,
+}: {
+	signature: Hex;
+	nonce: number;
+	chunkContent: string;
+	chunkCount: number;
+	address: Hex;
+}) {
+	const domain = {
+		name: "Writer",
+		version: "1",
+		chainId: TARGET_CHAIN_ID,
+		verifyingContract: getAddress(address),
+	} as const;
+
+	const types = {
+		CreateWithChunk: [
+			{ name: "nonce", type: "uint256" },
+			{ name: "chunkCount", type: "uint256" },
+			{ name: "chunkContent", type: "string" },
+		],
+	};
+
+	const message = {
+		nonce,
+		chunkCount,
+		chunkContent,
+	};
+
+	// Recover the address
+	return recoverTypedDataAddress({
+		domain,
+		message,
+		primaryType: "CreateWithChunk",
+		types,
+		signature,
+	});
+}
+
+export function recoverUpdateEntryWithChunkSigner({
+	signature,
+	nonce,
+	totalChunks,
+	content,
+	entryId,
+	address,
+}: {
+	signature: Hex;
+	nonce: number;
+	totalChunks: number;
+	content: string;
+	entryId: number;
+	address: Hex;
+}) {
+	const domain = {
+		name: "Writer",
+		version: "1",
+		chainId: TARGET_CHAIN_ID,
+		verifyingContract: getAddress(address),
+	} as const;
+
+	const types = {
+		Update: [
+			{ name: "nonce", type: "uint256" },
+			{ name: "totalChunks", type: "uint256" },
+			{ name: "content", type: "string" },
+			{ name: "entryId", type: "uint256" },
+		],
+	};
+
+	const message = {
+		nonce,
+		totalChunks,
+		content,
+		entryId,
+	};
+
+	// Recover the address
+	return recoverTypedDataAddress({
+		domain,
+		message,
+		primaryType: "Update",
+		types,
+		signature,
+	});
+}
+
+export function recoverRemoveEntrySigner({
+	signature,
+	nonce,
+	id,
+	address,
+}: {
+	signature: Hex;
+	nonce: number;
+	id: number;
+	address: Hex;
+}) {
+	const domain = {
+		name: "Writer",
+		version: "1",
+		chainId: TARGET_CHAIN_ID,
+		verifyingContract: getAddress(address),
+	} as const;
+
+	const types = {
+		Remove: [
+			{ name: "nonce", type: "uint256" },
+			{ name: "id", type: "uint256" },
+		],
+	};
+
+	const message = {
+		nonce,
+		id,
+	};
+
+	return recoverTypedDataAddress({
+		domain,
+		message,
+		primaryType: "Remove",
+		types,
+		signature,
+	});
+}
+
+export function recoverSetColorSigner({
+	signature,
+	nonce,
+	hexColor,
+	address,
+}: {
+	signature: Hex;
+	nonce: number;
+	hexColor: Hex;
+	address: Hex;
+}) {
+	const domain = {
+		name: "ColorRegistry",
+		version: "1",
+		chainId: TARGET_CHAIN_ID,
+		verifyingContract: getAddress(address),
+	} as const;
+
+	const types = {
+		SetHex: [
+			{ name: "nonce", type: "uint256" },
+			{ name: "hexColor", type: "bytes32" },
+		],
+	};
+
+	const message = {
+		nonce,
+		hexColor,
+	};
+
+	return recoverTypedDataAddress({
+		domain,
+		message,
+		primaryType: "SetHex",
+		types,
+		signature,
+	});
+}
