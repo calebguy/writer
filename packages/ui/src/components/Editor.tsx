@@ -2,6 +2,7 @@ import Bold from "@tiptap/extension-bold";
 import BulletList from "@tiptap/extension-bullet-list";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import Document from "@tiptap/extension-document";
+import HardBreak from "@tiptap/extension-hard-break";
 import Heading from "@tiptap/extension-heading";
 import History from "@tiptap/extension-history";
 import Image from "@tiptap/extension-image";
@@ -68,6 +69,7 @@ export function Editor({
 			ListItem,
 			TaskList,
 			TaskItem,
+			HardBreak,
 			Link.configure({
 				autolink: true,
 				openOnClick: true,
@@ -86,9 +88,11 @@ export function Editor({
 				allowBase64: true,
 			}),
 			Markdown.configure({
+				html: true,
 				linkify: true,
 				transformPastedText: true,
 				transformCopiedText: true,
+				// breaks: true,
 			}),
 			CodeBlockLowlight.configure({ lowlight }),
 		],

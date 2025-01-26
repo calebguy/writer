@@ -18,7 +18,7 @@ export function MD({ children, className }: MDProps) {
 			rehypePlugins={[rehypeHighlight]}
 			className={cn(
 				className,
-				"md grow flex flex-col h-full caret-primary overflow-y-auto break-anywhere",
+				"md grow flex flex-col h-full caret-primary overflow-y-auto break-anywhere whitespace-pre-wrap",
 			)}
 		>
 			{children}
