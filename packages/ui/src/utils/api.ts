@@ -130,3 +130,4 @@ export type GetWritersResponse = InferResponseType<
 	(typeof client.api.manager)[":address"]["$get"]
 >;
 export type Writer = GetWritersResponse["writers"][number];
+export type Entry = Writer["entries"][number];

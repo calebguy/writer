@@ -8,7 +8,7 @@ import BlockForm from "../components/BlockForm";
 import { POLLING_INTERVAL } from "../constants";
 import { WriterContext } from "../context";
 import type { BlockCreateInput } from "../interfaces";
-import { createWithChunk, getWriter } from "../utils/api";
+import { type Entry, createWithChunk, getWriter } from "../utils/api";
 import { useFirstWallet } from "../utils/hooks";
 import { getDerivedSigningKey, signCreateWithChunk } from "../utils/signer";
 import { compress, decompress, decrypt, encrypt } from "../utils/utils";
