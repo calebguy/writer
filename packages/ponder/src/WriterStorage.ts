@@ -39,7 +39,11 @@ ponder.on("WriterStorage:EntryCompleted", async ({ event }) => {
 			args: [event.args.id],
 		});
 		if (content.startsWith("v1:")) {
-			content = decompressBrotli(content.slice(3));
+			try {
+				content = decompressBrotli(content.slice(3));
+			} catch (e) {
+				console.error("Failed to decompress brotli", e);
+			}
 		}
 	}
 	await db.upsertEntry({
