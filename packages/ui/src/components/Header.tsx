@@ -35,24 +35,24 @@ export function Header() {
 		}
 	}, [data?.user?.color]);
 
-	let title = "Writer";
+	let title: string | undefined = "Writer";
+	let to = "/";
 	if (location.pathname === "/") {
 		title = "Writer";
-	} else if (writer) {
-		if (id) {
-			title = `${writer.title}: ${id}`;
-		} else {
-			title = writer.title;
-		}
-	}
-
-	let to = "/";
-	if (location.pathname.includes("account")) {
+	} else if (location.pathname.includes("account")) {
+		title = address;
 		to = "/";
-	} else if (address && id) {
-		to = `/writer/${address}`;
-	} else if (address && location.pathname.includes("create")) {
-		to = `/writer/${address}`;
+	} else if (address) {
+		if (location.pathname.includes("create")) {
+			to = `/writer/${address}`;
+			title = writer?.title;
+		} else if (id) {
+			title = `${writer?.title}: ${id}`;
+			to = `/writer/${address}`;
+		} else {
+			title = writer?.title;
+			to = "/";
+		}
 	}
 
 	return (
