@@ -1,5 +1,5 @@
 {
-  "id": "69c438e7-80b6-4648-b780-a14b4138b6b3",
+  "id": "2f72cf47-9fcb-428e-b682-b60db3deaa58",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -26,8 +26,20 @@
           "primaryKey": false,
           "notNull": false
         },
-        "content": {
-          "name": "content",
+        "version": {
+          "name": "version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "raw": {
+          "name": "raw",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "decompressed": {
+          "name": "decompressed",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -119,15 +131,30 @@
         }
       },
       "indexes": {
-        "on_chain_id_storage_address_idx": {
-          "name": "on_chain_id_storage_address_idx",
+        "storage_address_on_chain_id_idx": {
+          "name": "storage_address_on_chain_id_idx",
           "columns": [
+            {
+              "expression": "storage_address",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
             {
               "expression": "on_chain_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
-            },
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "storage_address_idx": {
+          "name": "storage_address_idx",
+          "columns": [
             {
               "expression": "storage_address",
               "isExpression": false,
@@ -135,7 +162,7 @@
               "nulls": "last"
             }
           ],
-          "isUnique": true,
+          "isUnique": false,
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -351,6 +378,13 @@
           "type": "text[]",
           "primaryKey": false,
           "notNull": true
+        },
+        "private": {
+          "name": "private",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "created_at_hash": {
           "name": "created_at_hash",

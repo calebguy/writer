@@ -27,19 +27,17 @@ class Db {
 		});
 	}
 
-	async getWritersByManager(address: Hex) {
+	async getWritersByManager(managerAddress: Hex) {
 		const writers = await this.pg.query.writer.findMany({
-			where: arrayContains(writer.managers, [address]),
+			where: arrayContains(writer.managers, [managerAddress]),
 			orderBy: (writer, { desc }) => [desc(writer.createdAt)],
 		});
+		const storageAddresses = writers
+			.filter((w) => w.storageAddress !== null)
+			.map((w) => w.storageAddress) as string[];
 		const entries = await this.pg.query.entry.findMany({
 			where: and(
-				inArray(
-					entry.storageAddress,
-					writers
-						.filter((w) => w.storageAddress !== null)
-						.map((w) => w.storageAddress) as string[],
-				),
+				inArray(entry.storageAddress, storageAddresses),
 				isNull(entry.deletedAt),
 			),
 			orderBy: (entry, { desc }) => [desc(entry.createdAt)],

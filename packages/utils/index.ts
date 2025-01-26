@@ -1,3 +1,5 @@
+import { decompressBrotli } from "./compression";
+
 export * from "./abis";
-export * from "./brotli";
+export * from "./compression";
 export * from "./viem";

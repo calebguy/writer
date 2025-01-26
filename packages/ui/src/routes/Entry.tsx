@@ -8,11 +8,12 @@ import { Editor } from "../components/Editor";
 import { MD } from "../components/MD";
 import { Blob } from "../components/icons/Blob";
 import { WriterContext } from "../context";
+import type { Entry as EntryType } from "../utils/api";
 import { deleteEntry, editEntry, getWriter } from "../utils/api";
 import { cn } from "../utils/cn";
 import { useFirstWallet } from "../utils/hooks";
-import { signDelete, signEdit } from "../utils/signer";
-import { shortenAddress } from "../utils/utils";
+import { getDerivedSigningKey, signDelete, signEdit } from "../utils/signer";
+import { processEntry, shortenAddress } from "../utils/utils";
 
 export default function Entry() {
 	const wallet = useFirstWallet();
@@ -23,6 +24,7 @@ export default function Entry() {
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [deleteSubmitted, setDeletedSubmitted] = useState(false);
 	const [editSubmitted, setEditSubmitted] = useState(false);
+	const [processedEntry, setProcessedEntry] = useState<EntryType | null>(null);
 	const { data } = useQuery({
 		queryFn: () => getWriter(address as Hex),
 		queryKey: ["get-writer", address],
@@ -58,29 +60,42 @@ export default function Entry() {
 		}
 	}, [data, setWriter]);
 
-	const entry = useMemo(() => {
-		return data?.entries.find((e) => e.onChainId === id);
-	}, [data, id]);
-	const canEdit = useMemo(() => {
-		return data?.managers.includes(wallet?.address);
-	}, [data?.managers, wallet?.address]);
+	useEffect(() => {
+		async function doIt() {
+			const entry = data?.entries.find((e) => e.onChainId === id);
+			if (entry) {
+				const key = await getDerivedSigningKey(wallet);
+				const processed = await processEntry(key, entry);
+				setProcessedEntry(processed);
+			}
+		}
+		doIt();
+	}, [data, id, wallet]);
 
-	const [editedContent, setEditedContent] = useState(entry?.content);
+	const canEdit = useMemo(() => {
+		return processedEntry?.author === wallet?.address;
+	}, [processedEntry?.author, wallet?.address]);
+
+	const [editedContent, setEditedContent] = useState(
+		processedEntry?.decompressed,
+	);
 	const isContentChanged = useMemo(() => {
-		return editedContent !== entry?.content;
-	}, [editedContent, entry?.content]);
+		return editedContent !== processedEntry?.decompressed;
+	}, [editedContent, processedEntry?.decompressed]);
 
 	const isEditPending = useMemo(() => {
 		return isPendingDelete || isPendingEdit || deleteSubmitted || editSubmitted;
 	}, [isPendingDelete, isPendingEdit, deleteSubmitted, editSubmitted]);
 
-	if (!entry) {
+	if (!processedEntry) {
 		return <div>Entry not found</div>;
 	}
 	return (
 		<div className="flex-grow flex flex-col">
 			{!isEditing && (
-				<MD className="border-[1px] border-transparent p-2">{entry.content}</MD>
+				<MD className="border-[1px] border-transparent p-2">
+					{processedEntry.decompressed}
+				</MD>
 			)}
 			{isEditing && (
 				<div className="flex-grow flex flex-col relative">
@@ -120,15 +135,15 @@ export default function Entry() {
 						<span className="text-neutral-600">
 							by:{" "}
 							<Link
-								to={`/account/${entry.author}`}
+								to={`/account/${processedEntry.author}`}
 								className="text-neutral-600 hover:text-secondary cursor-pointer mr-1"
 							>
-								{shortenAddress(entry.author as Hex)}
+								{shortenAddress(processedEntry.author as Hex)}
 							</Link>
 						</span>
 					</div>
 					<span className="text-neutral-600 bold">
-						on: {format(new Date(entry.createdAt), "MM/dd/yyyy")}
+						on: {format(new Date(processedEntry.createdAt), "MM/dd/yyyy")}
 					</span>
 				</div>
 				{canEdit && (
@@ -140,7 +155,7 @@ export default function Entry() {
 									className={cn("text-neutral-600 hover:text-secondary")}
 									onClick={() => {
 										if (isEditing) {
-											setEditedContent(entry?.content);
+											setEditedContent(processedEntry?.decompressed);
 											setIsEditing(false);
 											setIsDeleting(false);
 										} else {

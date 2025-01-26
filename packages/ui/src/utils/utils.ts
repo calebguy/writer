@@ -3,6 +3,7 @@ import {
 	decompress as decompressBrotli,
 } from "brotli-compress";
 import type { Hex } from "viem";
+import { Entry } from "./api";
 
 export function shortenAddress(address: Hex) {
 	return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -164,66 +165,6 @@ export async function decompress(compressed: string): Promise<string> {
 	return new TextDecoder().decode(decompressedData);
 }
 
-// export async function encrypt(key: Uint8Array, message: string) {
-// 	const cryptoKey = await crypto.subtle.importKey(
-// 		"raw",
-// 		key,
-// 		{ name: "AES-GCM" },
-// 		false,
-// 		["encrypt"],
-// 	);
-
-// 	const iv = crypto.getRandomValues(new Uint8Array(12));
-// 	const binaryMessage = Uint8Array.from(atob(message), (char) =>
-// 		char.charCodeAt(0),
-// 	);
-// 	const encrypted = await crypto.subtle.encrypt(
-// 		{
-// 			name: "AES-GCM",
-// 			iv,
-// 		},
-// 		cryptoKey,
-// 		binaryMessage,
-// 	);
-// 	const combined = new Uint8Array(iv.length + encrypted.byteLength);
-// 	combined.set(iv);
-// 	combined.set(new Uint8Array(encrypted), iv.length);
-// 	return btoa(String.fromCharCode(...combined));
-// }
-
-// export async function decrypt(key: Uint8Array, encryptedMessage: string) {
-// 	// Import the key for decryption
-// 	const cryptoKey = await crypto.subtle.importKey(
-// 		"raw",
-// 		key,
-// 		{ name: "AES-GCM" },
-// 		false,
-// 		["decrypt"],
-// 	);
-
-// 	// Decode the Base64-encrypted message
-// 	const combined = Uint8Array.from(atob(encryptedMessage), (char) =>
-// 		char.charCodeAt(0),
-// 	);
-
-// 	// Extract the IV and encrypted data
-// 	const iv = combined.slice(0, 12); // The first 12 bytes are the IV
-// 	const encryptedData = combined.slice(12); // The rest is the encrypted data
-
-// 	// Decrypt the message
-// 	const decrypted = await crypto.subtle.decrypt(
-// 		{
-// 			name: "AES-GCM",
-// 			iv,
-// 		},
-// 		cryptoKey,
-// 		encryptedData,
-// 	);
-
-// 	// Convert decrypted data back to a string
-// 	return new TextDecoder().decode(decrypted);
-// }
-
 export async function encrypt(key: Uint8Array, message: string) {
 	const cryptoKey = await crypto.subtle.importKey(
 		"raw",
@@ -278,4 +219,19 @@ export async function decrypt(key: Uint8Array, encryptedMessage: string) {
 
 	// Decode binary data to original string
 	return new TextDecoder().decode(decrypted);
+}
+
+export async function processEntry(
+	key: Uint8Array,
+	entry: Entry,
+): Promise<Entry> {
+	if (entry.raw?.startsWith("enc:br:")) {
+		const decrypted = await decrypt(key, entry.raw);
+		const decompressed = await decompress(decrypted);
+		return {
+			...entry,
+			decompressed,
+		};
+	}
+	return entry;
 }

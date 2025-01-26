@@ -1,6 +1,7 @@
 import {
 	bigint,
 	boolean,
+	index,
 	jsonb,
 	pgEnum,
 	pgTable,
@@ -17,6 +18,7 @@ export const writer = pgTable("writer", {
 	title: text().notNull(),
 	admin: text().notNull(),
 	managers: text().array().notNull(),
+	private: boolean().notNull().default(false),
 	createdAtHash: text(),
 	createdAtBlock: bigint({ mode: "bigint" }),
 	createdAtBlockDatetime: timestamp({
@@ -35,7 +37,9 @@ export const entry = pgTable(
 		id: serial().primaryKey(),
 		exists: boolean().notNull(),
 		onChainId: bigint({ mode: "bigint" }),
-		content: text(),
+		version: text(),
+		raw: text(),
+		decompressed: text(),
 		author: text().notNull(),
 		createdAtHash: text(),
 		createdAtBlock: bigint({ mode: "bigint" }),
@@ -66,8 +70,11 @@ export const entry = pgTable(
 	},
 	(entries) => ({
 		onChainStorageAddressIndex: uniqueIndex(
-			"on_chain_id_storage_address_idx",
-		).on(entries.onChainId, entries.storageAddress),
+			"storage_address_on_chain_id_idx",
+		).on(entries.storageAddress, entries.onChainId),
+		storageAddressIndex: index("storage_address_idx").on(
+			entries.storageAddress,
+		),
 	}),
 );
 

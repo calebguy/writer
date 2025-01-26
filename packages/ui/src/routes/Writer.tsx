@@ -11,7 +11,7 @@ import type { BlockCreateInput } from "../interfaces";
 import { type Entry, createWithChunk, getWriter } from "../utils/api";
 import { useFirstWallet } from "../utils/hooks";
 import { getDerivedSigningKey, signCreateWithChunk } from "../utils/signer";
-import { compress, decompress, decrypt, encrypt } from "../utils/utils";
+import { compress, encrypt, processEntry } from "../utils/utils";
 
 export function Writer() {
 	const { address } = useParams();
@@ -39,27 +39,18 @@ export function Writer() {
 	}, [data, setWriter]);
 
 	useEffect(() => {
-		const checkDecompression = async () => {
+		const processEntries = async () => {
 			if (data) {
-				const key = await getDerivedSigningKey(wallet);
 				const processedEntries = [];
+				const key = await getDerivedSigningKey(wallet);
 				for (const entry of data.entries) {
-					if (entry.content?.startsWith("enc:br:")) {
-						const content = entry.content.slice(7);
-						const decrypted = await decrypt(key, content);
-						const decompressed = await decompress(decrypted);
-						processedEntries.push({
-							...entry,
-							content: decompressed,
-						});
-					} else {
-						processedEntries.push(entry);
-					}
+					const processed = await processEntry(key, entry);
+					processedEntries.push(processed);
 				}
 				setProcessedData(processedEntries);
 			}
 		};
-		checkDecompression();
+		processEntries();
 	}, [data, wallet]);
 
 	useEffect(() => {
@@ -127,20 +118,12 @@ export function Writer() {
 							id = format(new Date(entry.createdAt), "MM/dd/yyyy");
 						}
 
-						// if (entry.content?.startsWith("enc:br")) {
-						// 	const key = await getDerivedSigningKey(wallet);
-						// 	const decrypted = await decrypt(key, entry.content);
-						// 	const decompressed = await decompress(decrypted);
-						// 	entry.content = decompressed;
-						// }
-						// We want the preview to overflow if it is long enough but we don't want to render the entire content
-
 						return (
 							<Block
 								key={entry.id}
 								href={`/writer/${data?.address}/${entry.onChainId}`}
 								isLoading={!entry.onChainId}
-								title={entry.content}
+								title={entry.decompressed ? entry.decompressed : entry.raw}
 								id={id}
 							/>
 						);

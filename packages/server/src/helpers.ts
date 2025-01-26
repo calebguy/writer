@@ -6,6 +6,7 @@ import type { Context } from "hono";
 import { createMiddleware } from "hono/factory";
 
 import { getCookie } from "hono/cookie";
+import { decompressBrotli } from "utils/brotli";
 import { privy } from "./constants";
 
 export class PrivyUserNotFoundError extends Error {

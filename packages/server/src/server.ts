@@ -5,7 +5,7 @@ import { randomBytes } from "node:crypto";
 import {
 	computeWriterAddress,
 	computeWriterStorageAddress,
-	decompressBrotli,
+	processRawContent,
 } from "utils";
 import { type Hex, getAddress, toHex } from "viem";
 import {
@@ -127,19 +127,15 @@ const api = app
 				args,
 				status: "PENDING",
 			});
-
-			let content = chunkContent;
-			if (content.startsWith("br:")) {
-				content = decompressBrotli(content.slice(3));
-			} else if (content.startsWith("enc:br:")) {
-				console.debug("received encrypted content, writing to DB");
-			}
-
+			const raw = chunkContent;
+			const { version, decompressed } = processRawContent(raw);
 			const data = await db.upsertEntry({
 				exists: true,
 				storageAddress: writer.storageAddress,
 				createdAtTransactionId: transactionId,
-				content,
+				raw,
+				decompressed,
+				version,
 				author: privyUserAddress,
 			});
 			const entry = entryToJsonSafe(data[0]);
@@ -183,12 +179,17 @@ const api = app
 				status: "PENDING",
 			});
 
+			const raw = content;
+			const { version, decompressed } = processRawContent(raw);
+
 			const data = await db.upsertEntry({
 				id: entry.id,
 				exists: true,
 				storageAddress: writer.storageAddress,
 				createdAtTransactionId: transactionId,
-				content,
+				raw,
+				decompressed,
+				version,
 				author: privyUserAddress,
 				updatedAtTransactionId: transactionId,
 			});

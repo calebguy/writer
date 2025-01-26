@@ -3,7 +3,9 @@ CREATE TABLE "entry" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"exists" boolean NOT NULL,
 	"on_chain_id" bigint,
-	"content" text,
+	"version" text,
+	"raw" text,
+	"decompressed" text,
 	"author" text NOT NULL,
 	"created_at_hash" text,
 	"created_at_block" bigint,
@@ -48,6 +50,7 @@ CREATE TABLE "writer" (
 	"title" text NOT NULL,
 	"admin" text NOT NULL,
 	"managers" text[] NOT NULL,
+	"private" boolean DEFAULT false NOT NULL,
 	"created_at_hash" text,
 	"created_at_block" bigint,
 	"created_at_block_datetime" timestamp with time zone,
@@ -62,4 +65,5 @@ ALTER TABLE "entry" ADD CONSTRAINT "entry_created_at_transaction_id_syndicate_tx
 ALTER TABLE "entry" ADD CONSTRAINT "entry_deleted_at_transaction_id_syndicate_tx_id_fk" FOREIGN KEY ("deleted_at_transaction_id") REFERENCES "public"."syndicate_tx"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "entry" ADD CONSTRAINT "entry_updated_at_transaction_id_syndicate_tx_id_fk" FOREIGN KEY ("updated_at_transaction_id") REFERENCES "public"."syndicate_tx"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "writer" ADD CONSTRAINT "writer_transaction_id_syndicate_tx_id_fk" FOREIGN KEY ("transaction_id") REFERENCES "public"."syndicate_tx"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-CREATE UNIQUE INDEX "on_chain_id_storage_address_idx" ON "entry" USING btree ("on_chain_id","storage_address");
+CREATE UNIQUE INDEX "storage_address_on_chain_id_idx" ON "entry" USING btree ("storage_address","on_chain_id");--> statement-breakpoint
+CREATE INDEX "storage_address_idx" ON "entry" USING btree ("storage_address");

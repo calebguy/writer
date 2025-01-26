@@ -1,5 +1,5 @@
 import { ponder } from "ponder:registry";
-import { decompressBrotli } from "utils";
+import { processRawContent } from "utils";
 import { WriterStorageAbi } from "utils/abis";
 import { getDoesEntryExist, publicClient } from "utils/viem";
 import { db } from ".";
@@ -30,29 +30,29 @@ ponder.on("WriterStorage:EntryCompleted", async ({ event }) => {
 		id: event.args.id,
 	});
 
-	let content = "";
+	let raw = "";
 	if (exists) {
-		content = await publicClient.readContract({
-			address: event.log.address,
-			abi: WriterStorageAbi,
-			functionName: "getEntryContent",
-			args: [event.args.id],
-		});
-		if (content.startsWith("br:")) {
-			try {
-				content = decompressBrotli(content.slice(3));
-			} catch (e) {
-				console.error("Failed to decompress brotli", e);
-			}
-		} else if (content.startsWith("enc:")) {
-			console.warn("Encrypted content found");
-		}
+		raw = await publicClient
+			.readContract({
+				address: event.log.address,
+				abi: WriterStorageAbi,
+				functionName: "getEntryContent",
+				args: [event.args.id],
+			})
+			.catch((e) => {
+				console.error("Failed to read entry content", e);
+				throw e;
+			});
 	}
+
+	const { version, decompressed } = processRawContent(raw);
 	await db.upsertEntry({
 		storageAddress: event.log.address,
 		exists: true,
 		onChainId: event.args.id,
-		content,
+		raw,
+		decompressed,
+		version,
 		createdAtHash: event.transaction.hash,
 		createdAtBlock: event.block.number,
 		createdAtBlockDatetime: new Date(Number(event.block.timestamp) * 1000),
