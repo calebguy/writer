@@ -1,4 +1,5 @@
 import { ponder } from "ponder:registry";
+import { decompressBrotli } from "utils";
 import { WriterStorageAbi } from "utils/abis";
 import { getDoesEntryExist, publicClient } from "utils/viem";
 import { db } from ".";
@@ -37,6 +38,9 @@ ponder.on("WriterStorage:EntryCompleted", async ({ event }) => {
 			functionName: "getEntryContent",
 			args: [event.args.id],
 		});
+		if (content.startsWith("v1:")) {
+			content = decompressBrotli(content.slice(3));
+		}
 	}
 	await db.upsertEntry({
 		storageAddress: event.log.address,

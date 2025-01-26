@@ -6,6 +6,7 @@ import Block from "../components/Block";
 import BlockForm from "../components/BlockForm";
 import { POLLING_INTERVAL } from "../constants";
 import { WriterContext } from "../context";
+import type { BlockCreateInput } from "../interfaces";
 import { createFromFactory, getWritersByManager } from "../utils/api";
 
 function Home() {
@@ -42,6 +43,14 @@ function Home() {
 		}
 	}, [data, isPolling]);
 
+	const handleSubmit = async ({ value }: BlockCreateInput) => {
+		return mutateAsync({
+			title: value,
+			admin: address,
+			managers: [address],
+		});
+	};
+
 	return (
 		<div>
 			{address && (
@@ -54,13 +63,7 @@ function Home() {
 					<BlockForm
 						placeholder="Create a Writer"
 						isLoading={isPending}
-						onSubmit={(data) =>
-							mutateAsync({
-								title: data.value,
-								admin: address,
-								managers: [address],
-							})
-						}
+						onSubmit={handleSubmit}
 					/>
 
 					{wallet &&

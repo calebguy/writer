@@ -2,7 +2,11 @@ import { entryToJsonSafe, writerToJsonSafe } from "db";
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { randomBytes } from "node:crypto";
-import { computeWriterAddress, computeWriterStorageAddress } from "utils";
+import {
+	computeWriterAddress,
+	computeWriterStorageAddress,
+	decompressBrotli,
+} from "utils";
 import { type Hex, getAddress, toHex } from "viem";
 import {
 	CREATE_FUNCTION_SIGNATURE,
@@ -124,11 +128,18 @@ const api = app
 				status: "PENDING",
 			});
 
+			let content = chunkContent;
+			if (content.startsWith("v1:")) {
+				content = decompressBrotli(content.slice(3));
+			}
+
+			console.log({ content });
+
 			const data = await db.upsertEntry({
 				exists: true,
 				storageAddress: writer.storageAddress,
 				createdAtTransactionId: transactionId,
-				content: chunkContent,
+				content,
 				author: privyUserAddress,
 			});
 			const entry = entryToJsonSafe(data[0]);

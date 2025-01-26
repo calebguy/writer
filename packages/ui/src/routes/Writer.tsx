@@ -7,9 +7,11 @@ import Block from "../components/Block";
 import BlockForm from "../components/BlockForm";
 import { POLLING_INTERVAL } from "../constants";
 import { WriterContext } from "../context";
+import type { BlockCreateInput } from "../interfaces";
 import { createWithChunk, getWriter } from "../utils/api";
 import { useFirstWallet } from "../utils/hooks";
 import { signCreateWithChunk } from "../utils/signer";
+import { compressWithVersion } from "../utils/utils";
 
 export function Writer() {
 	const { address } = useParams();
@@ -43,7 +45,8 @@ export function Writer() {
 		}
 	}, [data, isPolling]);
 
-	const handleSubmit = async (content: string) => {
+	const handleSubmit = async ({ value }: BlockCreateInput) => {
+		const content = value;
 		if (!address) {
 			console.debug("Could not get contract address when submitting form");
 			return;
@@ -54,13 +57,16 @@ export function Writer() {
 			return;
 		}
 
+		const compressedContent = await compressWithVersion(content);
+
 		const { signature, nonce, chunkCount, chunkContent } =
 			await signCreateWithChunk(wallet, {
-				content,
+				content: compressedContent,
 				address,
 			});
 
-		return mutateAsync({ address, signature, nonce, chunkCount, chunkContent });
+		await mutateAsync({ address, signature, nonce, chunkCount, chunkContent });
+		refetch();
 	};
 
 	return (
@@ -75,7 +81,7 @@ export function Writer() {
 					canExpand
 					isLoading={isPending}
 					placeholder={`Write in \n\n${data?.title}`}
-					onSubmit={({ value }) => handleSubmit(value).then(() => refetch())}
+					onSubmit={handleSubmit}
 					onExpand={setIsExpanded}
 				/>
 				{!isExpanded &&

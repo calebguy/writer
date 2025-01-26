@@ -110,57 +110,80 @@ export default function Entry() {
 				</div>
 			)}
 			<div
-				className={cn("flex items-end mt-1", {
+				className={cn("flex items-end mt-3", {
 					"justify-between": canEdit,
 					"justify-end": !canEdit,
 				})}
 			>
-				{canEdit && (
-					<div className="mt-2 flex gap-2 justify-between">
-						<div className="flex gap-2">
-							<button
-								type="button"
-								className={cn("text-neutral-600 hover:text-secondary")}
-								onClick={() => {
-									if (isEditing) {
-										setEditedContent(entry?.content);
-										setIsEditing(false);
-										setIsDeleting(false);
-									} else {
-										setIsEditing(true);
-									}
-								}}
+				<div>
+					<div className="flex gap-1">
+						<span className="text-neutral-600">
+							by:{" "}
+							<Link
+								to={`/account/${entry.author}`}
+								className="text-neutral-600 hover:text-secondary cursor-pointer mr-1"
 							>
-								{isEditing ? "cancel" : "edit"}
-							</button>
-							{isEditing && (
+								{shortenAddress(entry.author as Hex)}
+							</Link>
+						</span>
+					</div>
+					<span className="text-neutral-600 bold">
+						on: {format(new Date(entry.createdAt), "MM/dd/yyyy")}
+					</span>
+				</div>
+				{canEdit && (
+					<div className="flex gap-2 justify-between">
+						<div className="flex flex-col gap-1">
+							<div className="flex gap-2">
 								<button
 									type="button"
-									disabled={!isContentChanged}
-									onClick={async () => {
-										setEditSubmitted(true);
-										const { signature, nonce, entryId, totalChunks, content } =
-											await signEdit(wallet, {
+									className={cn("text-neutral-600 hover:text-secondary")}
+									onClick={() => {
+										if (isEditing) {
+											setEditedContent(entry?.content);
+											setIsEditing(false);
+											setIsDeleting(false);
+										} else {
+											setIsEditing(true);
+										}
+									}}
+								>
+									{isEditing ? "cancel" : "edit"}
+								</button>
+								{isEditing && (
+									<button
+										type="button"
+										disabled={!isContentChanged}
+										onClick={async () => {
+											setEditSubmitted(true);
+											const {
+												signature,
+												nonce,
+												entryId,
+												totalChunks,
+												content,
+											} = await signEdit(wallet, {
 												entryId: Number(id),
 												address: address as Hex,
 												content: editedContent as string,
 											});
-										mutateAsyncEdit({
-											address: address as Hex,
-											id: entryId,
-											signature,
-											nonce,
-											totalChunks,
-											content,
-										});
-										setEditSubmitted(false);
-										setIsEditing(false);
-									}}
-									className="text-primary disabled:text-neutral-600 hover:text-secondary"
-								>
-									save
-								</button>
-							)}
+											mutateAsyncEdit({
+												address: address as Hex,
+												id: entryId,
+												signature,
+												nonce,
+												totalChunks,
+												content,
+											});
+											setEditSubmitted(false);
+											setIsEditing(false);
+										}}
+										className="text-primary disabled:text-neutral-600 hover:text-secondary"
+									>
+										save
+									</button>
+								)}
+							</div>
 						</div>
 						{isEditing && (
 							<div className="ml-2">
@@ -199,17 +222,6 @@ export default function Entry() {
 						)}
 					</div>
 				)}
-				<div className="flex">
-					<Link
-						to={`/account/${entry.author}`}
-						className="text-primary underline cursor-pointer mr-1"
-					>
-						{shortenAddress(entry.author as Hex)}
-					</Link>
-					<span className="text-neutral-600 bold">
-						on {format(new Date(entry.createdAt), "MM/dd/yyyy")}
-					</span>
-				</div>
 			</div>
 		</div>
 	);

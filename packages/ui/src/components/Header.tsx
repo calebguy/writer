@@ -31,7 +31,6 @@ export function Header() {
 	// @ts-ignore
 	useEffect(() => {
 		if (data?.user?.color) {
-			console.log("setting color", data.user.color);
 			setPrimaryFromLongHex(data.user.color);
 		}
 	}, [data?.user?.color]);

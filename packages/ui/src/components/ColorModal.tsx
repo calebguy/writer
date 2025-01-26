@@ -65,7 +65,7 @@ export function ColorModal({ open, onClose }: ModalProps) {
 			<div className="flex items-center justify-center gap-2">
 				<button
 					type="button"
-					className="border border-transparent hover:border-primary border-dashed text-primary p-2 w-full bold text-xl disabled:hover:border-transparent disabled:opacity-30"
+					className="border border-transparent hover:border-primary border-dashed text-primary p-2 w-full bold text-xl disabled:hover:border-transparent disabled:opacity-30 disabled:cursor-not-allowed"
 					onClick={() => {
 						setRgbColor({
 							r: primaryColor[0],
@@ -84,7 +84,7 @@ export function ColorModal({ open, onClose }: ModalProps) {
 				</button>
 				<button
 					type="button"
-					className="border border-transparent hover:border-primary border-dashed text-primary p-2 w-full bold text-xl disabled:hover:border-transparent disabled:opacity-30"
+					className="border border-transparent hover:border-primary border-dashed text-primary p-2 w-full bold text-xl disabled:hover:border-transparent disabled:opacity-30 disabled:cursor-not-allowed"
 					disabled={
 						rgbColor.r === primaryColor[0] &&
 						rgbColor.g === primaryColor[1] &&

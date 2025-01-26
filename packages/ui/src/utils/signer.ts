@@ -203,3 +203,16 @@ export async function signCreateWithChunk(
 function getRandomNonce() {
 	return Math.floor(Math.random() * 1000000000000);
 }
+
+export async function getDerivedSigningKey(wallet: ConnectedWallet) {
+	const message = "encryption-key-derivation";
+	const encodedMessage = `0x${Buffer.from(message, "utf8").toString("hex")}`;
+	const provider = await wallet.getEthereumProvider();
+	const method = "personal_sign";
+	const signature = await provider.request({
+		method,
+		params: [encodedMessage, wallet.address],
+	});
+	console.log("signature", signature);
+	return signature;
+}

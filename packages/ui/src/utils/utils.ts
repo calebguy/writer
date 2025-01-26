@@ -1,4 +1,7 @@
+import { compress } from "brotli-compress";
 import type { Hex } from "viem";
+
+// const initPromise = init("brotli_wasm_bg.wasm");
 
 export function shortenAddress(address: Hex) {
 	return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -137,4 +140,13 @@ export function setPrimaryAndSecondaryCSSVariables(rgb: RGB) {
 	setCSSVariableFromRGB("--color-primary", rgb);
 	const secondaryColor = rgb.map((c) => c - 100);
 	setCSSVariableFromRGB("--color-secondary", secondaryColor as RGB);
+}
+
+export async function compressWithVersion(input: string) {
+	const encode = new TextEncoder();
+	const compressed = await compress(encode.encode(input), {
+		quality: 11,
+	});
+	const base64Compressed = btoa(String.fromCharCode(...compressed));
+	return `v1:${base64Compressed}`;
 }
