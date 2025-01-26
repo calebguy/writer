@@ -60,8 +60,8 @@ export const createWithChunkJsonValidator = zValidator(
 	"json",
 	z.object({
 		signature: z.string(),
-		nonce: z.number(),
-		chunkCount: z.number(),
+		nonce: bigIntSafe,
+		chunkCount: bigIntSafe,
 		chunkContent: z.string(),
 	}),
 );
@@ -70,8 +70,8 @@ export const updateEntryJsonValidator = zValidator(
 	"json",
 	z.object({
 		signature: z.string(),
-		nonce: z.number(),
-		totalChunks: z.number(),
+		nonce: bigIntSafe,
+		totalChunks: bigIntSafe,
 		content: z.string(),
 	}),
 );

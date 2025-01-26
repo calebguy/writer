@@ -62,6 +62,13 @@ export const privyAuthMiddleware = createMiddleware<{
 	}
 });
 
+const getDomain = (address: Hex) => ({
+	name: "Writer",
+	version: "1",
+	chainId: TARGET_CHAIN_ID,
+	verifyingContract: getAddress(address),
+});
+
 export function recoverCreateWithChunkSigner({
 	signature,
 	nonce,
@@ -70,38 +77,26 @@ export function recoverCreateWithChunkSigner({
 	address,
 }: {
 	signature: Hex;
-	nonce: number;
+	nonce: bigint;
 	chunkContent: string;
-	chunkCount: number;
+	chunkCount: bigint;
 	address: Hex;
 }) {
-	const domain = {
-		name: "Writer",
-		version: "1",
-		chainId: TARGET_CHAIN_ID,
-		verifyingContract: getAddress(address),
-	} as const;
-
-	const types = {
-		CreateWithChunk: [
-			{ name: "nonce", type: "uint256" },
-			{ name: "chunkCount", type: "uint256" },
-			{ name: "chunkContent", type: "string" },
-		],
-	};
-
-	const message = {
-		nonce,
-		chunkCount,
-		chunkContent,
-	};
-
-	// Recover the address
 	return recoverTypedDataAddress({
-		domain,
-		message,
+		domain: getDomain(address),
+		message: {
+			nonce,
+			chunkCount,
+			chunkContent,
+		},
 		primaryType: "CreateWithChunk",
-		types,
+		types: {
+			CreateWithChunk: [
+				{ name: "nonce", type: "uint256" },
+				{ name: "chunkCount", type: "uint256" },
+				{ name: "chunkContent", type: "string" },
+			],
+		},
 		signature,
 	});
 }
@@ -115,41 +110,30 @@ export function recoverUpdateEntryWithChunkSigner({
 	address,
 }: {
 	signature: Hex;
-	nonce: number;
-	totalChunks: number;
+	nonce: bigint;
+	totalChunks: bigint;
 	content: string;
-	entryId: number;
+	entryId: bigint;
 	address: Hex;
 }) {
-	const domain = {
-		name: "Writer",
-		version: "1",
-		chainId: TARGET_CHAIN_ID,
-		verifyingContract: getAddress(address),
-	} as const;
-
-	const types = {
-		Update: [
-			{ name: "nonce", type: "uint256" },
-			{ name: "totalChunks", type: "uint256" },
-			{ name: "content", type: "string" },
-			{ name: "entryId", type: "uint256" },
-		],
-	};
-
-	const message = {
-		nonce,
-		totalChunks,
-		content,
-		entryId,
-	};
-
 	// Recover the address
 	return recoverTypedDataAddress({
-		domain,
-		message,
+		domain: getDomain(address),
+		message: {
+			nonce,
+			totalChunks,
+			content,
+			entryId,
+		},
 		primaryType: "Update",
-		types,
+		types: {
+			Update: [
+				{ name: "nonce", type: "uint256" },
+				{ name: "totalChunks", type: "uint256" },
+				{ name: "content", type: "string" },
+				{ name: "entryId", type: "uint256" },
+			],
+		},
 		signature,
 	});
 }
@@ -161,34 +145,23 @@ export function recoverRemoveEntrySigner({
 	address,
 }: {
 	signature: Hex;
-	nonce: number;
-	id: number;
+	nonce: bigint;
+	id: bigint;
 	address: Hex;
 }) {
-	const domain = {
-		name: "Writer",
-		version: "1",
-		chainId: TARGET_CHAIN_ID,
-		verifyingContract: getAddress(address),
-	} as const;
-
-	const types = {
-		Remove: [
-			{ name: "nonce", type: "uint256" },
-			{ name: "id", type: "uint256" },
-		],
-	};
-
-	const message = {
-		nonce,
-		id,
-	};
-
 	return recoverTypedDataAddress({
-		domain,
-		message,
+		domain: getDomain(address),
+		message: {
+			nonce,
+			id,
+		},
 		primaryType: "Remove",
-		types,
+		types: {
+			Remove: [
+				{ name: "nonce", type: "uint256" },
+				{ name: "id", type: "uint256" },
+			],
+		},
 		signature,
 	});
 }
@@ -200,34 +173,28 @@ export function recoverSetColorSigner({
 	address,
 }: {
 	signature: Hex;
-	nonce: number;
+	nonce: bigint;
 	hexColor: Hex;
 	address: Hex;
 }) {
-	const domain = {
-		name: "ColorRegistry",
-		version: "1",
-		chainId: TARGET_CHAIN_ID,
-		verifyingContract: getAddress(address),
-	} as const;
-
-	const types = {
-		SetHex: [
-			{ name: "nonce", type: "uint256" },
-			{ name: "hexColor", type: "bytes32" },
-		],
-	};
-
-	const message = {
-		nonce,
-		hexColor,
-	};
-
 	return recoverTypedDataAddress({
-		domain,
-		message,
+		domain: {
+			name: "ColorRegistry",
+			version: "1",
+			chainId: TARGET_CHAIN_ID,
+			verifyingContract: getAddress(address),
+		},
+		message: {
+			nonce,
+			hexColor,
+		},
 		primaryType: "SetHex",
-		types,
+		types: {
+			SetHex: [
+				{ name: "nonce", type: "uint256" },
+				{ name: "hexColor", type: "bytes32" },
+			],
+		},
 		signature,
 	});
 }

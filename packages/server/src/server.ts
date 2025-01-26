@@ -74,7 +74,7 @@ const api = app
 
 		const address = await recoverSetColorSigner({
 			signature: signature as Hex,
-			nonce: Number(nonce),
+			nonce,
 			hexColor: hexColor as Hex,
 			address: env.COLOR_REGISTRY_ADDRESS as Hex,
 		});
@@ -172,7 +172,12 @@ const api = app
 
 			console.log("createwithchunk author", author);
 
-			const args = { signature, nonce, chunkCount, chunkContent };
+			const args = {
+				signature,
+				nonce: Number(nonce),
+				chunkCount: Number(chunkCount),
+				chunkContent,
+			};
 			const { transactionId } = await syndicate.transact.sendTransaction({
 				projectId: env.SYNDICATE_PROJECT_ID,
 				contractAddress,
@@ -227,7 +232,7 @@ const api = app
 				nonce,
 				totalChunks,
 				content,
-				entryId: Number(id),
+				entryId: id,
 				address: contractAddress,
 			});
 			console.log("update author", author);
@@ -235,7 +240,13 @@ const api = app
 				return c.json({ error: "previous author does not match" }, 400);
 			}
 
-			const args = { signature, nonce, totalChunks, content, id: Number(id) };
+			const args = {
+				signature,
+				nonce: Number(nonce),
+				totalChunks: Number(totalChunks),
+				content,
+				id: Number(id),
+			};
 			const { transactionId } = await syndicate.transact.sendTransaction({
 				projectId: env.SYNDICATE_PROJECT_ID,
 				contractAddress,
@@ -287,8 +298,8 @@ const api = app
 
 			const signer = await recoverRemoveEntrySigner({
 				signature: signature as Hex,
-				nonce: Number(nonce),
-				id: Number(id),
+				nonce,
+				id,
 				address,
 			});
 			console.log("remove signer", signer);
