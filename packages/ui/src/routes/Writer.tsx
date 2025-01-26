@@ -10,8 +10,8 @@ import { WriterContext } from "../context";
 import type { BlockCreateInput } from "../interfaces";
 import { createWithChunk, getWriter } from "../utils/api";
 import { useFirstWallet } from "../utils/hooks";
-import { signCreateWithChunk } from "../utils/signer";
-import { compressWithVersion } from "../utils/utils";
+import { getDerivedSigningKey, signCreateWithChunk } from "../utils/signer";
+import { compress, decompress, decrypt, encrypt } from "../utils/utils";
 
 export function Writer() {
 	const { address } = useParams();
@@ -45,6 +45,8 @@ export function Writer() {
 		}
 	}, [data, isPolling]);
 
+	const encrypted = true;
+
 	const handleSubmit = async ({ value }: BlockCreateInput) => {
 		const content = value;
 		if (!address) {
@@ -57,11 +59,21 @@ export function Writer() {
 			return;
 		}
 
-		const compressedContent = await compressWithVersion(content);
+		const compressedContent = await compress(content);
+		let versionedCompressedContent = `br:${compressedContent}`;
+		if (encrypted) {
+			const key = await getDerivedSigningKey(wallet);
+			const encrypted = await encrypt(key, compressedContent);
+			const decrypted = await decrypt(key, encrypted);
+			const decompressed = await decompress(decrypted);
+			console.log("decompressed", decompressed);
+
+			versionedCompressedContent = `enc:br:${encrypted}`;
+		}
 
 		const { signature, nonce, chunkCount, chunkContent } =
 			await signCreateWithChunk(wallet, {
-				content: compressedContent,
+				content: versionedCompressedContent,
 				address,
 			});
 
@@ -93,16 +105,20 @@ export function Writer() {
 							id = format(new Date(entry.createdAt), "MM/dd/yyyy");
 						}
 
+						// if (entry.content?.startsWith("enc:br")) {
+						// 	const key = await getDerivedSigningKey(wallet);
+						// 	const decrypted = await decrypt(key, entry.content);
+						// 	const decompressed = await decompress(decrypted);
+						// 	entry.content = decompressed;
+						// }
 						// We want the preview to overflow if it is long enough but we don't want to render the entire content
-						const title = entry.content
-							? `${entry.content.slice(0, 2_000)}`
-							: "n/a";
+
 						return (
 							<Block
 								key={entry.id}
 								href={`/writer/${data.address}/${entry.onChainId}`}
 								isLoading={!entry.onChainId}
-								title={title}
+								title={entry.content}
 								id={id}
 							/>
 						);

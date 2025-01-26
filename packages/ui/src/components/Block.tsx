@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { MD } from "./MD";
 
 interface BlockProps {
-	title: string;
+	title?: string | null;
 	id?: string;
 	href?: string;
 	onClick?: MouseEventHandler<HTMLAnchorElement>;

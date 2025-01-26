@@ -129,8 +129,10 @@ const api = app
 			});
 
 			let content = chunkContent;
-			if (content.startsWith("v1:")) {
+			if (content.startsWith("br:")) {
 				content = decompressBrotli(content.slice(3));
+			} else if (content.startsWith("enc:br:")) {
+				console.debug("received encrypted content, writing to DB");
 			}
 
 			const data = await db.upsertEntry({

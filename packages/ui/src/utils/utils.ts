@@ -1,7 +1,8 @@
-import { compress } from "brotli-compress";
+import {
+	compress as compressBrotli,
+	decompress as decompressBrotli,
+} from "brotli-compress";
 import type { Hex } from "viem";
-
-// const initPromise = init("brotli_wasm_bg.wasm");
 
 export function shortenAddress(address: Hex) {
 	return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -142,11 +143,139 @@ export function setPrimaryAndSecondaryCSSVariables(rgb: RGB) {
 	setCSSVariableFromRGB("--color-secondary", secondaryColor as RGB);
 }
 
-export async function compressWithVersion(input: string) {
+export async function compress(input: string) {
 	const encode = new TextEncoder();
-	const compressed = await compress(encode.encode(input), {
+	const compressed = await compressBrotli(encode.encode(input), {
 		quality: 11,
 	});
-	const base64Compressed = btoa(String.fromCharCode(...compressed));
-	return `v1:${base64Compressed}`;
+	return btoa(String.fromCharCode(...compressed));
+}
+
+export async function decompress(compressed: string): Promise<string> {
+	// Decode the Base64-encoded compressed data into a Uint8Array
+	const compressedData = Uint8Array.from(atob(compressed), (char) =>
+		char.charCodeAt(0),
+	);
+
+	// Decompress the Uint8Array using Brotli
+	const decompressedData = await decompressBrotli(compressedData);
+
+	// Decode the decompressed Uint8Array back into a string
+	return new TextDecoder().decode(decompressedData);
+}
+
+// export async function encrypt(key: Uint8Array, message: string) {
+// 	const cryptoKey = await crypto.subtle.importKey(
+// 		"raw",
+// 		key,
+// 		{ name: "AES-GCM" },
+// 		false,
+// 		["encrypt"],
+// 	);
+
+// 	const iv = crypto.getRandomValues(new Uint8Array(12));
+// 	const binaryMessage = Uint8Array.from(atob(message), (char) =>
+// 		char.charCodeAt(0),
+// 	);
+// 	const encrypted = await crypto.subtle.encrypt(
+// 		{
+// 			name: "AES-GCM",
+// 			iv,
+// 		},
+// 		cryptoKey,
+// 		binaryMessage,
+// 	);
+// 	const combined = new Uint8Array(iv.length + encrypted.byteLength);
+// 	combined.set(iv);
+// 	combined.set(new Uint8Array(encrypted), iv.length);
+// 	return btoa(String.fromCharCode(...combined));
+// }
+
+// export async function decrypt(key: Uint8Array, encryptedMessage: string) {
+// 	// Import the key for decryption
+// 	const cryptoKey = await crypto.subtle.importKey(
+// 		"raw",
+// 		key,
+// 		{ name: "AES-GCM" },
+// 		false,
+// 		["decrypt"],
+// 	);
+
+// 	// Decode the Base64-encrypted message
+// 	const combined = Uint8Array.from(atob(encryptedMessage), (char) =>
+// 		char.charCodeAt(0),
+// 	);
+
+// 	// Extract the IV and encrypted data
+// 	const iv = combined.slice(0, 12); // The first 12 bytes are the IV
+// 	const encryptedData = combined.slice(12); // The rest is the encrypted data
+
+// 	// Decrypt the message
+// 	const decrypted = await crypto.subtle.decrypt(
+// 		{
+// 			name: "AES-GCM",
+// 			iv,
+// 		},
+// 		cryptoKey,
+// 		encryptedData,
+// 	);
+
+// 	// Convert decrypted data back to a string
+// 	return new TextDecoder().decode(decrypted);
+// }
+
+export async function encrypt(key: Uint8Array, message: string) {
+	const cryptoKey = await crypto.subtle.importKey(
+		"raw",
+		key,
+		{ name: "AES-GCM" },
+		false,
+		["encrypt"],
+	);
+
+	const iv = crypto.getRandomValues(new Uint8Array(12)); // Generate IV
+	const binaryMessage = new TextEncoder().encode(message); // Encode message to binary
+
+	const encrypted = await crypto.subtle.encrypt(
+		{ name: "AES-GCM", iv },
+		cryptoKey,
+		binaryMessage,
+	);
+
+	// Combine IV and encrypted data
+	const combined = new Uint8Array(iv.length + encrypted.byteLength);
+	combined.set(iv);
+	combined.set(new Uint8Array(encrypted), iv.length);
+
+	// Encode combined result as Base64 for storage/transmission
+	return btoa(String.fromCharCode(...combined));
+}
+
+export async function decrypt(key: Uint8Array, encryptedMessage: string) {
+	const cryptoKey = await crypto.subtle.importKey(
+		"raw",
+		key,
+		{ name: "AES-GCM" },
+		false,
+		["decrypt"],
+	);
+
+	// Decode Base64 encrypted message
+	const combined = Uint8Array.from(atob(encryptedMessage), (char) =>
+		char.charCodeAt(0),
+	);
+
+	// Extract IV and encrypted data
+	const iv = combined.slice(0, 12);
+	const encryptedData = combined.slice(12);
+
+	// Decrypt the message
+	const decrypted = await crypto.subtle.decrypt(
+		{ name: "AES-GCM", iv },
+		cryptoKey,
+		encryptedData,
+	);
+
+	// Decode binary data to original string
+	return new TextDecoder().decode(decrypted);
 }
