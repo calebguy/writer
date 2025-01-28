@@ -4,7 +4,13 @@ import { nodePolyfills } from "vite-plugin-node-polyfills";
 // https://vitejs.dev/config/
 export default defineConfig({
 	plugins: [react(), nodePolyfills()],
-	
+	css: {
+		preprocessorOptions: {
+			scss: {
+				api: "modern-compiler", // or "modern"
+			},
+		},
+	},
 	server: {
 		proxy: {
 			"/api": {
