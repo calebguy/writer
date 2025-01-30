@@ -72,6 +72,18 @@ function computeWriterAddress(string title, address admin, address[] managers, b
 \`\`\`
 `;
 
+const writerCreatedEvent = `
+\`\`\`solidity
+event WriterCreated(
+	address indexed writerAddress,
+	address indexed storeAddress,
+	address indexed admin,
+	string title,
+	address[] managers
+);
+\`\`\`
+`;
+
 export function Docs() {
 	return (
 		<div className="grow flex flex-col">
@@ -101,6 +113,9 @@ export function Docs() {
 									<div className="flex">
 										<span className="text-primary mr-1.5 font-mono">write</span>
 										<MD>{factoryCreate}</MD>
+									</div>
+									<div className="flex justify-center">
+										<MD>{writerCreatedEvent}</MD>
 									</div>
 									<div className="flex">
 										<span className="text-secondary mr-1.5 font-mono">
