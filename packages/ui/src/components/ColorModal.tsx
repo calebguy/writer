@@ -13,6 +13,8 @@ import {
 } from "../utils/utils";
 import { Modal, ModalDescription, ModalTitle } from "./Modal";
 import { Blob } from "./icons/Blob";
+import { Save } from "./icons/Save";
+import { Undo } from "./icons/Undo";
 interface ModalProps {
 	open: boolean;
 	onClose: () => void;
@@ -43,8 +45,21 @@ export function ColorModal({ open, onClose }: ModalProps) {
 		}
 	}, [primaryColor, open]);
 
+	const isSaving = isPending || saveClicked;
+
 	return (
-		<Modal open={open} onClose={onClose}>
+		<Modal
+			open={open}
+			onClose={() => {
+				setRgbColor({
+					r: primaryColor[0],
+					g: primaryColor[1],
+					b: primaryColor[2],
+				});
+				setPrimaryAndSecondaryCSSVariables(primaryColor);
+				onClose();
+			}}
+		>
 			<VisuallyHidden.Root>
 				<ModalTitle>Set Color</ModalTitle>
 				<ModalDescription>Set the color</ModalDescription>
@@ -65,7 +80,7 @@ export function ColorModal({ open, onClose }: ModalProps) {
 			<div className="flex items-center justify-center gap-2">
 				<button
 					type="button"
-					className="border border-transparent hover:border-primary border-dashed text-primary p-2 w-full bold text-xl disabled:hover:border-transparent disabled:opacity-30 disabled:cursor-not-allowed"
+					className="border border-transparent hover:border-primary border-dashed text-primary p-2 w-full bold text-xl disabled:hover:border-transparent disabled:opacity-30 disabled:cursor-not-allowed flex justify-center items-center"
 					onClick={() => {
 						setRgbColor({
 							r: primaryColor[0],
@@ -80,11 +95,11 @@ export function ColorModal({ open, onClose }: ModalProps) {
 						rgbColor.b === primaryColor[2]
 					}
 				>
-					reset
+					<Undo className="w-5 h-5" />
 				</button>
 				<button
 					type="button"
-					className="border border-transparent hover:border-primary border-dashed text-primary p-2 w-full bold text-xl disabled:hover:border-transparent disabled:opacity-30 disabled:cursor-not-allowed"
+					className="border border-transparent hover:border-primary border-dashed text-primary p-2 w-full bold text-xl disabled:hover:border-transparent disabled:opacity-30 disabled:cursor-not-allowed flex justify-center items-center"
 					disabled={
 						rgbColor.r === primaryColor[0] &&
 						rgbColor.g === primaryColor[1] &&
@@ -104,7 +119,11 @@ export function ColorModal({ open, onClose }: ModalProps) {
 						onClose();
 					}}
 				>
-					{isPending || saveClicked ? "..." : "save"}
+					{isSaving ? (
+						<Blob className="w-5 h-5 rotating" />
+					) : (
+						<Save className="w-5 h-5" />
+					)}
 				</button>
 			</div>
 		</Modal>

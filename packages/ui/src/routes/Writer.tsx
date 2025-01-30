@@ -95,40 +95,38 @@ export function Writer() {
 	};
 
 	return (
-		<div className="relative grow">
-			<div
-				className="grid gap-2"
-				style={{
-					gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-				}}
-			>
-				<BlockForm
-					canExpand
-					isLoading={isPending}
-					placeholder={`Write in \n\n${data?.title}`}
-					onSubmit={handleSubmit}
-					onExpand={setIsExpanded}
-				/>
-				{!isExpanded &&
-					processedData.map((entry) => {
-						let id: undefined | string = undefined;
-						if (entry.createdAtBlockDatetime) {
-							id = format(new Date(entry.createdAtBlockDatetime), "MM-dd-yyyy");
-						} else {
-							id = format(new Date(entry.createdAt), "MM/dd/yyyy");
-						}
+		<div
+			className="grid gap-2"
+			style={{
+				gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+			}}
+		>
+			<BlockForm
+				canExpand
+				isLoading={isPending}
+				placeholder={`Write in \n\n${data?.title}`}
+				onSubmit={handleSubmit}
+				onExpand={setIsExpanded}
+			/>
+			{!isExpanded &&
+				processedData.map((entry) => {
+					let id: undefined | string = undefined;
+					if (entry.createdAtBlockDatetime) {
+						id = format(new Date(entry.createdAtBlockDatetime), "MM-dd-yyyy");
+					} else {
+						id = format(new Date(entry.createdAt), "MM/dd/yyyy");
+					}
 
-						return (
-							<Block
-								key={entry.id}
-								href={`/writer/${data?.address}/${entry.onChainId}`}
-								isLoading={!entry.onChainId}
-								title={entry.decompressed ? entry.decompressed : entry.raw}
-								id={id}
-							/>
-						);
-					})}
-			</div>
+					return (
+						<Block
+							key={entry.id}
+							href={`/writer/${data?.address}/${entry.onChainId}`}
+							isLoading={!entry.onChainId}
+							title={entry.decompressed ? entry.decompressed : entry.raw}
+							id={id}
+						/>
+					);
+				})}
 		</div>
 	);
 }

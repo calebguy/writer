@@ -8,10 +8,10 @@ import { Controller, useForm } from "react-hook-form";
 import type { BlockCreateInput } from "../interfaces";
 import { cn } from "../utils/cn";
 import { useIsMac } from "../utils/hooks";
-import { Editor } from "./Editor";
-import { MD } from "./MD";
 import { Arrow } from "./icons/Arrow";
 import { Blob } from "./icons/Blob";
+import { Editor } from "./markdown/Editor";
+import { MD } from "./markdown/MD";
 
 interface BlockFormProps {
 	onSubmit: (data: BlockCreateInput) => Promise<unknown>;

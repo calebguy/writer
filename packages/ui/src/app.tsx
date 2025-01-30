@@ -10,7 +10,9 @@ import {
 } from "./context.ts";
 import ErrorPage from "./error-page.tsx";
 import { AppLayout } from "./layouts/App.layout.tsx";
+import { BlankLayout } from "./layouts/Blank.layout.tsx";
 import { Author } from "./routes/Author.tsx";
+import { Docs } from "./routes/Docs.tsx";
 import Entry from "./routes/Entry.tsx";
 import Home from "./routes/Home.tsx";
 import { Writer } from "./routes/Writer.tsx";
@@ -41,13 +43,25 @@ const router = createBrowserRouter([
 	getRouteWithErrorBoundry("/writer/:address", <Writer />),
 	getRouteWithErrorBoundry("/writer/:address/:id", <Entry />),
 	getRouteWithErrorBoundry("/account/:address", <Author />),
+	{
+		path: "/docs",
+		element: (
+			<BlankLayout>
+				<Docs />
+			</BlankLayout>
+		),
+		errorElement: (
+			<BlankLayout>
+				<ErrorPage />
+			</BlankLayout>
+		),
+	},
 ]);
 
 export function App() {
 	const [writer, setWriter] = useState<WriterContextType["writer"]>(null);
 	const [primaryColor, setPrimaryColor] =
 		useState<WriterContextType["primaryColor"]>(defaultColor);
-
 	return (
 		<React.StrictMode>
 			<QueryClientProvider client={queryClient}>

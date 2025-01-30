@@ -116,7 +116,7 @@ export async function createWithChunk({
 	chunkCount: number;
 	chunkContent: string;
 }) {
-	const res = await client.api.writer[":address"].createWithChunk.$post({
+	const res = await client.api.writer[":address"].entry.$post({
 		param: { address },
 		json,
 	});

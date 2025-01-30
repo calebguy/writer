@@ -1,16 +1,14 @@
 import { useLogin, usePrivy } from "@privy-io/react-auth";
-import { useQuery } from "@tanstack/react-query";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { WriterContext } from "../context";
-import { getMe } from "../utils/api";
 import { cn } from "../utils/cn";
 import { Button, ButtonVariant } from "./Button";
 import { ColorModal } from "./ColorModal";
 import { Dropdown, DropdownItem } from "./Dropdown";
-import { MD } from "./MD";
 import { Arrow } from "./icons/Arrow";
 import { Blob } from "./icons/Blob";
+import { MD } from "./markdown/MD";
 
 export function Header() {
 	const { ready, authenticated, logout } = usePrivy();
@@ -18,22 +16,8 @@ export function Header() {
 	const location = useLocation();
 	const { address, id } = useParams();
 	const [open, setOpen] = useState(false);
-	const { writer, setPrimaryFromLongHex } = useContext(WriterContext);
+	const { writer } = useContext(WriterContext);
 	const isLoggedIn = ready && authenticated;
-
-	const { data } = useQuery({
-		queryKey: ["me"],
-		queryFn: () => getMe(),
-		enabled: isLoggedIn,
-	});
-
-	// Set the user's color when they login
-	// @ts-ignore
-	useEffect(() => {
-		if (data?.user?.color) {
-			setPrimaryFromLongHex(data.user.color);
-		}
-	}, [data?.user?.color]);
 
 	let title: string | undefined = "Writer";
 	let to = "/";
@@ -62,10 +46,10 @@ export function Header() {
 					<Link
 						to={to}
 						className={cn(
-							"text-3xl active:-translate-x-[1px] active:translate-y-[1px]",
+							"text-3xl active:-translate-x-[1px] active:translate-y-[1px] transition-colors",
 							{
 								"text-primary": isLoggedIn,
-								"text-neutral-500": !isLoggedIn,
+								"text-secondary": !isLoggedIn,
 							},
 						)}
 						style={{ overflowWrap: "anywhere" }}
@@ -91,9 +75,9 @@ export function Header() {
 						}}
 					>
 						<Blob
-							className={cn("h-8", {
+							className={cn("h-8 transition-colors", {
 								"text-primary": isLoggedIn,
-								"text-neutral-500": !isLoggedIn,
+								"text-secondary hover:text-primary": !isLoggedIn,
 							})}
 						/>
 					</Button>
@@ -103,9 +87,9 @@ export function Header() {
 					<Dropdown
 						trigger={
 							<Blob
-								className={cn("h-8", {
+								className={cn("h-8 transition-colors", {
 									"text-primary": isLoggedIn,
-									"text-neutral-500": !isLoggedIn,
+									"text-secondary": !isLoggedIn,
 								})}
 							/>
 						}

@@ -2,7 +2,7 @@ import { type MouseEventHandler, useCallback } from "react";
 import { cn } from "../utils/cn";
 
 import { Link } from "react-router-dom";
-import { MD } from "./MD";
+import { MD } from "./markdown/MD";
 
 interface BlockProps {
 	title?: string | null;

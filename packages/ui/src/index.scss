@@ -2,9 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+
+// LTRemark
 @font-face {
   font-family: 'LTRemark';
-  src: url('./fonts/LTRemark-Regular.otf') format('opentype');
+  src: url('./fonts/lt-remark/LTRemark-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -12,7 +14,7 @@
 
 @font-face {
   font-family: 'LTRemark';
-  src: url('./fonts/LTRemark-Italic.otf') format('opentype');
+  src: url('./fonts/lt-remark/LTRemark-Italic.woff2') format('woff2');
   font-weight: 400;
   font-style: italic;
   font-display: swap;
@@ -20,7 +22,7 @@
 
 @font-face {
   font-family: 'LTRemark';
-  src: url('./fonts/LTRemark-Bold.otf') format('opentype');
+  src: url('./fonts/lt-remark/LTRemark-Bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -28,7 +30,7 @@
 
 @font-face {
   font-family: 'LTRemark';
-  src: url('./fonts/LTRemark-BoldItalic.otf') format('opentype');
+  src: url('./fonts/lt-remark/LTRemark-BoldItalic.woff2') format('woff2');
   font-weight: 700;
   font-style: italic;
   font-display: swap;
@@ -36,7 +38,7 @@
 
 @font-face {
   font-family: 'LTRemark';
-  src: url('./fonts/LTRemark-Black.otf') format('opentype');
+  src: url('./fonts/lt-remark/LTRemark-Black.woff2') format('woff2');
   font-weight: 900;
   font-style: normal;
   font-display: swap;
@@ -44,16 +46,75 @@
 
 @font-face {
   font-family: 'LTRemark';
-  src: url('./fonts/LTRemark-BlackItalic.otf') format('opentype');
+  src: url('./fonts/lt-remark/LTRemark-BlackItalic.woff2') format('woff2');
   font-weight: 900;
   font-style: italic;
   font-display: swap;
 }
+
+// BasicallyAMono
+@font-face {
+  font-family: 'BasicallyAMono';
+  src: url('./fonts/basically-a-mono/BasicallyAMono-Thin.woff2') format('woff2');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BasicallyAMono';
+  src: url('./fonts/basically-a-mono/BasicallyAMono-ExtraLight.woff2') format('woff2');
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BasicallyAMono';
+  src: url('./fonts/basically-a-mono/BasicallyAMono-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BasicallyAMono';
+  src: url('./fonts/basically-a-mono/BasicallyAMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BasicallyAMono';
+  src: url('./fonts/basically-a-mono/BasicallyAMono-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BasicallyAMono';
+  src: url('./fonts/basically-a-mono/BasicallyAMono-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BasicallyAMono';
+  src: url('./fonts/basically-a-mono/BasicallyAMono-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+
 
 @layer base {
   :root {
-    --color-primary: 252 186 3;
-    --color-secondary: 120 98 40;
+    --color-primary: 255 255 255;
+    --color-secondary: 138 138 138;
 
     font-family: "LTRemark";
     line-height: 1.5;
@@ -76,7 +137,6 @@
 #root {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 3rem;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -152,7 +212,8 @@ html, body, #root {
   // Code block styling
   pre {
     background-color: transparent;
-    font-size: 0.8rem;
+    font-size: 0.875rem;
+    font-family: "BasicallyAMono", monospace;
     // TODO: maybe padding here??
     // padding-left: 0.5rem;
     // padding-right: 0.5rem;

@@ -52,7 +52,7 @@ function Home() {
 	};
 
 	return (
-		<div>
+		<>
 			{address && (
 				<div
 					className="grid gap-2"
@@ -82,7 +82,7 @@ function Home() {
 						))}
 				</div>
 			)}
-		</div>
+		</>
 	);
 }
 

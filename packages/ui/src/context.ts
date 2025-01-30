@@ -12,7 +12,18 @@ export interface WriterContextType {
 	setPrimaryFromLongHex: (hex: string) => void;
 }
 
-export const defaultColor: RGB = [255, 255, 255];
+export let defaultColor: RGB;
+const fallbackColor: RGB = [252, 186, 3];
+
+try {
+	const root = document.documentElement;
+	const primaryColor =
+		getComputedStyle(root).getPropertyValue("--color-primary");
+	const primaryColorArray = primaryColor.split(" ").map(Number) as RGB;
+	defaultColor = primaryColorArray;
+} catch (e) {
+	defaultColor = fallbackColor;
+}
 
 export const WriterContext = createContext<WriterContextType>({
 	writer: null,

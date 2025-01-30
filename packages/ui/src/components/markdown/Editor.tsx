@@ -25,9 +25,11 @@ import {
 import { all, createLowlight } from "lowlight";
 import { useImperativeHandle } from "react";
 import { Markdown } from "tiptap-markdown";
-import { cn } from "../utils/cn";
+import { cn } from "../../utils/cn";
+import doitSol from "./language/solidity";
 
 const lowlight = createLowlight(all);
+lowlight.register("solidity", doitSol);
 
 interface EditorProps {
 	content?: string | null;

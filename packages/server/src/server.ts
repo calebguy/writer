@@ -78,7 +78,6 @@ const api = app
 			hexColor: hexColor as Hex,
 			address: env.COLOR_REGISTRY_ADDRESS as Hex,
 		});
-		console.log("set color signer", address);
 
 		const args = {
 			signature,
@@ -149,7 +148,7 @@ const api = app
 		return c.json({ writer }, 201);
 	})
 	.post(
-		"/writer/:address/createWithChunk",
+		"/writer/:address/entry",
 		addressParamSchema,
 		createWithChunkJsonValidator,
 		async (c) => {
@@ -169,8 +168,6 @@ const api = app
 				chunkCount,
 				address: contractAddress,
 			});
-
-			console.log("createwithchunk author", author);
 
 			const args = {
 				signature,
