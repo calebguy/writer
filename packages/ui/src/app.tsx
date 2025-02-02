@@ -12,7 +12,7 @@ import ErrorPage from "./error-page.tsx";
 import { AppLayout } from "./layouts/App.layout.tsx";
 import { BlankLayout } from "./layouts/Blank.layout.tsx";
 import { Author } from "./routes/Author.tsx";
-import { Docs } from "./routes/Docs.tsx";
+import { Docs } from "./routes/Docs/Docs.tsx";
 import Entry from "./routes/Entry.tsx";
 import Home from "./routes/Home.tsx";
 import { Writer } from "./routes/Writer.tsx";
