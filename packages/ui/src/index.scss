@@ -181,6 +181,10 @@ html, body, #root {
 
 // Markdown reader & editor
 .md, .tiptap {
+  ::selection {
+    background-color: theme('colors.secondary');
+  }
+
   ol {
     margin: 0!important;
     p {

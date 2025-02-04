@@ -5,9 +5,11 @@ import { MD } from "../../components/markdown/MD";
 import { GITHUB_URL } from "../../constants";
 import { cn } from "../../utils/cn";
 import {
+	baseUrlSnipped,
 	chunkReceivedEvent,
 	entryCompletedEvent,
 	entryCreatedEvent,
+	entryObjectSnippet,
 	entryRemovedEvent,
 	entryStruct,
 	entryUpdatedEvent,
@@ -27,6 +29,7 @@ import {
 	writerGetEntryCount,
 	writerGetEntryIds,
 	writerGetEntryTotalChunks,
+	writerObjectSnippet,
 	writerRemove,
 	writerRemoveWithSig,
 	writerUpdate,
@@ -59,57 +62,116 @@ function Header() {
 }
 
 function Sidebar() {
-	const location = useLocation();
 	return (
-		<div className="border-r border-dashed border-secondary flex flex-col gap-12 pr-8 text-lg">
+		<div className="border-r border-dashed border-secondary flex-col gap-12 pr-8 text-lg hidden lg:flex">
 			<div>
 				<div className="font-bold">Contracts</div>
-				<div className="flex flex-col gap-1">
+				<div className="flex flex-col gap-3">
 					<SidebarLink
 						to="#writer-factory"
 						title="WriterFactory"
-						selected={location.hash === "#writer-factory"}
+						subLinks={[
+							{
+								to: "#writer-factory-create",
+								title: "Create",
+							},
+							{
+								to: "#compute-writer-storage-address",
+								title: "Compute Writer Storage Address",
+							},
+							{
+								to: "#compute-writer-address",
+								title: "Compute Writer Address",
+							},
+						]}
 					/>
 					<SidebarLink
 						to="#writer"
 						title="Writer"
-						selected={location.hash === "#writer"}
+						subLinks={[
+							{
+								to: "#writer-create",
+								title: "Create",
+							},
+							{
+								to: "#writer-add-chunk",
+								title: "Add Chunk",
+							},
+							{
+								to: "#writer-create-with-chunk",
+								title: "Create with Chunk",
+							},
+							{
+								to: "#writer-update",
+								title: "Update",
+							},
+							{
+								to: "#writer-remove",
+								title: "Remove",
+							},
+							{
+								to: "#writer-create-with-sig",
+								title: "Create With Sig",
+							},
+							{
+								to: "#writer-add-chunk-with-sig",
+								title: "Add Chunk With Sig",
+							},
+							{
+								to: "#writer-create-with-chunk-with-sig",
+								title: "Create With Chunk With Sig",
+							},
+							{
+								to: "#writer-update-with-sig",
+								title: "Update With Sig",
+							},
+							{
+								to: "#writer-remove-with-sig",
+								title: "Remove With Sig",
+							},
+							{
+								to: "#writer-get-entry-count",
+								title: "Get Entry Count",
+							},
+							{
+								to: "#writer-get-entry-ids",
+								title: "Get Entry IDs",
+							},
+							{
+								to: "#writer-get-entry",
+								title: "Get Entry",
+							},
+							{
+								to: "#writer-get-entry-content",
+								title: "Get Entry Content",
+							},
+							{
+								to: "#writer-get-entry-chunk",
+								title: "Get Entry Chunk",
+							},
+							{
+								to: "#writer-get-entry-total-chunks",
+								title: "Get Entry Total Chunks",
+							},
+						]}
 					/>
 				</div>
 			</div>
 			<div>
 				<div className="font-bold">API</div>
 				<div className="flex flex-col gap-1">
-					<SidebarLink
-						to="#create-writer"
-						title="Create Writer"
-						selected={location.hash === "#create-writer"}
-					/>
+					<SidebarLink to="#create-writer" title="Create Writer" />
 					<SidebarLink
 						to="#get-writer-by-address"
 						title="Get Writer by Address"
-						selected={location.hash === "#get-writer-by-address"}
 					/>
 					<SidebarLink
 						to="#get-writers-by-author"
 						title="Get Writers by Author"
-						selected={location.hash === "#get-writers-by-author"}
 					/>
-					<SidebarLink
-						to="#create-entry"
-						title="Create Entry"
-						selected={location.hash === "#create-entry"}
-					/>
-					<SidebarLink
-						to="#update-entry"
-						title="Update Entry"
-						selected={location.hash === "#update-entry"}
-					/>
-					<SidebarLink
-						to="#delete-entry"
-						title="Delete Entry"
-						selected={location.hash === "#delete-entry"}
-					/>
+					<SidebarLink to="#create-entry" title="Create Entry" />
+					<SidebarLink to="#update-entry" title="Update Entry" />
+					<SidebarLink to="#delete-entry" title="Delete Entry" />
 				</div>
 			</div>
 		</div>
@@ -263,6 +325,18 @@ export function Docs() {
 						</Section>
 						<div className="border-t border-dashed border-secondary my-4" />
 						<Section id="api" title="API">
+							<div>
+								<div className="text-lg font-bold">Base URL</div>
+								<MD>{baseUrlSnipped}</MD>
+							</div>
+							<div>
+								<div className="text-lg font-bold">Writer Object</div>
+								<MD>{writerObjectSnippet}</MD>
+							</div>
+							<div>
+								<div className="text-lg font-bold">Entry Object</div>
+								<MD>{entryObjectSnippet}</MD>
+							</div>
 							<div id="create-writer">
 								<Copyable slug="create-writer">
 									<div className="text-lg font-bold">Create Writer</div>
@@ -349,23 +423,68 @@ function Copyable({
 interface SidebarLinkProps {
 	to: To;
 	title?: string;
-	selected?: boolean;
+	subLinks?: {
+		to: To;
+		title: string;
+	}[];
 }
 
-function SidebarLink({ to, title, selected }: SidebarLinkProps) {
+function SidebarLink({ to, title, subLinks }: SidebarLinkProps) {
+	const location = useLocation();
+	const subLinksSelected = subLinks?.some(
+		(subLink) => location.hash === subLink.to,
+	);
+	const isSelected = location.hash === to;
+
+	if (subLinks) {
+		return (
+			<div>
+				<div className="flex items-center gap-1.5">
+					{isSelected && <span className="bg-primary rounded h-1 w-1" />}
+					<a
+						className={cn(
+							"text-neutral-400 transition-colors cursor-pointer inline-block",
+							{
+								"text-primary hover:text-primary":
+									isSelected && !subLinksSelected,
+								"text-primary": subLinksSelected,
+								"hover:text-secondary": !isSelected,
+							},
+						)}
+						href={`/docs${to}`}
+					>
+						{title}
+					</a>
+				</div>
+				<div className="text-base ml-2 flex flex-col gap-0">
+					{subLinks.map((subLink) => (
+						<SidebarLink
+							key={subLink.title}
+							to={subLink.to}
+							title={subLink.title}
+						/>
+					))}
+				</div>
+			</div>
+		);
+	}
+
 	return (
-		<a
-			className={cn(
-				"text-neutral-400 transition-colors cursor-pointer inline-block",
-				{
-					"text-primary hover:text-primary": selected,
-					"hover:text-secondary": !selected,
-				},
-			)}
-			href={`/docs${to}`}
-		>
-			{title}
-		</a>
+		<span className="flex items-center gap-1.5">
+			{isSelected && <span className="bg-primary rounded h-1 w-1" />}
+			<a
+				className={cn(
+					"text-neutral-400 transition-colors cursor-pointer inline-block",
+					{
+						"text-primary hover:text-primary": isSelected,
+						"hover:text-secondary": !isSelected,
+					},
+				)}
+				href={`/docs${to}`}
+			>
+				{title}
+			</a>
+		</span>
 	);
 }
 
