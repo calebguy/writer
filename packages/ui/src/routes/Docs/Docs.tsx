@@ -160,7 +160,39 @@ function Sidebar() {
 			<div>
 				<div className="font-bold">API</div>
 				<div className="flex flex-col gap-1">
-					<SidebarLink to="#create-writer" title="Create Writer" />
+					<SidebarLink
+						to="#writer-api"
+						title="/writer"
+						subLinks={[
+							{
+								to: "#create-writer",
+								title: "POST",
+							},
+							{
+								to: "#get-writer-by-address",
+								title: "GET",
+							},
+						]}
+					/>
+					<SidebarLink
+						to="#entry-api"
+						title="/entry"
+						subLinks={[
+							{
+								to: "#create-entry",
+								title: "POST",
+							},
+							{
+								to: "#update-entry",
+								title: "PUT",
+							},
+							{
+								to: "#delete-entry",
+								title: "DELETE",
+							},
+						]}
+					/>
+					{/* <SidebarLink to="#create-writer" title="Create Writer" />
 					<SidebarLink
 						to="#get-writer-by-address"
 						title="Get Writer by Address"
@@ -171,7 +203,7 @@ function Sidebar() {
 					/>
 					<SidebarLink to="#create-entry" title="Create Entry" />
 					<SidebarLink to="#update-entry" title="Update Entry" />
-					<SidebarLink to="#delete-entry" title="Delete Entry" />
+					<SidebarLink to="#delete-entry" title="Delete Entry" /> */}
 				</div>
 			</div>
 		</div>
