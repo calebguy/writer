@@ -5,10 +5,32 @@ import { MD } from "../../components/markdown/MD";
 import { GITHUB_URL } from "../../constants";
 import { cn } from "../../utils/cn";
 import {
+	chunkReceivedEvent,
+	entryCompletedEvent,
+	entryCreatedEvent,
+	entryRemovedEvent,
+	entryStruct,
+	entryUpdatedEvent,
 	factoryComputeWriterAddress,
 	factoryComputeWriterStorageAddress,
 	factoryCreate,
+	writerAddChunk,
+	writerAddChunkWithSig,
+	writerCreate,
+	writerCreateWithChunk,
+	writerCreateWithChunkWithSig,
+	writerCreateWithSig,
 	writerCreatedEvent,
+	writerGetEntry,
+	writerGetEntryChunk,
+	writerGetEntryContent,
+	writerGetEntryCount,
+	writerGetEntryIds,
+	writerGetEntryTotalChunks,
+	writerRemove,
+	writerRemoveWithSig,
+	writerUpdate,
+	writerUpdateWithSig,
 } from "./code";
 
 import { Link as LinkIcon } from "../../components/icons/Link";
@@ -122,14 +144,23 @@ export function Docs() {
 										Writers hold your content in the form of Entries.
 									</div>
 								</div>
-								<Methods
-									methods={[
-										factoryCreate,
-										writerCreatedEvent,
-										factoryComputeWriterStorageAddress,
-										factoryComputeWriterAddress,
-									]}
-								/>
+								<div className="flex flex-col gap-4 mt-2">
+									<Item
+										id="writer-factory-create"
+										title="Create"
+										code={factoryCreate + writerCreatedEvent}
+									/>
+									<Item
+										id="compute-writer-storage-address"
+										title="Compute Writer Storage Address"
+										code={factoryComputeWriterStorageAddress}
+									/>
+									<Item
+										id="compute-writer-address"
+										title="Compute Writer Address"
+										code={factoryComputeWriterAddress}
+									/>
+								</div>
 							</div>
 
 							<div id="writer" className="mt-8">
@@ -139,17 +170,95 @@ export function Docs() {
 									</Copyable>
 									<div className="text-neutral-400">
 										Writer is a contract that holds your content in the form of
-										Entries.
+										Entries. It calls WriterStorage to store and retrieve your
+										content. WriterStorage its-self cannot be used directly,
+										rather it is interfaced with by the Writer contract.
 									</div>
 								</div>
-								<Methods
-									methods={[
-										factoryCreate,
-										writerCreatedEvent,
-										factoryComputeWriterStorageAddress,
-										factoryComputeWriterAddress,
-									]}
-								/>
+								<div>
+									<MD>{entryStruct}</MD>
+									<MD>{entryCreatedEvent}</MD>
+									<MD>{entryUpdatedEvent}</MD>
+									<MD>{entryRemovedEvent}</MD>
+									<MD>{entryCompletedEvent}</MD>
+									<MD>{chunkReceivedEvent}</MD>
+								</div>
+								<div className="flex flex-col gap-4 mt-2">
+									<Item id="writer-create" title="Create" code={writerCreate} />
+									<Item
+										id="writer-add-chunk"
+										title="Add Chunk"
+										code={writerAddChunk}
+									/>
+									<Item
+										id="writer-create-with-chunk"
+										title="Create with Chunk"
+										code={writerCreateWithChunk}
+									/>
+									<Item id="writer-update" title="Update" code={writerUpdate} />
+									<Item id="writer-remove" title="Remove" code={writerRemove} />
+								</div>
+								<div className="border-t border-dashed border-neutral-600 my-6" />
+								<div className="flex flex-col gap-4">
+									<Item
+										id="writer-create-with-sig"
+										title="Create With Sig"
+										code={writerCreateWithSig}
+									/>
+									<Item
+										id="writer-add-chunk-with-sig"
+										title="Add Chunk With Sig"
+										code={writerAddChunkWithSig}
+									/>
+									<Item
+										id="writer-create-with-chunk-with-sig"
+										title="Create with Chunk With Sig"
+										code={writerCreateWithChunkWithSig}
+									/>
+									<Item
+										id="writer-update-with-sig"
+										title="Update With Sig"
+										code={writerUpdateWithSig}
+									/>
+									<Item
+										id="writer-remove-with-sig"
+										title="Remove With Sig"
+										code={writerRemoveWithSig}
+									/>
+								</div>
+								<div className="border-t border-dashed border-neutral-600 my-6" />
+								<div className="flex flex-col gap-4">
+									<Item
+										id="writer-get-entry-count"
+										title="Get Entry Count"
+										code={writerGetEntryCount}
+									/>
+									<Item
+										id="writer-get-entry-ids"
+										title="Get Entry IDs"
+										code={writerGetEntryIds}
+									/>
+									<Item
+										id="writer-get-entry"
+										title="Get Entry"
+										code={writerGetEntry}
+									/>
+									<Item
+										id="writer-get-entry-content"
+										title="Get Entry Content"
+										code={writerGetEntryContent}
+									/>
+									<Item
+										id="writer-get-entry-chunk"
+										title="Get Entry Chunk"
+										code={writerGetEntryChunk}
+									/>
+									<Item
+										id="writer-get-entry-total-chunks"
+										title="Get Entry Total Chunks"
+										code={writerGetEntryTotalChunks}
+									/>
+								</div>
 							</div>
 						</Section>
 						<div className="border-t border-dashed border-secondary my-4" />
@@ -198,12 +307,29 @@ export function Docs() {
 	);
 }
 
+function Item({
+	id,
+	title,
+	description,
+	code,
+}: { id: string; title: string; description?: string; code: string }) {
+	return (
+		<div id={id}>
+			<Copyable slug={id}>
+				<div className="text-lg">{title}</div>
+			</Copyable>
+			{description && <div className="text-neutral-400">{description}</div>}
+			<MD>{code}</MD>
+		</div>
+	);
+}
+
 function Copyable({
 	children,
 	slug,
 }: { children: React.ReactNode; slug: string }) {
 	return (
-		<div className="flex items-center gap-0.5 group">
+		<div className="flex items-center gap-1 group">
 			{children}
 			<button
 				onClick={() => {

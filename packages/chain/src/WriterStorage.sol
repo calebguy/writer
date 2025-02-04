@@ -59,7 +59,11 @@ contract WriterStorage is AccessControl {
         _revokeRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    function create(uint256 totalChunks, address author) public onlyLogic returns (uint256, Entry memory) {
+    function create(uint256 totalChunks, address author)
+        public
+        onlyLogic
+        returns (uint256 entryId, Entry memory entry)
+    {
         return _create(totalChunks, author);
     }
 
@@ -103,10 +107,14 @@ contract WriterStorage is AccessControl {
         emit EntryRemoved(id, author);
     }
 
-    function addChunk(uint256 id, uint256 index, string calldata content, address author) public onlyLogic {
+    function addChunk(uint256 id, uint256 index, string calldata content, address author)
+        public
+        onlyLogic
+        returns (Entry memory entry)
+    {
         require(bytes(getEntry(id).chunks[index]).length == 0, "WriterStorage: Chunk already exists");
 
-        _addChunk(id, index, content, author);
+        return _addChunk(id, index, content, author);
     }
 
     function getEntryCount() public view returns (uint256) {
@@ -181,16 +189,21 @@ contract WriterStorage is AccessControl {
         return entry;
     }
 
-    function update(uint256 id, uint256 totalChunks, string calldata content, address author) public onlyLogic {
-        Entry storage entry = entries[id];
-        require(entry.exists, "WriterStorage: Entry does not exist");
+    function update(uint256 id, uint256 totalChunks, string calldata content, address author)
+        public
+        onlyLogic
+        returns (Entry memory entry)
+    {
+        Entry storage entryToUpdate = entries[id];
+        require(entryToUpdate.exists, "WriterStorage: Entry does not exist");
         require(totalChunks > 0, "WriterStorage: Total chunks must be greater than 0");
         require(bytes(content).length > 0, "WriterStorage: Content cannot be empty");
 
-        entry.chunks[0] = content;
-        entry.totalChunks = totalChunks;
-        entry.updatedAtBlock = block.number;
-        entry.receivedChunks = 1;
+        entryToUpdate.chunks[0] = content;
+        entryToUpdate.totalChunks = totalChunks;
+        entryToUpdate.updatedAtBlock = block.number;
+        entryToUpdate.receivedChunks = 1;
         emit EntryUpdated(id, author);
+        return entryToUpdate;
     }
 }
