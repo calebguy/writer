@@ -216,7 +216,7 @@ export function Docs() {
 		if (hash) {
 			const element = document.getElementById(hash.slice(1));
 			if (element) {
-				element.scrollIntoView({ behavior: "smooth" });
+				element.scrollIntoView({ behavior: "instant" });
 			}
 		}
 	}, []);
@@ -225,7 +225,7 @@ export function Docs() {
 			<Header />
 			<div className="flex grow mt-4">
 				<Sidebar />
-				<div className="flex-1 p-4 overflow-y-auto grow scroll-smooth">
+				<div className="flex-1 p-4 overflow-y-auto grow scroll-auto">
 					<div className="grow h-1">
 						<Section id="contracts" title="Contracts">
 							<div id="writer-factory">

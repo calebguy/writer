@@ -226,7 +226,8 @@ export async function processEntry(
 	entry: Entry,
 ): Promise<Entry> {
 	if (entry.raw?.startsWith("enc:br:")) {
-		const decrypted = await decrypt(key, entry.raw);
+		// Remove the "enc:br:" prefix
+		const decrypted = await decrypt(key, entry.raw.slice(7));
 		const decompressed = await decompress(decrypted);
 		return {
 			...entry,

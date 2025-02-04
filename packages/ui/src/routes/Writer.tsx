@@ -62,6 +62,7 @@ export function Writer() {
 		}
 	}, [data, isPolling]);
 
+	// @note TODO: expose this in the UI some how
 	const encrypted = false;
 
 	const handleSubmit = async ({ value }: BlockCreateInput) => {
