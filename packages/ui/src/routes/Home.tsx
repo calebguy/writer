@@ -65,7 +65,6 @@ function Home() {
 						isLoading={isPending}
 						onSubmit={handleSubmit}
 					/>
-
 					{wallet &&
 						hasWriters &&
 						data?.map((writer) => (

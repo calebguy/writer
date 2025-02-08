@@ -129,9 +129,9 @@ export function recoverUpdateEntryWithChunkSigner({
 		types: {
 			Update: [
 				{ name: "nonce", type: "uint256" },
+				{ name: "entryId", type: "uint256" },
 				{ name: "totalChunks", type: "uint256" },
 				{ name: "content", type: "string" },
-				{ name: "entryId", type: "uint256" },
 			],
 		},
 		signature,

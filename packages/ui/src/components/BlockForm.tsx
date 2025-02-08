@@ -10,6 +10,8 @@ import { cn } from "../utils/cn";
 import { useIsMac } from "../utils/hooks";
 import { Arrow } from "./icons/Arrow";
 import { Blob } from "./icons/Blob";
+import { Lock } from "./icons/Lock";
+import { Unlock } from "./icons/Unlock";
 import { Editor } from "./markdown/Editor";
 import { MD } from "./markdown/MD";
 
@@ -19,6 +21,8 @@ interface BlockFormProps {
 	placeholder?: string;
 	canExpand?: boolean;
 	onExpand?: (isExpanded: boolean) => void;
+	encrypted?: boolean;
+	setEncrypted?: (encrypted: boolean) => void;
 }
 
 export default function BlockForm({
@@ -27,6 +31,8 @@ export default function BlockForm({
 	isLoading,
 	canExpand,
 	onExpand,
+	encrypted,
+	setEncrypted,
 }: BlockFormProps) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [hasFocus, setHasFocus] = useState(false);
@@ -130,10 +136,21 @@ export default function BlockForm({
 								}}
 							/>
 							{canExpand && !isLoading && (
-								<div className="absolute bottom-1 right-1 flex justify-end z-20">
+								<div className="absolute bottom-1 flex justify-between w-full z-20 px-2 pb-0.5">
 									<button
 										type="button"
+										onClick={() => setEncrypted(!encrypted)}
 										className="hover:text-primary text-neutral-600"
+									>
+										{encrypted ? (
+											<Lock className="h-3.5 w-3.5" />
+										) : (
+											<Unlock className="h-3.5 w-3.5 ml-0.5" />
+										)}
+									</button>
+									<button
+										type="button"
+										className="hover:text-primary text-neutral-600 mt-1"
 										onClick={() => {
 											setIsExpanded(!isExpanded);
 											onExpand?.(!isExpanded);

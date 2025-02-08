@@ -11,7 +11,6 @@ import {
 import ErrorPage from "./error-page.tsx";
 import { AppLayout } from "./layouts/App.layout.tsx";
 import { BlankLayout } from "./layouts/Blank.layout.tsx";
-import { Author } from "./routes/Author.tsx";
 import { Docs } from "./routes/Docs/Docs.tsx";
 import Entry from "./routes/Entry.tsx";
 import Home from "./routes/Home.tsx";
@@ -42,7 +41,7 @@ const router = createBrowserRouter([
 	getRouteWithErrorBoundry("/", <Home />),
 	getRouteWithErrorBoundry("/writer/:address", <Writer />),
 	getRouteWithErrorBoundry("/writer/:address/:id", <Entry />),
-	getRouteWithErrorBoundry("/account/:address", <Author />),
+	// getRouteWithErrorBoundry("/account/:address", <Author />),
 	{
 		path: "/docs",
 		element: (

@@ -19,6 +19,7 @@ export function Writer() {
 	const wallet = useFirstWallet();
 	const [isPolling, setIsPolling] = useState(false);
 	const [isExpanded, setIsExpanded] = useState(false);
+	const [encrypted, setEncrypted] = useState(false);
 	const { data, refetch } = useQuery({
 		queryFn: () => getWriter(address as Hex),
 		queryKey: ["get-writer", address],
@@ -61,9 +62,6 @@ export function Writer() {
 			setIsPolling(true);
 		}
 	}, [data, isPolling]);
-
-	// @note TODO: expose this in the UI some how
-	const encrypted = false;
 
 	const handleSubmit = async ({ value }: BlockCreateInput) => {
 		const content = value;
@@ -108,6 +106,8 @@ export function Writer() {
 				placeholder={`Write in \n\n${data?.title}`}
 				onSubmit={handleSubmit}
 				onExpand={setIsExpanded}
+				encrypted={encrypted}
+				setEncrypted={setEncrypted}
 			/>
 			{!isExpanded &&
 				processedData.map((entry) => {

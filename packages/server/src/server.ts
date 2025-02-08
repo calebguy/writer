@@ -208,7 +208,6 @@ const api = app
 		"/writer/:address/entry/:id/update",
 		addressAndIDParamSchema,
 		updateEntryJsonValidator,
-		privyAuthMiddleware,
 		async (c) => {
 			const { address, id } = c.req.valid("param");
 			const { signature, nonce, totalChunks, content } = c.req.valid("json");
@@ -216,11 +215,13 @@ const api = app
 			const contractAddress = getAddress(address);
 			const writer = await db.getWriter(address);
 			if (!writer) {
+				console.log("writer not found");
 				return c.json({ error: "writer not found" }, 404);
 			}
 
-			const entry = await db.getEntry(contractAddress, id);
+			const entry = await db.getEntry(writer.storageAddress as Hex, id);
 			if (!entry) {
+				console.log("entry not found");
 				return c.json({ error: "entry not found" }, 404);
 			}
 
@@ -232,7 +233,6 @@ const api = app
 				entryId: id,
 				address: contractAddress,
 			});
-			console.log("update author", author);
 			if (entry.author !== author) {
 				return c.json({ error: "previous author does not match" }, 400);
 			}
@@ -263,10 +263,10 @@ const api = app
 			const { version, decompressed } = processRawContent(raw);
 
 			const data = await db.upsertEntry({
+				createdAtTransactionId: entry.createdAtTransactionId,
 				id: entry.id,
 				exists: true,
 				storageAddress: writer.storageAddress,
-				createdAtTransactionId: transactionId,
 				raw,
 				decompressed,
 				version,
@@ -299,7 +299,6 @@ const api = app
 				id,
 				address,
 			});
-			console.log("remove signer", signer);
 			if (entry.author !== signer) {
 				return c.json({ error: "previous author does not match" }, 400);
 			}

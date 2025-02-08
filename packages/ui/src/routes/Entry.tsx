@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useContext, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import type { Hex } from "viem";
 import { queryClient } from "../app";
 import { Blob } from "../components/icons/Blob";
@@ -13,7 +13,12 @@ import { deleteEntry, editEntry, getWriter } from "../utils/api";
 import { cn } from "../utils/cn";
 import { useFirstWallet } from "../utils/hooks";
 import { getDerivedSigningKey, signRemove, signUpdate } from "../utils/signer";
-import { processEntry, shortenAddress } from "../utils/utils";
+import {
+	compress,
+	encrypt,
+	processEntry,
+	shortenAddress,
+} from "../utils/utils";
 
 export default function Entry() {
 	const wallet = useFirstWallet();
@@ -25,7 +30,7 @@ export default function Entry() {
 	const [deleteSubmitted, setDeletedSubmitted] = useState(false);
 	const [editSubmitted, setEditSubmitted] = useState(false);
 	const [processedEntry, setProcessedEntry] = useState<EntryType | null>(null);
-	const { data } = useQuery({
+	const { data, refetch } = useQuery({
 		queryFn: () => getWriter(address as Hex),
 		queryKey: ["get-writer", address],
 		enabled: !!address,
@@ -67,6 +72,7 @@ export default function Entry() {
 				const key = await getDerivedSigningKey(wallet);
 				const processed = await processEntry(key, entry);
 				setProcessedEntry(processed);
+				setEditedContent(processed.decompressed);
 			}
 		}
 		doIt();
@@ -134,12 +140,16 @@ export default function Entry() {
 					<div className="flex gap-1">
 						<span className="text-neutral-600">
 							by:{" "}
-							<Link
+							<span className="text-neutral-600">
+								{shortenAddress(processedEntry.author as Hex)}
+							</span>
+							{/* TODO: add link when account is supported */}
+							{/* <Link
 								to={`/account/${processedEntry.author}`}
 								className="text-neutral-600 hover:text-secondary cursor-pointer mr-1"
 							>
 								{shortenAddress(processedEntry.author as Hex)}
-							</Link>
+							</Link> */}
 						</span>
 					</div>
 					<span className="text-neutral-600 bold">
@@ -170,7 +180,19 @@ export default function Entry() {
 										type="button"
 										disabled={!isContentChanged}
 										onClick={async () => {
+											// @note TODO: update here for proper encrypted handling
+											const encrypted = false;
 											setEditSubmitted(true);
+											if (!editedContent) {
+												return;
+											}
+											const compressedContent = await compress(editedContent);
+											let versionedCompressedContent = `br:${compressedContent}`;
+											if (encrypted) {
+												const key = await getDerivedSigningKey(wallet);
+												const encrypted = await encrypt(key, compressedContent);
+												versionedCompressedContent = `enc:br:${encrypted}`;
+											}
 											const {
 												signature,
 												nonce,
@@ -180,9 +202,9 @@ export default function Entry() {
 											} = await signUpdate(wallet, {
 												entryId: Number(id),
 												address: address as Hex,
-												content: editedContent as string,
+												content: versionedCompressedContent,
 											});
-											mutateAsyncEdit({
+											await mutateAsyncEdit({
 												address: address as Hex,
 												id: entryId,
 												signature,
@@ -190,6 +212,7 @@ export default function Entry() {
 												totalChunks,
 												content,
 											});
+											await refetch();
 											setEditSubmitted(false);
 											setIsEditing(false);
 										}}

@@ -90,24 +90,24 @@ function Sidebar() {
 						title="Writer"
 						subLinks={[
 							{
-								to: "#writer-create",
-								title: "Create",
+								to: "#writer-create-entry",
+								title: "Create Entry",
 							},
 							{
 								to: "#writer-add-chunk",
-								title: "Add Chunk",
+								title: "Add Chunk to Entry",
 							},
 							{
 								to: "#writer-create-with-chunk",
-								title: "Create with Chunk",
+								title: "Create Entry with Chunk",
 							},
 							{
 								to: "#writer-update",
-								title: "Update",
+								title: "Update Entry",
 							},
 							{
 								to: "#writer-remove",
-								title: "Remove",
+								title: "Remove Entry",
 							},
 							{
 								to: "#writer-create-with-sig",
@@ -234,8 +234,7 @@ export function Docs() {
 										<div className="text-lg font-bold">WriterFactory</div>
 									</Copyable>
 									<div className="text-neutral-400">
-										WriterFactory is a factory contract that creates Writers.
-										Writers hold your content in the form of Entries.
+										Factory contract for creating Writers.
 									</div>
 								</div>
 								<div className="flex flex-col gap-4 mt-2">
@@ -262,11 +261,11 @@ export function Docs() {
 									<Copyable slug="writer">
 										<div className="text-lg font-bold">Writer</div>
 									</Copyable>
-									<div className="text-neutral-400">
-										Writer is a contract that holds your content in the form of
-										Entries. It calls WriterStorage to store and retrieve your
-										content. WriterStorage its-self cannot be used directly,
-										rather it is interfaced with by the Writer contract.
+									<div className="text-neutral-400 flex flex-col gap-0.5">
+										<div>
+											Main contract that holds entries that consists of chunks
+											of your content.
+										</div>
 									</div>
 								</div>
 								<div>
@@ -278,19 +277,40 @@ export function Docs() {
 									<MD>{chunkReceivedEvent}</MD>
 								</div>
 								<div className="flex flex-col gap-4 mt-2">
-									<Item id="writer-create" title="Create" code={writerCreate} />
+									<div className="my-8 text-orange-500 text-xl">
+										NOTE: Only address with the `WRITER` role are able to call
+										the following functions.
+									</div>
+									<Item
+										id="writer-create-entry"
+										title="Create Entry"
+										code={writerCreate}
+										description="Create a new entry, specifying the total number of chunks"
+									/>
 									<Item
 										id="writer-add-chunk"
 										title="Add Chunk"
 										code={writerAddChunk}
+										description="Add a chunk to a writer, given an entry ID and chunk index"
 									/>
 									<Item
 										id="writer-create-with-chunk"
 										title="Create with Chunk"
 										code={writerCreateWithChunk}
+										description="Create a new entry with a chunk, specifying the total number of chunks, useful if the entry only consists of a single chunk"
 									/>
-									<Item id="writer-update" title="Update" code={writerUpdate} />
-									<Item id="writer-remove" title="Remove" code={writerRemove} />
+									<Item
+										id="writer-update"
+										title="Update Entry"
+										code={writerUpdate}
+										description="Update an entry, given an entry ID, new total chunks amount, and new 0 index chunk"
+									/>
+									<Item
+										id="writer-remove"
+										title="Remove Entry"
+										code={writerRemove}
+										description="Remove an entry, given an entry ID"
+									/>
 								</div>
 								<div className="border-t border-dashed border-neutral-600 my-6" />
 								<div className="flex flex-col gap-4">
@@ -472,7 +492,6 @@ function SidebarLink({ to, title, subLinks }: SidebarLinkProps) {
 		return (
 			<div>
 				<div className="flex items-center gap-1.5">
-					{isSelected && <span className="bg-primary rounded h-1 w-1" />}
 					<a
 						className={cn(
 							"text-neutral-400 transition-colors cursor-pointer inline-block",
@@ -503,7 +522,6 @@ function SidebarLink({ to, title, subLinks }: SidebarLinkProps) {
 
 	return (
 		<span className="flex items-center gap-1.5">
-			{isSelected && <span className="bg-primary rounded h-1 w-1" />}
 			<a
 				className={cn(
 					"text-neutral-400 transition-colors cursor-pointer inline-block",

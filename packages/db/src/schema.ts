@@ -51,6 +51,11 @@ export const entry = pgTable(
 		deletedAtBlockDatetime: timestamp({
 			withTimezone: true,
 		}),
+		updatedAtHash: text(),
+		updatedAtBlock: bigint({ mode: "bigint" }),
+		updatedAtBlockDatetime: timestamp({
+			withTimezone: true,
+		}),
 		createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
 		updatedAt: timestamp({ withTimezone: true }).notNull(),
 		deletedAt: timestamp({ withTimezone: true }),

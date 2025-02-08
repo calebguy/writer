@@ -1,5 +1,5 @@
 {
-  "id": "15980a09-71d0-4684-96db-251776625a81",
+  "id": "a5847e4c-10e4-4a3f-91f7-ee2ab6cb15cf",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -82,6 +82,24 @@
         },
         "deleted_at_block_datetime": {
           "name": "deleted_at_block_datetime",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at_hash": {
+          "name": "updated_at_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at_block": {
+          "name": "updated_at_block",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at_block_datetime": {
+          "name": "updated_at_block_datetime",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false

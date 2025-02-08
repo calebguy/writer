@@ -183,6 +183,7 @@ export function entryToJsonSafe(data: typeof entry.$inferSelect) {
 		onChainId: data.onChainId?.toString(),
 		createdAtBlock: data.createdAtBlock?.toString(),
 		deletedAtBlock: data.deletedAtBlock?.toString(),
+		updatedAtBlock: data.updatedAtBlock?.toString(),
 	};
 }
 
