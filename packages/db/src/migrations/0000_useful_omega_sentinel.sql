@@ -1,11 +1,18 @@
 CREATE TYPE "public"."request_status" AS ENUM('PENDING', 'PROCESSED', 'SUBMITTED', 'CONFIRMED', 'PAUSED', 'ABANDONED');--> statement-breakpoint
+CREATE TABLE "chunk" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"entry_id" integer NOT NULL,
+	"index" integer NOT NULL,
+	"content" text NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_at_transaction_id" varchar(255),
+	CONSTRAINT "chunk_createdAtTransactionId_unique" UNIQUE("created_at_transaction_id")
+);
+--> statement-breakpoint
 CREATE TABLE "entry" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"exists" boolean NOT NULL,
 	"on_chain_id" bigint,
-	"version" text,
-	"raw" text,
-	"decompressed" text,
 	"author" text NOT NULL,
 	"created_at_hash" text,
 	"created_at_block" bigint,
@@ -64,9 +71,11 @@ CREATE TABLE "writer" (
 	CONSTRAINT "writer_transactionId_unique" UNIQUE("transaction_id")
 );
 --> statement-breakpoint
+ALTER TABLE "chunk" ADD CONSTRAINT "chunk_created_at_transaction_id_syndicate_tx_id_fk" FOREIGN KEY ("created_at_transaction_id") REFERENCES "public"."syndicate_tx"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "entry" ADD CONSTRAINT "entry_created_at_transaction_id_syndicate_tx_id_fk" FOREIGN KEY ("created_at_transaction_id") REFERENCES "public"."syndicate_tx"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "entry" ADD CONSTRAINT "entry_deleted_at_transaction_id_syndicate_tx_id_fk" FOREIGN KEY ("deleted_at_transaction_id") REFERENCES "public"."syndicate_tx"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "entry" ADD CONSTRAINT "entry_updated_at_transaction_id_syndicate_tx_id_fk" FOREIGN KEY ("updated_at_transaction_id") REFERENCES "public"."syndicate_tx"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "writer" ADD CONSTRAINT "writer_transaction_id_syndicate_tx_id_fk" FOREIGN KEY ("transaction_id") REFERENCES "public"."syndicate_tx"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "entry_index_idx" ON "chunk" USING btree ("entry_id","index");--> statement-breakpoint
 CREATE UNIQUE INDEX "storage_address_on_chain_id_idx" ON "entry" USING btree ("storage_address","on_chain_id");--> statement-breakpoint
 CREATE INDEX "storage_address_idx" ON "entry" USING btree ("storage_address");

@@ -1,3 +1,4 @@
+import { ConnectedWallet } from "@privy-io/react-auth";
 import {
 	compress as compressBrotli,
 	decompress as decompressBrotli,
@@ -235,4 +236,16 @@ export async function processEntry(
 		};
 	}
 	return entry;
+}
+
+export function isEntryPrivate(entry: Entry) {
+	return entry.version?.startsWith("enc:") || entry.raw?.startsWith("enc:br:");
+}
+
+export function isWalletAuthor(wallet: ConnectedWallet, entry: Entry) {
+	return entry.author === wallet?.address;
+}
+
+export function sleep(ms: number) {
+	return new Promise((resolve) => setTimeout(resolve, ms));
 }

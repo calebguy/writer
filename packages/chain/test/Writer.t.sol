@@ -133,6 +133,28 @@ contract WriterDirectCallerTest is TestBase {
         assertEq(content, "Hello World");
     }
 
+    function test_MaxBytesPerChunkBeforeGasLimit() public {
+        uint256 maxBytes = 0;
+        uint256 step = 32; // Start with a reasonable step size
+        bool reachedGasLimit = false;
+
+        vm.startPrank(user);
+
+        writer.create(1);
+        while (!reachedGasLimit) {
+            string memory chunkContent = new string(maxBytes + step);
+            try writer.addChunk(0, 0, chunkContent) {
+                maxBytes += step;
+            } catch (bytes memory reason) {
+                console.logBytes(reason);
+                reachedGasLimit = true;
+            }
+        }
+        vm.stopPrank();
+
+        emit log_named_uint("Maximum chunk size before gas limit", maxBytes);
+    }
+
     function test_Remove() public {
         vm.startPrank(user);
         writer.create(2);
@@ -374,6 +396,25 @@ contract WriterWithSigTest is TestBase {
             author: user.addr
         });
         entryEq(entry, expectedEntry);
+    }
+
+    function test_MaxBytesPerChunk() public {
+        uint256 nonce = 0;
+        uint256 chunkCount = 1;
+        string memory chunkContent = "Hello";
+        bytes memory signature = _sign(
+            userPrivateKey,
+            address(writer),
+            keccak256(
+                abi.encode(
+                    writer.CREATE_WITH_CHUNK_TYPEHASH(), nonce, chunkCount, keccak256(abi.encodePacked(chunkContent))
+                )
+            )
+        );
+
+        vm.expectEmit();
+        emit WriterStorage.EntryCreated(0, user.addr);
+        writer.createWithChunkWithSig(signature, nonce, chunkCount, chunkContent);
     }
 
     function _sign(uint256 signerPrivateKey, address verifyingContract, bytes32 hashStruct)

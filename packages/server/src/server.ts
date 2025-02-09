@@ -2,11 +2,7 @@ import { entryToJsonSafe, writerToJsonSafe } from "db";
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { randomBytes } from "node:crypto";
-import {
-	computeWriterAddress,
-	computeWriterStorageAddress,
-	processRawContent,
-} from "utils";
+import { computeWriterAddress, computeWriterStorageAddress } from "utils";
 import { type Hex, getAddress, toHex } from "viem";
 import {
 	CREATE_FUNCTION_SIGNATURE,
@@ -60,6 +56,7 @@ const api = app
 	.get("/writer/:address", async (c) => {
 		const address = getAddress(c.req.param("address"));
 		const data = await db.getWriter(address);
+		console.log(data);
 		if (!data) {
 			return c.json({ error: "writer not found" }, 404);
 		}
@@ -148,7 +145,7 @@ const api = app
 		return c.json({ writer }, 201);
 	})
 	.post(
-		"/writer/:address/entry",
+		"/writer/:address/entry/createWithChunk",
 		addressParamSchema,
 		createWithChunkJsonValidator,
 		async (c) => {
@@ -190,20 +187,47 @@ const api = app
 				status: "PENDING",
 			});
 			const raw = chunkContent;
-			const { version, decompressed } = processRawContent(raw);
-			const data = await db.upsertEntry({
+			const [data] = await db.upsertEntry({
 				exists: true,
 				storageAddress: writer.storageAddress,
 				createdAtTransactionId: transactionId,
-				raw,
-				decompressed,
-				version,
 				author,
 			});
-			const entry = entryToJsonSafe(data[0]);
+			if (!data) {
+				return c.json({ error: "entry not found" }, 404);
+			}
+			await db.upsertChunk({
+				entryId: data.id,
+				content: raw,
+				createdAtTransactionId: transactionId,
+				index: 0,
+			});
+			const entryRefreshed = await db.getEntry(
+				writer.storageAddress as Hex,
+				data.id,
+			);
+			if (!entryRefreshed) {
+				return c.json({ error: "entry not found" }, 404);
+			}
+			const entry = entryToJsonSafe(entryRefreshed);
 			return c.json({ entry }, 201);
 		},
 	)
+	.get("/writer/:address/entry/:id", addressAndIDParamSchema, async (c) => {
+		const { address, id } = c.req.valid("param");
+		const writer = await db.getWriter(address);
+		if (!writer) {
+			return c.json({ error: "writer not found" }, 404);
+		}
+		const entry = await db.getEntryByOnchainId(
+			writer.storageAddress as Hex,
+			id,
+		);
+		if (!entry) {
+			return c.json({ error: "entry not found" }, 404);
+		}
+		return c.json({ entry: entryToJsonSafe(entry) });
+	})
 	.post(
 		"/writer/:address/entry/:id/update",
 		addressAndIDParamSchema,
@@ -219,7 +243,10 @@ const api = app
 				return c.json({ error: "writer not found" }, 404);
 			}
 
-			const entry = await db.getEntry(writer.storageAddress as Hex, id);
+			const entry = await db.getEntryByOnchainId(
+				writer.storageAddress as Hex,
+				id,
+			);
 			if (!entry) {
 				console.log("entry not found");
 				return c.json({ error: "entry not found" }, 404);
@@ -259,21 +286,18 @@ const api = app
 				status: "PENDING",
 			});
 
-			const raw = content;
-			const { version, decompressed } = processRawContent(raw);
-
-			const data = await db.upsertEntry({
+			const [data] = await db.upsertEntry({
 				createdAtTransactionId: entry.createdAtTransactionId,
 				id: entry.id,
 				exists: true,
 				storageAddress: writer.storageAddress,
-				raw,
-				decompressed,
-				version,
 				author,
 				updatedAtTransactionId: transactionId,
 			});
-			return c.json({ entry: entryToJsonSafe(data[0]) }, 201);
+			if (!data) {
+				return c.json({ error: "entry not found" }, 404);
+			}
+			return c.json({ entry: entryToJsonSafe(data) }, 201);
 		},
 	)
 	.post(
@@ -288,7 +312,10 @@ const api = app
 				return c.json({ error: "writer not found" }, 404);
 			}
 
-			const entry = await db.getEntry(writer.storageAddress as Hex, id);
+			const entry = await db.getEntryByOnchainId(
+				writer.storageAddress as Hex,
+				id,
+			);
 			if (!entry) {
 				return c.json({ error: "entry not found" }, 404);
 			}

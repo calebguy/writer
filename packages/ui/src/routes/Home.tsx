@@ -7,7 +7,7 @@ import BlockForm from "../components/BlockForm";
 import { POLLING_INTERVAL } from "../constants";
 import { WriterContext } from "../context";
 import type { BlockCreateInput } from "../interfaces";
-import { createFromFactory, getWritersByManager } from "../utils/api";
+import { factoryCreate, getWritersByManager } from "../utils/api";
 
 function Home() {
 	const { wallets } = useWallets();
@@ -24,7 +24,7 @@ function Home() {
 	});
 
 	const { mutateAsync, isPending } = useMutation({
-		mutationFn: createFromFactory,
+		mutationFn: factoryCreate,
 		mutationKey: ["create-from-factory"],
 		onSuccess: () => {
 			refetch();

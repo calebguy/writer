@@ -41,6 +41,16 @@ export async function getWriter(address: Hex) {
 	return (await res.json()).writer;
 }
 
+export async function getEntry(address: Hex, id: number) {
+	const res = await client.api.writer[":address"].entry[":id"].$get({
+		param: { address, id: String(id) },
+	});
+	if (!res.ok) {
+		throw new Error(res.statusText);
+	}
+	return (await res.json()).entry;
+}
+
 export async function editEntry({
 	address,
 	id,
@@ -92,7 +102,7 @@ export async function getWritersByManager(address: Hex) {
 	return (await res.json()).writers;
 }
 
-export async function createFromFactory(json: {
+export async function factoryCreate(json: {
 	admin: string;
 	managers: string[];
 	title: string;
@@ -116,7 +126,7 @@ export async function createWithChunk({
 	chunkCount: number;
 	chunkContent: string;
 }) {
-	const res = await client.api.writer[":address"].entry.$post({
+	const res = await client.api.writer[":address"].entry.createWithChunk.$post({
 		param: { address },
 		json,
 	});

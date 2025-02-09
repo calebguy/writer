@@ -139,7 +139,7 @@ export default function BlockForm({
 								<div className="absolute bottom-1 flex justify-between w-full z-20 px-2 pb-0.5">
 									<button
 										type="button"
-										onClick={() => setEncrypted(!encrypted)}
+										onClick={() => setEncrypted?.(!encrypted)}
 										className="hover:text-primary text-neutral-600"
 									>
 										{encrypted ? (

@@ -1,12 +1,14 @@
 import { and, arrayContains, eq, inArray, isNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
+import { processRawContent } from "utils";
 import type { Hex } from "viem";
 import {
+	chunkRelations,
 	entryRelations,
 	syndicateTxRelations,
 	writerRelations,
 } from "./src/relations";
-import { entry, syndicateTx, user, writer } from "./src/schema";
+import { chunk, entry, syndicateTx, user, writer } from "./src/schema";
 
 class Db {
 	private pg;
@@ -20,8 +22,10 @@ class Db {
 				entry,
 				syndicateTx,
 				user,
+				chunk,
 				writerRelations,
 				entryRelations,
+				chunkRelations,
 				syndicateTransactionRelations: syndicateTxRelations,
 			},
 		});
@@ -41,6 +45,11 @@ class Db {
 				isNull(entry.deletedAt),
 			),
 			orderBy: (entry, { desc }) => [desc(entry.createdAt)],
+			with: {
+				chunks: {
+					orderBy: (chunk, { desc }) => [desc(chunk.index)],
+				},
+			},
 		});
 		return writers.map((w) => ({
 			...w,
@@ -61,6 +70,11 @@ class Db {
 				isNull(entry.deletedAt),
 			),
 			orderBy: (entry, { desc }) => [desc(entry.createdAt)],
+			with: {
+				chunks: {
+					orderBy: (chunk, { desc }) => [desc(chunk.index)],
+				},
+			},
 		});
 		return {
 			...data,
@@ -68,13 +82,36 @@ class Db {
 		};
 	}
 
-	async getEntry(storageAddress: Hex, id: bigint) {
+	async getEntry(storageAddress: Hex, id: number) {
+		const data = await this.pg.query.entry.findFirst({
+			where: and(eq(entry.storageAddress, storageAddress), eq(entry.id, id)),
+			with: {
+				chunks: {
+					orderBy: (chunk, { desc }) => [desc(chunk.index)],
+				},
+			},
+		});
+		if (!data) {
+			return null;
+		}
+		return data;
+	}
+
+	async getEntryByOnchainId(storageAddress: Hex, id: bigint) {
 		const data = await this.pg.query.entry.findFirst({
 			where: and(
 				eq(entry.storageAddress, storageAddress),
 				eq(entry.onChainId, id),
 			),
+			with: {
+				chunks: {
+					orderBy: (chunk, { desc }) => [desc(chunk.index)],
+				},
+			},
 		});
+		if (!data) {
+			return null;
+		}
 		return data;
 	}
 
@@ -121,8 +158,8 @@ class Db {
 			.returning();
 	}
 
-	upsertEntry(item: InsertEntry) {
-		return this.pg
+	async upsertEntry(item: InsertEntry) {
+		const data = await this.pg
 			.insert(entry)
 			.values({
 				...item,
@@ -139,6 +176,11 @@ class Db {
 				},
 			})
 			.returning();
+		return Promise.all(
+			data.map(({ storageAddress, id }) =>
+				this.getEntry(storageAddress as Hex, id),
+			),
+		);
 	}
 
 	deleteEntry(address: Hex, id: bigint, transactionId: string) {
@@ -168,6 +210,13 @@ class Db {
 		});
 		return data;
 	}
+
+	upsertChunk(item: InsertChunk) {
+		return this.pg
+			.insert(chunk)
+			.values({ ...item, createdAt: new Date() })
+			.returning();
+	}
 }
 
 export function writerToJsonSafe(data: SelectWriter) {
@@ -177,9 +226,16 @@ export function writerToJsonSafe(data: SelectWriter) {
 	};
 }
 
-export function entryToJsonSafe(data: typeof entry.$inferSelect) {
+export function entryToJsonSafe({ chunks, ...data }: EntryWithChunks) {
+	const raw = chunks.map((c) => c.content).join("");
+	console.log("raw", raw, data.onChainId, data.storageAddress);
+	const { version, decompressed } = processRawContent(raw);
 	return {
 		...data,
+		chunks,
+		raw,
+		version,
+		decompressed,
 		onChainId: data.onChainId?.toString(),
 		createdAtBlock: data.createdAtBlock?.toString(),
 		deletedAtBlock: data.deletedAtBlock?.toString(),
@@ -188,6 +244,8 @@ export function entryToJsonSafe(data: typeof entry.$inferSelect) {
 }
 
 type SelectWriter = typeof writer.$inferSelect;
+type SelectEntry = typeof entry.$inferSelect;
+type SelectChunk = typeof chunk.$inferSelect;
 type InsertWriter = Omit<typeof writer.$inferInsert, "createdAt" | "updatedAt">;
 type InsertSyndicateTransaction = Omit<
 	typeof syndicateTx.$inferInsert,
@@ -195,4 +253,8 @@ type InsertSyndicateTransaction = Omit<
 >;
 type InsertEntry = Omit<typeof entry.$inferInsert, "createdAt" | "updatedAt">;
 type InsertUser = Omit<typeof user.$inferInsert, "createdAt" | "updatedAt">;
+type InsertChunk = Omit<typeof chunk.$inferInsert, "createdAt">;
+type EntryWithChunks = SelectEntry & {
+	chunks: SelectChunk[];
+};
 export { Db };

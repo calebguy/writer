@@ -2,6 +2,7 @@ import {
 	bigint,
 	boolean,
 	index,
+	integer,
 	jsonb,
 	pgEnum,
 	pgTable,
@@ -37,9 +38,6 @@ export const entry = pgTable(
 		id: serial().primaryKey(),
 		exists: boolean().notNull(),
 		onChainId: bigint({ mode: "bigint" }),
-		version: text(),
-		raw: text(),
-		decompressed: text(),
 		author: text().notNull(),
 		createdAtHash: text(),
 		createdAtBlock: bigint({ mode: "bigint" }),
@@ -80,6 +78,23 @@ export const entry = pgTable(
 		storageAddressIndex: index("storage_address_idx").on(
 			entries.storageAddress,
 		),
+	}),
+);
+
+export const chunk = pgTable(
+	"chunk",
+	{
+		id: serial().primaryKey(),
+		entryId: integer().notNull(),
+		index: integer().notNull(),
+		content: text().notNull(),
+		createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+		createdAtTransactionId: varchar({ length: 255 })
+			.unique()
+			.references(() => syndicateTx.id),
+	},
+	(chunks) => ({
+		entryIdIndex: index("entry_index_idx").on(chunks.entryId, chunks.index),
 	}),
 );
 

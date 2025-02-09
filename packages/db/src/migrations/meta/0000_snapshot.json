@@ -1,9 +1,103 @@
 {
-  "id": "a5847e4c-10e4-4a3f-91f7-ee2ab6cb15cf",
+  "id": "8e48e02a-8f7f-4d32-b0d8-f0a7541c1bfa",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "public.chunk": {
+      "name": "chunk",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "entry_id": {
+          "name": "entry_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "index": {
+          "name": "index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_at_transaction_id": {
+          "name": "created_at_transaction_id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "entry_index_idx": {
+          "name": "entry_index_idx",
+          "columns": [
+            {
+              "expression": "entry_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "index",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "chunk_created_at_transaction_id_syndicate_tx_id_fk": {
+          "name": "chunk_created_at_transaction_id_syndicate_tx_id_fk",
+          "tableFrom": "chunk",
+          "tableTo": "syndicate_tx",
+          "columnsFrom": [
+            "created_at_transaction_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "chunk_createdAtTransactionId_unique": {
+          "name": "chunk_createdAtTransactionId_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "created_at_transaction_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.entry": {
       "name": "entry",
       "schema": "",
@@ -23,24 +117,6 @@
         "on_chain_id": {
           "name": "on_chain_id",
           "type": "bigint",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "version": {
-          "name": "version",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "raw": {
-          "name": "raw",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "decompressed": {
-          "name": "decompressed",
-          "type": "text",
           "primaryKey": false,
           "notNull": false
         },

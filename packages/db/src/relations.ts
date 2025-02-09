@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { entry, syndicateTx, writer } from "./schema";
+import { chunk, entry, syndicateTx, writer } from "./schema";
 
 export const writerRelations = relations(writer, ({ one, many }) => ({
 	syndicateTransaction: one(syndicateTx, {
@@ -13,7 +13,7 @@ export const syndicateTxRelations = relations(syndicateTx, ({ many }) => ({
 	entries: many(entry),
 }));
 
-export const entryRelations = relations(entry, ({ one }) => ({
+export const entryRelations = relations(entry, ({ one, many }) => ({
 	createdAtTransaction: one(syndicateTx, {
 		fields: [entry.createdAtTransactionId],
 		references: [syndicateTx.id],
@@ -25,5 +25,17 @@ export const entryRelations = relations(entry, ({ one }) => ({
 	updatedAtTransaction: one(syndicateTx, {
 		fields: [entry.updatedAtTransactionId],
 		references: [syndicateTx.id],
+	}),
+	chunks: many(chunk),
+}));
+
+export const chunkRelations = relations(chunk, ({ one }) => ({
+	createdAtTransaction: one(syndicateTx, {
+		fields: [chunk.createdAtTransactionId],
+		references: [syndicateTx.id],
+	}),
+	entry: one(entry, {
+		fields: [chunk.entryId],
+		references: [entry.id],
 	}),
 }));
