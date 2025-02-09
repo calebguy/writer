@@ -1,13 +1,31 @@
 import { ponder } from "ponder:registry";
 import { db } from ".";
+import { env } from "../env";
+import { getSynIdFromRawInput, syndicate } from "../utils/syndicate";
 
 ponder.on("WriterStorage:ChunkReceived", async ({ event }) => {
+	const transactionId = getSynIdFromRawInput(event.transaction.input);
+	if (transactionId) {
+		const tx = await syndicate.wallet.getTransactionRequest(
+			env.SYNDICATE_PROJECT_ID,
+			transactionId,
+		);
+		await db.upsertTx({
+			id: transactionId,
+			chainId: BigInt(10),
+			functionSignature: tx.functionSignature,
+			args: tx.decodedData,
+			blockNumber: event.block.number,
+			hash: event.transaction.hash,
+			status: "CONFIRMED",
+		});
+	}
+
 	console.log(
 		"Chunk received",
 		event.log.address,
 		event.args.id,
 		event.args.index,
-		event.args.content,
 	);
 	const entry = await db.getEntryByOnchainId(event.log.address, event.args.id);
 	if (!entry) {
@@ -19,18 +37,38 @@ ponder.on("WriterStorage:ChunkReceived", async ({ event }) => {
 		index: Number(event.args.index),
 		entryId: entry.id,
 		content: event.args.content,
+		createdAtTransactionId: transactionId,
 	});
 });
 
 ponder.on("WriterStorage:EntryCreated", async ({ event }) => {
+	const transactionId = getSynIdFromRawInput(event.transaction.input);
+	if (transactionId) {
+		const tx = await syndicate.wallet.getTransactionRequest(
+			env.SYNDICATE_PROJECT_ID,
+			transactionId,
+		);
+		await db.upsertTx({
+			id: transactionId,
+			chainId: BigInt(10),
+			functionSignature: tx.functionSignature,
+			args: tx.decodedData,
+			blockNumber: event.block.number,
+			hash: event.transaction.hash,
+			// syndicate's internal status may not be "CONFIRMED" but we can assume it
+			// is confirmed since we are only listening to onchain events
+			status: "CONFIRMED",
+		});
+	}
 	await db.upsertEntry({
 		storageAddress: event.log.address,
 		exists: true,
 		onChainId: event.args.id,
+		author: event.args.author,
 		createdAtHash: event.transaction.hash,
 		createdAtBlock: event.block.number,
 		createdAtBlockDatetime: new Date(Number(event.block.timestamp) * 1000),
-		author: event.args.author,
+		createdAtTransactionId: transactionId,
 	});
 });
 

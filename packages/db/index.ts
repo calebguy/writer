@@ -215,6 +215,12 @@ class Db {
 		return this.pg
 			.insert(chunk)
 			.values({ ...item, createdAt: new Date() })
+			.onConflictDoUpdate({
+				target: item.createdAtTransactionId
+					? [entry.createdAtTransactionId]
+					: [entry.storageAddress, entry.onChainId],
+				set: item,
+			})
 			.returning();
 	}
 }

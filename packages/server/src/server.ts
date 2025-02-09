@@ -56,7 +56,6 @@ const api = app
 	.get("/writer/:address", async (c) => {
 		const address = getAddress(c.req.param("address"));
 		const data = await db.getWriter(address);
-		console.log(data);
 		if (!data) {
 			return c.json({ error: "writer not found" }, 404);
 		}
