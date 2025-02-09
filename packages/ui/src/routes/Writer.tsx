@@ -5,6 +5,7 @@ import { useParams } from "react-router-dom";
 import type { Hex } from "viem";
 import Block from "../components/Block";
 import BlockForm from "../components/BlockForm";
+import { Lock } from "../components/icons/Lock";
 import { POLLING_INTERVAL } from "../constants";
 import { WriterContext } from "../context";
 import type { BlockCreateInput } from "../interfaces";
@@ -43,11 +44,35 @@ export function Writer() {
 		const processEntries = async () => {
 			if (data) {
 				const processedEntries = [];
-				const key = await getDerivedSigningKey(wallet);
-				for (const entry of data.entries) {
-					const processed = await processEntry(key, entry);
-					processedEntries.push(processed);
+
+				if (wallet) {
+					const key = await getDerivedSigningKey(wallet);
+					for (const entry of data.entries) {
+						if (entry.author === wallet.address) {
+							const processed = await processEntry(key, entry);
+							processedEntries.push(processed);
+						} else {
+							if (entry.raw?.startsWith("enc:")) {
+								// do nothing
+							} else {
+								processedEntries.push(entry);
+							}
+						}
+					}
+				} else {
+					const publicEntries = data.entries.filter(
+						(e) => !e.raw?.startsWith("enc:"),
+					);
+					console.log(publicEntries);
+					for (const entry of publicEntries) {
+						processedEntries.push(entry);
+					}
 				}
+
+				// for (const entry of data.entries) {
+				// 	const processed = await processEntry(key, entry);
+				// 	processedEntries.push(processed);
+				// }
 				setProcessedData(processedEntries);
 			}
 		};
@@ -100,15 +125,17 @@ export function Writer() {
 				gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
 			}}
 		>
-			<BlockForm
-				canExpand
-				isLoading={isPending}
-				placeholder={`Write in \n\n${data?.title}`}
-				onSubmit={handleSubmit}
-				onExpand={setIsExpanded}
-				encrypted={encrypted}
-				setEncrypted={setEncrypted}
-			/>
+			{wallet && data?.managers.includes(wallet.address) && (
+				<BlockForm
+					canExpand
+					isLoading={isPending}
+					placeholder={`Write in \n\n${data?.title}`}
+					onSubmit={handleSubmit}
+					onExpand={setIsExpanded}
+					encrypted={encrypted}
+					setEncrypted={setEncrypted}
+				/>
+			)}
 			{!isExpanded &&
 				processedData.map((entry) => {
 					let id: undefined | string = undefined;
@@ -125,6 +152,11 @@ export function Writer() {
 							isLoading={!entry.onChainId}
 							title={entry.decompressed ? entry.decompressed : entry.raw}
 							id={id}
+							leftIcon={
+								entry.version?.startsWith("enc") ? (
+									<Lock className="h-3.5 w-3.5 text-neutral-600" />
+								) : null
+							}
 						/>
 					);
 				})}
