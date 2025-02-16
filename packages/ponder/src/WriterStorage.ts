@@ -1,8 +1,7 @@
 import { ponder } from "ponder:registry";
 import { db } from ".";
-import { env } from "../env";
+import { env } from "../utils/env";
 import { getSynIdFromRawInput, syndicate } from "../utils/syndicate";
-
 ponder.on("WriterStorage:ChunkReceived", async ({ event }) => {
 	const transactionId = getSynIdFromRawInput(event.transaction.input);
 	if (transactionId) {
@@ -12,7 +11,7 @@ ponder.on("WriterStorage:ChunkReceived", async ({ event }) => {
 		);
 		await db.upsertTx({
 			id: transactionId,
-			chainId: BigInt(10),
+			chainId: BigInt(env.TARGET_CHAIN_ID),
 			functionSignature: tx.functionSignature,
 			args: tx.decodedData,
 			blockNumber: event.block.number,
@@ -50,7 +49,7 @@ ponder.on("WriterStorage:EntryCreated", async ({ event }) => {
 		);
 		await db.upsertTx({
 			id: transactionId,
-			chainId: BigInt(10),
+			chainId: BigInt(env.TARGET_CHAIN_ID),
 			functionSignature: tx.functionSignature,
 			args: tx.decodedData,
 			blockNumber: event.block.number,

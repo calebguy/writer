@@ -1,10 +1,10 @@
 include .env
 
 deploy-factory:
-	forge create --rpc-url op --private-key ${PRIVATE_KEY} src/WriterFactory.sol:WriterFactory --verify
+	forge create --rpc-url arb --private-key ${PRIVATE_KEY} src/WriterFactory.sol:WriterFactory --verify --broadcast
 
 deploy-color-registry:
-	forge create --rpc-url op --private-key ${PRIVATE_KEY} src/ColorRegistry.sol:ColorRegistry --verify
+	forge create --rpc-url op --private-key ${PRIVATE_KEY} src/ColorRegistry.sol:ColorRegistry --verify --broadcast
 
 create:
 	cast send ${FACTORY_ADDRESS} "create(address, address[])" $(adminAddress) $(writers) --rpc-url op --private-key ${PRIVATE_KEY}

@@ -13,7 +13,6 @@ export function decompressBrotli(input: string) {
 // Attempts to decompress the content if not encrypted
 // Returns the version and the decompressed content
 export const processRawContent = (raw: string) => {
-	console.log("processing raw content", raw);
 	let version = null;
 	let decompressed = null;
 	if (raw.startsWith("br:")) {
@@ -21,7 +20,6 @@ export const processRawContent = (raw: string) => {
 		decompressed = decompressBrotli(raw.slice(3));
 	} else if (raw.startsWith("enc:br:")) {
 		version = "enc:br";
-		console.debug("received encrypted content, writing to DB");
 	}
 	// @note how should we handle non-supported versions?
 	return { version, decompressed };

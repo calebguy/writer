@@ -29,6 +29,7 @@ const schema = z.object({
 	SYNDICATE_PROJECT_ID: minString(),
 	PRIVY_APP_ID: minString(),
 	PRIVY_SECRET: minString(),
+	TARGET_CHAIN_ID: minString().transform((val) => Number(val)),
 });
 
 export const env = schema.parse(process.env);

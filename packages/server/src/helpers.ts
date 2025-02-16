@@ -6,7 +6,8 @@ import type { Context } from "hono";
 import { createMiddleware } from "hono/factory";
 
 import { getCookie } from "hono/cookie";
-import { TARGET_CHAIN_ID, privy } from "./constants";
+import { privy } from "./constants";
+import { env } from "./env";
 
 export class PrivyUserNotFoundError extends Error {
 	constructor(message: string) {
@@ -65,7 +66,7 @@ export const privyAuthMiddleware = createMiddleware<{
 const getDomain = (address: Hex) => ({
 	name: "Writer",
 	version: "1",
-	chainId: TARGET_CHAIN_ID,
+	chainId: env.TARGET_CHAIN_ID,
 	verifyingContract: getAddress(address),
 });
 
@@ -181,7 +182,7 @@ export function recoverSetColorSigner({
 		domain: {
 			name: "ColorRegistry",
 			version: "1",
-			chainId: TARGET_CHAIN_ID,
+			chainId: env.TARGET_CHAIN_ID,
 			verifyingContract: getAddress(address),
 		},
 		message: {

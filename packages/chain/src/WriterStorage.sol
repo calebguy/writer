@@ -3,9 +3,6 @@ pragma solidity ^0.8.13;
 
 import {AccessControl} from "oz/access/AccessControl.sol";
 
-// @note commit reveal may be used for private messages
-// https://www.gitcoin.co/blog/commit-reveal-scheme-on-ethereum
-
 contract WriterStorage is AccessControl {
     address public logic;
 
@@ -43,7 +40,6 @@ contract WriterStorage is AccessControl {
         string[] chunks;
         uint256 totalChunks;
         uint256 receivedChunks;
-        bool exists;
         address author;
     }
 
@@ -81,8 +77,7 @@ contract WriterStorage is AccessControl {
     }
 
     function remove(uint256 id, address author) public onlyLogic {
-        // Ensure the entry exists
-        require(entries[id].exists, "WriterStorage: Entry does not exist");
+        require(_doesEntryExist(id), "WriterStorage: Entry does not exist");
 
         // Get the index of the entry to be removed
         uint256 index = entryIdToEntryIdsIndex[id];
@@ -115,6 +110,29 @@ contract WriterStorage is AccessControl {
         require(bytes(getEntry(id).chunks[index]).length == 0, "WriterStorage: Chunk already exists");
 
         return _addChunk(id, index, content, author);
+    }
+
+    function update(uint256 id, uint256 totalChunks, string calldata content, address author)
+        public
+        onlyLogic
+        returns (Entry memory entry)
+    {
+        require(_doesEntryExist(id), "WriterStorage: Entry does not exist");
+        require(totalChunks > 0, "WriterStorage: Total chunks must be greater than 0");
+        require(bytes(content).length > 0, "WriterStorage: Content cannot be empty");
+        Entry storage entryToUpdate = entries[id];
+
+        // Clear previous chunks
+        delete entryToUpdate.chunks;
+        entryToUpdate.chunks = new string[](totalChunks);
+        entryToUpdate.receivedChunks = 0;
+        entryToUpdate.totalChunks = totalChunks;
+        entryToUpdate.updatedAtBlock = block.number;
+        entryToUpdate.receivedChunks = 0;
+
+        Entry memory updatedEntry = _addChunk(id, 0, content, author);
+        emit EntryUpdated(id, author);
+        return updatedEntry;
     }
 
     function getEntryCount() public view returns (uint256) {
@@ -156,7 +174,6 @@ contract WriterStorage is AccessControl {
             chunks: new string[](totalChunks),
             totalChunks: totalChunks,
             receivedChunks: 0,
-            exists: true,
             author: author
         });
         entryIds.push(id);
@@ -171,7 +188,7 @@ contract WriterStorage is AccessControl {
         returns (Entry storage)
     {
         Entry storage entry = entries[id];
-        require(entry.exists, "WriterStorage: Entry does not exist");
+        require(_doesEntryExist(id), "WriterStorage: Entry does not exist");
         require(index < entry.totalChunks, "WriterStorage: Invalid chunk index");
 
         entry.chunks[index] = content;
@@ -182,28 +199,12 @@ contract WriterStorage is AccessControl {
 
         if (entry.receivedChunks == entry.totalChunks) {
             emit EntryCompleted(id, author);
-        } else {
-            emit EntryUpdated(id, author);
         }
 
         return entry;
     }
 
-    function update(uint256 id, uint256 totalChunks, string calldata content, address author)
-        public
-        onlyLogic
-        returns (Entry memory entry)
-    {
-        Entry storage entryToUpdate = entries[id];
-        require(entryToUpdate.exists, "WriterStorage: Entry does not exist");
-        require(totalChunks > 0, "WriterStorage: Total chunks must be greater than 0");
-        require(bytes(content).length > 0, "WriterStorage: Content cannot be empty");
-
-        entryToUpdate.chunks[0] = content;
-        entryToUpdate.totalChunks = totalChunks;
-        entryToUpdate.updatedAtBlock = block.number;
-        entryToUpdate.receivedChunks = 1;
-        emit EntryUpdated(id, author);
-        return entryToUpdate;
+    function _doesEntryExist(uint256 id) internal view returns (bool) {
+        return entries[id].createdAtBlock > 0;
     }
 }

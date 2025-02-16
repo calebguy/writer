@@ -234,7 +234,6 @@ export function writerToJsonSafe(data: SelectWriter) {
 
 export function entryToJsonSafe({ chunks, ...data }: EntryWithChunks) {
 	const raw = chunks.map((c) => c.content).join("");
-	console.log("raw", raw, data.onChainId, data.storageAddress);
 	const { version, decompressed } = processRawContent(raw);
 	return {
 		...data,

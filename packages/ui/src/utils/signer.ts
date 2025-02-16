@@ -1,6 +1,15 @@
 import type { ConnectedWallet } from "@privy-io/react-auth";
-import { getAddress, keccak256 } from "viem";
-import { TARGET_CHAIN_ID } from "../constants";
+import { type Hex, getAddress, keccak256 } from "viem";
+
+if (!import.meta.env.VITE_COLOR_REGISTRY_ADDRESS) {
+	throw new Error("VITE_COLOR_REGISTRY_ADDRESS is not set");
+}
+
+if (!import.meta.env.VITE_TARGET_CHAIN_ID) {
+	throw new Error("VITE_TARGET_CHAIN_ID is not set");
+}
+
+const TARGET_CHAIN_ID = import.meta.env.VITE_TARGET_CHAIN_ID;
 
 export async function signSetColor(
 	wallet: ConnectedWallet,
@@ -15,7 +24,7 @@ export async function signSetColor(
 			version: "1",
 			chainId: TARGET_CHAIN_ID,
 			verifyingContract: getAddress(
-				"0x7Bf5B616f5431725bCE61E397173cd6FbFaAC6F1",
+				import.meta.env.VITE_COLOR_REGISTRY_ADDRESS as Hex,
 			),
 		},
 		message: {

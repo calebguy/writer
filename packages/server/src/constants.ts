@@ -3,7 +3,6 @@ import { env } from "./env";
 
 import { Db } from "db";
 
-export const TARGET_CHAIN_ID = 10;
 export const CREATE_FUNCTION_SIGNATURE =
 	"create(string title, address admin, address[] managers, bytes32 salt)";
 export const CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE =

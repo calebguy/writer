@@ -1,9 +1,16 @@
 import { ponder } from "ponder:registry";
-import { env } from "../env";
+import { env } from "../utils/env";
 import { getSynIdFromRawInput, syndicate } from "../utils/syndicate";
 import { db } from "./index";
 ponder.on("WriterFactory:WriterCreated", async ({ event, context }) => {
 	const { writerAddress, storeAddress, admin, managers, title } = event.args;
+	console.log("WriterFactory:WriterCreated", {
+		writerAddress,
+		storeAddress,
+		admin,
+		managers,
+		title,
+	});
 	const transactionId = getSynIdFromRawInput(event.transaction.input);
 	if (transactionId) {
 		const tx = await syndicate.wallet.getTransactionRequest(
@@ -12,7 +19,7 @@ ponder.on("WriterFactory:WriterCreated", async ({ event, context }) => {
 		);
 		await db.upsertTx({
 			id: transactionId,
-			chainId: BigInt(10),
+			chainId: BigInt(env.TARGET_CHAIN_ID),
 			functionSignature: tx.functionSignature,
 			args: tx.decodedData,
 			blockNumber: event.block.number,

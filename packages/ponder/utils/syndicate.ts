@@ -1,6 +1,6 @@
 import { SyndicateClient } from "@syndicateio/syndicate-node";
 import { fromHex } from "viem";
-import { env } from "../env";
+import { env } from "./env";
 
 export const syndicate = new SyndicateClient({ token: env.SYNDICATE_API_KEY });
 

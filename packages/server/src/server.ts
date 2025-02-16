@@ -9,7 +9,6 @@ import {
 	CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
 	DELETE_ENTRY_FUNCTION_SIGNATURE,
 	SET_HEX_FUNCTION_SIGNATURE,
-	TARGET_CHAIN_ID,
 	UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE,
 	db,
 } from "./constants";
@@ -83,13 +82,13 @@ const api = app
 		const { transactionId } = await syndicate.transact.sendTransaction({
 			projectId: env.SYNDICATE_PROJECT_ID,
 			contractAddress: env.COLOR_REGISTRY_ADDRESS,
-			chainId: TARGET_CHAIN_ID,
+			chainId: env.TARGET_CHAIN_ID,
 			functionSignature: SET_HEX_FUNCTION_SIGNATURE,
 			args,
 		});
 		await db.createTx({
 			id: transactionId,
-			chainId: BigInt(TARGET_CHAIN_ID),
+			chainId: BigInt(env.TARGET_CHAIN_ID),
 			functionSignature: SET_HEX_FUNCTION_SIGNATURE,
 			args,
 			status: "PENDING",
@@ -120,13 +119,13 @@ const api = app
 		const { transactionId } = await syndicate.transact.sendTransaction({
 			projectId: env.SYNDICATE_PROJECT_ID,
 			contractAddress: env.FACTORY_ADDRESS,
-			chainId: TARGET_CHAIN_ID,
+			chainId: env.TARGET_CHAIN_ID,
 			functionSignature: CREATE_FUNCTION_SIGNATURE,
 			args,
 		});
 		await db.createTx({
 			id: transactionId,
-			chainId: BigInt(TARGET_CHAIN_ID),
+			chainId: BigInt(env.TARGET_CHAIN_ID),
 			functionSignature: CREATE_FUNCTION_SIGNATURE,
 			args,
 			status: "PENDING",
@@ -174,13 +173,13 @@ const api = app
 			const { transactionId } = await syndicate.transact.sendTransaction({
 				projectId: env.SYNDICATE_PROJECT_ID,
 				contractAddress,
-				chainId: TARGET_CHAIN_ID,
+				chainId: env.TARGET_CHAIN_ID,
 				functionSignature: CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
 				args,
 			});
 			await db.createTx({
 				id: transactionId,
-				chainId: BigInt(TARGET_CHAIN_ID),
+				chainId: BigInt(env.TARGET_CHAIN_ID),
 				functionSignature: CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
 				args,
 				status: "PENDING",
@@ -273,13 +272,13 @@ const api = app
 			const { transactionId } = await syndicate.transact.sendTransaction({
 				projectId: env.SYNDICATE_PROJECT_ID,
 				contractAddress,
-				chainId: TARGET_CHAIN_ID,
+				chainId: env.TARGET_CHAIN_ID,
 				functionSignature: UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE,
 				args,
 			});
 			await db.createTx({
 				id: transactionId,
-				chainId: BigInt(TARGET_CHAIN_ID),
+				chainId: BigInt(env.TARGET_CHAIN_ID),
 				functionSignature: UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE,
 				args,
 				status: "PENDING",
@@ -333,13 +332,13 @@ const api = app
 			const { transactionId } = await syndicate.transact.sendTransaction({
 				projectId: env.SYNDICATE_PROJECT_ID,
 				contractAddress: address,
-				chainId: TARGET_CHAIN_ID,
+				chainId: env.TARGET_CHAIN_ID,
 				functionSignature: DELETE_ENTRY_FUNCTION_SIGNATURE,
 				args,
 			});
 			await db.createTx({
 				id: transactionId,
-				chainId: BigInt(TARGET_CHAIN_ID),
+				chainId: BigInt(env.TARGET_CHAIN_ID),
 				functionSignature: DELETE_ENTRY_FUNCTION_SIGNATURE,
 				args,
 				status: "PENDING",

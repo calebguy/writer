@@ -13,7 +13,6 @@ contract TestBase is Test {
         assertEq(entry.updatedAtBlock, expectedEntry.updatedAtBlock);
         assertEq(entry.totalChunks, expectedEntry.totalChunks);
         assertEq(entry.receivedChunks, expectedEntry.receivedChunks);
-        assertEq(entry.exists, expectedEntry.exists);
         assertEq(entry.chunks.length, expectedEntry.chunks.length);
         for (uint256 i = 0; i < entry.chunks.length; i++) {
             assertEq(entry.chunks[i], expectedEntry.chunks[i]);
@@ -52,7 +51,6 @@ contract WriterDirectCallerTest is TestBase {
             updatedAtBlock: currentBlock,
             totalChunks: 2,
             receivedChunks: 0,
-            exists: true,
             chunks: new string[](2),
             author: user
         });
@@ -86,7 +84,6 @@ contract WriterDirectCallerTest is TestBase {
             updatedAtBlock: currentBlock,
             totalChunks: totalChunks,
             receivedChunks: totalChunks,
-            exists: true,
             chunks: expectedChunks,
             author: user
         });
@@ -104,7 +101,6 @@ contract WriterDirectCallerTest is TestBase {
         writer.create(size);
 
         vm.expectEmit();
-        emit WriterStorage.EntryUpdated(0, user);
         emit WriterStorage.ChunkReceived(user, 0, 0, "Hello");
         writer.addChunk(0, 0, "Hello");
 
@@ -123,7 +119,6 @@ contract WriterDirectCallerTest is TestBase {
             updatedAtBlock: block.number,
             totalChunks: size,
             receivedChunks: size,
-            exists: true,
             chunks: expectedChunks,
             author: user
         });
@@ -174,7 +169,6 @@ contract WriterDirectCallerTest is TestBase {
             updatedAtBlock: 0,
             totalChunks: 0,
             receivedChunks: 0,
-            exists: false,
             chunks: new string[](0),
             author: user
         });
@@ -182,6 +176,34 @@ contract WriterDirectCallerTest is TestBase {
 
         uint256[] memory expectedEntryIds = new uint256[](0);
         assertEq(writer.getEntryIds(), expectedEntryIds);
+    }
+
+    function test_Update() public {
+        vm.startPrank(user);
+        writer.create(2);
+        writer.addChunk(0, 0, "Hello");
+        writer.addChunk(0, 1, "World");
+
+        uint256 entryId = 0;
+
+        vm.expectEmit();
+        emit WriterStorage.ChunkReceived(user, entryId, 0, "Hello World");
+        emit WriterStorage.EntryUpdated(entryId, user);
+        writer.update(entryId, 2, "Hello World");
+        vm.stopPrank();
+
+        WriterStorage.Entry memory entry = writer.getEntry(entryId);
+        string[] memory expectedChunks = new string[](2);
+        expectedChunks[0] = "Hello World";
+        WriterStorage.Entry memory expectedEntry = WriterStorage.Entry({
+            createdAtBlock: block.number,
+            updatedAtBlock: block.number,
+            totalChunks: 2,
+            receivedChunks: 1,
+            chunks: expectedChunks,
+            author: user
+        });
+        entryEq(entry, expectedEntry);
     }
 
     function test_SetNewAuthorizedWriter() public {
@@ -293,7 +315,6 @@ contract WriterWithSigTest is TestBase {
             updatedAtBlock: block.number,
             totalChunks: size,
             receivedChunks: size,
-            exists: true,
             chunks: expectedChunks,
             author: user.addr
         });
@@ -327,7 +348,6 @@ contract WriterWithSigTest is TestBase {
             updatedAtBlock: block.number,
             totalChunks: chunkCount,
             receivedChunks: chunkCount,
-            exists: true,
             chunks: expectedChunks,
             author: user.addr
         });
@@ -391,7 +411,6 @@ contract WriterWithSigTest is TestBase {
             updatedAtBlock: 0,
             totalChunks: 0,
             receivedChunks: 0,
-            exists: false,
             chunks: new string[](0),
             author: user.addr
         });
