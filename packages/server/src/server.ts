@@ -295,6 +295,15 @@ const api = app
 			if (!data) {
 				return c.json({ error: "entry not found" }, 404);
 			}
+			await db.upsertChunk({
+				entryId: data.id,
+				content: content,
+				createdAtTransactionId: transactionId,
+				index: 0,
+			});
+			if (!data) {
+				return c.json({ error: "entry not found" }, 404);
+			}
 			return c.json({ entry: entryToJsonSafe(data) }, 201);
 		},
 	)

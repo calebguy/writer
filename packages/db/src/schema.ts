@@ -94,7 +94,10 @@ export const chunk = pgTable(
 			.references(() => syndicateTx.id),
 	},
 	(chunks) => ({
-		entryIdIndex: index("entry_index_idx").on(chunks.entryId, chunks.index),
+		entryIdIndex: uniqueIndex("entry_index_idx").on(
+			chunks.entryId,
+			chunks.index,
+		),
 	}),
 );
 

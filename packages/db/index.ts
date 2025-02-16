@@ -216,10 +216,8 @@ class Db {
 			.insert(chunk)
 			.values({ ...item, createdAt: new Date() })
 			.onConflictDoUpdate({
-				target: item.createdAtTransactionId
-					? [entry.createdAtTransactionId]
-					: [entry.storageAddress, entry.onChainId],
-				set: item,
+				target: [chunk.entryId, chunk.index],
+				set: { ...item },
 			})
 			.returning();
 	}

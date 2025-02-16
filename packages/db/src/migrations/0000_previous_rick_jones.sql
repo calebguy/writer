@@ -76,6 +76,6 @@ ALTER TABLE "entry" ADD CONSTRAINT "entry_created_at_transaction_id_syndicate_tx
 ALTER TABLE "entry" ADD CONSTRAINT "entry_deleted_at_transaction_id_syndicate_tx_id_fk" FOREIGN KEY ("deleted_at_transaction_id") REFERENCES "public"."syndicate_tx"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "entry" ADD CONSTRAINT "entry_updated_at_transaction_id_syndicate_tx_id_fk" FOREIGN KEY ("updated_at_transaction_id") REFERENCES "public"."syndicate_tx"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "writer" ADD CONSTRAINT "writer_transaction_id_syndicate_tx_id_fk" FOREIGN KEY ("transaction_id") REFERENCES "public"."syndicate_tx"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-CREATE INDEX "entry_index_idx" ON "chunk" USING btree ("entry_id","index");--> statement-breakpoint
+CREATE UNIQUE INDEX "entry_index_idx" ON "chunk" USING btree ("entry_id","index");--> statement-breakpoint
 CREATE UNIQUE INDEX "storage_address_on_chain_id_idx" ON "entry" USING btree ("storage_address","on_chain_id");--> statement-breakpoint
 CREATE INDEX "storage_address_idx" ON "entry" USING btree ("storage_address");

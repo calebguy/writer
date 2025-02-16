@@ -32,6 +32,7 @@ ponder.on("WriterStorage:ChunkReceived", async ({ event }) => {
 		return;
 	}
 
+	console.log("Upserting chunk", entry.id, event.args.index, transactionId);
 	await db.upsertChunk({
 		index: Number(event.args.index),
 		entryId: entry.id,

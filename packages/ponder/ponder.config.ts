@@ -15,20 +15,20 @@ const startBlock = env.START_BLOCK;
 
 export default createConfig({
 	networks: {
-		arb: {
+		target: {
 			chainId: env.TARGET_CHAIN_ID,
 			transport: http(env.RPC_URL),
 		},
 	},
 	contracts: {
 		WriterFactory: {
-			network: "arb",
+			network: "target",
 			abi: WriterFactoryAbi,
 			address: env.FACTORY_ADDRESS as Hex,
 			startBlock,
 		},
 		Writer: {
-			network: "arb",
+			network: "target",
 			abi: WriterAbi,
 			address: factory({
 				address: env.FACTORY_ADDRESS as Hex,
@@ -38,7 +38,7 @@ export default createConfig({
 			startBlock,
 		},
 		WriterStorage: {
-			network: "arb",
+			network: "target",
 			abi: WriterStorageAbi,
 			address: factory({
 				address: env.FACTORY_ADDRESS as Hex,
@@ -48,7 +48,7 @@ export default createConfig({
 			startBlock,
 		},
 		ColorRegistry: {
-			network: "arb",
+			network: "target",
 			abi: ColorRegistryAbi,
 			address: env.COLOR_REGISTRY_ADDRESS as Hex,
 			startBlock,
