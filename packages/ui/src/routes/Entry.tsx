@@ -176,13 +176,13 @@ export default function Entry() {
 							className={cn(
 								"absolute w-full h-full flex justify-center items-center z-20",
 								{ "bg-red-700": isPendingDelete },
-								{ "bg-primary": isPendingEdit },
+								{ "bg-primary": isEditPending },
 							)}
 						>
 							<Blob
 								className={cn("w-8 h-8 rotating", {
 									"text-red-900": isPendingDelete,
-									"text-secondary": isPendingEdit,
+									"text-secondary": isEditPending,
 								})}
 							/>
 						</div>
@@ -265,6 +265,7 @@ export default function Entry() {
 												content,
 											});
 											await refetchEntry();
+											await sleep(250);
 											setEditSubmitted(false);
 											setIsEditing(false);
 										}}
