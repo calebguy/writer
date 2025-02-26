@@ -2,7 +2,6 @@ import { z } from "zod";
 
 export enum AppEnv {
 	Development = "DEVELOPMENT",
-	Staging = "STAGING",
 	Production = "PRODUCTION",
 }
 
@@ -20,7 +19,7 @@ const logNameExpectedReceived: z.ZodErrorMap = (issue, ctx) => {
 z.setErrorMap(logNameExpectedReceived);
 
 const schema = z.object({
-	APP_ENV: z.enum([AppEnv.Development, AppEnv.Staging, AppEnv.Production]),
+	APP_ENV: z.enum([AppEnv.Development, AppEnv.Production]),
 	DATABASE_URL: minString(),
 	RPC_URL: minString(),
 	FACTORY_ADDRESS: minString(),
@@ -33,5 +32,4 @@ const schema = z.object({
 export const env = schema.parse(process.env);
 
 export const isDev = env.APP_ENV === AppEnv.Development;
-export const isStaging = env.APP_ENV === AppEnv.Staging;
 export const isProd = env.APP_ENV === AppEnv.Production;

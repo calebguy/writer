@@ -1,4 +1,4 @@
-import { env } from "./env";
+import { AppEnv, env } from "./env";
 
 import { Db } from "db";
 
@@ -13,4 +13,4 @@ export const DELETE_ENTRY_FUNCTION_SIGNATURE =
 export const SET_HEX_FUNCTION_SIGNATURE =
 	"setHexWithSig(bytes signature, uint256 nonce, bytes32 hexColor)";
 
-export const db = new Db(env.DATABASE_URL);
+export const db = new Db(env.DATABASE_URL, env.APP_ENV === AppEnv.Production);
