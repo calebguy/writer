@@ -1,4 +1,5 @@
 import { and, arrayContains, eq, inArray, isNull } from "drizzle-orm";
+import { drizzle as drizzleNeon } from "drizzle-orm/neon-http";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { processRawContent } from "utils";
 import type { Hex } from "viem";
@@ -13,8 +14,11 @@ import { chunk, entry, syndicateTx, user, writer } from "./src/schema";
 class Db {
 	private pg;
 
-	constructor(private readonly connectionUrl: string) {
-		this.pg = drizzle({
+	constructor(
+		private readonly connectionUrl: string,
+		private readonly isNeon: boolean,
+	) {
+		const params = {
 			casing: "snake_case",
 			connection: this.connectionUrl,
 			schema: {
@@ -28,7 +32,9 @@ class Db {
 				chunkRelations,
 				syndicateTransactionRelations: syndicateTxRelations,
 			},
-		});
+		};
+		//@ts-expect-error
+		this.pg = isNeon ? drizzleNeon(params) : drizzle(params);
 	}
 
 	async getWritersByManager(managerAddress: Hex) {
