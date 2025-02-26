@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useContext, useEffect, useState } from "react";
+import { Helmet } from "react-helmet";
 import { useParams } from "react-router-dom";
 import type { Hex } from "viem";
 import Block from "../components/Block";
@@ -119,47 +120,62 @@ export function Writer() {
 	};
 
 	return (
-		<div
-			className="grid gap-2"
-			style={{
-				gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-			}}
-		>
-			{wallet && data?.managers.includes(wallet.address) && (
-				<BlockForm
-					canExpand
-					isLoading={isPending}
-					placeholder={`Write in \n\n${data?.title}`}
-					onSubmit={handleSubmit}
-					onExpand={setIsExpanded}
-					encrypted={encrypted}
-					setEncrypted={setEncrypted}
+		<>
+			<Helmet>
+				<meta charSet="utf-8" />
+				<title>{address}</title>
+				<meta property="og:title" content={address} />
+				<meta
+					property="og:url"
+					content={`http://localhost:3000/writer/og/${address}`}
 				/>
-			)}
-			{!isExpanded &&
-				processedData.map((entry) => {
-					let id: undefined | string = undefined;
-					if (entry.createdAtBlockDatetime) {
-						id = format(new Date(entry.createdAtBlockDatetime), "MM-dd-yyyy");
-					} else {
-						id = format(new Date(entry.createdAt), "MM/dd/yyyy");
-					}
+				<meta
+					property="og:image"
+					content={`http://localhost:3000/writer/og/${address}`}
+				/>
+			</Helmet>
+			<div
+				className="grid gap-2"
+				style={{
+					gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+				}}
+			>
+				{wallet && data?.managers.includes(wallet.address) && (
+					<BlockForm
+						canExpand
+						isLoading={isPending}
+						placeholder={`Write in \n\n${data?.title}`}
+						onSubmit={handleSubmit}
+						onExpand={setIsExpanded}
+						encrypted={encrypted}
+						setEncrypted={setEncrypted}
+					/>
+				)}
+				{!isExpanded &&
+					processedData.map((entry) => {
+						let id: undefined | string = undefined;
+						if (entry.createdAtBlockDatetime) {
+							id = format(new Date(entry.createdAtBlockDatetime), "MM-dd-yyyy");
+						} else {
+							id = format(new Date(entry.createdAt), "MM/dd/yyyy");
+						}
 
-					return (
-						<Block
-							key={entry.id}
-							href={`/writer/${data?.address}/${entry.onChainId}`}
-							isLoading={!entry.onChainId}
-							title={entry.decompressed ? entry.decompressed : entry.raw}
-							id={id}
-							leftIcon={
-								entry.version?.startsWith("enc") ? (
-									<Lock className="h-3.5 w-3.5 text-neutral-600" />
-								) : null
-							}
-						/>
-					);
-				})}
-		</div>
+						return (
+							<Block
+								key={entry.id}
+								href={`/writer/${data?.address}/${entry.onChainId}`}
+								isLoading={!entry.onChainId}
+								title={entry.decompressed ? entry.decompressed : entry.raw}
+								id={id}
+								leftIcon={
+									entry.version?.startsWith("enc") ? (
+										<Lock className="h-3.5 w-3.5 text-neutral-600" />
+									) : null
+								}
+							/>
+						);
+					})}
+			</div>
+		</>
 	);
 }

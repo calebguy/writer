@@ -1,4 +1,3 @@
-import { PrivyClient } from "@privy-io/server-auth";
 import { env } from "./env";
 
 import { Db } from "db";
@@ -14,5 +13,4 @@ export const DELETE_ENTRY_FUNCTION_SIGNATURE =
 export const SET_HEX_FUNCTION_SIGNATURE =
 	"setHexWithSig(bytes signature, uint256 nonce, bytes32 hexColor)";
 
-export const privy = new PrivyClient(env.PRIVY_APP_ID, env.PRIVY_SECRET);
 export const db = new Db(env.DATABASE_URL);

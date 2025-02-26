@@ -1,10 +1,10 @@
-import { ConnectedWallet } from "@privy-io/react-auth";
+import type { ConnectedWallet } from "@privy-io/react-auth";
 import {
 	compress as compressBrotli,
 	decompress as decompressBrotli,
 } from "brotli-compress";
 import type { Hex } from "viem";
-import { Entry } from "./api";
+import type { Entry } from "./api";
 
 export function shortenAddress(address: Hex) {
 	return `${address.slice(0, 6)}...${address.slice(-4)}`;

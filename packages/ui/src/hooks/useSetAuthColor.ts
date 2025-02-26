@@ -4,8 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 
 import { usePrivy } from "@privy-io/react-auth";
 import { useEffect } from "react";
+import type { Hex } from "viem";
 import { WriterContext, defaultColor } from "../context";
 import { getMe } from "../utils/api";
+import { useFirstWallet } from "../utils/hooks";
 
 export function useSetAuthColor() {
 	const { ready, authenticated } = usePrivy();
@@ -15,10 +17,12 @@ export function useSetAuthColor() {
 		() => ready && authenticated,
 		[ready, authenticated],
 	);
+
+	const wallet = useFirstWallet();
 	const { data } = useQuery({
 		queryKey: ["me"],
-		queryFn: () => getMe(),
-		enabled: isLoggedIn,
+		queryFn: () => getMe(wallet?.address as Hex),
+		enabled: isLoggedIn && !!wallet?.address,
 	});
 
 	// Set the user's color when they login

@@ -3,10 +3,12 @@ import { hc } from "hono/client";
 import type { Api } from "server/src/server";
 import type { Hex } from "viem";
 
-const client = hc<Api>("/");
+const client = hc<Api>("http://localhost:3000/");
 
-export async function getMe() {
-	const res = await client.api.me.$get();
+export async function getMe(address: Hex) {
+	const res = await client.api.me[":address"].$get({
+		param: { address },
+	});
 	if (!res.ok) {
 		throw new Error(res.statusText);
 	}

@@ -1,6 +1,7 @@
 import { entryToJsonSafe, writerToJsonSafe } from "db";
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
+import { cors } from "hono/cors";
 import { randomBytes } from "node:crypto";
 import { computeWriterAddress, computeWriterStorageAddress } from "utils";
 import { type Hex, getAddress, toHex } from "viem";
@@ -14,7 +15,6 @@ import {
 } from "./constants";
 import { env } from "./env";
 import {
-	privyAuthMiddleware,
 	recoverCreateWithChunkSigner,
 	recoverRemoveEntrySigner,
 	recoverSetColorSigner,
@@ -33,8 +33,10 @@ import { syndicate } from "./syndicate";
 
 const app = new Hono();
 
+// @note split out the frontend build from the server
 app.use("*", serveStatic({ root: "../ui/dist" }));
 app.use("*", serveStatic({ path: "../ui/dist/index.html" }));
+app.use("*", cors());
 
 const api = app
 	.basePath("/api")
@@ -47,9 +49,9 @@ const api = app
 		}));
 		return c.json({ writers });
 	})
-	.get("/me", privyAuthMiddleware, async (c) => {
-		const privyUserAddress = c.get("privyUserAddress");
-		const user = await db.getUser(privyUserAddress);
+	.get("/me/:address", async (c) => {
+		const address = c.req.param("address");
+		const user = await db.getUser(address as Hex);
 		return c.json({ user });
 	})
 	.get("/writer/:address", async (c) => {

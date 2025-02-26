@@ -27,8 +27,6 @@ const schema = z.object({
 	COLOR_REGISTRY_ADDRESS: minString(),
 	SYNDICATE_API_KEY: minString(),
 	SYNDICATE_PROJECT_ID: minString(),
-	PRIVY_APP_ID: minString(),
-	PRIVY_SECRET: minString(),
 	TARGET_CHAIN_ID: minString().transform((val) => Number(val)),
 });
 
