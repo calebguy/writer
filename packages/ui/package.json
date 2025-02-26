@@ -43,7 +43,7 @@
     "react-router-dom": "^7.1.0",
     "rehype-highlight": "^7.0.1",
     "sass": "^1.81.0",
-    "server": "workspace:*",
+    "server": "workspace:server",
     "tiptap-markdown": "^0.8.10",
     "vaul": "^0.9.1",
     "viem": "^2.17.1",

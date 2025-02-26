@@ -11,9 +11,9 @@
     "@hono/zod-validator": "^0.2.2",
     "@syndicateio/syndicate-node": "^1.0.1",
     "@types/uuid": "^10.0.0",
-    "db": "workspace:*",
+    "db": "workspace:db",
     "hono": "^4.4.2",
-    "utils": "workspace:*",
+    "utils": "workspace:utils",
     "uuid": "^10.0.0",
     "viem": "^2.21.35",
     "zod": "^3.23.8"
