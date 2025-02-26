@@ -16,7 +16,7 @@ class Db {
 
 	constructor(
 		private readonly connectionUrl: string,
-		private readonly isNeon: boolean,
+		isNeon: boolean,
 	) {
 		const params = {
 			casing: "snake_case",
