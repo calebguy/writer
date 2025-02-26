@@ -15,5 +15,6 @@
 		"format": "bunx @biomejs/biome format --write .",
 		"start": "bun --filter 'server' start",
 		"build": "bun --filter 'ui' build"
-	}
+	},
+	"packageManager": "^bun@1.2.0"
 }
