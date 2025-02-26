@@ -1,8 +1,0 @@
-services:
-  - type: web
-    name: bun
-    runtime: docker
-    repo: https://github.com/calebguy/writer
-    branch: main
-    plan: free
-    autoDeploy: true
