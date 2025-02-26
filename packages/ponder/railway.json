@@ -1,17 +1,20 @@
 {
   "$schema": "https://railway.com/railway.schema.json",
+  "deploy": {
+    "startCommand": "bun start"
+  },
   "build": {
     "nixpacksPlan": {
       "providers": ["node"],
       "phases": {
+        "setup": {
+          "nixPkgs": ["bun", "build-essentials"]
+        },
         "install": {
           "dependsOn": ["setup"],
           "cmds": ["bun install"]
         }
       }
     }
-  },
-  "deploy": {
-    "startCommand": "bun start"
   }
 }
