@@ -3,10 +3,14 @@ import { hc } from "hono/client";
 import type { Api } from "server/src/server";
 import type { Hex } from "viem";
 
-const client = hc<Api>("http://localhost:3000/");
+if (!import.meta.env.VITE_API_BASE_URL) {
+	throw new Error("VITE_API_BASE_URL is not set");
+}
+
+const client = hc<Api>(import.meta.env.VITE_API_BASE_URL);
 
 export async function getMe(address: Hex) {
-	const res = await client.api.me[":address"].$get({
+	const res = await client.me[":address"].$get({
 		param: { address },
 	});
 	if (!res.ok) {
@@ -24,7 +28,7 @@ export async function setColor({
 	nonce: number;
 	hexColor: string;
 }) {
-	const res = await client.api["color-registry"].set.$post({
+	const res = await client["color-registry"].set.$post({
 		json: { signature, nonce, hexColor },
 	});
 	if (!res.ok) {
@@ -34,7 +38,7 @@ export async function setColor({
 }
 
 export async function getWriter(address: Hex) {
-	const res = await client.api.writer[":address"].$get({
+	const res = await client.writer[":address"].$get({
 		param: { address },
 	});
 	if (!res.ok) {
@@ -44,7 +48,7 @@ export async function getWriter(address: Hex) {
 }
 
 export async function getEntry(address: Hex, id: number) {
-	const res = await client.api.writer[":address"].entry[":id"].$get({
+	const res = await client.writer[":address"].entry[":id"].$get({
 		param: { address, id: String(id) },
 	});
 	if (!res.ok) {
@@ -68,7 +72,7 @@ export async function editEntry({
 	totalChunks: number;
 	content: string;
 }) {
-	const res = await client.api.writer[":address"].entry[":id"].update.$post({
+	const res = await client.writer[":address"].entry[":id"].update.$post({
 		param: { address, id: String(id) },
 		json: { signature, nonce, totalChunks, content },
 	});
@@ -84,7 +88,7 @@ export async function deleteEntry({
 	signature,
 	nonce,
 }: { address: string; id: number; signature: string; nonce: number }) {
-	const res = await client.api.writer[":address"].entry[":id"].delete.$post({
+	const res = await client.writer[":address"].entry[":id"].delete.$post({
 		param: { address, id: String(id) },
 		json: { signature, nonce },
 	});
@@ -95,7 +99,7 @@ export async function deleteEntry({
 }
 
 export async function getWritersByManager(address: Hex) {
-	const res = await client.api.manager[":address"].$get({
+	const res = await client.manager[":address"].$get({
 		param: { address },
 	});
 	if (!res.ok) {
@@ -109,7 +113,7 @@ export async function factoryCreate(json: {
 	managers: string[];
 	title: string;
 }) {
-	const res = await client.api.factory.create.$post({
+	const res = await client.factory.create.$post({
 		json,
 	});
 	if (!res.ok) {
@@ -128,7 +132,7 @@ export async function createWithChunk({
 	chunkCount: number;
 	chunkContent: string;
 }) {
-	const res = await client.api.writer[":address"].entry.createWithChunk.$post({
+	const res = await client.writer[":address"].entry.createWithChunk.$post({
 		param: { address },
 		json,
 	});
@@ -139,7 +143,7 @@ export async function createWithChunk({
 }
 
 export type GetWritersResponse = InferResponseType<
-	(typeof client.api.manager)[":address"]["$get"]
+	(typeof client.manager)[":address"]["$get"]
 >;
 export type Writer = GetWritersResponse["writers"][number];
 export type Entry = Writer["entries"][number];

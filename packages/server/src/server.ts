@@ -39,7 +39,7 @@ app.use("*", serveStatic({ path: "../ui/dist/index.html" }));
 app.use("*", cors());
 
 const api = app
-	.basePath("/api")
+	.basePath("/")
 	.get("/manager/:address", async (c) => {
 		const address = getAddress(c.req.param("address"));
 		const data = await db.getWritersByManager(address);

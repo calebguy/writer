@@ -1,7 +1,7 @@
 import { relations } from "drizzle-orm/relations";
 import { chunk, entry, syndicateTx, writer } from "./schema";
 
-export const writerRelations = relations(writer, ({ one, many }) => ({
+export const writerRelations = relations(writer, ({ one }) => ({
 	syndicateTransaction: one(syndicateTx, {
 		fields: [writer.transactionId],
 		references: [syndicateTx.id],

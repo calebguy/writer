@@ -557,15 +557,15 @@ function Section({
 	);
 }
 
-function Methods({ methods }: { methods: string[] }) {
-	return (
-		<div className="mt-6">
-			<div className="text-neutral-400">Methods</div>
-			<div className="flex flex-col gap-1 text-sm mt-1">
-				{methods.map((method) => (
-					<MD key={method}>{method}</MD>
-				))}
-			</div>
-		</div>
-	);
-}
+// function Methods({ methods }: { methods: string[] }) {
+// 	return (
+// 		<div className="mt-6">
+// 			<div className="text-neutral-400">Methods</div>
+// 			<div className="flex flex-col gap-1 text-sm mt-1">
+// 				{methods.map((method) => (
+// 					<MD key={method}>{method}</MD>
+// 				))}
+// 			</div>
+// 		</div>
+// 	);
+// }
