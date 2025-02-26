@@ -1,6 +1,5 @@
 {
   "name": "ponder",
-  "private": true,
   "type": "module",
   "scripts": {
     "dev": "ponder dev",
