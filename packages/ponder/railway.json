@@ -8,7 +8,8 @@
       "providers": ["node"],
       "phases": {
         "setup": {
-          "nixPkgs": ["bun", "build-essential"]
+          "nixPkgs": ["bun"],
+          "aptPkgs": ["build-essential"]
         },
         "install": {
           "dependsOn": ["setup"],
