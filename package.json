@@ -13,8 +13,7 @@
 	"scripts": {
 		"dev": "bun --filter 'server' dev & bun --filter 'ui' dev",
 		"format": "bunx @biomejs/biome format --write .",
-		"start": "bun --filter 'server' start",
-		"build": "bun --filter 'ui' build"
+		"ponder:start": "bun --filter 'ponder' start"
 	},
 	"packageManager": "^bun@1.2.0"
 }
