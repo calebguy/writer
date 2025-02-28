@@ -1,7 +1,7 @@
 {
   "$schema": "https://railway.com/railway.schema.json",
   "deploy": {
-    "startCommand": "bun run ponder:start"
+    "startCommand": "bun run ponder:start --schema $RAILWAY_DEPLOYMENT_ID"
   },
   "build": {
     "nixpacksPlan": {
