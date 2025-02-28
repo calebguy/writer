@@ -122,17 +122,8 @@ export function Writer() {
 	return (
 		<>
 			<Helmet>
-				<meta charSet="utf-8" />
-				<title>{address}</title>
-				<meta property="og:title" content={address} />
-				<meta
-					property="og:url"
-					content={`http://localhost:3000/writer/og/${address}`}
-				/>
-				<meta
-					property="og:image"
-					content={`http://localhost:3000/writer/og/${address}`}
-				/>
+				<title>Writer | {address}</title>
+				<meta property="og:title" content={`Writer | ${address}`} />
 			</Helmet>
 			<div
 				className="grid gap-2"

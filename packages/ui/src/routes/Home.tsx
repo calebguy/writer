@@ -1,6 +1,7 @@
 import { useWallets } from "@privy-io/react-auth";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useContext, useEffect, useMemo, useState } from "react";
+import { Helmet } from "react-helmet";
 import type { Hex } from "viem";
 import Block from "../components/Block";
 import BlockForm from "../components/BlockForm";
@@ -53,6 +54,10 @@ function Home() {
 
 	return (
 		<>
+			<Helmet>
+				<title>Writer</title>
+				<meta property="og:title" content="Writer" />
+			</Helmet>
 			{address && (
 				<div
 					className="grid gap-2"
