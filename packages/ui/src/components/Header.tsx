@@ -54,7 +54,7 @@ export function Header() {
 						)}
 						style={{ overflowWrap: "anywhere" }}
 					>
-						<div className="flex items-center gap-2">
+						<div className="flex items-center gap-2 italic">
 							{(writer || id) && location.pathname !== "/" && (
 								<Arrow className="w-6 h-6 -rotate-[135deg]" />
 							)}
