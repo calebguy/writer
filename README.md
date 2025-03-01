@@ -1,5 +1,5 @@
 # Writer
-![Writer](https://res.cloudinary.com/dm9gwanrg/image/upload/v1740783439/Artboard_1_3x_lznjge.png)
+![Writer](https://res.cloudinary.com/dm9gwanrg/image/upload/v1740821996/Artboard_1_3x-green_pq8tyn.png)
 
 
 <!-- @note TODO: add a feature for favoriting -->
