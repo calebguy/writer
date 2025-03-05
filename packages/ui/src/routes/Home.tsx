@@ -93,14 +93,15 @@ function Home() {
 								bottomRight={
 									<Dropdown
 										side="right"
-										onSelect={() => {
-											hideWriter(writer.address);
-										}}
 										trigger={
 											<VerticalEllipses className="w-5 hover:bg-neutral-800 rounded-full p-0.5" />
 										}
 									>
-										<DropdownItem>
+										<DropdownItem
+											onClick={() => {
+												hideWriter(writer.address as Hex);
+											}}
+										>
 											<ClosedEye className="w-4 text-neutral-600" />
 										</DropdownItem>
 									</Dropdown>
