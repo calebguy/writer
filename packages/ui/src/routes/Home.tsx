@@ -5,10 +5,13 @@ import { Helmet } from "react-helmet";
 import type { Hex } from "viem";
 import Block from "../components/Block";
 import BlockForm from "../components/BlockForm";
+import { Dropdown, DropdownItem } from "../components/Dropdown";
+import { ClosedEye } from "../components/icons/ClosedEye";
+import { VerticalEllipses } from "../components/icons/VerticalEllipses";
 import { POLLING_INTERVAL } from "../constants";
 import { WriterContext } from "../context";
 import type { BlockCreateInput } from "../interfaces";
-import { factoryCreate, getWritersByManager } from "../utils/api";
+import { deleteWriter, factoryCreate, getWritersByManager } from "../utils/api";
 
 function Home() {
 	const { wallets } = useWallets();
@@ -31,6 +34,11 @@ function Home() {
 			refetch();
 			setIsPolling(true);
 		},
+	});
+
+	const { mutateAsync: hideWriter } = useMutation({
+		mutationFn: deleteWriter,
+		mutationKey: ["delete-writer"],
 	});
 
 	const hasWriters = useMemo(() => (data ? data.length > 0 : false), [data]);
@@ -82,6 +90,21 @@ function Home() {
 								title={writer.title}
 								isLoading={!writer.createdAtHash}
 								id={writer.entries.length.toString()}
+								bottomRight={
+									<Dropdown
+										side="right"
+										onSelect={() => {
+											hideWriter(writer.address);
+										}}
+										trigger={
+											<VerticalEllipses className="w-5 hover:bg-neutral-800 rounded-full p-0.5" />
+										}
+									>
+										<DropdownItem>
+											<ClosedEye className="w-4 text-neutral-600" />
+										</DropdownItem>
+									</Dropdown>
+								}
 							/>
 						))}
 				</div>

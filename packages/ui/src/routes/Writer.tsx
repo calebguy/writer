@@ -158,7 +158,7 @@ export function Writer() {
 								isLoading={!entry.onChainId}
 								title={entry.decompressed ? entry.decompressed : entry.raw}
 								id={id}
-								leftIcon={
+								bottomRight={
 									entry.version?.startsWith("enc") ? (
 										<Lock className="h-3.5 w-3.5 text-neutral-600" />
 									) : null

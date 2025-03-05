@@ -10,7 +10,8 @@ interface BlockProps {
 	href?: string;
 	onClick?: MouseEventHandler<HTMLAnchorElement>;
 	isLoading?: boolean;
-	leftIcon?: React.ReactNode;
+	bottomRight?: React.ReactNode;
+	topRight?: React.ReactNode;
 }
 
 export default function Block({
@@ -19,7 +20,8 @@ export default function Block({
 	href,
 	onClick,
 	isLoading,
-	leftIcon,
+	bottomRight,
+	topRight,
 }: BlockProps) {
 	const className = cn(
 		"border-0 border-neutral-700 bg-neutral-900 aspect-square flex flex-col justify-between overflow-auto",
@@ -31,22 +33,25 @@ export default function Block({
 
 	const renderChildren = useCallback(() => {
 		return (
-			<div className="p-2 flex flex-col grow h-1">
+			<div className="p-2 flex flex-col grow h-1 relative">
 				<MD className="grow">{title}</MD>
 				<div
 					className={cn("flex items-end", {
-						"justify-between": leftIcon,
-						"justify-end": !leftIcon,
+						"justify-between": bottomRight,
+						"justify-end": !bottomRight,
 					})}
 				>
-					{leftIcon && <div>{leftIcon}</div>}
+					{bottomRight && (
+						<div className="flex flex-col justify-end">{bottomRight}</div>
+					)}
 					<div className="text-neutral-600 text-sm leading-3 pt-2">
 						{isLoading ? <span>...</span> : id}
 					</div>
 				</div>
+				{topRight && <div className="absolute top-0 right-0">{topRight}</div>}
 			</div>
 		);
-	}, [title, id, isLoading, leftIcon]);
+	}, [title, id, isLoading, bottomRight, topRight]);
 	return href && !isLoading ? (
 		<Link onClick={onClick} to={href} key={id} className={className}>
 			{renderChildren()}
