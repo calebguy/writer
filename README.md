@@ -1,2 +1,4 @@
 # Writer
-![Writer](https://res.cloudinary.com/dm9gwanrg/image/upload/v1740821996/Artboard_1_3x-green_pq8tyn.png)
+![Writer](https://res.cloudinary.com/dm9gwanrg/image/upload/v1741159374/Artboard_1_1_3p_ztojhs.png)
+
+-- write forever, write today --
