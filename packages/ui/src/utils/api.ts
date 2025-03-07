@@ -9,6 +9,16 @@ if (!import.meta.env.VITE_API_BASE_URL) {
 
 const client = hc<Api>(import.meta.env.VITE_API_BASE_URL);
 
+export async function deleteWriter(address: Hex) {
+	const res = await client.writer[":address"].$delete({
+		param: { address },
+	});
+	if (!res.ok) {
+		throw new Error(res.statusText);
+	}
+	return res.json();
+}
+
 export async function getMe(address: Hex) {
 	const res = await client.me[":address"].$get({
 		param: { address },

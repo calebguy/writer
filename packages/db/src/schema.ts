@@ -27,6 +27,7 @@ export const writer = pgTable("writer", {
 	}),
 	createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
 	updatedAt: timestamp({ withTimezone: true }).notNull(),
+	deletedAt: timestamp({ withTimezone: true }),
 	transactionId: varchar({ length: 255 })
 		.unique()
 		.references(() => syndicateTx.id),

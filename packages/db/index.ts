@@ -39,7 +39,10 @@ class Db {
 
 	async getWritersByManager(managerAddress: Hex) {
 		const writers = await this.pg.query.writer.findMany({
-			where: arrayContains(writer.managers, [managerAddress]),
+			where: and(
+				arrayContains(writer.managers, [managerAddress]),
+				isNull(writer.deletedAt),
+			),
 			orderBy: (writer, { desc }) => [desc(writer.createdAt)],
 		});
 		const storageAddresses = writers
@@ -226,6 +229,13 @@ class Db {
 				set: { ...item },
 			})
 			.returning();
+	}
+
+	deleteWriter(address: Hex) {
+		return this.pg
+			.update(writer)
+			.set({ deletedAt: new Date() })
+			.where(eq(writer.address, address));
 	}
 }
 

@@ -5,10 +5,11 @@ import { Helmet } from "react-helmet";
 import type { Hex } from "viem";
 import Block from "../components/Block";
 import BlockForm from "../components/BlockForm";
+import { ClosedEye } from "../components/icons/ClosedEye";
 import { POLLING_INTERVAL } from "../constants";
 import { WriterContext } from "../context";
 import type { BlockCreateInput } from "../interfaces";
-import { factoryCreate, getWritersByManager } from "../utils/api";
+import { deleteWriter, factoryCreate, getWritersByManager } from "../utils/api";
 
 function Home() {
 	const { wallets } = useWallets();
@@ -31,6 +32,11 @@ function Home() {
 			refetch();
 			setIsPolling(true);
 		},
+	});
+
+	const { mutateAsync: hideWriter } = useMutation({
+		mutationFn: deleteWriter,
+		mutationKey: ["delete-writer"],
 	});
 
 	const hasWriters = useMemo(() => (data ? data.length > 0 : false), [data]);
@@ -81,7 +87,30 @@ function Home() {
 								href={`/writer/${writer.address}`}
 								title={writer.title}
 								isLoading={!writer.createdAtHash}
-								id={writer.entries.length.toString()}
+								bottom={
+									<div className="text-right text-sm text-neutral-600 leading-3 pt-2">
+										<div className="group inline-block">
+											<span className="group-hover:hidden block">
+												{writer.entries.length.toString()}
+											</span>
+											<button
+												type="button"
+												className="group-hover:block hidden ml-auto absolute bottom-1.5 right-2 z-10 hover:text-primary"
+												onClick={async (e) => {
+													e.preventDefault();
+													e.stopPropagation();
+													await hideWriter(writer.address as Hex);
+													refetch();
+												}}
+											>
+												<ClosedEye className="w-4 h-4" />
+											</button>
+											<div className="absolute left-0 top-0 w-full h-full bg-neutral-900/90 hidden group-hover:flex items-center justify-center">
+												<span className="text-primary italic">Hide?</span>
+											</div>
+										</div>
+									</div>
+								}
 							/>
 						))}
 				</div>

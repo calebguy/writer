@@ -4,6 +4,7 @@ import { cn } from "../utils/cn";
 interface DropdownProps {
 	children: React.ReactNode;
 	trigger: React.ReactNode;
+	side?: "left" | "right" | "top" | "bottom";
 }
 
 const dropdownMenuItemClasses = cn(
@@ -14,10 +15,16 @@ const dropdownMenuContentClasses = cn(
 	"DropdownMenuContent min-w-xl w-full min-w-40 bg-neutral-900 p-1.5 shadow-sm will-change-transform will-change-[opacity]",
 );
 
-export function Dropdown({ children, trigger }: DropdownProps) {
+export function Dropdown({ children, trigger, side = "left" }: DropdownProps) {
 	return (
 		<DropdownMenu.Root>
-			<DropdownMenu.Trigger asChild>
+			<DropdownMenu.Trigger
+				asChild
+				onClick={(e) => {
+					e.stopPropagation();
+					e.preventDefault();
+				}}
+			>
 				<button
 					type="button"
 					className={cn(
@@ -25,7 +32,6 @@ export function Dropdown({ children, trigger }: DropdownProps) {
 						"items-center",
 						"justify-center",
 						"outline-none",
-						"active:-translate-x-[1px] active:translate-y-[1px]",
 					)}
 				>
 					{trigger}
@@ -33,7 +39,7 @@ export function Dropdown({ children, trigger }: DropdownProps) {
 			</DropdownMenu.Trigger>
 			<DropdownMenu.Portal>
 				<DropdownMenu.Content
-					side="left"
+					side={side}
 					className={cn(dropdownMenuContentClasses)}
 					sideOffset={10}
 				>

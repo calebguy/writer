@@ -1,6 +1,5 @@
 import { entryToJsonSafe, writerToJsonSafe } from "db";
 import { Hono } from "hono";
-import { serveStatic } from "hono/bun";
 import { cors } from "hono/cors";
 import { randomBytes } from "node:crypto";
 import { computeWriterAddress, computeWriterStorageAddress } from "utils";
@@ -33,9 +32,6 @@ import { syndicate } from "./syndicate";
 
 const app = new Hono();
 
-// @note split out the frontend build from the server
-app.use("*", serveStatic({ root: "../ui/dist" }));
-app.use("*", serveStatic({ path: "../ui/dist/index.html" }));
 app.use("*", cors());
 
 const api = app
@@ -143,6 +139,23 @@ const api = app
 		});
 		const writer = writerToJsonSafe(data[0]);
 		return c.json({ writer }, 201);
+	})
+	.delete("/writer/:address", addressParamSchema, async (c) => {
+		const { address } = c.req.valid("param");
+		const writer = await db.getWriter(address);
+		if (!writer) {
+			return c.json({ error: "writer not found" }, 404);
+		}
+		await db.deleteWriter(address);
+		return c.json(
+			{
+				writer: {
+					...writerToJsonSafe(writer),
+					entries: writer.entries.map(entryToJsonSafe),
+				},
+			},
+			200,
+		);
 	})
 	.post(
 		"/writer/:address/entry/createWithChunk",
