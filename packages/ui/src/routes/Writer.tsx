@@ -11,6 +11,7 @@ import { POLLING_INTERVAL } from "../constants";
 import { WriterContext } from "../context";
 import type { BlockCreateInput } from "../interfaces";
 import { type Entry, createWithChunk, getWriter } from "../utils/api";
+import { cn } from "../utils/cn";
 import { useFirstWallet } from "../utils/hooks";
 import { getDerivedSigningKey, signCreateWithChunk } from "../utils/signer";
 import { compress, encrypt, processEntry } from "../utils/utils";
@@ -64,16 +65,10 @@ export function Writer() {
 					const publicEntries = data.entries.filter(
 						(e) => !e.raw?.startsWith("enc:"),
 					);
-					console.log(publicEntries);
 					for (const entry of publicEntries) {
 						processedEntries.push(entry);
 					}
 				}
-
-				// for (const entry of data.entries) {
-				// 	const processed = await processEntry(key, entry);
-				// 	processedEntries.push(processed);
-				// }
 				setProcessedData(processedEntries);
 			}
 		};
@@ -144,11 +139,14 @@ export function Writer() {
 				)}
 				{!isExpanded &&
 					processedData.map((entry) => {
-						let id: undefined | string = undefined;
+						let createdAt: undefined | string = undefined;
 						if (entry.createdAtBlockDatetime) {
-							id = format(new Date(entry.createdAtBlockDatetime), "MM-dd-yyyy");
+							createdAt = format(
+								new Date(entry.createdAtBlockDatetime),
+								"MM-dd-yyyy",
+							);
 						} else {
-							id = format(new Date(entry.createdAt), "MM/dd/yyyy");
+							createdAt = format(new Date(entry.createdAt), "MM/dd/yyyy");
 						}
 
 						return (
@@ -157,11 +155,23 @@ export function Writer() {
 								href={`/writer/${data?.address}/${entry.onChainId}`}
 								isLoading={!entry.onChainId}
 								title={entry.decompressed ? entry.decompressed : entry.raw}
-								id={id}
-								bottomRight={
-									entry.version?.startsWith("enc") ? (
-										<Lock className="h-3.5 w-3.5 text-neutral-600" />
-									) : null
+								bottom={
+									<div
+										className={cn(
+											"flex items-end text-neutral-600 text-sm leading-3 pt-2",
+											{
+												"justify-between": entry.version?.startsWith("enc"),
+												"justify-end": !entry.version?.startsWith("enc"),
+											},
+										)}
+									>
+										{entry.version?.startsWith("enc") && (
+											<span>
+												<Lock className="h-3.5 w-3.5 text-neutral-600" />
+											</span>
+										)}
+										<span>{createdAt}</span>
+									</div>
 								}
 							/>
 						);

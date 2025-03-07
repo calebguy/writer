@@ -147,7 +147,15 @@ const api = app
 			return c.json({ error: "writer not found" }, 404);
 		}
 		await db.deleteWriter(address);
-		return c.json({ writer }, 200);
+		return c.json(
+			{
+				writer: {
+					...writerToJsonSafe(writer),
+					entries: writer.entries.map(entryToJsonSafe),
+				},
+			},
+			200,
+		);
 	})
 	.post(
 		"/writer/:address/entry/createWithChunk",

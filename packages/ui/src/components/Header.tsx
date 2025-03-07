@@ -43,24 +43,25 @@ export function Header() {
 		<div className="flex mb-10 header">
 			<div className="flex justify-between items-center w-full">
 				<div className="flex items-end gap-2">
-					<Link
-						to={to}
-						className={cn(
-							"text-3xl active:-translate-x-[1px] active:translate-y-[1px] transition-colors",
-							{
-								"text-primary": isLoggedIn,
-								"text-secondary": !isLoggedIn,
-							},
-						)}
-						style={{ overflowWrap: "anywhere" }}
-					>
-						<div className="flex items-center gap-2 italic">
-							{(writer || id) && location.pathname !== "/" && (
+					<div className="flex items-center gap-2 italic">
+						{(writer || id) && location.pathname !== "/" && (
+							<Link
+								to={to}
+								className={cn("text-3xl transition-colors", {
+									"text-primary": isLoggedIn,
+									"text-secondary": !isLoggedIn,
+								})}
+								style={{ overflowWrap: "anywhere" }}
+							>
 								<Arrow className="w-6 h-6 -rotate-[135deg]" />
-							)}
-							{!id && <MD>{title}</MD>}
-						</div>
-					</Link>
+							</Link>
+						)}
+						{!id && (
+							<MD className="text-3xl transition-colors text-primary">
+								{title}
+							</MD>
+						)}
+					</div>
 				</div>
 				{!authenticated && (
 					<Button
