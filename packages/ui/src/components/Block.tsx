@@ -31,11 +31,7 @@ export default function Block({
 		return (
 			<div className="p-2 flex flex-col grow h-1 relative">
 				<MD className="grow">{title}</MD>
-				{isLoading && (
-					<div>
-						<span>...</span>
-					</div>
-				)}
+				{isLoading && <div className="text-center text-neutral-600">...</div>}
 				{!isLoading && bottom}
 			</div>
 		);
