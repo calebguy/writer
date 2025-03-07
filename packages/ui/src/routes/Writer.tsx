@@ -117,7 +117,9 @@ export function Writer() {
 	return (
 		<>
 			<Helmet>
-				<title>Writer | {address}</title>
+				<title>
+					Writer {data?.title ? `| ${data?.title.replace("#", "")}` : ""}
+				</title>
 				<meta property="og:title" content={`Writer | ${address}`} />
 			</Helmet>
 			<div
