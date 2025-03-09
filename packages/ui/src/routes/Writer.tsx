@@ -141,14 +141,15 @@ export function Writer() {
 				)}
 				{!isExpanded &&
 					processedData.map((entry) => {
+						const dateFmt = "MMM do, yyyy";
 						let createdAt: undefined | string = undefined;
 						if (entry.createdAtBlockDatetime) {
 							createdAt = format(
 								new Date(entry.createdAtBlockDatetime),
-								"MM-dd-yyyy",
+								dateFmt,
 							);
 						} else {
-							createdAt = format(new Date(entry.createdAt), "MM/dd/yyyy");
+							createdAt = format(new Date(entry.createdAt), dateFmt);
 						}
 
 						return (
