@@ -1,6 +1,8 @@
 # Use the official Bun 1.2.0 image
 FROM oven/bun:1.2.0
 
+EXPOSE 3000
+
 # Copy all files to the container
 COPY . .
 
