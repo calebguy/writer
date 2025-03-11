@@ -11,3 +11,4 @@ RUN bun install
 
 # Set the default command
 CMD ["bun", "run", "ponder:prod:start"]
+
