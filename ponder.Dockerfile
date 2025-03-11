@@ -8,4 +8,4 @@ COPY . .
 RUN bun install
 
 # Set the default command
-CMD ["bun", "run", "ponder:start"]
+CMD ["bun", "run", "ponder:prod:start"]

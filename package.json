@@ -14,6 +14,7 @@
 		"dev": "bun --filter 'db' dev & bun --filter 'server' dev & bun --filter 'ponder' dev & bun --filter 'ui' dev",
 		"format": "bunx @biomejs/biome format --write .",
 		"ponder:start": "bun --filter 'ponder' start",
+		"ponder:prod:start": "bun --filter 'ponder' prod:start",
 		"db:migrate": "bun --filter 'db' migrate",
 		"server:install": "bun --filter 'server' install",
 		"server:start": "bun --filter 'server' start"
