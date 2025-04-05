@@ -16,7 +16,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 			{isLoggedIn && <AuthedHeader />}
 			<div className="relative grow flex flex-col">{children}</div>
 			{isLoggedIn && (
-				<div className="mt-4">
+				<div className="mt-4 md:block hidden">
 					<Footer />
 				</div>
 			)}
