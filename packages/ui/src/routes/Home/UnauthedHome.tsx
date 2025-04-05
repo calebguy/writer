@@ -12,7 +12,7 @@ export default function UnauthedHome() {
 					className="bg-neutral-900 text-primary px-4 py-2"
 					onClick={() => login()}
 				>
-					Login
+					Open
 				</button>
 			</div>
 		</div>

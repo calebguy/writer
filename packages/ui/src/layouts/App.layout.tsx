@@ -15,9 +15,11 @@ export function AppLayout({ children }: AppLayoutProps) {
 		<BlankLayout>
 			{isLoggedIn && <AuthedHeader />}
 			<div className="relative grow flex flex-col">{children}</div>
-			<div className="mt-4">
-				<Footer />
-			</div>
+			{isLoggedIn && (
+				<div className="mt-4">
+					<Footer />
+				</div>
+			)}
 		</BlankLayout>
 	);
 }
