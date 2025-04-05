@@ -3,15 +3,19 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useContext, useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet";
 import type { Hex } from "viem";
-import Block from "../components/Block";
-import BlockForm from "../components/BlockForm";
-import { ClosedEye } from "../components/icons/ClosedEye";
-import { POLLING_INTERVAL } from "../constants";
-import { WriterContext } from "../context";
-import type { BlockCreateInput } from "../interfaces";
-import { deleteWriter, factoryCreate, getWritersByManager } from "../utils/api";
+import Block from "../../components/Block";
+import BlockForm from "../../components/BlockForm";
+import { ClosedEye } from "../../components/icons/ClosedEye";
+import { POLLING_INTERVAL } from "../../constants";
+import { WriterContext } from "../../context";
+import type { BlockCreateInput } from "../../interfaces";
+import {
+	deleteWriter,
+	factoryCreate,
+	getWritersByManager,
+} from "../../utils/api";
 
-function Home() {
+function AuthedHome() {
 	const { wallets } = useWallets();
 	const wallet = wallets[0];
 	const address = wallet?.address;
@@ -119,4 +123,4 @@ function Home() {
 	);
 }
 
-export default Home;
+export default AuthedHome;
