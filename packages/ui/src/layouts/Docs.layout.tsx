@@ -1,10 +1,11 @@
 import { type To, useLocation } from "react-router-dom";
 import { DocsHeader } from "../components/Header/DocsHeader";
 import { cn } from "../utils/cn";
+import { BaseLayout } from "./Base";
 
 export function DocsLayout({ children }: { children: React.ReactNode }) {
 	return (
-		<div className="grow flex flex-col pt-8 pb-2 px-8">
+		<BaseLayout>
 			<DocsHeader />
 			<div className="flex grow mt-4">
 				<div className="flex grow">
@@ -12,7 +13,7 @@ export function DocsLayout({ children }: { children: React.ReactNode }) {
 					{children}
 				</div>
 			</div>
-		</div>
+		</BaseLayout>
 	);
 }
 

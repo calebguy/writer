@@ -10,7 +10,7 @@ import {
 } from "./context.ts";
 import ErrorPage from "./error-page.tsx";
 import { AppLayout } from "./layouts/App.layout.tsx";
-import { BlankLayout } from "./layouts/Blank.layout.tsx";
+import { BaseLayout } from "./layouts/Base.tsx";
 import { DocsLayout } from "./layouts/Docs.layout.tsx";
 import { Docs } from "./routes/Docs/Docs.tsx";
 import Entry from "./routes/Entry.tsx";
@@ -50,9 +50,9 @@ const router = createBrowserRouter([
 			</DocsLayout>
 		),
 		errorElement: (
-			<BlankLayout>
+			<BaseLayout>
 				<ErrorPage />
-			</BlankLayout>
+			</BaseLayout>
 		),
 	},
 ]);
