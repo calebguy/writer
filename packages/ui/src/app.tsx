@@ -15,6 +15,7 @@ import { DocsLayout } from "./layouts/Docs.layout.tsx";
 import { Docs } from "./routes/Docs/Docs.tsx";
 import Entry from "./routes/Entry.tsx";
 import Home from "./routes/Home/Home.tsx";
+import Index from "./routes/Index.tsx";
 import { Writer } from "./routes/Writer.tsx";
 import {
 	RGBToHex,
@@ -42,6 +43,7 @@ const router = createBrowserRouter([
 	getRouteWithErrorBoundry("/", <Home />),
 	getRouteWithErrorBoundry("/writer/:address", <Writer />),
 	getRouteWithErrorBoundry("/writer/:address/:id", <Entry />),
+	getRouteWithErrorBoundry("/index", <Index />),
 	{
 		path: "/docs",
 		element: (
