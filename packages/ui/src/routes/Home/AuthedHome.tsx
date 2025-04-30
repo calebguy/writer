@@ -76,7 +76,7 @@ function AuthedHome() {
 					}}
 				>
 					<BlockForm
-						placeholder="Create a Writer"
+						placeholder="Create a Place (for writing)"
 						isLoading={isPending}
 						onSubmit={handleSubmit}
 					/>
