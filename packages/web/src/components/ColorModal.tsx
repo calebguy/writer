@@ -1,18 +1,19 @@
 "use client";
 
+import { setColor as setColorApi } from "@/utils/api";
+import { WriterContext } from "@/utils/context";
+import { useFirstWallet } from "@/utils/hooks";
+import { signSetColor } from "@/utils/signer";
 import { useMutation } from "@tanstack/react-query";
+import { VisuallyHidden } from "radix-ui";
 import { useContext, useEffect, useState } from "react";
 import { type RgbColor, RgbColorPicker } from "react-colorful";
-import { WriterContext } from "../context";
-import { setColor as setColorApi } from "../utils/api";
-import { useFirstWallet } from "../utils/hooks";
-import { signSetColor } from "../utils/signer";
 import {
 	RGBToHex,
 	hexColorToBytes32,
 	setPrimaryAndSecondaryCSSVariables,
 } from "../utils/utils";
-import { Modal } from "./Modal";
+import { Modal, ModalDescription, ModalTitle } from "./Modal";
 import { Blob } from "./icons/Blob";
 import { Save } from "./icons/Save";
 import { Undo } from "./icons/Undo";
@@ -61,10 +62,10 @@ export function ColorModal({ open, onClose }: ModalProps) {
 				onClose();
 			}}
 		>
-			{/* <VisuallyHidden.Root>
+			<VisuallyHidden.Root>
 				<ModalTitle>Set Color</ModalTitle>
 				<ModalDescription>Set the color</ModalDescription>
-			</VisuallyHidden.Root> */}
+			</VisuallyHidden.Root>
 			<div className="flex items-center justify-center py-4">
 				<RgbColorPicker
 					className="!border-primary !border-dashed !border"

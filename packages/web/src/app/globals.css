@@ -1,0 +1,360 @@
+@import 'tailwindcss';
+
+/* 
+  Highlight.js Code Styling 
+  Themes found here: https://github.com/highlightjs/highlight.js/tree/main/src/styles
+*/
+/* @import 'highlight.js/styles/github-dark.css'; */
+@import 'highlight.js/styles/base16/tomorrow-night.css';
+
+@theme {
+  --color-primary: 255 255 255;
+  --color-secondary: 125 125 125;
+}
+
+@layer base {
+  :root {
+    font-family: "LTRemark";
+    line-height: 1.5;
+    font-weight: 400;
+
+    color: rgba(255, 255, 255, 0.87);
+    background-color: var(--color-neutral-800);
+
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+::selection {
+  background-color: rgb(var(--color-secondary));
+  color: rgb(var(--color-primary));
+}
+
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+html,
+body,
+#root {
+  min-height: 100dvh;
+  margin: 0;
+}
+
+#privy-dialog-backdrop {
+  display: none;
+}
+
+/* #headlessui-dialog-panel-\:r3\:,
+#privy-modal-content {
+  box-shadow: none;
+} */
+
+
+.break-anywhere {
+  overflow-wrap: anywhere;
+}
+
+.header {
+  img {
+    max-width: 100px;
+    display: inline-block;
+  }
+}
+
+/* // Markdown reader & editor */
+.mdxeditor {
+  /* border: 1px solid red; */
+
+  /* Remove outline from editable markdown elements */
+  [aria-label="editable markdown"] {
+    outline: none;
+  }
+
+  .prose {
+    outline: none;
+    font-family: "LTRemark";
+    padding: 0;
+
+    h1 {
+      font-size: 2rem;
+      line-height: 1.2;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      line-height: 1.2;
+    }
+
+    h3 {
+      font-size: 1.25rem;
+      line-height: 1.2;
+    }
+  }
+}
+
+
+/* // Radix UI Dropdown */
+.DropdownMenuContent {
+  animation-duration: 200ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 50;
+}
+
+/* Prevent layout shifts when dropdown is open */
+/* body[data-radix-dropdown-menu-root] {
+  overflow: auto !important;
+} */
+
+.DropdownMenuContent[data-side="top"],
+.DropdownMenuSubContent[data-side="top"] {
+  animation-name: slideDownAndFade;
+}
+
+.DropdownMenuContent[data-side="right"],
+.DropdownMenuSubContent[data-side="right"] {
+  animation-name: slideLeftAndFade;
+}
+
+.DropdownMenuContent[data-side="bottom"],
+.DropdownMenuSubContent[data-side="bottom"] {
+  animation-name: slideUpAndFade;
+}
+
+.DropdownMenuContent[data-side="left"],
+.DropdownMenuSubContent[data-side="left"] {
+  animation-name: slideRightAndFade;
+}
+
+/* // Color Picker */
+.react-colorful {
+  width: 225px !important;
+  height: 225px !important;
+}
+
+.react-colorful__saturation {
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+}
+
+.react-colorful__hue {
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+.rotating {
+  -webkit-animation: rotating 0.95s linear infinite;
+  -moz-animation: rotating 0.95s linear infinite;
+  -ms-animation: rotating 0.95s linear infinite;
+  -o-animation: rotating 0.95s linear infinite;
+  animation: rotating 0.95s linear infinite;
+}
+
+/* // Animations */
+@keyframes slideUpAndFade {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideRightAndFade {
+  from {
+    opacity: 0;
+    transform: translateX(-2px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideDownAndFade {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideLeftAndFade {
+  from {
+    opacity: 0;
+    transform: translateX(2px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes contentShow {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@-webkit-keyframes rotating
+
+/* Safari and Chrome */
+  {
+  from {
+    -webkit-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+
+  to {
+    -webkit-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes rotating {
+  from {
+    -ms-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    -webkit-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+
+  to {
+    -ms-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+/* // LTRemark */
+@font-face {
+  font-family: 'LTRemark';
+  src: url('/fonts/lt-remark/LTRemark-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'LTRemark';
+  src: url('/fonts/lt-remark/LTRemark-Italic.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'LTRemark';
+  src: url('/fonts/lt-remark/LTRemark-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'LTRemark';
+  src: url('/fonts/lt-remark/LTRemark-BoldItalic.woff2') format('woff2');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'LTRemark';
+  src: url('/fonts/lt-remark/LTRemark-Black.woff2') format('woff2');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'LTRemark';
+  src: url('/fonts/lt-remark/LTRemark-BlackItalic.woff2') format('woff2');
+  font-weight: 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* // BasicallyAMono */
+@font-face {
+  font-family: 'BasicallyAMono';
+  src: url('/fonts/basically-a-mono/BasicallyAMono-Thin.woff2') format('woff2');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BasicallyAMono';
+  src: url('/fonts/basically-a-mono/BasicallyAMono-ExtraLight.woff2') format('woff2');
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BasicallyAMono';
+  src: url('/fonts/basically-a-mono/BasicallyAMono-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BasicallyAMono';
+  src: url('/fonts/basically-a-mono/BasicallyAMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BasicallyAMono';
+  src: url('/fonts/basically-a-mono/BasicallyAMono-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BasicallyAMono';
+  src: url('/fonts/basically-a-mono/BasicallyAMono-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BasicallyAMono';
+  src: url('/fonts/basically-a-mono/BasicallyAMono-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
