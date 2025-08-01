@@ -15,7 +15,7 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 			<body>
-				<div className="antialiased grow flex flex-col px-4 md:px-8 pt-4 md:pt-8 pb-2">
+				<div className="antialiased w-full grow flex flex-col px-4 md:px-8 pt-4 md:pt-8 pb-2">
 					<Providers>{children}</Providers>
 				</div>
 			</body>

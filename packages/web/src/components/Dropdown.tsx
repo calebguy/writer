@@ -15,10 +15,14 @@ const dropdownMenuItemClasses = cn(
 );
 
 const dropdownMenuContentClasses = cn(
-	"min-w-40 bg-neutral-900 p-1.5 shadow-sm border border-neutral-800",
+	"min-w-24 bg-neutral-900 p-1.5 shadow-sm border border-neutral-800",
 );
 
-export function Dropdown({ children, trigger, side = "left" }: DropdownProps) {
+export function Dropdown({
+	children,
+	trigger,
+	side = "bottom",
+}: DropdownProps) {
 	const [mounted, setMounted] = useState(false);
 
 	useEffect(() => {
@@ -36,12 +40,7 @@ export function Dropdown({ children, trigger, side = "left" }: DropdownProps) {
 			>
 				<button
 					type="button"
-					className={cn(
-						"inline-flex",
-						"items-center",
-						"justify-center",
-						"outline-none",
-					)}
+					className="inline-flex items-center justify-center outline-none cursor-pointer"
 				>
 					{trigger}
 				</button>
@@ -52,9 +51,9 @@ export function Dropdown({ children, trigger, side = "left" }: DropdownProps) {
 						side={side}
 						align="start"
 						className={cn(dropdownMenuContentClasses)}
-						sideOffset={8}
-						alignOffset={0}
-						collisionPadding={8}
+						sideOffset={10}
+						// alignOffset={10}
+						collisionPadding={28}
 						onCloseAutoFocus={(e) => e.preventDefault()}
 					>
 						{children}

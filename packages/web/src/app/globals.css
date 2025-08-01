@@ -33,13 +33,6 @@
   color: rgb(var(--color-primary));
 }
 
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-}
 
 html,
 body,
@@ -48,14 +41,24 @@ body,
   margin: 0;
 }
 
-#privy-dialog-backdrop {
-  display: none;
+body {
+  display: flex;
 }
 
-/* #headlessui-dialog-panel-\:r3\:,
+/* #privy-dialog {
+  display: none;
+} */
+
+#privy-dialog {
+  div {
+    box-shadow: none !important;
+  }
+}
+
+#headlessui-dialog-panel-\:r3\:,
 #privy-modal-content {
   box-shadow: none;
-} */
+}
 
 
 .break-anywhere {
