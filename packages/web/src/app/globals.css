@@ -45,10 +45,6 @@ body {
   display: flex;
 }
 
-/* #privy-dialog {
-  display: none;
-} */
-
 #privy-dialog {
   div {
     box-shadow: none !important;
@@ -58,6 +54,10 @@ body {
 #headlessui-dialog-panel-\:r3\:,
 #privy-modal-content {
   box-shadow: none;
+}
+
+.mdxeditor-popup-container {
+  display: none;
 }
 
 
