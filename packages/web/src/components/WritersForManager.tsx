@@ -47,7 +47,7 @@ export function WritersForManager({
 			{authedUserAddress && <CreateWriterInput />} */}
 			{authedUserAddress && (
 				<div className="grow flex flex-col">
-					<MDX markdown="Create a Place" />
+					<MDX markdown="Create a [Place](https://www.google.com)" />
 				</div>
 			)}
 			{/* {writers?.map((writer) => (

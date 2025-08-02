@@ -12,6 +12,10 @@ import {
 	withLatestFrom,
 } from "@mdxeditor/editor";
 import * as Popover from "@radix-ui/react-popover";
+import { BsTrash3Fill } from "react-icons/bs";
+import { IoMdClose } from "react-icons/io";
+import { IoCopy } from "react-icons/io5";
+import { MdEdit } from "react-icons/md";
 import { LinkDialog } from "../components/LinkDialog";
 
 const closeLinkDialog$ = Action((r) => {
@@ -77,54 +81,59 @@ const LinkPreview: React.FC<{ url: string }> = ({ url }) => {
 
 	return (
 		<div className="w-64 max-w-md p-2 shadow-xl bg-neutral-900 relative">
-			<div className="space-y-4">
-				<div className="bg-neutral-800 px-2 py-1 overflow-x-auto">
-					<a
-						href={url}
-						target="_blank"
-						rel="noopener noreferrer"
-						className="break-keep text-secondary hover:underline whitespace-nowrap"
-					>
-						{url}
-					</a>
-				</div>
+			<div className="bg-neutral-800 pr-1 pt-1 pb-1 pl-0.5 overflow-x-auto flex items-center gap-1">
+				<button
+					type="button"
+					className="p-1 cursor-pointer hover:text-lime-700 text-neutral-300"
+					onClick={handleCopyLink}
+				>
+					<IoCopy className="w-3 h-3" />
+				</button>
+				<a
+					href={url}
+					target="_blank"
+					rel="noopener noreferrer"
+					className="break-keep text-secondary hover:underline whitespace-nowrap text-sm leading-3"
+				>
+					{url}
+				</a>
 			</div>
 
-			<div className="mt-6 flex justify-between">
-				<div className="flex space-x-2">
-					<button
-						type="button"
-						onClick={handleCopyLink}
-						className="rounded-md border border-gray-300 bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:border-gray-600 dark:bg-gray-600 dark:text-gray-300 dark:hover:bg-gray-500"
-					>
-						Copy
-					</button>
-					<button
-						type="button"
-						onClick={handleRemoveLink}
-						className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:border-red-600 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
-					>
-						Remove
-					</button>
-				</div>
-				<div className="flex space-x-3">
-					<button
-						type="button"
-						onClick={() => closeLinkDialog()}
-						className="rounded-md border border-gray-300 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:border-gray-600 dark:bg-gray-600 dark:text-gray-300 dark:hover:bg-gray-500"
-					>
-						Close
-					</button>
-					<button
-						type="button"
-						onClick={() => switchFromPreviewToLinkEdit()}
-						className="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-					>
-						Edit
-					</button>
-				</div>
+			<div className="flex justify-between items-center mt-2">
+				<LinkButton
+					onClick={handleRemoveLink}
+					className="hover:bg-red-900! hover:text-red-300!"
+				>
+					<BsTrash3Fill />
+				</LinkButton>
+
+				<LinkButton onClick={closeLinkDialog}>
+					<IoMdClose />
+				</LinkButton>
+				<LinkButton onClick={switchFromPreviewToLinkEdit}>
+					<MdEdit />
+				</LinkButton>
 			</div>
 		</div>
+	);
+};
+
+const LinkButton: React.FC<{
+	children: React.ReactNode;
+	onClick: () => void;
+	className?: string;
+}> = ({ children, onClick, className }) => {
+	return (
+		<button
+			type="button"
+			onClick={onClick}
+			className={cn(
+				"bg-neutral-900 p-1.5 text-xs font-medium hover:bg-neutral-800 focus:outline-none cursor-pointer leading-[1px]",
+				className,
+			)}
+		>
+			{children}
+		</button>
 	);
 };
 
@@ -169,6 +178,7 @@ const CustomLinkDialogComponent: React.FC = () => {
 	);
 };
 
+import { cn } from "@/utils/cn";
 import { realmPlugin } from "@mdxeditor/editor";
 
 export const customLinkDialogPlugin = realmPlugin({
