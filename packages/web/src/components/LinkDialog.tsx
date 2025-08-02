@@ -78,6 +78,7 @@ export const LinkDialog: React.FC<LinkDialogProps> = ({
 						URL
 					</label>
 					<input
+						autoFocus={true}
 						id="url"
 						type="url"
 						value={linkUrl}
@@ -85,7 +86,6 @@ export const LinkDialog: React.FC<LinkDialogProps> = ({
 						onKeyDown={handleKeyDown}
 						className="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
 						placeholder="https://example.com"
-						autoFocus={true}
 					/>
 				</div>
 

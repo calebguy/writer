@@ -1,11 +1,11 @@
 "use client";
 
-import { Blob } from "@/components/icons/Blob";
 import { cn } from "@/utils/cn";
 import { usePrivy } from "@privy-io/react-auth";
 import { useState } from "react";
 import { ColorModal } from "./ColorModal";
 import { Dropdown, DropdownItem } from "./Dropdown";
+import { Logo } from "./icons/Logo";
 
 export function Header() {
 	const { ready, authenticated, logout } = usePrivy();
@@ -19,7 +19,13 @@ export function Header() {
 			</div>
 			<Dropdown
 				trigger={
-					<Blob
+					// <Blob
+					// 	className={cn("h-8 transition-colors", {
+					// 		"text-primary": isLoggedIn,
+					// 		"text-secondary": !isLoggedIn,
+					// 	})}
+					// />
+					<Logo
 						className={cn("h-8 transition-colors", {
 							"text-primary": isLoggedIn,
 							"text-secondary": !isLoggedIn,

@@ -42,7 +42,7 @@ const MDX: FC<EditorProps> = ({ markdown, ref, onChange, className }) => {
 			ref={ref}
 			markdown={markdown}
 			className={cn(
-				"border border-neutral-900 aspect-square min-w-24",
+				"border p-2 border-neutral-900 aspect-square min-w-24 relative",
 				className,
 			)}
 			contentEditableClassName="prose"

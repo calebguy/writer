@@ -2,6 +2,7 @@ import {
 	Action,
 	addComposerChild$,
 	cancelLinkEdit$,
+	editorRootElementRef$,
 	linkDialogState$,
 	removeLink$,
 	switchFromPreviewToLinkEdit$,
@@ -75,42 +76,14 @@ const LinkPreview: React.FC<{ url: string }> = ({ url }) => {
 	};
 
 	return (
-		<div className="w-96 max-w-md rounded-lg border border-neutral-900 bg-white p-6 shadow-xl dark:bg-gray-800">
-			<div className="mb-4 flex items-center justify-between">
-				<h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-					Link Preview
-				</h3>
-				<button
-					type="button"
-					onClick={() => closeLinkDialog()}
-					className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-					aria-label="Close dialog"
-				>
-					<svg
-						className="h-5 w-5"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-						aria-hidden="true"
-					>
-						<path
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							strokeWidth={2}
-							d="M6 18L18 6M6 6l12 12"
-						/>
-					</svg>
-				</button>
-			</div>
-
+		<div className="w-64 max-w-md p-2 shadow-xl bg-neutral-900 relative">
 			<div className="space-y-4">
-				<div className="rounded-md bg-gray-50 p-3 dark:bg-gray-700">
-					<p className="mb-2 text-sm text-gray-600 dark:text-gray-400">Link:</p>
+				<div className="bg-neutral-800 px-2 py-1 overflow-x-auto">
 					<a
 						href={url}
 						target="_blank"
 						rel="noopener noreferrer"
-						className="break-all text-blue-600 hover:underline dark:text-blue-400"
+						className="break-keep text-secondary hover:underline whitespace-nowrap"
 					>
 						{url}
 					</a>
@@ -156,7 +129,10 @@ const LinkPreview: React.FC<{ url: string }> = ({ url }) => {
 };
 
 const CustomLinkDialogComponent: React.FC = () => {
-	const [linkDialogState] = useCellValues(linkDialogState$);
+	const [linkDialogState, editorRootElementRef] = useCellValues(
+		linkDialogState$,
+		editorRootElementRef$,
+	);
 
 	if (linkDialogState.type === "inactive") {
 		return null;
@@ -171,7 +147,7 @@ const CustomLinkDialogComponent: React.FC = () => {
 					onOpenAutoFocus={(e) => e.preventDefault()}
 					onCloseAutoFocus={(e) => e.preventDefault()}
 					style={{
-						position: "fixed",
+						position: "absolute",
 						top: `${
 							linkDialogState.rectangle.top +
 							linkDialogState.rectangle.height +

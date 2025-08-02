@@ -15,6 +15,7 @@ import {
 } from "../utils/utils";
 import { Modal, ModalDescription, ModalTitle } from "./Modal";
 import { Blob } from "./icons/Blob";
+import { Logo } from "./icons/Logo";
 import { Save } from "./icons/Save";
 import { Undo } from "./icons/Undo";
 interface ModalProps {
@@ -76,7 +77,7 @@ export function ColorModal({ open, onClose }: ModalProps) {
 					}}
 				/>
 				<div className="flex flex-col items-center justify-center ml-6">
-					<Blob className="w-44 h-44 text-primary" />
+					<Logo className="w-44 h-44 text-primary" />
 				</div>
 			</div>
 			<div className="flex items-center justify-center gap-2">
