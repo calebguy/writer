@@ -126,6 +126,16 @@ ol li::marker {
   }
 }
 
+/* Hide scrollbars for specific elements */
+.scrollbar-none {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
 ::selection {
   background-color: rgb(var(--color-secondary));
   color: rgb(var(--color-primary));

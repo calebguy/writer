@@ -15,7 +15,7 @@ import * as Popover from "@radix-ui/react-popover";
 import { BsTrash3Fill } from "react-icons/bs";
 import { FaCheck } from "react-icons/fa6";
 import { MdEdit } from "react-icons/md";
-import { LinkDialog } from "../components/LinkDialog";
+import { LinkEdit } from "../components/LinkEdit";
 
 const closeLinkDialog$ = Action((r) => {
 	r.sub(
@@ -36,10 +36,10 @@ const LinkEditForm: React.FC<{ initialUrl: string | undefined }> = ({
 	const updateLink = usePublisher(updateLink$);
 	const cancelLinkEdit = usePublisher(cancelLinkEdit$);
 
-	const handleSave = (url: string, title: string) => {
+	const handleSave = (url: string) => {
 		updateLink({
-			title: title || "",
 			url: url,
+			title: undefined,
 		});
 	};
 
@@ -48,7 +48,7 @@ const LinkEditForm: React.FC<{ initialUrl: string | undefined }> = ({
 	};
 
 	return (
-		<LinkDialog
+		<LinkEdit
 			url={initialUrl || ""}
 			title=""
 			onSave={handleSave}
@@ -64,15 +64,6 @@ const LinkPreview: React.FC<{ url: string }> = ({ url }) => {
 	const closeLinkDialog = usePublisher(closeLinkDialog$);
 	const removeLink = usePublisher(removeLink$);
 
-	const handleCopyLink = async () => {
-		try {
-			await navigator.clipboard.writeText(url);
-			// You could add a toast notification here if you have a toast system
-		} catch (err) {
-			console.error("Failed to copy link:", err);
-		}
-	};
-
 	const handleRemoveLink = () => {
 		removeLink();
 		closeLinkDialog();
@@ -80,12 +71,12 @@ const LinkPreview: React.FC<{ url: string }> = ({ url }) => {
 
 	return (
 		<div className="w-64 max-w-md p-2 shadow-xl bg-neutral-900 relative flex flex-col gap-2">
-			<div className="bg-neutral-800 pr-1 pt-1 pb-1 pl-0.5 overflow-x-auto flex items-center gap-1 relative">
+			<div className="bg-neutral-800 p-2 overflow-x-auto flex items-center gap-1 scrollbar-none">
 				<a
 					href={url}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="break-keep text-secondary hover:underline whitespace-nowrap text-sm leading-3"
+					className="break-keep text-secondary hover:underline whitespace-nowrap text-sm leading-3 flex-1"
 				>
 					{url}
 				</a>
@@ -111,25 +102,6 @@ const LinkPreview: React.FC<{ url: string }> = ({ url }) => {
 				</LinkButton>
 			</div>
 		</div>
-	);
-};
-
-const LinkButton: React.FC<{
-	children: React.ReactNode;
-	onClick: () => void;
-	className?: string;
-}> = ({ children, onClick, className }) => {
-	return (
-		<button
-			type="button"
-			onClick={onClick}
-			className={cn(
-				"bg-neutral-900 p-1 text-xs font-medium hover:bg-neutral-800 focus:outline-none cursor-pointer leading-[1px]",
-				className,
-			)}
-		>
-			{children}
-		</button>
 	);
 };
 
@@ -174,8 +146,8 @@ const CustomLinkDialogComponent: React.FC = () => {
 	);
 };
 
-import { cn } from "@/utils/cn";
 import { realmPlugin } from "@mdxeditor/editor";
+import { LinkButton } from "./LinkButton";
 
 export const customLinkDialogPlugin = realmPlugin({
 	init(realm) {
