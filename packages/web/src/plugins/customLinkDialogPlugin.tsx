@@ -13,8 +13,7 @@ import {
 } from "@mdxeditor/editor";
 import * as Popover from "@radix-ui/react-popover";
 import { BsTrash3Fill } from "react-icons/bs";
-import { IoMdClose } from "react-icons/io";
-import { IoCopy } from "react-icons/io5";
+import { FaCheck } from "react-icons/fa6";
 import { MdEdit } from "react-icons/md";
 import { LinkDialog } from "../components/LinkDialog";
 
@@ -80,15 +79,8 @@ const LinkPreview: React.FC<{ url: string }> = ({ url }) => {
 	};
 
 	return (
-		<div className="w-64 max-w-md p-2 shadow-xl bg-neutral-900 relative">
-			<div className="bg-neutral-800 pr-1 pt-1 pb-1 pl-0.5 overflow-x-auto flex items-center gap-1">
-				<button
-					type="button"
-					className="p-1 cursor-pointer hover:text-lime-700 text-neutral-300"
-					onClick={handleCopyLink}
-				>
-					<IoCopy className="w-3 h-3" />
-				</button>
+		<div className="w-64 max-w-md p-2 shadow-xl bg-neutral-900 relative flex flex-col gap-2">
+			<div className="bg-neutral-800 pr-1 pt-1 pb-1 pl-0.5 overflow-x-auto flex items-center gap-1 relative">
 				<a
 					href={url}
 					target="_blank"
@@ -99,19 +91,23 @@ const LinkPreview: React.FC<{ url: string }> = ({ url }) => {
 				</a>
 			</div>
 
-			<div className="flex justify-between items-center mt-2">
+			<div className="flex justify-between items-center">
+				<div className="flex items-center gap-1">
+					<LinkButton
+						onClick={closeLinkDialog}
+						className="hover:bg-green-900! hover:text-green-300!"
+					>
+						<FaCheck className="w-3 h-3" />
+					</LinkButton>
+					<LinkButton onClick={switchFromPreviewToLinkEdit}>
+						<MdEdit className="w-3 h-3" />
+					</LinkButton>
+				</div>
 				<LinkButton
 					onClick={handleRemoveLink}
 					className="hover:bg-red-900! hover:text-red-300!"
 				>
-					<BsTrash3Fill />
-				</LinkButton>
-
-				<LinkButton onClick={closeLinkDialog}>
-					<IoMdClose />
-				</LinkButton>
-				<LinkButton onClick={switchFromPreviewToLinkEdit}>
-					<MdEdit />
+					<BsTrash3Fill className="w-3 h-3" />
 				</LinkButton>
 			</div>
 		</div>
@@ -128,7 +124,7 @@ const LinkButton: React.FC<{
 			type="button"
 			onClick={onClick}
 			className={cn(
-				"bg-neutral-900 p-1.5 text-xs font-medium hover:bg-neutral-800 focus:outline-none cursor-pointer leading-[1px]",
+				"bg-neutral-900 p-1 text-xs font-medium hover:bg-neutral-800 focus:outline-none cursor-pointer leading-[1px]",
 				className,
 			)}
 		>
