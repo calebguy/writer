@@ -89,7 +89,7 @@ export const LinkEdit: React.FC<LinkEditProps> = ({
 					<LinkButton
 						onClick={handleSave}
 						disabled={!canSave}
-						className="hover:bg-green-900! hover:text-green-300! disabled:opacity-50 disabled:cursor-not-allowed"
+						className="hover:bg-green-900! hover:text-green-300! disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-neutral-900! disabled:hover:text-neutral-300!"
 					>
 						<MdSave className="w-3 h-3" />
 					</LinkButton>
