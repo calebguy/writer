@@ -35,10 +35,7 @@ export async function getAuthenticatedUser() {
 
 type UserWithWallet = User & { wallet: Omit<WalletWithMetadata, "type"> };
 export async function requireAuth(): Promise<UserWithWallet> {
-	console.log("requireAuth");
 	const user = await getAuthenticatedUser();
-	console.log(user);
-
 	if (!user) {
 		redirect(Routes.Index);
 	}
@@ -47,9 +44,7 @@ export async function requireAuth(): Promise<UserWithWallet> {
 }
 
 export async function requireGuest() {
-	console.log("requireGuest");
 	const user = await getAuthenticatedUser();
-	console.log("requireGuest", user);
 	if (user) {
 		redirect(Routes.Home);
 	}

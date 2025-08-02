@@ -1,106 +1,29 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
-import { useIsMac } from "@/utils/hooks";
-import { cn } from "@/utils/cn";
+import type { MDXEditorMethods } from "@mdxeditor/editor";
+import dynamic from "next/dynamic";
+import { useEffect, useRef } from "react";
 
-interface CreateWriterInputProps {
-	onSubmit: (title: string) => Promise<unknown>;
-	isLoading?: boolean;
-	placeholder?: string;
-}
+const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 
-export default function CreateWriterInput({
-	onSubmit,
-	isLoading = false,
-	placeholder = "Create a Place",
-}: CreateWriterInputProps) {
-	const [value, setValue] = useState("");
-	const [hasFocus, setHasFocus] = useState(false);
-	const inputRef = useRef<HTMLTextAreaElement>(null);
-	const isMac = useIsMac();
+export default function CreateWriterInput() {
+	const editorRef = useRef<MDXEditorMethods>(null);
 
 	useEffect(() => {
-		const handleKeyDown = (event: KeyboardEvent) => {
-			// Submit on cmd + enter
-			if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
-				event.preventDefault();
-				if (value.trim()) {
-					handleSubmit();
-				}
-			}
-		};
-
-		document.addEventListener("keydown", handleKeyDown);
-		return () => {
-			document.removeEventListener("keydown", handleKeyDown);
-		};
-	}, [value]);
-
-	const handleSubmit = async () => {
-		if (value.trim() && !isLoading) {
-			await onSubmit(value.trim());
-			setValue("");
-			setHasFocus(false);
+		if (editorRef.current) {
+			editorRef.current.focus();
 		}
-	};
-
-	const handleFocus = () => {
-		setHasFocus(true);
-	};
-
-	const handleBlur = () => {
-		setHasFocus(false);
-	};
+	}, []);
 
 	return (
-		<div className="relative w-full h-full">
-			<div
-				className={cn(
-					"w-full h-full border-2 border-dashed border-neutral-700 rounded-lg transition-all duration-200",
-					{
-						"border-primary bg-neutral-900": hasFocus,
-						"hover:border-neutral-600 hover:bg-neutral-900/50": !hasFocus,
-					}
-				)}
-			>
-				<div className="relative w-full h-full p-4">
-					{!hasFocus && !value && (
-						<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-							<div className="text-2xl text-neutral-600">+</div>
-						</div>
-					)}
-					
-					<textarea
-						ref={inputRef}
-						value={value}
-						onChange={(e) => setValue(e.target.value)}
-						onFocus={handleFocus}
-						onBlur={handleBlur}
-						placeholder={hasFocus ? placeholder : ""}
-						className={cn(
-							"w-full h-full bg-transparent text-primary placeholder-neutral-600 resize-none outline-none border-none",
-							{
-								"cursor-text": !hasFocus,
-							}
-						)}
-						disabled={isLoading}
-					/>
-					
-					{hasFocus && (
-						<div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-neutral-600 text-sm text-center">
-							<div>{isMac ? "⌘" : "ctrl"} + ↵</div>
-							<div>to create</div>
-						</div>
-					)}
-				</div>
+		<div className="group aspect-square w-full h-full border border-black hover:cursor-text hover:bg-neutral-900 hover:!border-neutral-900 p-2">
+			<div className="group-hover:hidden w-full h-full flex justify-center items-center text-2xl">
+				+
 			</div>
-			
-			{isLoading && (
-				<div className="absolute inset-0 bg-neutral-900/90 flex items-center justify-center rounded-lg">
-					<div className="text-primary">Creating...</div>
-				</div>
-			)}
+			<div className="hidden group-hover:block w-full h-full text-2xl text-neutral-600">
+				Create a Place
+			</div>
+			<MDX markdown="Create a Place" ref={editorRef} />
 		</div>
 	);
-} 
+}

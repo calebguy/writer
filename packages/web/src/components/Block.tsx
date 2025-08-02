@@ -25,7 +25,7 @@ export default function Block({ title, href, isLoading, bottom }: BlockProps) {
 	const renderChildren = useCallback(() => {
 		return (
 			<div className="p-2 flex flex-col grow h-1 relative">
-				<MDX className="grow" markdown={title ?? ""} />
+				<MDX markdown={title ?? ""} />
 				{isLoading && <div className="text-center text-neutral-600">...</div>}
 				{!isLoading && bottom}
 			</div>

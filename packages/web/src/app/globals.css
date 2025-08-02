@@ -56,11 +56,6 @@ body {
   box-shadow: none;
 }
 
-.mdxeditor-popup-container {
-  display: none;
-}
-
-
 .break-anywhere {
   overflow-wrap: anywhere;
 }
@@ -72,9 +67,24 @@ body {
   }
 }
 
-/* // Markdown reader & editor */
+/* MDX */
+/* .mdxeditor-popup-container {
+  display: none;
+} */
 .mdxeditor {
-  /* border: 1px solid red; */
+  display: flex;
+  flex-direction: column;
+  flex: 1!important;
+
+  .mdxeditor-root-contenteditable {
+    flex: 1; 
+    display: flex;
+    flex-direction: column;
+
+    div {
+      flex: 1;
+    }
+  }
 
   /* Remove outline from editable markdown elements */
   [aria-label="editable markdown"] {
@@ -83,8 +93,19 @@ body {
 
   .prose {
     outline: none;
-    font-family: "LTRemark";
     padding: 0;
+    height: 100%;
+    color: white!important;
+    font-family: "LTRemark";
+
+    .editable:focus {
+      border: 1px solid orange;
+    }
+
+    a {
+      color: rgb(var(--color-primary))!important;
+      text-decoration: underline!important;
+    }
 
     h1 {
       font-size: 2rem;

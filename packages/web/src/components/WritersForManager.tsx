@@ -2,9 +2,9 @@
 
 import { type Writer, deleteWriter, factoryCreate } from "@/utils/api";
 import { useMutation } from "@tanstack/react-query";
-import Block from "./Block";
-import BlockForm from "./BlockForm";
-import { ClosedEye } from "./icons/ClosedEye";
+import dynamic from "next/dynamic";
+
+const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 
 export function WritersForManager({
 	writers,
@@ -31,7 +31,7 @@ export function WritersForManager({
 				gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
 			}}
 		>
-			{authedUserAddress && (
+			{/* {authedUserAddress && (
 				<BlockForm
 					placeholder="Create a Place"
 					isLoading={isPending}
@@ -44,7 +44,13 @@ export function WritersForManager({
 					}}
 				/>
 			)}
-			{writers?.map((writer) => (
+			{authedUserAddress && <CreateWriterInput />} */}
+			{authedUserAddress && (
+				<div className="grow flex flex-col">
+					<MDX markdown="Create a Place" />
+				</div>
+			)}
+			{/* {writers?.map((writer) => (
 				<Block
 					key={writer.address}
 					href={`/writer/${writer.address}`}
@@ -75,7 +81,7 @@ export function WritersForManager({
 						</div>
 					}
 				/>
-			))}
+			))} */}
 		</div>
 	);
 }
