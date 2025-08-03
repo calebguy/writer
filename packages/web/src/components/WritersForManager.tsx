@@ -47,7 +47,33 @@ export function WritersForManager({
 			{authedUserAddress && <CreateWriterInput />} */}
 			{authedUserAddress && (
 				<div className="grow flex flex-col">
-					<MDX markdown="Create a [Place](https://mdxeditor.dev/editor/api/functions/useRemoteMDXEditorRealm)" />
+					<MDX
+						onChange={(mkdwn) => {
+							console.log(mkdwn);
+						}}
+						markdown={`
+Create a [Place](https://mdxeditor.dev/editor/api/functions/useRemoteMDXEditorRealm "Place")
+
+list item
+
+* hello
+* there
+* how
+* are
+* you
+
+1. this is a one
+2. this is a two
+
+
+> block quote right here alrighty
+ 
+\`\`\`js
+code block
+\`\`\`
+
+`}
+					/>
 				</div>
 			)}
 			{/* {writers?.map((writer) => (

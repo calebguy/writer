@@ -6,6 +6,7 @@ import { cn } from "@/utils/cn";
 import {
 	MDXEditor,
 	type MDXEditorMethods,
+	codeBlockPlugin,
 	headingsPlugin,
 	linkPlugin,
 	listsPlugin,
@@ -32,10 +33,11 @@ const MDX: FC<EditorProps> = ({ markdown, ref, onChange, className }) => {
 			plugins={[
 				headingsPlugin(),
 				listsPlugin(),
-				markdownShortcutPlugin(),
 				quotePlugin(),
 				pasteLinkPlugin(),
 				linkPlugin(),
+				codeBlockPlugin(),
+				markdownShortcutPlugin(),
 				customLinkDialogPlugin(),
 			]}
 			onChange={onChange}
