@@ -7,11 +7,13 @@ import {
 	MDXEditor,
 	type MDXEditorMethods,
 	codeBlockPlugin,
+	codeMirrorPlugin,
 	headingsPlugin,
 	linkPlugin,
 	listsPlugin,
 	markdownShortcutPlugin,
 	quotePlugin,
+	toolbarPlugin,
 } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
 import type { FC } from "react";
@@ -31,12 +33,45 @@ const MDX: FC<EditorProps> = ({ markdown, ref, onChange, className }) => {
 	return (
 		<MDXEditor
 			plugins={[
+				// toolbarPlugin({
+				// 	toolbarContents: () => {
+				// 		return <div className="hidden" />;
+				// 	},
+				// }),
 				headingsPlugin(),
 				listsPlugin(),
 				quotePlugin(),
 				pasteLinkPlugin(),
 				linkPlugin(),
-				codeBlockPlugin(),
+				codeBlockPlugin({ defaultCodeBlockLanguage: "js" }),
+				codeMirrorPlugin({
+					codeBlockLanguages: {
+						js: "JavaScript",
+						ts: "TypeScript",
+						jsx: "JavaScript (React)",
+						tsx: "TypeScript (React)",
+						css: "CSS",
+						html: "HTML",
+						json: "JSON",
+						md: "Markdown",
+						sql: "SQL",
+						python: "Python",
+						java: "Java",
+						cpp: "C++",
+						c: "C",
+						php: "PHP",
+						ruby: "Ruby",
+						go: "Go",
+						rust: "Rust",
+						swift: "Swift",
+						kotlin: "Kotlin",
+						scala: "Scala",
+						shell: "Shell",
+						bash: "Bash",
+						yaml: "YAML",
+						xml: "XML",
+					},
+				}),
 				markdownShortcutPlugin(),
 				customLinkDialogPlugin(),
 			]}

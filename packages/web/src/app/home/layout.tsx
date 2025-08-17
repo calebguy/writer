@@ -6,11 +6,11 @@ export default function AuthedLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<div className="flex flex-col">
+		<div className="flex flex-col grow">
 			<div className="mb-4">
 				<Header />
 			</div>
-			<div>{children}</div>
+			<div className="grow flex flex-col">{children}</div>
 		</div>
 	);
 }

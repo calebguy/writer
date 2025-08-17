@@ -189,9 +189,9 @@ body {
     display: flex;
     flex-direction: column;
 
-    div {
-      flex: 1;
-    }
+      /* div {
+        flex: 1;
+      } */
   }
 
 
@@ -417,6 +417,87 @@ body {
     blockquote p:last-child {
       margin-bottom: 0;
     }
+
+    /* Code block styling
+    pre {
+      background-color: var(--color-neutral-900);
+      border: 1px solid var(--color-neutral-700);
+      border-radius: 4px;
+      padding: 1rem;
+      margin: 1rem 0;
+      overflow-x: auto;
+      font-family: "BasicallyAMono", "Monaco", "Menlo", "Ubuntu Mono", monospace;
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+
+    code {
+      background-color: var(--color-neutral-800);
+      color: var(--color-neutral-200);
+      padding: 0.125rem 0.25rem;
+      border-radius: 2px;
+      font-family: "BasicallyAMono", "Monaco", "Menlo", "Ubuntu Mono", monospace;
+      font-size: 0.875rem;
+    }
+
+    pre code {
+      background-color: transparent;
+      padding: 0;
+      color: inherit;
+    } */
+
+    /* CodeMirror editor styling */
+    .cm-editor {
+      background-color: var(--color-neutral-900) !important;
+      border: 1px solid var(--color-neutral-700) !important;
+      border-radius: 4px !important;
+      font-family: "BasicallyAMono", "Monaco", "Menlo", "Ubuntu Mono", monospace !important;
+    }
+
+    .cm-editor .cm-scroller {
+      font-family: "BasicallyAMono", "Monaco", "Menlo", "Ubuntu Mono", monospace !important;
+    }
+
+    .cm-editor .cm-content {
+      padding: 1rem !important;
+    }
+
+    .cm-editor .cm-line {
+      color: var(--color-neutral-200) !important;
+    }
+
+    .cm-editor .cm-activeLine {
+      background-color: var(--color-neutral-800) !important;
+    }
+
+    .cm-editor .cm-selectionBackground {
+      background-color: var(--color-neutral-700) !important;
+    }
+
+    .cm-editor .cm-activeLineGutter {
+      background-color: var(--color-neutral-800)!important;
+    }
+
+    .cm-editor .cm-gutter {
+      background-color: var(--color-neutral-900)!important;
+    }
+
+    .cm-editor .cm-gutterElement { 
+      color: rgb(var(--color-secondary))!important;
+    }
+
+    .cm-editor .cm-matchingBracket {
+      background-color: var(--color-neutral-800)!important;
+    }
+  }
+
+  ._codeMirrorWrapper_sects_392 {
+    border: none!important;
+    background-color: var(--color-neutral-900)!important;
+  }
+
+  ._codeMirrorToolbar_sects_409 {
+    background-color: var(--color-neutral-800)!important;
   }
 }
 
