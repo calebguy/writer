@@ -413,8 +413,13 @@
         border-bottom-left-radius: 0!important;
       }
 
+      .cm-selectionMatch span {
+        background-color: var(--color-neutral-800)!important;
+      }
+
       ._selectDropdownArrow_sects_374 {
         padding-left: 0.25rem!important;
+        padding-top: 0!important;
       }
 
       ._selectTrigger_sects_308 {
@@ -425,6 +430,8 @@
 
         span {
           padding-left: 0.5rem;
+          padding-top: 0.15rem;
+          padding-bottom: 0.15rem;
         }
       }
 
