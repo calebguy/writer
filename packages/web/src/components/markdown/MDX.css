@@ -67,6 +67,32 @@
       all: unset;
     }
 
+    /* code editor autocomplete */
+    .cm-tooltip-autocomplete {
+      background-color: var(--color-neutral-900)!important;
+      color: var(--color-neutral-700)!important;
+      border: 1px solid var(--color-neutral-700)!important;
+    }
+
+    .cm-completionIcon {
+      display: none!important;
+    }
+
+    .cm-tooltip-autocomplete > ul > li[aria-selected="true"] {
+      background-color: var(--color-neutral-900)!important;
+      color: rgb(var(--color-white))!important;
+    }
+
+    .cm-tooltip-autocomplete > ul > li {
+      font-style: italic!important;
+      border: 1px solid transparent!important;
+    }
+
+    .cm-tooltip-autocomplete > ul > li:hover {
+      /* border: 1px dashed green!important; */
+      color: rgb(var(--color-white))!important;
+    }
+
     .PopoverContent {
       border-radius: 4px;
       padding: 20px;
