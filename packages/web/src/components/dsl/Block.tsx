@@ -1,10 +1,10 @@
 import { useCallback } from "react";
-import { cn } from "../utils/cn";
+import { cn } from "../../utils/cn";
 
 // import { Link } from "react-router-dom";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
+const MDX = dynamic(() => import("../markdown/MDX"), { ssr: false });
 
 interface BlockProps {
 	title?: string | null;

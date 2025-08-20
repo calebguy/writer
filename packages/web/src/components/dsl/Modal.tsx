@@ -1,6 +1,6 @@
 import * as Dialog from "@radix-ui/react-dialog";
-import { cn } from "../utils/cn";
-import { Close } from "./icons/Close";
+import { cn } from "../../utils/cn";
+import { Close } from "../icons/Close";
 interface ModalProps {
 	open: boolean;
 	onClose: () => void;
@@ -13,19 +13,19 @@ export function Modal({ open, onClose, children }: ModalProps) {
 			<Dialog.Portal>
 				<Dialog.Overlay className="bg-neutral-900 opacity-70 fixed inset-0" />
 				<Dialog.Content
-					style={{
-						animation: "contentShow 150ms cubic-bezier(0.16, 1, 0.3, 1)",
-					}}
+					// style={{
+					// 	animation: "contentShow 150ms cubic-bezier(0.16, 1, 0.3, 1)",
+					// }}
 					className={cn(
 						"DialogContent",
-						"fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80vw max-w-450px max-h-85vh p-[25px] bg-secondary",
+						"fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80vw max-w-450px max-h-85vh p-[25px] bg-neutral-800",
 					)}
 				>
 					{children}
 					<Dialog.Close asChild>
 						<button
 							type="button"
-							className="inline-flex items-center justify-center absolute top-4 right-4 text-primary hover:text-primary/50"
+							className="inline-flex items-center justify-center absolute top-4 right-4 text-primary hover:text-primary/50 cursor-pointer"
 							aria-label="Close"
 						>
 							<Close className="w-4 h-4" />

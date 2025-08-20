@@ -28,6 +28,75 @@ interface EditorProps {
 	autoFocus?: boolean;
 }
 
+const exampleTheme = {
+	paragraph: "mdx--paragraph",
+	quote: "mdx--quote",
+	heading: {
+		h1: "mdx--heading-h1",
+		h2: "mdx--heading-h2",
+		h3: "mdx--heading-h3",
+		h4: "mdx--heading-h4",
+		h5: "mdx--heading-h5",
+		h6: "mdx--heading-h6",
+	},
+	list: {
+		nested: {
+			listitem: "mdx--nested-listitem",
+		},
+		ol: "mdx--list-ol",
+		ul: "mdx--list-ul",
+		listitem: "mdx--listItem",
+		listitemChecked: "mdx--listItemChecked",
+		listitemUnchecked: "mdx--listItemUnchecked",
+	},
+	hashtag: "mdx--hashtag",
+	image: "mdx--image",
+	link: "mdx--link",
+	text: {
+		bold: "mdx--textBold",
+		code: "mdx--textCode",
+		italic: "mdx--textItalic",
+		strikethrough: "mdx--textStrikethrough",
+		subscript: "mdx--textSubscript",
+		superscript: "mdx--textSuperscript",
+		underline: "mdx--textUnderline",
+		underlineStrikethrough: "mdx--textUnderlineStrikethrough",
+	},
+	code: "mdx--code",
+	codeHighlight: {
+		atrule: "mdx--tokenAttr",
+		attr: "mdx--tokenAttr",
+		boolean: "mdx--tokenProperty",
+		builtin: "mdx--tokenSelector",
+		cdata: "mdx--tokenComment",
+		char: "mdx--tokenSelector",
+		class: "mdx--tokenFunction",
+		"class-name": "mdx--tokenFunction",
+		comment: "mdx--tokenComment",
+		constant: "mdx--tokenProperty",
+		deleted: "mdx--tokenProperty",
+		doctype: "mdx--tokenComment",
+		entity: "mdx--tokenOperator",
+		function: "mdx--tokenFunction",
+		important: "mdx--tokenVariable",
+		inserted: "mdx--tokenSelector",
+		keyword: "mdx--tokenAttr",
+		namespace: "mdx--tokenVariable",
+		number: "mdx--tokenProperty",
+		operator: "mdx--tokenOperator",
+		prolog: "mdx--tokenComment",
+		property: "mdx--tokenProperty",
+		punctuation: "mdx--tokenPunctuation",
+		regex: "mdx--tokenVariable",
+		selector: "mdx--tokenSelector",
+		string: "mdx--tokenSelector",
+		symbol: "mdx--tokenProperty",
+		tag: "mdx--tokenProperty",
+		url: "mdx--tokenOperator",
+		variable: "mdx--tokenVariable",
+	},
+};
+
 /**
  * Extend this Component further with the necessary plugins or props you need.
  * proxying the ref is necessary. Next.js dynamically imported components don't support refs.
@@ -95,6 +164,7 @@ const MDX: FC<EditorProps> = ({
 				}}
 				trim={false}
 				spellCheck={true}
+				lexicalTheme={exampleTheme}
 				contentEditableClassName="prose"
 				className={cn(
 					"border p-2 border-neutral-900 aspect-square min-w-24 relative",

@@ -9,13 +9,13 @@ import type { MDXEditorMethods } from "@mdxeditor/editor";
 import dynamic from "next/dynamic";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { cn } from "../utils/cn";
-import { Arrow } from "./icons/Arrow";
-import { Blob } from "./icons/Blob";
-import { Lock } from "./icons/Lock";
-import { Unlock } from "./icons/Unlock";
+import { cn } from "../../utils/cn";
+import { Arrow } from "../icons/Arrow";
+import { Blob } from "../icons/Blob";
+import { Lock } from "../icons/Lock";
+import { Unlock } from "../icons/Unlock";
 
-const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
+const MDX = dynamic(() => import("../markdown/MDX"), { ssr: false });
 
 interface BlockFormProps {
 	onSubmit: (data: { value: string }) => Promise<unknown>;

@@ -4,7 +4,7 @@ import { cn } from "@/utils/cn";
 import { usePrivy } from "@privy-io/react-auth";
 import { useState } from "react";
 import { ColorModal } from "./ColorModal";
-import { Dropdown, DropdownItem } from "./Dropdown";
+import { Dropdown, DropdownItem } from "./dsl/Dropdown";
 import { Logo } from "./icons/Logo";
 
 export function Header() {

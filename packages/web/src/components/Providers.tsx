@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuthColor } from "@/hooks/useAuthColor";
 import {
 	WriterContext,
 	type WriterContextType,
@@ -13,7 +14,7 @@ import {
 } from "@/utils/utils";
 import { PrivyProvider } from "@privy-io/react-auth";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { optimism } from "viem/chains";
 
 const PRIVY_APP_ID = "clzekejfs079912zv96ahfm5a";
@@ -21,12 +22,32 @@ export const queryClient = new QueryClient();
 
 export function Providers({
 	children,
+	initialColor,
 }: Readonly<{
 	children: React.ReactNode;
+	initialColor?: string;
 }>) {
 	const [writer, setWriter] = useState<WriterContextType["writer"]>(null);
-	const [primaryColor, setPrimaryColor] =
-		useState<WriterContextType["primaryColor"]>(defaultColor);
+
+	const getInitialColor = () => {
+		if (initialColor) {
+			try {
+				return hexToRGB(bytes32ToHexColor(initialColor));
+			} catch {
+				return defaultColor;
+			}
+		}
+		return defaultColor;
+	};
+
+	const [primaryColor, setPrimaryColor] = useState<
+		WriterContextType["primaryColor"]
+	>(getInitialColor());
+
+	useEffect(() => {
+		setPrimaryAndSecondaryCSSVariables(primaryColor);
+	}, [primaryColor]);
+
 	return (
 		<QueryClientProvider client={queryClient}>
 			<PrivyProvider
@@ -61,9 +82,15 @@ export function Providers({
 						},
 					}}
 				>
+					<AuthColorSync />
 					{children}
 				</WriterContext>
 			</PrivyProvider>
 		</QueryClientProvider>
 	);
+}
+
+function AuthColorSync() {
+	useAuthColor();
+	return null;
 }

@@ -12,6 +12,8 @@
     height: 100% !important;
     pointer-events: none !important;
     z-index: 1000 !important;
+    background-color: transparent!important;
+    border: none!important;
   }
 
   .mdxeditor-popup-container > * {

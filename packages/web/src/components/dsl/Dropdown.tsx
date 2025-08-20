@@ -2,7 +2,7 @@
 
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useEffect, useState } from "react";
-import { cn } from "../utils/cn";
+import { cn } from "../../utils/cn";
 
 interface DropdownProps {
 	children: React.ReactNode;
