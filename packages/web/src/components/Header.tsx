@@ -19,12 +19,6 @@ export function Header() {
 			</div>
 			<Dropdown
 				trigger={
-					// <Blob
-					// 	className={cn("h-8 transition-colors", {
-					// 		"text-primary": isLoggedIn,
-					// 		"text-secondary": !isLoggedIn,
-					// 	})}
-					// />
 					<Logo
 						className={cn("h-8 transition-colors", {
 							"text-primary": isLoggedIn,

@@ -14,7 +14,7 @@ import {
 } from "@/utils/utils";
 import { PrivyProvider } from "@privy-io/react-auth";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { optimism } from "viem/chains";
 
 const PRIVY_APP_ID = "clzekejfs079912zv96ahfm5a";
@@ -48,6 +48,20 @@ export function Providers({
 		setPrimaryAndSecondaryCSSVariables(primaryColor);
 	}, [primaryColor]);
 
+	const handleSetPrimaryColor = useCallback(
+		(rgb: WriterContextType["primaryColor"]) => {
+			setPrimaryColor(rgb);
+			setPrimaryAndSecondaryCSSVariables(rgb);
+		},
+		[],
+	);
+
+	const handleSetPrimaryFromLongHex = useCallback((hex: string) => {
+		const rgb = hexToRGB(bytes32ToHexColor(hex));
+		setPrimaryColor(rgb);
+		setPrimaryAndSecondaryCSSVariables(rgb);
+	}, []);
+
 	return (
 		<QueryClientProvider client={queryClient}>
 			<PrivyProvider
@@ -71,15 +85,8 @@ export function Providers({
 						setWriter,
 						defaultColor,
 						primaryColor,
-						setPrimaryColor: (rgb) => {
-							setPrimaryColor(rgb);
-							setPrimaryAndSecondaryCSSVariables(rgb);
-						},
-						setPrimaryFromLongHex: (hex) => {
-							const rgb = hexToRGB(bytes32ToHexColor(hex));
-							setPrimaryColor(rgb);
-							setPrimaryAndSecondaryCSSVariables(rgb);
-						},
+						setPrimaryColor: handleSetPrimaryColor,
+						setPrimaryFromLongHex: handleSetPrimaryFromLongHex,
 					}}
 				>
 					<AuthColorSync />
