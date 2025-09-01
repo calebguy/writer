@@ -26,7 +26,6 @@ const LexicalLinkExportVisitor = {
  */
 export const pasteLinkPlugin = realmPlugin({
 	init(realm) {
-		console.log("pasteLinkPlugin initialized!"); // Debug log
 		realm.pubIn({
 			[addLexicalNode$]: [LinkNode],
 			[addExportVisitor$]: LexicalLinkExportVisitor,

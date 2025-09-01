@@ -20,11 +20,7 @@ interface PasteLinkHandlerProps {
 export const PasteLinkHandler: React.FC<PasteLinkHandlerProps> = ({
 	realm,
 }) => {
-	console.log("PasteLinkHandler component loaded!"); // Debug log to verify component loads
-
 	React.useEffect(() => {
-		console.log("PasteLinkHandler useEffect running"); // Debug log
-
 		// Subscribe to the root editor to register our paste command
 		realm.pub(createRootEditorSubscription$, (editor) => {
 			return editor.registerCommand(
