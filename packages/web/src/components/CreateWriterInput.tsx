@@ -1,29 +1,21 @@
 "use client";
 
-import type { MDXEditorMethods } from "@mdxeditor/editor";
 import dynamic from "next/dynamic";
-import { useEffect, useRef } from "react";
 
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 
 export default function CreateWriterInput() {
-	const editorRef = useRef<MDXEditorMethods>(null);
-
-	useEffect(() => {
-		if (editorRef.current) {
-			editorRef.current.focus();
-		}
-	}, []);
-
 	return (
-		<div className="group aspect-square w-full h-full border border-black hover:cursor-text hover:bg-neutral-900 hover:!border-neutral-900 p-2">
-			<div className="group-hover:hidden w-full h-full flex justify-center items-center text-2xl">
-				+
+		<div className="group">
+			<div className="group-hover:hidden border border-neutral-900 h-full flex justify-center items-center text-primary text-2xl">
+				<span>+</span>
 			</div>
-			<div className="hidden group-hover:block w-full h-full text-2xl text-neutral-600">
-				Create a Place
-			</div>
-			<MDX markdown="Create a Place" ref={editorRef} />
+			<MDX
+				markdown={""}
+				autoFocus
+				className="hidden group-hover:flex border-dashed border-primary bg-neutral-900 flex-col placeholder:text-green-300"
+				placeholder="Create a Place"
+			/>
 		</div>
 	);
 }

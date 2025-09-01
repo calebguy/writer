@@ -1,16 +1,18 @@
 "use client";
 
 import { type Writer, deleteWriter, factoryCreate } from "@/utils/api";
+import type { UserWithWallet } from "@/utils/auth";
 import { useMutation } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import CreateWriterInput from "./CreateWriterInput";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 
 export function WritersForManager({
 	writers,
-	authedUserAddress,
-}: { writers: Array<Writer>; authedUserAddress?: string }) {
+	user,
+}: { writers: Array<Writer>; user?: UserWithWallet }) {
 	const { mutateAsync, isPending } = useMutation({
 		mutationFn: factoryCreate,
 		mutationKey: ["create-from-factory"],
@@ -32,31 +34,13 @@ export function WritersForManager({
 				gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
 			}}
 		>
-			{/* {authedUserAddress && (
-				<BlockForm
-					placeholder="Create a Place"
-					isLoading={isPending}
-					onSubmit={async ({ value }) => {
-						await mutateAsync({
-							title: value,
-							admin: authedUserAddress,
-							managers: [authedUserAddress],
-						});
-					}}
-				/>
-			)}
-			{authedUserAddress && <CreateWriterInput />} */}
+			{!!user && <CreateWriterInput />}
 			{writers?.map((writer) => (
 				<Link href={`/writer/${writer.address}`} key={writer.address}>
 					<MarkdownRenderer
 						markdown={writer.title}
 						className="bg-neutral-900 text-white"
 					/>
-				</Link>
-			))}
-			{writers?.map((writer) => (
-				<Link href={`/writer/${writer.address}`} key={writer.address}>
-					<MDX markdown={writer.title} className="bg-neutral-900 text-white" readOnly={true} />
 				</Link>
 			))}
 		</div>

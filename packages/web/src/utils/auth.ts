@@ -33,7 +33,9 @@ export async function getAuthenticatedUser() {
 	}
 }
 
-type UserWithWallet = User & { wallet: Omit<WalletWithMetadata, "type"> };
+export type UserWithWallet = User & {
+	wallet: Omit<WalletWithMetadata, "type">;
+};
 export async function requireAuth(): Promise<UserWithWallet> {
 	const user = await getAuthenticatedUser();
 	if (!user) {

@@ -60,8 +60,11 @@
       flex: 1; 
       display: flex;
       flex-direction: column;
-    }
 
+      div {
+        height: 100%;
+      }
+    }
 
     button,
     fieldset,
@@ -306,6 +309,7 @@
       height: 100%;
       color: rgb(var(--color-white))!important;
       font-family: "LTRemark";
+      caret-color: rgb(var(--color-primary))!important;
 
       .editable:focus {
         border: 1px solid orange;
@@ -451,6 +455,9 @@
         font-size: 0.875rem!important;
         line-height: 1.5!important;
       }
+    }
+    ._placeholder_sects_1101 p {
+      color: var(--color-neutral-600);
     }
   }
 }

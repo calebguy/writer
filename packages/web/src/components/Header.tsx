@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/utils/cn";
 import { usePrivy } from "@privy-io/react-auth";
 import { useState } from "react";
 import { ColorModal } from "./ColorModal";
@@ -14,23 +13,11 @@ export function Header() {
 
 	return (
 		<div className="flex items-center justify-between">
-			<div
-				className={cn("text-3xl transition-colors pr-0.5", {
-					"text-primary": isLoggedIn,
-					"text-secondary": !isLoggedIn,
-				})}
-			>
+			<div className="text-3xl transition-colors pr-0.5 text-primary">
 				Writer
 			</div>
 			<Dropdown
-				trigger={
-					<Logo
-						className={cn("h-8 transition-colors", {
-							"text-primary": isLoggedIn,
-							"text-secondary": !isLoggedIn,
-						})}
-					/>
-				}
+				trigger={<Logo className="h-8 transition-colors text-primary" />}
 			>
 				<DropdownItem onClick={() => setOpen(true)}>
 					<div className="flex items-center justify-between gap-2 w-full">
