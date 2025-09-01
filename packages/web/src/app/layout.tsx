@@ -1,11 +1,12 @@
-import { Providers } from "@/components/Providers";
-import type { Metadata } from "next";
-import "./globals.css";
-import { cn } from "@/utils/cn";
-import { basicallyAMono, ltRemark } from "./fonts";
-import { getAuthenticatedUser } from "@/utils/auth";
 import { getUserColor } from "@/actions/getUserColor";
+import { Providers } from "@/components/Providers";
+import { getAuthenticatedUser } from "@/utils/auth";
+import { cn } from "@/utils/cn";
+import { bytes32ToHexColor, hexToRGB } from "@/utils/utils";
+import type { Metadata } from "next";
 import type { Hex } from "viem";
+import { basicallyAMono, ltRemark } from "./fonts";
+import "./globals.css";
 
 export const metadata: Metadata = {
 	title: "Writer",
@@ -27,9 +28,16 @@ export default async function RootLayout({
 			console.warn("Failed to fetch user color in layout:", error);
 		}
 	}
+	const colorStyle: React.CSSProperties = {};
+	if (initialColor) {
+		const rgb = hexToRGB(bytes32ToHexColor(initialColor));
+		const secondaryColor = rgb.map((c) => c - 100);
+		colorStyle["--color-primary" as any] = rgb.join(" ");
+		colorStyle["--color-secondary" as any] = secondaryColor.join(" ");
+	}
 
 	return (
-		<html lang="en">
+		<html lang="en" style={colorStyle}>
 			<body>
 				<div
 					className={cn(
@@ -38,7 +46,9 @@ export default async function RootLayout({
 						basicallyAMono.variable,
 					)}
 				>
-					<Providers initialColor={initialColor || undefined}>{children}</Providers>
+					<Providers initialColor={initialColor || undefined}>
+						{children}
+					</Providers>
 				</div>
 			</body>
 		</html>

@@ -14,7 +14,12 @@ export function Header() {
 
 	return (
 		<div className="flex items-center justify-between">
-			<div className="text-3xl transition-colors text-primary pr-0.5">
+			<div
+				className={cn("text-3xl transition-colors pr-0.5", {
+					"text-primary": isLoggedIn,
+					"text-secondary": !isLoggedIn,
+				})}
+			>
 				Writer
 			</div>
 			<Dropdown

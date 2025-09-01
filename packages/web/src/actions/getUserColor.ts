@@ -4,9 +4,12 @@ import type { Hex } from "viem";
 
 export async function getUserColor(address: Hex): Promise<string | null> {
 	try {
-		const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.API_BASE_URL;
+		const baseUrl =
+			process.env.NEXT_PUBLIC_BASE_URL || process.env.API_BASE_URL;
 		if (!baseUrl) {
-			console.warn("NEXT_PUBLIC_BASE_URL not configured for server-side color fetch");
+			console.warn(
+				"NEXT_PUBLIC_BASE_URL not configured for server-side color fetch",
+			);
 			return null;
 		}
 
