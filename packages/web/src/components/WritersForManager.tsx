@@ -56,7 +56,7 @@ export function WritersForManager({
 			))}
 			{writers?.map((writer) => (
 				<Link href={`/writer/${writer.address}`} key={writer.address}>
-					<MDX markdown={writer.title} className="bg-neutral-900 text-white" />
+					<MDX markdown={writer.title} className="bg-neutral-900 text-white" readOnly={true} />
 				</Link>
 			))}
 		</div>
