@@ -2,10 +2,8 @@
 
 import { type Writer, deleteWriter, factoryCreate } from "@/utils/api";
 import { useMutation } from "@tanstack/react-query";
-import dynamic from "next/dynamic";
 import Link from "next/link";
-
-const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
+import { MarkdownRenderer } from "./MarkdownRenderer";
 
 export function WritersForManager({
 	writers,
@@ -48,10 +46,9 @@ export function WritersForManager({
 			{authedUserAddress && <CreateWriterInput />} */}
 			{writers?.map((writer) => (
 				<Link href={`/writer/${writer.address}`} key={writer.address}>
-					<MDX
+					<MarkdownRenderer
 						markdown={writer.title}
-						readOnly={true}
-						className="bg-neutral-900 text-white!"
+						className="bg-neutral-900 text-white"
 					/>
 				</Link>
 			))}
