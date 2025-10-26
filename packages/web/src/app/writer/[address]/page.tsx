@@ -24,7 +24,7 @@ export default async function Writer({
 				<Link
 					href={`/writer/${writer.address}/${entry.id}`}
 					key={entry.id}
-					className="aspect-square bg-neutral-900 flex flex-col justify-between px-2 pt-2 pb-0.5"
+					className="aspect-square bg-neutral-900 flex flex-col justify-between px-2 pt-2 pb-0.5 hover:cursor-zoom-in"
 				>
 					<MarkdownRenderer
 						markdown={entry.decompressed ?? entry.raw}

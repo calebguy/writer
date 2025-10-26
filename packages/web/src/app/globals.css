@@ -88,10 +88,6 @@ body,
   margin: 0;
 }
 
-body {
-  display: flex;
-}
-
 #privy-dialog {
   div {
     box-shadow: none !important;
@@ -112,32 +108,6 @@ body {
     max-width: 100px;
     display: inline-block;
   }
-}
-
-.DropdownMenuContent {
-  animation-duration: 200ms;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-  z-index: 50;
-}
-
-.DropdownMenuContent[data-side="top"],
-.DropdownMenuSubContent[data-side="top"] {
-  animation-name: slideDownAndFade;
-}
-
-.DropdownMenuContent[data-side="right"],
-.DropdownMenuSubContent[data-side="right"] {
-  animation-name: slideLeftAndFade;
-}
-
-.DropdownMenuContent[data-side="bottom"],
-.DropdownMenuSubContent[data-side="bottom"] {
-  animation-name: slideUpAndFade;
-}
-
-.DropdownMenuContent[data-side="left"],
-.DropdownMenuSubContent[data-side="left"] {
-  animation-name: slideRightAndFade;
 }
 
 .react-colorful {

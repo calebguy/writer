@@ -39,7 +39,7 @@ export function WritersForManager({
 				<Link
 					href={`/writer/${writer.address}`}
 					key={writer.address}
-					className="aspect-square bg-neutral-900 flex flex-col justify-between px-2 pt-2 pb-0.5"
+					className="aspect-square bg-neutral-900 flex flex-col justify-between px-2 pt-2 pb-0.5 hover:cursor-zoom-in"
 				>
 					<MarkdownRenderer markdown={writer.title} className=" text-white" />
 					<div className="text-right text-neutral-600">
