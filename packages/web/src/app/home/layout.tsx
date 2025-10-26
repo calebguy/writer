@@ -1,6 +1,6 @@
-import { Header } from "../../components/Header";
+import { HomeHeader } from "../../components/header/HomeHeader";
 
-export default function AuthedLayout({
+export default function Layout({
 	children,
 }: Readonly<{
 	children: React.ReactNode;
@@ -8,7 +8,7 @@ export default function AuthedLayout({
 	return (
 		<div className="flex flex-col grow">
 			<div className="mb-4">
-				<Header />
+				<HomeHeader />
 			</div>
 			<div className="grow flex flex-col">{children}</div>
 		</div>

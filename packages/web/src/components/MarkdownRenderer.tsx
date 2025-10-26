@@ -14,13 +14,7 @@ export function MarkdownRenderer({
 }: MarkdownRendererProps) {
 	return (
 		<div className="mdx" style={{ position: "relative" }}>
-			<div
-				className={cn(
-					"mdxeditor",
-					"border p-2 border-neutral-900 aspect-square min-w-24 relative",
-					className,
-				)}
-			>
+			<div className={cn("mdxeditor", "grow min-w-24 relative", className)}>
 				<div className="prose">
 					<ReactMarkdown
 						rehypePlugins={[rehypeHighlight]}

@@ -6,16 +6,11 @@ import { ColorModal } from "./ColorModal";
 import { Dropdown, DropdownItem } from "./dsl/Dropdown";
 import { Logo } from "./icons/Logo";
 
-export function Header() {
-	const { ready, authenticated, logout } = usePrivy();
-	const isLoggedIn = ready && authenticated;
+export function LogoDropdown() {
+	const { logout } = usePrivy();
 	const [open, setOpen] = useState(false);
-
 	return (
-		<div className="flex items-center justify-between">
-			<div className="text-3xl transition-colors pr-0.5 text-primary">
-				Writer
-			</div>
+		<>
 			<Dropdown
 				trigger={<Logo className="h-8 transition-colors text-primary" />}
 			>
@@ -36,6 +31,6 @@ export function Header() {
 				</DropdownItem>
 			</Dropdown>
 			<ColorModal open={open} onClose={() => setOpen(false)} />
-		</div>
+		</>
 	);
 }

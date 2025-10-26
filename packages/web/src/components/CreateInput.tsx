@@ -7,7 +7,11 @@ import { useEffect, useRef, useState } from "react";
 
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 
-export default function CreateWriterInput() {
+interface CreateInputProps {
+	placeholder?: string;
+}
+
+export default function CreateInput({ placeholder }: CreateInputProps) {
 	const [hasFocus, setHasFocus] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [markdown, setMarkdown] = useState<string>("");
@@ -71,7 +75,7 @@ export default function CreateWriterInput() {
 						"flex border-primary": hasFocus,
 					},
 				)}
-				placeholder="Create a Place"
+				placeholder={placeholder}
 				onChange={setMarkdown}
 			/>
 		</div>

@@ -5,7 +5,7 @@ import type { UserWithWallet } from "@/utils/auth";
 import { useMutation } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import CreateWriterInput from "./CreateWriterInput";
+import CreateInput from "./CreateInput";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 
@@ -34,13 +34,17 @@ export function WritersForManager({
 				gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
 			}}
 		>
-			{!!user && <CreateWriterInput />}
+			{!!user && <CreateInput placeholder="Create a Place for Writing" />}
 			{writers?.map((writer) => (
-				<Link href={`/writer/${writer.address}`} key={writer.address}>
-					<MarkdownRenderer
-						markdown={writer.title}
-						className="bg-neutral-900 text-white"
-					/>
+				<Link
+					href={`/writer/${writer.address}`}
+					key={writer.address}
+					className="aspect-square bg-neutral-900 flex flex-col justify-between px-2 pt-2 pb-0.5"
+				>
+					<MarkdownRenderer markdown={writer.title} className=" text-white" />
+					<div className="text-right text-neutral-600">
+						{writer.entries.length}
+					</div>
 				</Link>
 			))}
 		</div>
