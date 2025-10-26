@@ -5,9 +5,9 @@ export default async function Layout({
 	params,
 }: Readonly<{
 	children: React.ReactNode;
-	params: { address: string };
+	params: Promise<{ address: string }>;
 }>) {
-	const { address } = params;
+	const { address } = await params;
 	return (
 		<div className="flex flex-col">
 			<div className="mb-4">

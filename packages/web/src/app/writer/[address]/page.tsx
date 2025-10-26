@@ -22,7 +22,7 @@ export default async function Writer({
 			<CreateInput placeholder={`Write in ${writer.title}`} />
 			{writer.entries?.map((entry) => (
 				<Link
-					href={`/writer/${writer.address}/${entry.id}`}
+					href={`/writer/${writer.address}/${entry.onChainId?.toString()}`}
 					key={entry.id}
 					className="aspect-square bg-neutral-900 flex flex-col justify-between px-2 pt-2 pb-0.5 hover:cursor-zoom-in"
 				>
