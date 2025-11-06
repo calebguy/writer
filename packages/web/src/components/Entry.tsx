@@ -102,6 +102,52 @@ export default function Entry({
 		return isPendingDelete || isPendingEdit || deleteSubmitted || editSubmitted;
 	}, [isPendingDelete, isPendingEdit, deleteSubmitted, editSubmitted]);
 
+	const handleSave = async () => {
+		setEditSubmitted(true);
+		if (!editedContent) {
+			return;
+		}
+		const compressedContent = await compress(editedContent);
+		let versionedCompressedContent = `br:${compressedContent}`;
+		if (encrypted) {
+			const key = await getDerivedSigningKey(wallet);
+			const encryptedContent = await encrypt(key, compressedContent);
+			versionedCompressedContent = `enc:br:${encryptedContent}`;
+		}
+		const { signature, nonce, entryId, totalChunks, content } =
+			await signUpdate(wallet, {
+				entryId: Number(id),
+				address: address as Hex,
+				content: versionedCompressedContent,
+			});
+		await mutateAsyncEdit({
+			address: address as Hex,
+			id: entryId,
+			signature,
+			nonce,
+			totalChunks,
+			content,
+		});
+		await sleep(250);
+		setEditSubmitted(false);
+		setIsEditing(false);
+		onEntryUpdate();
+	};
+
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (isEditing && (e.metaKey || e.ctrlKey) && e.key === "Enter") {
+				e.preventDefault();
+				if (isContentChanged && !isEditPending) {
+					handleSave();
+				}
+			}
+		};
+
+		window.addEventListener("keydown", handleKeyDown);
+		return () => window.removeEventListener("keydown", handleKeyDown);
+	}, [isEditing, isContentChanged, isEditPending, editedContent, encrypted]);
+
 	const canView = useMemo(() => {
 		if (processedEntry) {
 			if (isEntryPrivate(processedEntry)) {
@@ -229,45 +275,7 @@ export default function Entry({
 									<button
 										type="button"
 										disabled={!isContentChanged}
-										onClick={async () => {
-											setEditSubmitted(true);
-											if (!editedContent) {
-												return;
-											}
-											const compressedContent = await compress(editedContent);
-											let versionedCompressedContent = `br:${compressedContent}`;
-											if (encrypted) {
-												const key = await getDerivedSigningKey(wallet);
-												const encryptedContent = await encrypt(
-													key,
-													compressedContent,
-												);
-												versionedCompressedContent = `enc:br:${encryptedContent}`;
-											}
-											const {
-												signature,
-												nonce,
-												entryId,
-												totalChunks,
-												content,
-											} = await signUpdate(wallet, {
-												entryId: Number(id),
-												address: address as Hex,
-												content: versionedCompressedContent,
-											});
-											await mutateAsyncEdit({
-												address: address as Hex,
-												id: entryId,
-												signature,
-												nonce,
-												totalChunks,
-												content,
-											});
-											await sleep(250);
-											setEditSubmitted(false);
-											setIsEditing(false);
-											onEntryUpdate();
-										}}
+										onClick={handleSave}
 										className="text-primary disabled:text-neutral-600 hover:text-secondary"
 									>
 										save

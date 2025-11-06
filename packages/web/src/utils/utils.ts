@@ -243,6 +243,7 @@ export function isEntryPrivate(entry: Entry) {
 }
 
 export function isWalletAuthor(wallet: ConnectedWallet, entry: Entry) {
+	console.log(entry.author, wallet?.address);
 	return entry.author === wallet?.address;
 }
 

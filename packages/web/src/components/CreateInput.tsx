@@ -69,7 +69,7 @@ export default function CreateInput({ placeholder }: CreateInputProps) {
 				markdown={markdown}
 				autoFocus
 				className={cn(
-					"group-hover:flex border-dashed bg-neutral-900 flex-col placeholder:text-green-300",
+					"group-hover:flex border-dashed bg-neutral-900 text-white!important flex-col placeholder:text-green-300",
 					{
 						hidden: !hasFocus,
 						"flex border-primary": hasFocus,

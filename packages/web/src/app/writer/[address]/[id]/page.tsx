@@ -12,14 +12,16 @@ export default async function EntryPage({
 	const entry = await getEntry(address as Hex, Number(id));
 
 	return (
-		<Entry
-			initialEntry={entry}
-			address={address}
-			id={id}
-			onEntryUpdate={async () => {
-				"use server";
-				// This will trigger a revalidation of the page
-			}}
-		/>
+		<div className="flex-grow flex flex-col">
+			<Entry
+				initialEntry={entry}
+				address={address}
+				id={id}
+				onEntryUpdate={async () => {
+					"use server";
+					// This will trigger a revalidation of the page
+				}}
+			/>
+		</div>
 	);
 }
