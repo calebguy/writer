@@ -34,7 +34,7 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-neutral-900);
+  background: var(--color-neutral-500);
   border-radius: 4px;
 }
 
@@ -48,22 +48,22 @@
 
 @media (prefers-color-scheme: dark) {
   ::-webkit-scrollbar-thumb {
-    background: var(--color-neutral-900);
+    background: var(--color-neutral-500);
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-neutral-800);
+    background: var(--color-neutral-400);
   }
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--color-neutral-900)  transparent;
+  scrollbar-color: var(--color-neutral-500)  transparent;
 }
 
 @media (prefers-color-scheme: dark) {
   * {
-    scrollbar-color: var(--color-neutral-900)  transparent;
+    scrollbar-color: var(--color-neutral-500)  transparent;
   }
 }
 

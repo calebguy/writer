@@ -63,7 +63,7 @@ export default function EntryList({
 						key={entry.id}
 						className="aspect-square bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 hover:cursor-zoom-in overflow-hidden"
 					>
-						<div className="overflow-y-auto flex-grow min-h-0">
+						<div className="overflow-y-scroll flex-grow min-h-0">
 							<MarkdownRenderer
 								markdown={entry.decompressed ?? entry.raw}
 								className="text-white"
