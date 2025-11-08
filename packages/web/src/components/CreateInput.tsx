@@ -52,7 +52,7 @@ export default function CreateInput({ placeholder }: CreateInputProps) {
 		};
 	}, []);
 	return (
-		<div className="group" ref={containerRef}>
+		<div className="group aspect-square" ref={containerRef}>
 			<div
 				className={cn(
 					"group-hover:hidden border border-neutral-900 h-full flex justify-center items-center text-primary text-2xl",
@@ -69,7 +69,7 @@ export default function CreateInput({ placeholder }: CreateInputProps) {
 				markdown={markdown}
 				autoFocus
 				className={cn(
-					"group-hover:flex border-dashed bg-neutral-900 text-white!important flex-col placeholder:text-green-300",
+					"group-hover:flex border-dashed bg-neutral-900 text-white!important flex-col placeholder:text-green-300 h-full",
 					{
 						hidden: !hasFocus,
 						"flex border-primary": hasFocus,
