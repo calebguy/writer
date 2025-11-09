@@ -75,7 +75,7 @@ export default function CreateInput({
 	if (isExpanded) {
 		return (
 			<div
-				className="fixed inset-0 z-50 bg-neutral-900 p-2"
+				className="absolute inset-0 z-50 bg-neutral-900"
 				ref={containerRef}
 			>
 				<div className="h-full w-full border border-dashed border-primary relative">

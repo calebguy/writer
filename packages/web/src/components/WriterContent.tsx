@@ -18,7 +18,7 @@ export default function WriterContent({
 
 	return (
 		<div
-			className="grid gap-2"
+			className={`grid gap-2 relative ${isExpanded ? "h-full" : ""}`}
 			style={{
 				gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
 			}}
