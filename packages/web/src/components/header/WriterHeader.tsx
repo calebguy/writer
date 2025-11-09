@@ -1,9 +1,9 @@
 import { getWriter } from "@/utils/api";
-import Link from "next/link";
-import { FiArrowLeft } from "react-icons/fi";
 import type { Hex } from "viem";
 import { LogoDropdown } from "../LogoDropdown";
 import { MarkdownRenderer } from "../MarkdownRenderer";
+import { BackButton } from "./BackButton";
+
 export async function WriterHeader({
 	address,
 }: {
@@ -13,9 +13,7 @@ export async function WriterHeader({
 	return (
 		<div className="flex items-center justify-between">
 			<div className="flex items-center gap-2 text-primary">
-				<Link href="/home">
-					<FiArrowLeft className="w-7 h-7" />
-				</Link>
+				<BackButton writerAddress={address} />
 				<MarkdownRenderer markdown={writer.title} className="text-primary" />
 			</div>
 
