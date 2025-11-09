@@ -108,7 +108,7 @@ export default function CreateInput({
 					markdown={markdown}
 					autoFocus
 					className={cn(
-						"bg-neutral-900 text-white!important flex-col placeholder:text-green-300 h-full flex w-full p-2",
+						"bg-neutral-900 !text-white flex-col placeholder:text-green-300 h-full flex w-full p-2",
 						{
 							"border-dashed border-primary": hasFocus && !isExpanded,
 						},
@@ -119,7 +119,7 @@ export default function CreateInput({
 				{hasFocus && canExpand && (
 					<button
 						type="button"
-						className="absolute bottom-2 right-2 hover:text-primary text-neutral-600 z-20"
+						className="absolute bottom-2 right-2 hover:text-primary text-neutral-600 z-20 cursor-pointer"
 						onClick={() => {
 							setIsExpanded(!isExpanded);
 							onExpand?.(!isExpanded);

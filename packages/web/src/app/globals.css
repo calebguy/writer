@@ -227,3 +227,8 @@ body,
   }
 }
 
+/* MDX Editor text color override */
+._contentEditable_sets_380 {
+  color: white !important;
+}
+

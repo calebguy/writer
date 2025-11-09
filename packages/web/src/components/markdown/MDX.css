@@ -1,8 +1,9 @@
 .mdx {
 
   width: 100%;
-  ._tooltipContent_sects_681 {
-    display: none!important;
+
+  ._contentEditable_sects_380 {
+    color: white!important;
   }
 
   /* Fix popup container positioning */
