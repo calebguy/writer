@@ -9,11 +9,11 @@ export default async function Layout({
 }>) {
 	const { address } = await params;
 	return (
-		<div className="flex flex-col grow">
-			<div className="mb-4">
+		<div className="flex flex-col grow min-h-0">
+			<div className="mb-4 flex-shrink-0">
 				<WriterHeader address={address} />
 			</div>
-			<div className="grow flex flex-col">{children}</div>
+			<div className="grow flex flex-col relative min-h-0 overflow-auto">{children}</div>
 		</div>
 	);
 }

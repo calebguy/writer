@@ -72,43 +72,19 @@ export default function CreateInput({
 		};
 	}, [onExpand]);
 
-	if (isExpanded) {
-		return (
-			<div className="absolute inset-0 z-50 bg-neutral-900" ref={containerRef}>
-				<div className="h-full w-full border border-dashed border-primary relative">
-					<MDX
-						ref={editorRef}
-						markdown={markdown}
-						autoFocus
-						className="bg-neutral-900 text-white!important flex-col placeholder:text-green-300 h-full flex w-full p-2"
-						placeholder={placeholder}
-						onChange={setMarkdown}
-					/>
-					<button
-						type="button"
-						className="absolute bottom-3 right-2 hover:text-primary text-neutral-600 z-20"
-						onClick={() => {
-							setIsExpanded(false);
-							onExpand?.(false);
-						}}
-						onMouseDown={(e) => {
-							e.preventDefault();
-						}}
-					>
-						<Arrow title="collapse" className="-rotate-90 w-4 h-4" />
-					</button>
-				</div>
-			</div>
-		);
-	}
-
 	return (
-		<div className="group aspect-square" ref={containerRef}>
+		<div
+			className={cn("group", {
+				"aspect-square": !isExpanded,
+				"absolute inset-0 z-50": isExpanded,
+			})}
+			ref={containerRef}
+		>
 			<div
 				className={cn(
 					"border border-neutral-900 h-full flex justify-center items-center text-primary text-2xl bg-transparent hover:bg-neutral-900 hover:cursor-text transition-colors",
 					{
-						hidden: hasFocus,
+						hidden: hasFocus || isExpanded,
 					},
 				)}
 				onClick={() => setHasFocus(true)}
@@ -122,31 +98,43 @@ export default function CreateInput({
 			</div>
 			<div
 				className={cn("h-full relative", {
-					hidden: !hasFocus,
-					flex: hasFocus,
+					hidden: !hasFocus && !isExpanded,
+					flex: hasFocus || isExpanded,
+					"border border-dashed border-primary": isExpanded,
 				})}
 			>
 				<MDX
 					ref={editorRef}
 					markdown={markdown}
 					autoFocus
-					className="border-dashed bg-neutral-900 text-white!important flex-col placeholder:text-green-300 h-full flex border-primary"
+					className={cn(
+						"bg-neutral-900 text-white!important flex-col placeholder:text-green-300 h-full flex w-full p-2",
+						{
+							"border-dashed border-primary": hasFocus && !isExpanded,
+						}
+					)}
 					placeholder={placeholder}
 					onChange={setMarkdown}
 				/>
 				{hasFocus && canExpand && (
 					<button
 						type="button"
-						className="absolute bottom-2 right-2 hover:text-primary text-neutral-600 z-20 cursor-pointer"
+						className="absolute bottom-3 right-2 hover:text-primary text-neutral-600 z-20"
 						onClick={() => {
-							setIsExpanded(true);
-							onExpand?.(true);
+							setIsExpanded(!isExpanded);
+							onExpand?.(!isExpanded);
 						}}
 						onMouseDown={(e) => {
 							e.preventDefault();
 						}}
 					>
-						<Arrow title="expand" className="rotate-90 w-4 h-4" />
+						<Arrow
+							title={isExpanded ? "collapse" : "expand"}
+							className={cn("w-4 h-4", {
+								"rotate-90": !isExpanded,
+								"-rotate-90": isExpanded,
+							})}
+						/>
 					</button>
 				)}
 			</div>

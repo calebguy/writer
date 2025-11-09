@@ -5,9 +5,9 @@ import type { Hex } from "viem";
 export default async function Writer({
 	params,
 }: {
-	params: { address: string };
+	params: Promise<{ address: string }>;
 }) {
-	const { address } = params;
+	const { address } = await params;
 	const writer = await getWriter(address as Hex);
 
 	return (
