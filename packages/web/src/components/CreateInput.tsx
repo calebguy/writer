@@ -1,5 +1,6 @@
 "use client";
 
+import { Arrow } from "@/components/icons/Arrow";
 import { cn } from "@/utils/cn";
 import type { MDXEditorMethods } from "@mdxeditor/editor";
 import dynamic from "next/dynamic";
@@ -9,10 +10,17 @@ const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 
 interface CreateInputProps {
 	placeholder?: string;
+	onExpand?: (isExpanded: boolean) => void;
+	canExpand?: boolean;
 }
 
-export default function CreateInput({ placeholder }: CreateInputProps) {
+export default function CreateInput({
+	placeholder,
+	onExpand,
+	canExpand = false,
+}: CreateInputProps) {
 	const [hasFocus, setHasFocus] = useState(false);
+	const [isExpanded, setIsExpanded] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [markdown, setMarkdown] = useState<string>("");
 	const editorRef = useRef<MDXEditorMethods>(null);
@@ -24,9 +32,9 @@ export default function CreateInput({ placeholder }: CreateInputProps) {
 				if (!containerRef.current.contains(event.target as Node)) {
 					if (markdown.trim() === "") {
 						setHasFocus(false);
+						setIsExpanded(false);
+						onExpand?.(false);
 					}
-				} else {
-					setHasFocus(true);
 				}
 			}
 		};
@@ -35,7 +43,17 @@ export default function CreateInput({ placeholder }: CreateInputProps) {
 		return () => {
 			document.removeEventListener("mousedown", handleClick);
 		};
-	}, [markdown]);
+	}, [markdown, onExpand]);
+
+	// Focus the editor when hasFocus changes to true
+	useEffect(() => {
+		if (hasFocus && editorRef.current) {
+			// Small timeout to ensure the editor is rendered
+			setTimeout(() => {
+				editorRef.current?.focus();
+			}, 0);
+		}
+	}, [hasFocus]);
 
 	// Handle escape key
 	useEffect(() => {
@@ -43,6 +61,8 @@ export default function CreateInput({ placeholder }: CreateInputProps) {
 			if (event.key === "Escape") {
 				editorRef.current?.setMarkdown("");
 				setHasFocus(false);
+				setIsExpanded(false);
+				onExpand?.(false);
 			}
 		};
 
@@ -50,34 +70,84 @@ export default function CreateInput({ placeholder }: CreateInputProps) {
 		return () => {
 			document.removeEventListener("keydown", handleKeyDown);
 		};
-	}, []);
+	}, [onExpand]);
+
+	if (isExpanded) {
+		return (
+			<div
+				className="fixed inset-0 z-50 bg-neutral-900 p-2"
+				ref={containerRef}
+			>
+				<div className="h-full w-full border border-dashed border-primary relative">
+					<MDX
+						ref={editorRef}
+						markdown={markdown}
+						autoFocus
+						className="bg-neutral-900 text-white!important flex-col placeholder:text-green-300 h-full flex w-full p-2"
+						placeholder={placeholder}
+						onChange={setMarkdown}
+					/>
+					<button
+						type="button"
+						className="absolute bottom-3 right-2 hover:text-primary text-neutral-600 z-20"
+						onClick={() => {
+							setIsExpanded(false);
+							onExpand?.(false);
+						}}
+						onMouseDown={(e) => {
+							e.preventDefault();
+						}}
+					>
+						<Arrow title="collapse" className="-rotate-90 w-4 h-4" />
+					</button>
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<div className="group aspect-square" ref={containerRef}>
 			<div
 				className={cn(
-					"group-hover:hidden border border-neutral-900 h-full flex justify-center items-center text-primary text-2xl",
+					"border border-neutral-900 h-full flex justify-center items-center text-primary text-2xl bg-transparent hover:bg-neutral-900 hover:cursor-text transition-colors",
 					{
-						"group-hover:hidden": !hasFocus,
 						hidden: hasFocus,
 					},
 				)}
+				onClick={() => setHasFocus(true)}
 			>
 				<span>+</span>
 			</div>
-			<MDX
-				ref={editorRef}
-				markdown={markdown}
-				autoFocus
-				className={cn(
-					"group-hover:flex border-dashed bg-neutral-900 text-white!important flex-col placeholder:text-green-300 h-full",
-					{
-						hidden: !hasFocus,
-						"flex border-primary": hasFocus,
-					},
+			<div
+				className={cn("h-full relative", {
+					hidden: !hasFocus,
+					flex: hasFocus,
+				})}
+			>
+				<MDX
+					ref={editorRef}
+					markdown={markdown}
+					autoFocus
+					className="border-dashed bg-neutral-900 text-white!important flex-col placeholder:text-green-300 h-full flex border-primary"
+					placeholder={placeholder}
+					onChange={setMarkdown}
+				/>
+				{hasFocus && canExpand && (
+					<button
+						type="button"
+						className="absolute bottom-3 right-2 hover:text-primary text-neutral-600 z-20"
+						onClick={() => {
+							setIsExpanded(true);
+							onExpand?.(true);
+						}}
+						onMouseDown={(e) => {
+							e.preventDefault();
+						}}
+					>
+						<Arrow title="expand" className="rotate-90 w-4 h-4" />
+					</button>
 				)}
-				placeholder={placeholder}
-				onChange={setMarkdown}
-			/>
+			</div>
 		</div>
 	);
 }
