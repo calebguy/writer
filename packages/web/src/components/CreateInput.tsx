@@ -74,10 +74,7 @@ export default function CreateInput({
 
 	if (isExpanded) {
 		return (
-			<div
-				className="absolute inset-0 z-50 bg-neutral-900"
-				ref={containerRef}
-			>
+			<div className="absolute inset-0 z-50 bg-neutral-900" ref={containerRef}>
 				<div className="h-full w-full border border-dashed border-primary relative">
 					<MDX
 						ref={editorRef}
@@ -115,6 +112,11 @@ export default function CreateInput({
 					},
 				)}
 				onClick={() => setHasFocus(true)}
+				onKeyDown={(e) => {
+					if (e.key === "Enter") {
+						setHasFocus(true);
+					}
+				}}
 			>
 				<span>+</span>
 			</div>
@@ -135,7 +137,7 @@ export default function CreateInput({
 				{hasFocus && canExpand && (
 					<button
 						type="button"
-						className="absolute bottom-3 right-2 hover:text-primary text-neutral-600 z-20"
+						className="absolute bottom-2 right-2 hover:text-primary text-neutral-600 z-20 cursor-pointer"
 						onClick={() => {
 							setIsExpanded(true);
 							onExpand?.(true);
