@@ -100,7 +100,7 @@ export default function CreateInput({
 				className={cn("h-full relative", {
 					hidden: !hasFocus && !isExpanded,
 					flex: hasFocus || isExpanded,
-					"border border-dashed border-primary": isExpanded,
+					"border border-dashed border-primary w-full": isExpanded,
 				})}
 			>
 				<MDX
@@ -111,7 +111,7 @@ export default function CreateInput({
 						"bg-neutral-900 text-white!important flex-col placeholder:text-green-300 h-full flex w-full p-2",
 						{
 							"border-dashed border-primary": hasFocus && !isExpanded,
-						}
+						},
 					)}
 					placeholder={placeholder}
 					onChange={setMarkdown}
@@ -119,7 +119,7 @@ export default function CreateInput({
 				{hasFocus && canExpand && (
 					<button
 						type="button"
-						className="absolute bottom-3 right-2 hover:text-primary text-neutral-600 z-20"
+						className="absolute bottom-2 right-2 hover:text-primary text-neutral-600 z-20"
 						onClick={() => {
 							setIsExpanded(!isExpanded);
 							onExpand?.(!isExpanded);

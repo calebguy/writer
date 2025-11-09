@@ -18,10 +18,12 @@ export default function WriterContent({
 
 	return (
 		<div
-			className={`grid gap-2 relative ${isExpanded ? "h-full" : ""}`}
-			style={{
-				gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-			}}
+			className={`relative ${isExpanded ? "h-full" : "grid gap-2"}`}
+			style={
+				!isExpanded
+					? { gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))" }
+					: undefined
+			}
 		>
 			<CreateInput
 				placeholder={`Write in ${writerTitle}`}
