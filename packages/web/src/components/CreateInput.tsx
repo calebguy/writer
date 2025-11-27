@@ -2,6 +2,7 @@
 
 import { Arrow } from "@/components/icons/Arrow";
 import { cn } from "@/utils/cn";
+import { useIsMac } from "@/utils/hooks";
 import type { MDXEditorMethods } from "@mdxeditor/editor";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
@@ -19,6 +20,7 @@ export default function CreateInput({
 	onExpand,
 	canExpand = false,
 }: CreateInputProps) {
+	const isMac = useIsMac();
 	const [hasFocus, setHasFocus] = useState(false);
 	const [isExpanded, setIsExpanded] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -116,6 +118,10 @@ export default function CreateInput({
 					placeholder={placeholder}
 					onChange={setMarkdown}
 				/>
+				<div className="text-neutral-700 text-base leading-[16px] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+					<div>{isMac ? "⌘" : "ctrl"} + ↵</div>
+					<div>to create</div>
+				</div>
 				{hasFocus && canExpand && (
 					<button
 						type="button"
