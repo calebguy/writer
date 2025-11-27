@@ -26,6 +26,7 @@ export default function CreateInput({
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [markdown, setMarkdown] = useState<string>("");
 	const editorRef = useRef<MDXEditorMethods>(null);
+	const [showHint, setShowHint] = useState(true);
 
 	// Handle clicks inside or outside the container
 	useEffect(() => {
@@ -74,6 +75,13 @@ export default function CreateInput({
 		};
 	}, [onExpand]);
 
+	// Hide hint when text would overlap (based on character count as a heuristic)
+	useEffect(() => {
+		const lineCount = markdown.split("\n").length;
+		const hasSignificantContent = markdown.length > 50 || lineCount > 5;
+		setShowHint(!hasSignificantContent);
+	}, [markdown]);
+
 	return (
 		<div
 			className={cn("group", {
@@ -118,10 +126,12 @@ export default function CreateInput({
 					placeholder={placeholder}
 					onChange={setMarkdown}
 				/>
-				<div className="text-neutral-700 text-base leading-[16px] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-					<div>{isMac ? "⌘" : "ctrl"} + ↵</div>
-					<div>to create</div>
-				</div>
+				{showHint && (
+					<div className="text-neutral-700 text-base leading-[16px] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+						<div>{isMac ? "⌘" : "ctrl"} + ↵</div>
+						<div>to create</div>
+					</div>
+				)}
 				{hasFocus && canExpand && (
 					<button
 						type="button"
