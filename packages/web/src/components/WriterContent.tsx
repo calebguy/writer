@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import type { Entry } from "@/utils/api";
+import { useState } from "react";
 import CreateInput from "./CreateInput";
 import EntryList from "./EntryList";
 
@@ -16,6 +16,10 @@ export default function WriterContent({
 }) {
 	const [isExpanded, setIsExpanded] = useState(false);
 
+	const handleSubmit = async (markdown: string) => {
+		console.log("handleSubmit", markdown);
+	};
+
 	return (
 		<div
 			className={`relative ${isExpanded ? "h-full" : "grid gap-2"}`}
@@ -29,6 +33,7 @@ export default function WriterContent({
 				placeholder={`Write in ${writerTitle}`}
 				onExpand={setIsExpanded}
 				canExpand={true}
+				onSubmit={handleSubmit}
 			/>
 			{!isExpanded && (
 				<EntryList entries={entries} writerAddress={writerAddress} />

@@ -45,6 +45,14 @@ export function WritersForManager({
 		mutationKey: ["delete-writer"],
 	});
 
+	const handleSubmit = async (markdown: string) => {
+		await mutateAsync({
+			title: markdown,
+			admin: address as Hex,
+			managers: [address as Hex],
+		});
+	};
+
 	useEffect(() => {
 		const isAllOnChain = data?.every((writer) => writer.createdAtHash);
 		if (isAllOnChain) {
@@ -61,7 +69,13 @@ export function WritersForManager({
 				gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
 			}}
 		>
-			{!!user && <CreateInput placeholder="Create a Place" />}
+			{!!user && (
+				<CreateInput
+					placeholder="Create a Place"
+					onSubmit={handleSubmit}
+					isLoading={isPending}
+				/>
+			)}
 			{(data ?? writers)?.map((writer) => (
 				<Link
 					href={`/writer/${writer.address}`}
