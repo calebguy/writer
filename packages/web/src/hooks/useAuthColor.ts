@@ -1,10 +1,10 @@
-import { useContext, useEffect, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { usePrivy } from "@privy-io/react-auth";
-import type { Hex } from "viem";
-import { WriterContext, defaultColor } from "@/utils/context";
 import { getMe } from "@/utils/api";
-import { useFirstWallet } from "@/utils/hooks";
+import { WriterContext, defaultColor } from "@/utils/context";
+import { useOPWallet } from "@/utils/hooks";
+import { usePrivy } from "@privy-io/react-auth";
+import { useQuery } from "@tanstack/react-query";
+import { useContext, useEffect, useMemo } from "react";
+import type { Hex } from "viem";
 
 export function useAuthColor() {
 	const { ready, authenticated } = usePrivy();
@@ -15,7 +15,7 @@ export function useAuthColor() {
 		[ready, authenticated],
 	);
 
-	const wallet = useFirstWallet();
+	const wallet = useOPWallet();
 	const { data } = useQuery({
 		queryKey: ["me"],
 		queryFn: () => getMe(wallet?.address as Hex),

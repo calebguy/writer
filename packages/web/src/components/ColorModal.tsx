@@ -2,7 +2,7 @@
 
 import { setColor as setColorApi } from "@/utils/api";
 import { WriterContext } from "@/utils/context";
-import { useFirstWallet } from "@/utils/hooks";
+import { useOPWallet } from "@/utils/hooks";
 import { signSetColor } from "@/utils/signer";
 import { useMutation } from "@tanstack/react-query";
 import { VisuallyHidden } from "radix-ui";
@@ -24,7 +24,7 @@ interface ModalProps {
 }
 
 export function ColorModal({ open, onClose }: ModalProps) {
-	const wallet = useFirstWallet();
+	const wallet = useOPWallet();
 	const [saveClicked, setSaveClicked] = useState(false);
 	const { mutateAsync, isPending } = useMutation({
 		mutationFn: setColorApi,

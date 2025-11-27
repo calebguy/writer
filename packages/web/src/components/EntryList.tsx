@@ -4,7 +4,7 @@ import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { Lock } from "@/components/icons/Lock";
 import type { Entry } from "@/utils/api";
 import { cn } from "@/utils/cn";
-import { useFirstWallet } from "@/utils/hooks";
+import { useOPWallet } from "@/utils/hooks";
 import { getDerivedSigningKey } from "@/utils/signer";
 import { isEntryPrivate, isWalletAuthor, processEntry } from "@/utils/utils";
 import { format } from "date-fns";
@@ -18,7 +18,7 @@ export default function EntryList({
 	entries: Entry[];
 	writerAddress: string;
 }) {
-	const wallet = useFirstWallet();
+	const wallet = useOPWallet();
 	const [processedEntries, setProcessedEntries] = useState<Entry[]>([]);
 
 	useEffect(() => {

@@ -3,7 +3,7 @@
 import type { Entry as EntryType } from "@/utils/api";
 import { deleteEntry, editEntry } from "@/utils/api";
 import { cn } from "@/utils/cn";
-import { useFirstWallet } from "@/utils/hooks";
+import { useOPWallet } from "@/utils/hooks";
 import { getDerivedSigningKey, signRemove, signUpdate } from "@/utils/signer";
 import {
 	compress,
@@ -35,7 +35,7 @@ export default function Entry({
 	id: string;
 	onEntryUpdate: () => void;
 }) {
-	const wallet = useFirstWallet();
+	const wallet = useOPWallet();
 	const router = useRouter();
 	const [isEditing, setIsEditing] = useState(false);
 	const [isDeleting, setIsDeleting] = useState(false);
@@ -258,7 +258,9 @@ export default function Entry({
 							<div className="flex gap-2">
 								<button
 									type="button"
-									className={cn("text-neutral-600 hover:text-secondary")}
+									className={cn(
+										"text-neutral-600 hover:text-secondary cursor-pointer",
+									)}
 									onClick={() => {
 										if (isEditing) {
 											setEditedContent(processedEntry?.decompressed ?? "");
@@ -276,7 +278,10 @@ export default function Entry({
 										type="button"
 										disabled={!isContentChanged}
 										onClick={handleSave}
-										className="text-primary disabled:text-neutral-600 hover:text-secondary"
+										className={cn(
+											"text-green-400 hover:text-green-600 disabled:text-neutral-600",
+											{ "cursor-pointer": isContentChanged },
+										)}
 									>
 										save
 									</button>
@@ -288,7 +293,7 @@ export default function Entry({
 								{!isDeleting && (
 									<button
 										type="button"
-										className="text-neutral-600 hover:text-red-700"
+										className="text-neutral-600 hover:text-red-700 cursor-pointer"
 										onClick={() => setIsDeleting(true)}
 									>
 										delete

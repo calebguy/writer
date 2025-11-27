@@ -1,13 +1,22 @@
 "use client";
 
 import { useWallets } from "@privy-io/react-auth";
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 
 export function useIsMac() {
-	return useMemo(() => navigator.platform.toLowerCase().includes("mac"), []);
+	const [isMac, setIsMac] = useState(false);
+
+	useEffect(() => {
+		setIsMac(navigator.platform.toLowerCase().includes("mac"));
+	}, []);
+
+	return isMac;
 }
 
-export function useFirstWallet() {
+export function useOPWallet() {
 	const { wallets } = useWallets();
-	return wallets[0];
+	console.log("wallets", wallets);
+	const opWallets = wallets.filter((wallet) => wallet.chainId === "eip155:10");
+	console.log("opWallets", opWallets);
+	return opWallets[0];
 }
