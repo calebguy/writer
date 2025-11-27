@@ -119,7 +119,11 @@ const MDX: FC<EditorProps> = ({
 	}, []);
 
 	return (
-		<div className="mdx" ref={containerRef} style={{ position: "relative" }}>
+		<div
+			className="mdx grow flex flex-col"
+			ref={containerRef}
+			style={{ position: "relative" }}
+		>
 			<MDXEditor
 				plugins={[
 					headingsPlugin(),

@@ -16,6 +16,7 @@ import {
 } from "@/utils/utils";
 import { useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { Hex } from "viem";
@@ -23,6 +24,8 @@ import { MarkdownRenderer } from "./MarkdownRenderer";
 import { Blob } from "./icons/Blob";
 import { Lock } from "./icons/Lock";
 import { Unlock } from "./icons/Unlock";
+
+const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 
 export default function Entry({
 	initialEntry,
@@ -197,15 +200,16 @@ export default function Entry({
 			)}
 			{isEditing && (
 				<div className="flex-grow flex flex-col relative">
-					<textarea
-						value={editedContent}
-						onChange={(e) => setEditedContent(e.target.value)}
-						className="border-[1px] border-primary border-dashed p-2 bg-neutral-900 flex-grow resize-none"
+					<MDX
+						markdown={editedContent}
+						onChange={setEditedContent}
+						className="border-[1px] border-primary border-dashed bg-neutral-900 !text-white flex-col grow flex w-full !aspect-auto"
+						autoFocus
 					/>
 					<button
 						type="button"
 						onClick={() => setEncrypted?.(!encrypted)}
-						className="hover:text-primary text-neutral-600 absolute bottom-3 left-2"
+						className="hover:text-primary text-neutral-600 absolute bottom-3 left-2 z-20"
 					>
 						{encrypted ? (
 							<Lock className="h-3.5 w-3.5" />
