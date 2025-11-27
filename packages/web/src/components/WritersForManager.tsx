@@ -13,7 +13,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { Hex } from "viem";
-import CreateInput from "./CreateInput";
+import CreateInput, { type CreateInputData } from "./CreateInput";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 
@@ -45,7 +45,7 @@ export function WritersForManager({
 		mutationKey: ["delete-writer"],
 	});
 
-	const handleSubmit = async (markdown: string) => {
+	const handleSubmit = async ({ markdown }: CreateInputData) => {
 		await mutateAsync({
 			title: markdown,
 			admin: address as Hex,

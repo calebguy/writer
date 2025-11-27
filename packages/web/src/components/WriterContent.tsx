@@ -1,8 +1,15 @@
 "use client";
 
 import type { Entry } from "@/utils/api";
+import { createWithChunk } from "@/utils/api";
+import { useOPWallet } from "@/utils/hooks";
+import { getDerivedSigningKey, signCreateWithChunk } from "@/utils/signer";
+import { compress, encrypt } from "@/utils/utils";
+import { useMutation } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import CreateInput from "./CreateInput";
+import type { Hex } from "viem";
+import CreateInput, { type CreateInputData } from "./CreateInput";
 import EntryList from "./EntryList";
 
 export default function WriterContent({
@@ -15,9 +22,49 @@ export default function WriterContent({
 	entries: Entry[];
 }) {
 	const [isExpanded, setIsExpanded] = useState(false);
+	const wallet = useOPWallet();
+	const router = useRouter();
 
-	const handleSubmit = async (markdown: string) => {
-		console.log("handleSubmit", markdown);
+	const { mutateAsync, isPending } = useMutation({
+		mutationFn: createWithChunk,
+		mutationKey: ["create-with-chunk", writerAddress],
+		onSuccess: () => {
+			router.refresh();
+		},
+	});
+
+	const handleSubmit = async ({ markdown, encrypted }: CreateInputData) => {
+		if (!writerAddress) {
+			console.debug("Could not get writer address when submitting form");
+			return;
+		}
+
+		if (!wallet) {
+			console.error("No wallet found");
+			return;
+		}
+
+		const compressedContent = await compress(markdown);
+		let versionedCompressedContent = `br:${compressedContent}`;
+		if (encrypted) {
+			const key = await getDerivedSigningKey(wallet);
+			const encryptedContent = await encrypt(key, compressedContent);
+			versionedCompressedContent = `enc:br:${encryptedContent}`;
+		}
+
+		const { signature, nonce, chunkCount, chunkContent } =
+			await signCreateWithChunk(wallet, {
+				content: versionedCompressedContent,
+				address: writerAddress,
+			});
+
+		await mutateAsync({
+			address: writerAddress as Hex,
+			signature,
+			nonce,
+			chunkCount,
+			chunkContent,
+		});
 	};
 
 	return (
@@ -34,6 +81,7 @@ export default function WriterContent({
 				onExpand={setIsExpanded}
 				canExpand={true}
 				onSubmit={handleSubmit}
+				isLoading={isPending}
 			/>
 			{!isExpanded && (
 				<EntryList entries={entries} writerAddress={writerAddress} />

@@ -2,6 +2,8 @@
 
 import { Arrow } from "@/components/icons/Arrow";
 import { Blob } from "@/components/icons/Blob";
+import { Lock } from "@/components/icons/Lock";
+import { Unlock } from "@/components/icons/Unlock";
 import { cn } from "@/utils/cn";
 import { useIsMac } from "@/utils/hooks";
 import type { MDXEditorMethods } from "@mdxeditor/editor";
@@ -11,19 +13,24 @@ import { MarkdownRenderer } from "./MarkdownRenderer";
 
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 
+export interface CreateInputData {
+	markdown: string;
+	encrypted: boolean;
+}
+
 interface CreateInputProps {
 	placeholder?: string;
 	onExpand?: (isExpanded: boolean) => void;
 	canExpand?: boolean;
-	onSubmit: (markdown: string) => Promise<void> | void;
+	onSubmit: (data: CreateInputData) => Promise<void> | void;
 	isLoading?: boolean;
 }
 
 export default function CreateInput({
 	placeholder,
 	onExpand,
-	canExpand = false,
 	onSubmit,
+	canExpand = false,
 	isLoading = false,
 }: CreateInputProps) {
 	const isMac = useIsMac();
@@ -35,6 +42,7 @@ export default function CreateInput({
 	const [showHint, setShowHint] = useState(true);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [loadingContent, setLoadingContent] = useState<string>("");
+	const [encrypted, setEncrypted] = useState(false);
 
 	// Handle clicks inside or outside the container
 	useEffect(() => {
@@ -69,14 +77,13 @@ export default function CreateInput({
 	// Handle keyboard shortcuts
 	useEffect(() => {
 		const handleKeyDown = async (event: KeyboardEvent) => {
-			console.log("handleKeyDown", event);
 			// Submit on cmd/ctrl + enter
 			if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
 				event.preventDefault();
 				if (markdown.trim() !== "") {
 					setLoadingContent(markdown);
 					setIsSubmitting(true);
-					await onSubmit(markdown);
+					await onSubmit({ markdown, encrypted });
 					editorRef.current?.setMarkdown("");
 					setMarkdown("");
 					setIsSubmitting(false);
@@ -97,7 +104,7 @@ export default function CreateInput({
 		return () => {
 			document.removeEventListener("keydown", handleKeyDown);
 		};
-	}, [markdown, onSubmit, onExpand]);
+	}, [markdown, encrypted, onSubmit, onExpand]);
 
 	// Hide hint when text would overlap (based on character count as a heuristic)
 	useEffect(() => {
@@ -175,26 +182,39 @@ export default function CreateInput({
 								<div>to create</div>
 							</div>
 						)}
-						{hasFocus && canExpand && (
-							<button
-								type="button"
-								className="absolute bottom-2 right-2 hover:text-primary text-neutral-600 z-20 cursor-pointer"
-								onClick={() => {
-									setIsExpanded(!isExpanded);
-									onExpand?.(!isExpanded);
-								}}
-								onMouseDown={(e) => {
-									e.preventDefault();
-								}}
-							>
-								<Arrow
-									title={isExpanded ? "collapse" : "expand"}
-									className={cn("w-4 h-4", {
-										"rotate-90": !isExpanded,
-										"-rotate-90": isExpanded,
-									})}
-								/>
-							</button>
+						{hasFocus && canExpand && !isLoading && (
+							<div className="absolute bottom-1 flex justify-between w-full z-20 px-2 pb-0.5">
+								<button
+									type="button"
+									onClick={() => setEncrypted?.(!encrypted)}
+									className="hover:text-primary text-neutral-600 cursor-pointer"
+								>
+									{encrypted ? (
+										<Lock className="h-3.5 w-3.5" />
+									) : (
+										<Unlock className="h-3.5 w-3.5 ml-0.5" />
+									)}
+								</button>
+								<button
+									type="button"
+									className="hover:text-primary text-neutral-600 mt-1"
+									onClick={() => {
+										setIsExpanded(!isExpanded);
+										onExpand?.(!isExpanded);
+									}}
+									onMouseDown={(e) => {
+										e.preventDefault();
+									}}
+								>
+									<Arrow
+										title={isExpanded ? "collapse" : "expand"}
+										className={cn("w-4 h-4", {
+											"rotate-90": !isExpanded,
+											"-rotate-90": isExpanded,
+										})}
+									/>
+								</button>
+							</div>
 						)}
 					</div>
 				</>
