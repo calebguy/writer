@@ -1,7 +1,6 @@
 "use client";
 
 import { Arrow } from "@/components/icons/Arrow";
-import { Blob } from "@/components/icons/Blob";
 import { Lock } from "@/components/icons/Lock";
 import { Unlock } from "@/components/icons/Unlock";
 import { cn } from "@/utils/cn";
@@ -10,6 +9,7 @@ import type { MDXEditorMethods } from "@mdxeditor/editor";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { MarkdownRenderer } from "./MarkdownRenderer";
+import { Logo } from "./icons/Logo";
 
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 
@@ -129,7 +129,7 @@ export default function CreateInput({
 						<MarkdownRenderer markdown={loadingContent} />
 					</div>
 					<div className="text-sm absolute inset-0 flex justify-center items-center text-primary">
-						<Blob
+						<Logo
 							className={cn("rotating", {
 								"w-6 h-6": !isExpanded,
 								"w-8 h-8": isExpanded,

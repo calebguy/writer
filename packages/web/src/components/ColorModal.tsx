@@ -14,7 +14,6 @@ import {
 	setPrimaryAndSecondaryCSSVariables,
 } from "../utils/utils";
 import { Modal, ModalDescription, ModalTitle } from "./dsl/Modal";
-import { Blob } from "./icons/Blob";
 import { Logo } from "./icons/Logo";
 import { Save } from "./icons/Save";
 import { Undo } from "./icons/Undo";
@@ -122,7 +121,7 @@ export function ColorModal({ open, onClose }: ModalProps) {
 					}}
 				>
 					{isSaving ? (
-						<Blob className="w-5 h-5 rotating" />
+						<Logo className="w-5 h-5 rotating" />
 					) : (
 						<Save className="w-5 h-5" />
 					)}

@@ -21,8 +21,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { Hex } from "viem";
 import { MarkdownRenderer } from "./MarkdownRenderer";
-import { Blob } from "./icons/Blob";
 import { Lock } from "./icons/Lock";
+import { Logo } from "./icons/Logo";
 import { Unlock } from "./icons/Unlock";
 
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
@@ -166,7 +166,7 @@ export default function Entry({
 			<div className="flex-grow flex flex-col">
 				<div className="flex-grow flex flex-col relative">
 					<div className="absolute w-full h-full flex justify-center items-center">
-						<Blob className="w-8 h-8 rotating text-primary" />
+						<Logo className="w-8 h-8 rotating text-primary" />
 					</div>
 				</div>
 			</div>
@@ -186,7 +186,7 @@ export default function Entry({
 					{!canView && (
 						<div className="flex flex-col gap-2 justify-center items-center grow">
 							<div className="text-sm text-neutral-600">
-								<Blob className="w-8 h-8" />
+								<Logo className="w-8 h-8" />
 							</div>
 							<div className="text-lg text-neutral-600">Private</div>
 						</div>
@@ -225,7 +225,7 @@ export default function Entry({
 								{ "bg-primary": isEditPending },
 							)}
 						>
-							<Blob
+							<Logo
 								className={cn("w-8 h-8 rotating", {
 									"text-red-900": isPendingDelete,
 									"text-secondary": isEditPending,
