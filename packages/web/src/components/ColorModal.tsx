@@ -69,7 +69,6 @@ export function ColorModal({ open, onClose }: ModalProps) {
 			</VisuallyHidden.Root>
 			<div className="flex items-center justify-center py-4">
 				<RgbColorPicker
-					className="!border-primary !border-dashed !border"
 					color={rgbColor}
 					onChange={(c) => {
 						setRgbColor(c);
