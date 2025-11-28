@@ -1,0 +1,6 @@
+# Ignore MDX editor submodule (reference only)
+packages/web/mdx-editor
+
+# Ignore chain package (Foundry dependencies)
+packages/chain/lib/forge-std
+packages/chain/lib/openzeppelin-contracts
