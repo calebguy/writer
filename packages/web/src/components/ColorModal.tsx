@@ -1,19 +1,20 @@
 "use client";
 
+import { setColor as setColorApi } from "@/utils/api";
+import { WriterContext } from "@/utils/context";
+import { useOPWallet } from "@/utils/hooks";
+import { signSetColor } from "@/utils/signer";
 import { useMutation } from "@tanstack/react-query";
+import { VisuallyHidden } from "radix-ui";
 import { useContext, useEffect, useState } from "react";
 import { type RgbColor, RgbColorPicker } from "react-colorful";
-import { WriterContext } from "../context";
-import { setColor as setColorApi } from "../utils/api";
-import { useFirstWallet } from "../utils/hooks";
-import { signSetColor } from "../utils/signer";
 import {
 	RGBToHex,
 	hexColorToBytes32,
 	setPrimaryAndSecondaryCSSVariables,
 } from "../utils/utils";
-import { Modal } from "./Modal";
-import { Blob } from "./icons/Blob";
+import { Modal, ModalDescription, ModalTitle } from "./dsl/Modal";
+import { Logo } from "./icons/Logo";
 import { Save } from "./icons/Save";
 import { Undo } from "./icons/Undo";
 interface ModalProps {
@@ -22,7 +23,7 @@ interface ModalProps {
 }
 
 export function ColorModal({ open, onClose }: ModalProps) {
-	const wallet = useFirstWallet();
+	const wallet = useOPWallet();
 	const [saveClicked, setSaveClicked] = useState(false);
 	const { mutateAsync, isPending } = useMutation({
 		mutationFn: setColorApi,
@@ -61,13 +62,12 @@ export function ColorModal({ open, onClose }: ModalProps) {
 				onClose();
 			}}
 		>
-			{/* <VisuallyHidden.Root>
+			<VisuallyHidden.Root>
 				<ModalTitle>Set Color</ModalTitle>
 				<ModalDescription>Set the color</ModalDescription>
-			</VisuallyHidden.Root> */}
+			</VisuallyHidden.Root>
 			<div className="flex items-center justify-center py-4">
 				<RgbColorPicker
-					className="!border-primary !border-dashed !border"
 					color={rgbColor}
 					onChange={(c) => {
 						setRgbColor(c);
@@ -75,13 +75,13 @@ export function ColorModal({ open, onClose }: ModalProps) {
 					}}
 				/>
 				<div className="flex flex-col items-center justify-center ml-6">
-					<Blob className="w-44 h-44 text-primary" />
+					<Logo className="w-44 h-44 text-primary" />
 				</div>
 			</div>
 			<div className="flex items-center justify-center gap-2">
 				<button
 					type="button"
-					className="border border-transparent hover:border-primary border-dashed text-primary p-2 w-full bold text-xl disabled:hover:border-transparent disabled:opacity-30 disabled:cursor-not-allowed flex justify-center items-center"
+					className="border border-transparent hover:border-primary border-dashed text-primary p-2 w-full bold text-xl disabled:hover:border-transparent disabled:opacity-30 disabled:cursor-not-allowed flex justify-center items-center cursor-pointer"
 					onClick={() => {
 						setRgbColor({
 							r: primaryColor[0],
@@ -100,7 +100,7 @@ export function ColorModal({ open, onClose }: ModalProps) {
 				</button>
 				<button
 					type="button"
-					className="border border-transparent hover:border-primary border-dashed text-primary p-2 w-full bold text-xl disabled:hover:border-transparent disabled:opacity-30 disabled:cursor-not-allowed flex justify-center items-center"
+					className="border border-transparent hover:border-primary border-dashed text-primary p-2 w-full bold text-xl disabled:hover:border-transparent disabled:opacity-30 disabled:cursor-not-allowed flex justify-center items-center cursor-pointer"
 					disabled={
 						rgbColor.r === primaryColor[0] &&
 						rgbColor.g === primaryColor[1] &&
@@ -121,7 +121,7 @@ export function ColorModal({ open, onClose }: ModalProps) {
 					}}
 				>
 					{isSaving ? (
-						<Blob className="w-5 h-5 rotating" />
+						<Logo className="w-5 h-5 rotating" />
 					) : (
 						<Save className="w-5 h-5" />
 					)}

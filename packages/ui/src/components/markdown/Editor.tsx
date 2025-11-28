@@ -12,11 +12,11 @@ import ListItem from "@tiptap/extension-list-item";
 import OrderedList from "@tiptap/extension-ordered-list";
 import Paragraph from "@tiptap/extension-paragraph";
 import Placeholder from "@tiptap/extension-placeholder";
-import Strikethrough from "@tiptap/extension-strike";
+import Strike from "@tiptap/extension-strike";
 import TaskItem from "@tiptap/extension-task-item";
 import TaskList from "@tiptap/extension-task-list";
-
 import Text from "@tiptap/extension-text";
+
 import {
 	EditorContent,
 	type Editor as TiptapEditor,
@@ -67,7 +67,7 @@ export function Editor({
 			History,
 			Bold,
 			Italic,
-			Strikethrough,
+			Strike,
 			OrderedList,
 			ListItem,
 			TaskList,
@@ -104,6 +104,7 @@ export function Editor({
 		},
 		content,
 	});
+
 	useImperativeHandle<TiptapEditor | null, TiptapEditor | null>(
 		editorRef,
 		() => editor,
@@ -111,8 +112,6 @@ export function Editor({
 
 	return (
 		<EditorContent
-			placeholder={placeholder}
-			disabled={disabled}
 			editor={editor}
 			className="grow flex flex-col overflow-auto"
 		/>

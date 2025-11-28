@@ -4,7 +4,7 @@ export default function UnauthedHome() {
 	const { login } = useLogin();
 
 	return (
-		<div className="grow flex justify-center items-center">
+		<div className="grow flex justify-center items-center min-h-screen">
 			<div className="flex flex-col gap-4 items-center">
 				<div className="text-6xl md:text-8xl text-primary italic">Writer</div>
 				<button
