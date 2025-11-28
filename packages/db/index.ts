@@ -13,10 +13,7 @@ import { chunk, entry, syndicateTx, user, writer } from "./src/schema";
 class Db {
 	private pg;
 
-	constructor(
-		private readonly connectionUrl: string,
-		isNeon: boolean,
-	) {
+	constructor(private readonly connectionUrl: string) {
 		this.pg = drizzle({
 			casing: "snake_case",
 			connection: this.connectionUrl,
