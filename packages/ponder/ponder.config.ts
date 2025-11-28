@@ -3,7 +3,7 @@ import { createConfig, factory } from "ponder";
 import { ColorRegistryAbi } from "./../utils/abis/ColorRegistryAbi";
 
 import { WriterFactoryAbi, WriterStorageAbi } from "utils/abis";
-import { http, type Hex } from "viem";
+import type { Hex } from "viem";
 import { WriterAbi } from "../utils/abis/WriterAbi";
 import { env } from "./utils/env";
 
@@ -14,21 +14,21 @@ const writerCreatedEvent = parseAbiItem(
 const startBlock = env.START_BLOCK;
 
 export default createConfig({
-	networks: {
+	chains: {
 		target: {
-			chainId: env.TARGET_CHAIN_ID,
-			transport: http(env.RPC_URL),
+			id: Number(env.TARGET_CHAIN_ID),
+			rpc: env.RPC_URL,
 		},
 	},
 	contracts: {
 		WriterFactory: {
-			network: "target",
+			chain: "target",
 			abi: WriterFactoryAbi,
 			address: env.FACTORY_ADDRESS as Hex,
 			startBlock,
 		},
 		Writer: {
-			network: "target",
+			chain: "target",
 			abi: WriterAbi,
 			address: factory({
 				address: env.FACTORY_ADDRESS as Hex,
@@ -38,7 +38,7 @@ export default createConfig({
 			startBlock,
 		},
 		WriterStorage: {
-			network: "target",
+			chain: "target",
 			abi: WriterStorageAbi,
 			address: factory({
 				address: env.FACTORY_ADDRESS as Hex,
@@ -48,7 +48,7 @@ export default createConfig({
 			startBlock,
 		},
 		ColorRegistry: {
-			network: "target",
+			chain: "target",
 			abi: ColorRegistryAbi,
 			address: env.COLOR_REGISTRY_ADDRESS as Hex,
 			startBlock,

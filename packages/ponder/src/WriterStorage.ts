@@ -2,6 +2,7 @@ import { ponder } from "ponder:registry";
 import { db } from ".";
 import { env } from "../utils/env";
 import { getSynIdFromRawInput, syndicate } from "../utils/syndicate";
+
 ponder.on("WriterStorage:ChunkReceived", async ({ event }) => {
 	const transactionId = getSynIdFromRawInput(event.transaction.input);
 	if (transactionId) {
