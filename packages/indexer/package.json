@@ -6,6 +6,7 @@
 	"scripts": {
 		"dev": "ponder dev",
 		"start": "ponder start --schema $RAILWAY_DEPLOYMENT_ID",
+		"render:start": "ponder start --schema $RENDER_INSTANCE_ID",
 		"db": "ponder db",
 		"codegen": "ponder codegen",
 		"serve": "ponder serve",
