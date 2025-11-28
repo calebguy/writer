@@ -1,10 +1,10 @@
 import { parseAbiItem } from "abitype";
 import { createConfig, factory } from "ponder";
-import { ColorRegistryAbi } from "./../utils/abis/ColorRegistryAbi";
+import { ColorRegistryAbi } from "utils/abis/ColorRegistryAbi";
 
 import { WriterFactoryAbi, WriterStorageAbi } from "utils/abis";
+import { WriterAbi } from "utils/abis/WriterAbi";
 import type { Hex } from "viem";
-import { WriterAbi } from "../utils/abis/WriterAbi";
 import { env } from "./utils/env";
 
 const writerCreatedEvent = parseAbiItem(
