@@ -11,9 +11,9 @@
 		"typescript": "^5.0.0"
 	},
 	"scripts": {
-		"dev": "bun --filter 'db' dev & bun --filter 'server' dev & bun --filter 'ponder' dev & bun --filter 'ui' dev",
+		"dev": "bun --filter 'db' dev & bun --filter 'server' dev & bun --filter 'indexer' dev & bun --filter 'web' dev",
 		"format": "bunx @biomejs/biome format --write .",
-		"ponder:start": "bun --filter 'ponder' start",
+		"indexer:start": "bun --filter 'indexer' start",
 		"db:migrate": "bun --filter 'db' migrate",
 		"server:install": "bun --filter 'server' install",
 		"server:start": "bun --filter 'server' start"
