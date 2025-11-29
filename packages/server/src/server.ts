@@ -273,7 +273,7 @@ const api = app
 				entryId: id,
 				address: contractAddress,
 			});
-			if (entry.author !== author) {
+			if (entry.author.toLowerCase() !== author.toLowerCase()) {
 				return c.json({ error: "previous author does not match" }, 400);
 			}
 
@@ -348,7 +348,7 @@ const api = app
 				id,
 				address,
 			});
-			if (entry.author !== signer) {
+			if (entry.author.toLowerCase() !== signer.toLowerCase()) {
 				return c.json({ error: "previous author does not match" }, 400);
 			}
 

@@ -11,13 +11,12 @@ import { format } from "date-fns";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-export default function EntryList({
-	entries,
-	writerAddress,
-}: {
+interface EntryListProps {
 	entries: Entry[];
 	writerAddress: string;
-}) {
+}
+
+export default function EntryList({ entries, writerAddress }: EntryListProps) {
 	const wallet = useOPWallet();
 	const [processedEntries, setProcessedEntries] = useState<Entry[]>([]);
 
