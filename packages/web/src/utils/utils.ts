@@ -243,8 +243,7 @@ export function isEntryPrivate(entry: Entry) {
 }
 
 export function isWalletAuthor(wallet: ConnectedWallet, entry: Entry) {
-	console.log("author", entry.author, "wallet.address", wallet?.address);
-	return entry.author === wallet?.address;
+	return entry.author?.toLowerCase() === wallet?.address?.toLowerCase();
 }
 
 export function sleep(ms: number) {
