@@ -34,7 +34,7 @@ class Db {
 	async getWritersByManager(managerAddress: Hex) {
 		const writers = await this.pg.query.writer.findMany({
 			where: and(
-				arrayContains(writer.managers, [managerAddress]),
+				arrayContains(writer.managers, [managerAddress.toLowerCase()]),
 				isNull(writer.deletedAt),
 			),
 			orderBy: (writer, { desc }) => [desc(writer.createdAt)],
@@ -44,7 +44,10 @@ class Db {
 			.map((w) => w.storageAddress) as string[];
 		const entries = await this.pg.query.entry.findMany({
 			where: and(
-				inArray(entry.storageAddress, storageAddresses),
+				inArray(
+					entry.storageAddress,
+					storageAddresses.map((s) => s.toLowerCase()),
+				),
 				isNull(entry.deletedAt),
 			),
 			orderBy: (entry, { desc }) => [desc(entry.createdAt)],
@@ -62,14 +65,14 @@ class Db {
 
 	async getWriter(address: Hex) {
 		const data = await this.pg.query.writer.findFirst({
-			where: eq(writer.address, address),
+			where: eq(writer.address, address.toLowerCase()),
 		});
 		if (!data) {
 			return null;
 		}
 		const entries = await this.pg.query.entry.findMany({
 			where: and(
-				eq(entry.storageAddress, data.storageAddress),
+				eq(entry.storageAddress, data.storageAddress.toLowerCase()),
 				isNull(entry.deletedAt),
 			),
 			orderBy: (entry, { desc }) => [desc(entry.createdAt)],
@@ -87,7 +90,10 @@ class Db {
 
 	async getEntry(storageAddress: Hex, id: number) {
 		const data = await this.pg.query.entry.findFirst({
-			where: and(eq(entry.storageAddress, storageAddress), eq(entry.id, id)),
+			where: and(
+				eq(entry.storageAddress, storageAddress.toLowerCase()),
+				eq(entry.id, id),
+			),
 			with: {
 				chunks: {
 					orderBy: (chunk, { desc }) => [desc(chunk.index)],
@@ -103,7 +109,7 @@ class Db {
 	async getEntryByOnchainId(storageAddress: Hex, id: bigint) {
 		const data = await this.pg.query.entry.findFirst({
 			where: and(
-				eq(entry.storageAddress, storageAddress),
+				eq(entry.storageAddress, storageAddress.toLowerCase()),
 				eq(entry.onChainId, id),
 			),
 			with: {
@@ -190,7 +196,12 @@ class Db {
 		return this.pg
 			.update(entry)
 			.set({ deletedAt: new Date(), deletedAtTransactionId: transactionId })
-			.where(and(eq(entry.storageAddress, address), eq(entry.onChainId, id)));
+			.where(
+				and(
+					eq(entry.storageAddress, address.toLowerCase()),
+					eq(entry.onChainId, id),
+				),
+			);
 	}
 
 	upsertUser(item: InsertUser) {
@@ -209,7 +220,7 @@ class Db {
 
 	async getUser(address: Hex) {
 		const data = await this.pg.query.user.findFirst({
-			where: eq(user.address, address),
+			where: eq(user.address, address.toLowerCase()),
 		});
 		return data;
 	}
@@ -229,7 +240,7 @@ class Db {
 		return this.pg
 			.update(writer)
 			.set({ deletedAt: new Date() })
-			.where(eq(writer.address, address));
+			.where(eq(writer.address, address.toLowerCase()));
 	}
 }
 
