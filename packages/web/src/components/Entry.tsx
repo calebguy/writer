@@ -202,43 +202,46 @@ export default function Entry({
 					)}
 				</div>
 			)}
-			{isEditing && (
-				<div className="flex-grow flex flex-col relative">
-					<MDX
-						markdown={editedContent}
-						onChange={setEditedContent}
-						className="border-[1px] border-primary border-dashed bg-neutral-900 !text-white flex-col grow flex w-full !aspect-auto"
-						autoFocus
-					/>
-					<button
-						type="button"
-						onClick={() => setEncrypted?.(!encrypted)}
-						className="hover:text-primary text-neutral-600 absolute bottom-3 left-2 z-20"
-					>
-						{encrypted ? (
-							<Lock className="h-3.5 w-3.5" />
-						) : (
-							<Unlock className="h-3.5 w-3.5 ml-0.5" />
-						)}
-					</button>
-					{isEditPending && (
-						<div
-							className={cn(
-								"absolute w-full h-full flex justify-center items-center z-20",
-								{ "bg-red-700": isPendingDelete },
-								{ "bg-primary": isEditPending },
-							)}
-						>
-							<Logo
-								className={cn("w-8 h-8 rotating", {
-									"text-red-900": isPendingDelete,
-									"text-secondary": isEditPending,
-								})}
-							/>
-						</div>
+			<div
+				className={cn("flex-grow flex-col relative", {
+					flex: isEditing,
+					hidden: !isEditing,
+				})}
+			>
+				<MDX
+					markdown={editedContent}
+					onChange={setEditedContent}
+					className="border-[1px] border-primary border-dashed bg-neutral-900 !text-white flex-col grow flex w-full !aspect-auto"
+					autoFocus={isEditing}
+				/>
+				<button
+					type="button"
+					onClick={() => setEncrypted?.(!encrypted)}
+					className="hover:text-primary text-neutral-600 absolute bottom-3 left-2 z-20"
+				>
+					{encrypted ? (
+						<Lock className="h-3.5 w-3.5" />
+					) : (
+						<Unlock className="h-3.5 w-3.5 ml-0.5" />
 					)}
-				</div>
-			)}
+				</button>
+				{isEditPending && (
+					<div
+						className={cn(
+							"absolute w-full h-full flex justify-center items-center z-20",
+							{ "bg-red-700": isPendingDelete },
+							{ "bg-primary": isEditPending },
+						)}
+					>
+						<Logo
+							className={cn("w-8 h-8 rotating", {
+								"text-red-900": isPendingDelete,
+								"text-secondary": isEditPending,
+							})}
+						/>
+					</div>
+				)}
+			</div>
 
 			{/* Footer */}
 			<div

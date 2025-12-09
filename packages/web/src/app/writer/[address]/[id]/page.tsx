@@ -11,6 +11,7 @@ export default async function EntryPage({
 	const { address, id } = await params;
 	console.log(address, id);
 	const entry = await getEntry(address as Hex, Number(id));
+	console.log(entry);
 
 	return (
 		<div className="flex-grow flex flex-col">
