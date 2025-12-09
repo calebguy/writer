@@ -149,19 +149,33 @@ class Db {
 			.returning();
 	}
 
-	upsertWriter({ transactionId, ...itemWithoutTransactionId }: InsertWriter) {
+	upsertWriter(item: InsertWriter) {
+		if (item.transactionId) {
+			return this.pg
+				.insert(writer)
+				.values({
+					...item,
+					updatedAt: new Date(),
+					createdAt: new Date(),
+				})
+				.onConflictDoUpdate({
+					target: [writer.transactionId],
+					set: { ...item, updatedAt: new Date() },
+				})
+				.returning();
+		}
+
 		return this.pg
 			.insert(writer)
 			.values({
-				...itemWithoutTransactionId,
-				transactionId,
+				...item,
 				updatedAt: new Date(),
 				createdAt: new Date(),
 			})
 			.onConflictDoUpdate({
 				target: [writer.address],
 				set: {
-					...itemWithoutTransactionId,
+					...item,
 					updatedAt: new Date(),
 				},
 			})
