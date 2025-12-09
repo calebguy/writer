@@ -227,8 +227,8 @@ body,
   }
 }
 
-/* MDX Editor text color override */
+/* MDX Editor text color override - inherits from parent */
 ._contentEditable_sets_380 {
-  color: white !important;
+  color: inherit !important;
 }
 

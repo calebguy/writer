@@ -211,7 +211,7 @@ export default function Entry({
 				<MDX
 					markdown={editedContent}
 					onChange={setEditedContent}
-					className="border-[1px] border-primary border-dashed bg-neutral-900 !text-white flex-col grow flex w-full !aspect-auto"
+					className="border-[1px] border-primary border-dashed bg-neutral-900 !text-secondary flex-col grow flex w-full !aspect-auto"
 					autoFocus={isEditing}
 				/>
 				<button
@@ -225,20 +225,25 @@ export default function Entry({
 						<Unlock className="h-3.5 w-3.5 ml-0.5" />
 					)}
 				</button>
-				{isEditPending && (
+				{isEditing && isEditPending && (
 					<div
 						className={cn(
-							"absolute w-full h-full flex justify-center items-center z-20",
+							"absolute inset-0 flex flex-col items-center justify-between h-full z-20",
 							{ "bg-red-700": isPendingDelete },
-							{ "bg-primary": isEditPending },
+							{ "bg-secondary": !isPendingDelete },
 						)}
 					>
-						<Logo
-							className={cn("w-8 h-8 rotating", {
-								"text-red-900": isPendingDelete,
-								"text-secondary": isEditPending,
-							})}
-						/>
+						<div className="text-primary w-full text-left break-words p-2 overflow-hidden">
+							<MarkdownRenderer markdown={editedContent} />
+						</div>
+						<div className="absolute inset-0 flex justify-center items-center">
+							<Logo
+								className={cn("w-8 h-8 rotating", {
+									"text-red-900": isPendingDelete,
+									"text-primary": !isPendingDelete,
+								})}
+							/>
+						</div>
 					</div>
 				)}
 			</div>

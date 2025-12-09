@@ -8,8 +8,10 @@ import { useOPWallet } from "@/utils/hooks";
 import { getDerivedSigningKey } from "@/utils/signer";
 import { isEntryPrivate, isWalletAuthor, processEntry } from "@/utils/utils";
 import { format } from "date-fns";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+const MDX = dynamic(() => import("@/components/markdown/MDX"), { ssr: false });
 
 interface EntryListProps {
 	entries: Entry[];
