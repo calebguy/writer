@@ -149,18 +149,19 @@ class Db {
 			.returning();
 	}
 
-	upsertWriter(item: InsertWriter) {
+	upsertWriter({ transactionId, ...itemWithoutTransactionId }: InsertWriter) {
 		return this.pg
 			.insert(writer)
 			.values({
-				...item,
+				...itemWithoutTransactionId,
+				transactionId,
 				updatedAt: new Date(),
 				createdAt: new Date(),
 			})
 			.onConflictDoUpdate({
 				target: [writer.address],
 				set: {
-					...item,
+					...itemWithoutTransactionId,
 					updatedAt: new Date(),
 				},
 			})
