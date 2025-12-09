@@ -18,7 +18,7 @@ import { useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Hex } from "viem";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import { Lock } from "./icons/Lock";
@@ -47,6 +47,7 @@ export default function Entry({
 	const [processedEntry, setProcessedEntry] = useState<EntryType | null>(null);
 	const [encrypted, setEncrypted] = useState(false);
 	const [editedContent, setEditedContent] = useState("");
+	const awaitingRefreshRef = useRef(false);
 
 	const { mutateAsync: mutateAsyncDelete, isPending: isPendingDelete } =
 		useMutation({
@@ -85,6 +86,11 @@ export default function Entry({
 					setProcessedEntry(initialEntry);
 					setEditedContent(initialEntry.decompressed ?? "");
 				}
+			}
+			if (awaitingRefreshRef.current) {
+				awaitingRefreshRef.current = false;
+				setEditSubmitted(false);
+				setIsEditing(false);
 			}
 		}
 		loadProcessedEntry();
@@ -131,9 +137,7 @@ export default function Entry({
 			totalChunks,
 			content,
 		});
-		await sleep(250);
-		setEditSubmitted(false);
-		setIsEditing(false);
+		awaitingRefreshRef.current = true;
 		onEntryUpdate();
 	};
 
@@ -149,7 +153,7 @@ export default function Entry({
 
 		window.addEventListener("keydown", handleKeyDown);
 		return () => window.removeEventListener("keydown", handleKeyDown);
-	}, [isEditing, isContentChanged, isEditPending, editedContent, encrypted]);
+	}, [isEditing, isContentChanged, isEditPending, handleSave]);
 
 	const canView = useMemo(() => {
 		if (processedEntry) {
@@ -306,7 +310,7 @@ export default function Entry({
 								{isDeleting && (
 									<button
 										type="button"
-										className="text-red-700 hover:text-red-900"
+										className="text-red-700 hover:text-red-900 cursor-pointer"
 										onClick={async () => {
 											setDeletedSubmitted(true);
 											const { signature, nonce } = await signRemove(wallet, {

@@ -1,5 +1,6 @@
 import Entry from "@/components/Entry";
 import { getEntry } from "@/utils/api";
+import { revalidatePath } from "next/cache";
 import type { Hex } from "viem";
 
 export default async function EntryPage({
@@ -19,7 +20,7 @@ export default async function EntryPage({
 				id={id}
 				onEntryUpdate={async () => {
 					"use server";
-					// This will trigger a revalidation of the page
+					revalidatePath(`/writer/${address}/${id}`);
 				}}
 			/>
 		</div>
