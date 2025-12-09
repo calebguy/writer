@@ -149,7 +149,33 @@ class Db {
 			.returning();
 	}
 
-	upsertWriter(item: InsertWriter) {
+	async upsertWriter(item: InsertWriter) {
+		const { transactionId, ...updateItem } = item;
+
+		// If transactionId is provided, check if a writer with this transactionId already exists
+		// This handles crash recovery scenarios where the same event is processed multiple times
+		if (transactionId) {
+			const existing = await this.pg.query.writer.findFirst({
+				where: eq(writer.transactionId, transactionId),
+			});
+			if (existing) {
+				return this.pg
+					.insert(writer)
+					.values({
+						...updateItem,
+						updatedAt: new Date(),
+						createdAt: new Date(),
+					})
+					.onConflictDoUpdate({
+						target: [writer.address],
+						set: {
+							updatedAt: new Date(),
+						},
+					})
+					.returning();
+			}
+		}
+
 		return this.pg
 			.insert(writer)
 			.values({
@@ -160,7 +186,8 @@ class Db {
 			.onConflictDoUpdate({
 				target: [writer.address],
 				set: {
-					...item,
+					...updateItem,
+					transactionId,
 					updatedAt: new Date(),
 				},
 			})

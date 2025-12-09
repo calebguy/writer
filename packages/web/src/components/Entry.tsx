@@ -229,18 +229,24 @@ export default function Entry({
 					<div
 						className={cn(
 							"absolute inset-0 flex flex-col items-center justify-between h-full z-20",
-							{ "bg-red-700": isPendingDelete },
-							{ "bg-secondary": !isPendingDelete },
+							{ "bg-red-700": deleteSubmitted },
+							{ "bg-secondary": !deleteSubmitted },
 						)}
 					>
-						<div className="text-primary w-full text-left break-words p-2 overflow-hidden">
+						<div
+							className={cn(
+								"w-full text-left break-words p-2 overflow-hidden",
+								{ "text-red-900": deleteSubmitted },
+								{ "text-primary": !deleteSubmitted },
+							)}
+						>
 							<MarkdownRenderer markdown={editedContent} />
 						</div>
 						<div className="absolute inset-0 flex justify-center items-center">
 							<Logo
 								className={cn("w-8 h-8 rotating", {
-									"text-red-900": isPendingDelete,
-									"text-primary": !isPendingDelete,
+									"text-red-900": deleteSubmitted,
+									"text-primary": !deleteSubmitted,
 								})}
 							/>
 						</div>
