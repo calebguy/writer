@@ -40,15 +40,10 @@ export default function EntryList({ entries, writerAddress }: EntryListProps) {
 	const [processedEntriesMap, setProcessedEntriesMap] = useState<
 		Map<number, Entry>
 	>(new Map());
-	// Track private entries confirmed not to belong to current user
-	const [excludedEntryIds, setExcludedEntryIds] = useState<Set<number>>(
-		new Set(),
-	);
 
 	useEffect(() => {
 		async function processAllEntries() {
 			const processed = new Map<number, Entry>();
-			const excluded = new Set<number>();
 
 			for (const entry of entries) {
 				if (isEntryPrivate(entry)) {
@@ -57,11 +52,7 @@ export default function EntryList({ entries, writerAddress }: EntryListProps) {
 						const key = await getDerivedSigningKey(wallet);
 						const decryptedEntry = await processEntry(key, entry);
 						processed.set(entry.id, decryptedEntry);
-					} else if (wallet) {
-						// Private entry but not ours - exclude it
-						excluded.add(entry.id);
 					}
-					// If no wallet yet, don't exclude - keep showing skeleton
 				} else {
 					// Public entries are always shown
 					processed.set(entry.id, entry);
@@ -69,7 +60,6 @@ export default function EntryList({ entries, writerAddress }: EntryListProps) {
 			}
 
 			setProcessedEntriesMap(processed);
-			setExcludedEntryIds(excluded);
 		}
 
 		processAllEntries();
@@ -78,14 +68,16 @@ export default function EntryList({ entries, writerAddress }: EntryListProps) {
 	return (
 		<>
 			{entries.map((entry) => {
-				// Skip entries confirmed not to belong to user
-				if (excludedEntryIds.has(entry.id)) {
-					return null;
+				// For private entries: only show if wallet is connected and user is author
+				if (isEntryPrivate(entry)) {
+					if (!wallet || !isWalletAuthor(wallet, entry)) {
+						return null;
+					}
 				}
 
 				const processedEntry = processedEntriesMap.get(entry.id);
 
-				// Show skeleton if not yet processed
+				// Show skeleton if not yet processed (private entry being decrypted)
 				if (!processedEntry) {
 					return <EntryCardSkeleton key={entry.id} />;
 				}
