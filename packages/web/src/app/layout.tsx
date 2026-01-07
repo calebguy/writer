@@ -12,6 +12,23 @@ import "./globals.css";
 export const metadata: Metadata = {
 	title: "Writer",
 	description: "Write for now, forever",
+	openGraph: {
+		title: "Writer",
+		description: "Write for now, forever",
+		images: [
+			{
+				url: "https://res.cloudinary.com/dm9gwanrg/image/upload/v1741159374/Artboard_1_1_3p_ztojhs.png",
+			},
+		],
+	},
+	twitter: {
+		card: "summary_large_image",
+		title: "Writer",
+		description: "Write for now, forever",
+		images: [
+			"https://res.cloudinary.com/dm9gwanrg/image/upload/v1741159374/Artboard_1_1_3p_ztojhs.png",
+		],
+	},
 };
 
 export default async function RootLayout({
