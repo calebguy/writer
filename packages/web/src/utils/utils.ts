@@ -169,7 +169,7 @@ export async function decompress(compressed: string): Promise<string> {
 export async function encrypt(key: Uint8Array, message: string) {
 	const cryptoKey = await crypto.subtle.importKey(
 		"raw",
-		key,
+		key as BufferSource,
 		{ name: "AES-GCM" },
 		false,
 		["encrypt"],
@@ -196,7 +196,7 @@ export async function encrypt(key: Uint8Array, message: string) {
 export async function decrypt(key: Uint8Array, encryptedMessage: string) {
 	const cryptoKey = await crypto.subtle.importKey(
 		"raw",
-		key,
+		key as BufferSource,
 		{ name: "AES-GCM" },
 		false,
 		["decrypt"],

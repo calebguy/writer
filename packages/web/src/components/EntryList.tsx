@@ -52,7 +52,6 @@ export default function EntryList({ entries, writerAddress }: EntryListProps) {
 						// Decrypt if it's the author's private entry
 						const key = await getDerivedSigningKey(wallet);
 						const decryptedEntry = await processEntry(key, entry);
-						console.log("Decrypted entry:", decryptedEntry);
 						processed.set(entry.id, decryptedEntry);
 					}
 				} else {

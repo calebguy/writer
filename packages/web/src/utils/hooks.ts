@@ -15,7 +15,6 @@ export function useIsMac() {
 
 export function useOPWallet() {
 	const { wallets, ready } = useWallets();
-	console.log("Wallets ready:", ready, wallets);
 	const opWallets = wallets.filter((wallet) => wallet.chainId === "eip155:10");
 	return [opWallets[0], ready] as const;
 }
