@@ -23,7 +23,7 @@ interface ModalProps {
 }
 
 export function ColorModal({ open, onClose }: ModalProps) {
-	const wallet = useOPWallet();
+	const [wallet] = useOPWallet();
 	const [saveClicked, setSaveClicked] = useState(false);
 	const { mutateAsync, isPending } = useMutation({
 		mutationFn: setColorApi,

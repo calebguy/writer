@@ -6,11 +6,13 @@ import "./markdown/MDX.css";
 interface MarkdownRendererProps {
 	markdown: string;
 	className?: string;
+	links?: boolean;
 }
 
 export function MarkdownRenderer({
 	markdown,
 	className,
+	links = true,
 }: MarkdownRendererProps) {
 	return (
 		<div className="mdx" style={{ position: "relative" }}>
@@ -31,7 +33,12 @@ export function MarkdownRenderer({
 							ul: ({ children }) => <ul>{children}</ul>,
 							ol: ({ children }) => <ol>{children}</ol>,
 							li: ({ children }) => <li>{children}</li>,
-							a: ({ children, href }) => <a href={href}>{children}</a>,
+							a: ({ children, href }) =>
+								links ? (
+									<a href={href}>{children}</a>
+								) : (
+									<span className="underline">{children}</span>
+								),
 							strong: ({ children }) => <strong>{children}</strong>,
 							em: ({ children }) => <em>{children}</em>,
 							code: ({ children }) => <code>{children}</code>,

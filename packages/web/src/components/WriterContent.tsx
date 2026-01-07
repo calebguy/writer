@@ -22,7 +22,7 @@ export default function WriterContent({
 	entries: Entry[];
 }) {
 	const [isExpanded, setIsExpanded] = useState(false);
-	const wallet = useOPWallet();
+	const [wallet] = useOPWallet();
 	const router = useRouter();
 
 	const { mutateAsync, isPending } = useMutation({

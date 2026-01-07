@@ -38,7 +38,7 @@ export default function Entry({
 	id: string;
 	onEntryUpdate: () => void;
 }) {
-	const wallet = useOPWallet();
+	const [wallet] = useOPWallet();
 	const router = useRouter();
 	const [isEditing, setIsEditing] = useState(false);
 	const [isDeleting, setIsDeleting] = useState(false);

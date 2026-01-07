@@ -15,7 +15,7 @@ export function useAuthColor() {
 		[ready, authenticated],
 	);
 
-	const wallet = useOPWallet();
+	const [wallet] = useOPWallet();
 	const { data } = useQuery({
 		queryKey: ["me"],
 		queryFn: () => getMe(wallet?.address as Hex),

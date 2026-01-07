@@ -36,10 +36,11 @@ interface EntryListProps {
 }
 
 export default function EntryList({ entries, writerAddress }: EntryListProps) {
-	const wallet = useOPWallet();
+	const [wallet, ready] = useOPWallet();
 	const [processedEntriesMap, setProcessedEntriesMap] = useState<
 		Map<number, Entry>
 	>(new Map());
+	const [isProcessing, setIsProcessing] = useState(true);
 
 	useEffect(() => {
 		async function processAllEntries() {
@@ -51,78 +52,95 @@ export default function EntryList({ entries, writerAddress }: EntryListProps) {
 						// Decrypt if it's the author's private entry
 						const key = await getDerivedSigningKey(wallet);
 						const decryptedEntry = await processEntry(key, entry);
+						console.log("Decrypted entry:", decryptedEntry);
 						processed.set(entry.id, decryptedEntry);
 					}
 				} else {
 					// Public entries are always shown
 					processed.set(entry.id, entry);
 				}
+				console.log("entry ID processed:", entry.id);
 			}
 
-			setProcessedEntriesMap(processed);
+			return processed;
 		}
 
-		processAllEntries();
-	}, [entries, wallet]);
+		if (!ready) {
+			return;
+		}
+
+		processAllEntries().then((processed) => {
+			setProcessedEntriesMap(processed);
+			setIsProcessing(false);
+		});
+	}, [entries, wallet, ready]);
+
+	console.log("is processing", isProcessing);
+	console.log("entries length", entries.length);
+	console.log("processedEntriesMap size", processedEntriesMap.size);
 
 	return (
 		<>
-			{entries.map((entry) => {
-				// For private entries: only show if wallet is connected and user is author
-				if (isEntryPrivate(entry)) {
-					if (!wallet || !isWalletAuthor(wallet, entry)) {
-						return null;
+			{isProcessing &&
+				Array.from({ length: entries.length }).map((_, idx) => (
+					<EntryCardSkeleton key={`skeleton-${idx}`} />
+				))}
+			{!isProcessing &&
+				processedEntriesMap.size > 0 &&
+				Array.from(processedEntriesMap.values()).map((entry) => {
+					// // For private entries: only show if wallet is connected and user is author
+					// if (isEntryPrivate(entry)) {
+					// 	if (!wallet || !isWalletAuthor(wallet, entry)) {
+					// 		return null;
+					// 	}
+					// }
+
+					// const processedEntry = processedEntriesMap.get(entry.id);
+
+					// // Show skeleton if not yet processed (private entry being decrypted)
+					// if (!processedEntry) {
+					// 	return <EntryCardSkeleton key={entry.id} />;
+					// }
+					const dateFmt = "MMM do, yyyy";
+					let createdAt: string | undefined = undefined;
+					if (entry.createdAtBlockDatetime) {
+						createdAt = format(new Date(entry.createdAtBlockDatetime), dateFmt);
+					} else {
+						createdAt = format(new Date(entry.createdAt), dateFmt);
 					}
-				}
 
-				const processedEntry = processedEntriesMap.get(entry.id);
-
-				// Show skeleton if not yet processed (private entry being decrypted)
-				if (!processedEntry) {
-					return <EntryCardSkeleton key={entry.id} />;
-				}
-				const dateFmt = "MMM do, yyyy";
-				let createdAt: string | undefined = undefined;
-				if (processedEntry.createdAtBlockDatetime) {
-					createdAt = format(
-						new Date(processedEntry.createdAtBlockDatetime),
-						dateFmt,
-					);
-				} else {
-					createdAt = format(new Date(processedEntry.createdAt), dateFmt);
-				}
-
-				return (
-					<Link
-						href={`/writer/${writerAddress}/${processedEntry.onChainId?.toString()}`}
-						key={processedEntry.id}
-						className="aspect-square bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 hover:cursor-zoom-in overflow-hidden"
-					>
-						<div className="overflow-y-scroll flex-grow min-h-0">
-							<MarkdownRenderer
-								markdown={processedEntry.decompressed ?? processedEntry.raw}
-								className="text-white"
-							/>
-						</div>
-						<div
-							className={cn(
-								"flex items-end text-neutral-600 text-sm leading-3 pt-2 flex-shrink-0 pb-2",
-								{
-									"justify-between": isEntryPrivate(processedEntry),
-									"justify-end": !isEntryPrivate(processedEntry),
-								},
-							)}
+					return (
+						<Link
+							href={`/writer/${writerAddress}/${entry.onChainId?.toString()}`}
+							key={entry.id}
+							className="aspect-square bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 hover:cursor-zoom-in overflow-hidden"
 						>
-							{isEntryPrivate(processedEntry) && (
-								<span>
-									<Lock className="h-3.5 w-3.5 text-neutral-600" />
-								</span>
-							)}
-							<span>{createdAt}</span>
-						</div>
-					</Link>
-				);
-			})}
+							<div className="overflow-y-scroll flex-grow min-h-0">
+								<MarkdownRenderer
+									markdown={entry.decompressed ?? entry.raw}
+									className="text-white"
+									links={false}
+								/>
+							</div>
+							<div
+								className={cn(
+									"flex items-end text-neutral-600 text-sm leading-3 pt-2 flex-shrink-0 pb-2",
+									{
+										"justify-between": isEntryPrivate(entry),
+										"justify-end": !isEntryPrivate(entry),
+									},
+								)}
+							>
+								{isEntryPrivate(entry) && (
+									<span>
+										<Lock className="h-3.5 w-3.5 text-neutral-600" />
+									</span>
+								)}
+								<span>{createdAt}</span>
+							</div>
+						</Link>
+					);
+				})}
 		</>
 	);
 }
