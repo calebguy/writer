@@ -31,11 +31,13 @@ export default function Entry({
 	initialEntry,
 	address,
 	id,
+	isPending,
 	onEntryUpdate,
 }: {
 	initialEntry: EntryType;
 	address: string;
 	id: string;
+	isPending?: boolean;
 	onEntryUpdate: () => void;
 }) {
 	const [wallet] = useOPWallet();
@@ -97,8 +99,8 @@ export default function Entry({
 	}, [initialEntry, wallet]);
 
 	const canEdit = useMemo(() => {
-		return initialEntry && isWalletAuthor(wallet, initialEntry);
-	}, [initialEntry, wallet]);
+		return initialEntry && isWalletAuthor(wallet, initialEntry) && !isPending;
+	}, [initialEntry, wallet, isPending]);
 
 	const isContentChanged = useMemo(() => {
 		return (

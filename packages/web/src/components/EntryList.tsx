@@ -93,7 +93,11 @@ export default function EntryList({ entries, writerAddress }: EntryListProps) {
 
 					return (
 						<Link
-							href={`/writer/${writerAddress}/${entry.onChainId?.toString()}`}
+							href={
+								entry.onChainId
+									? `/writer/${writerAddress}/${entry.onChainId.toString()}`
+									: `/writer/${writerAddress}/pending/${entry.id}`
+							}
 							key={entry.id}
 							className="aspect-square bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 hover:cursor-zoom-in overflow-hidden"
 						>

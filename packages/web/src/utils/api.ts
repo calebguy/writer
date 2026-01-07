@@ -67,6 +67,16 @@ export async function getEntry(address: Hex, id: number) {
 	return (await res.json()).entry;
 }
 
+export async function getPendingEntry(address: Hex, id: number) {
+	const res = await client.writer[":address"].entry.pending[":id"].$get({
+		param: { address, id: String(id) },
+	});
+	if (!res.ok) {
+		throw new Error(res.statusText);
+	}
+	return (await res.json()).entry;
+}
+
 export async function editEntry({
 	address,
 	id,

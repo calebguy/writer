@@ -241,6 +241,25 @@ const api = app
 		}
 		return c.json({ entry: entryToJsonSafe(entry) });
 	})
+	.get(
+		"/writer/:address/entry/pending/:id",
+		addressAndIDParamSchema,
+		async (c) => {
+			const { address, id } = c.req.valid("param");
+			const writer = await db.getWriter(address);
+			if (!writer) {
+				return c.json({ error: "writer not found" }, 404);
+			}
+			const entry = await db.getEntry(
+				writer.storageAddress as Hex,
+				Number(id),
+			);
+			if (!entry) {
+				return c.json({ error: "entry not found" }, 404);
+			}
+			return c.json({ entry: entryToJsonSafe(entry) });
+		},
+	)
 	.post(
 		"/writer/:address/entry/:id/update",
 		addressAndIDParamSchema,
