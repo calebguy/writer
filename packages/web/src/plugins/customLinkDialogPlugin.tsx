@@ -40,6 +40,7 @@ const LinkEditForm: React.FC<{ initialUrl: string | undefined }> = ({
 		updateLink({
 			url: url,
 			title: undefined,
+			text: undefined,
 		});
 	};
 

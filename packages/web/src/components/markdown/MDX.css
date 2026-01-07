@@ -315,6 +315,7 @@
       /* color: rgb(var(--color-white))!important; */
       font-family: "LTRemark";
       caret-color: rgb(var(--color-primary))!important;
+      color: white!important;
 
       .editable:focus {
         border: 1px solid orange;
@@ -461,7 +462,7 @@
         line-height: 1.5!important;
       }
     }
-    ._placeholder_sects_1101 p {
+    ._placeholder_1e2ox_1106 p {
       color: var(--color-neutral-600);
     }
   }
