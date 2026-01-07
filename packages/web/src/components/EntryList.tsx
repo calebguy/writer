@@ -59,7 +59,6 @@ export default function EntryList({ entries, writerAddress }: EntryListProps) {
 					// Public entries are always shown
 					processed.set(entry.id, entry);
 				}
-				console.log("entry ID processed:", entry.id);
 			}
 
 			return processed;
@@ -75,10 +74,6 @@ export default function EntryList({ entries, writerAddress }: EntryListProps) {
 		});
 	}, [entries, wallet, ready]);
 
-	console.log("is processing", isProcessing);
-	console.log("entries length", entries.length);
-	console.log("processedEntriesMap size", processedEntriesMap.size);
-
 	return (
 		<>
 			{isProcessing &&
@@ -88,19 +83,6 @@ export default function EntryList({ entries, writerAddress }: EntryListProps) {
 			{!isProcessing &&
 				processedEntriesMap.size > 0 &&
 				Array.from(processedEntriesMap.values()).map((entry) => {
-					// // For private entries: only show if wallet is connected and user is author
-					// if (isEntryPrivate(entry)) {
-					// 	if (!wallet || !isWalletAuthor(wallet, entry)) {
-					// 		return null;
-					// 	}
-					// }
-
-					// const processedEntry = processedEntriesMap.get(entry.id);
-
-					// // Show skeleton if not yet processed (private entry being decrypted)
-					// if (!processedEntry) {
-					// 	return <EntryCardSkeleton key={entry.id} />;
-					// }
 					const dateFmt = "MMM do, yyyy";
 					let createdAt: string | undefined = undefined;
 					if (entry.createdAtBlockDatetime) {

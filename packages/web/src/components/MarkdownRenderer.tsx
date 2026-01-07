@@ -37,7 +37,7 @@ export function MarkdownRenderer({
 								links ? (
 									<a href={href}>{children}</a>
 								) : (
-									<span className="underline">{children}</span>
+									<span className="underline text-primary">{children}</span>
 								),
 							strong: ({ children }) => <strong>{children}</strong>,
 							em: ({ children }) => <em>{children}</em>,
