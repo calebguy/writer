@@ -1,7 +1,7 @@
 "use client";
 
 import type { Entry as EntryType } from "@/utils/api";
-import { deleteEntry, editEntry } from "@/utils/api";
+import { deleteEntry, editEntry, getPendingEntry } from "@/utils/api";
 import { cn } from "@/utils/cn";
 import { useOPWallet } from "@/utils/hooks";
 import { getDerivedSigningKey, signRemove, signUpdate } from "@/utils/signer";
@@ -101,6 +101,25 @@ export default function Entry({
 	const canEdit = useMemo(() => {
 		return initialEntry && isWalletAuthor(wallet, initialEntry) && !isPending;
 	}, [initialEntry, wallet, isPending]);
+
+	// Poll for on-chain confirmation when pending
+	useEffect(() => {
+		if (!isPending) return;
+
+		const pollInterval = setInterval(async () => {
+			try {
+				const entry = await getPendingEntry(address as Hex, Number(id));
+				if (entry.onChainId) {
+					clearInterval(pollInterval);
+					router.replace(`/writer/${address}/${entry.onChainId}`);
+				}
+			} catch (error) {
+				console.error("Error polling for entry confirmation:", error);
+			}
+		}, 3000);
+
+		return () => clearInterval(pollInterval);
+	}, [isPending, address, id, router]);
 
 	const isContentChanged = useMemo(() => {
 		return (
@@ -211,6 +230,12 @@ export default function Entry({
 					{isEntryPrivate(processedEntry) && (
 						<div className="absolute bottom-0 left-0">
 							<Lock className="w-3.5 h-3.5 text-neutral-600" />
+						</div>
+					)}
+					{isPending && (
+						<div className="absolute bottom-0 right-0 flex items-center gap-1.5 text-neutral-600">
+							<span className="text-xs">confirming</span>
+							<Logo className="w-3.5 h-3.5 rotating" />
 						</div>
 					)}
 				</div>

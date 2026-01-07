@@ -2,7 +2,7 @@
 
   width: 100%;
 
-  ._contentEditable_sects_380 {
+  ._contentEditable_sects_380, ._contentEditable_1e2ox_380 {
     color: white!important;
   }
 
@@ -315,7 +315,7 @@
       /* color: rgb(var(--color-white))!important; */
       font-family: "LTRemark";
       caret-color: rgb(var(--color-primary))!important;
-      color: white!important;
+      /* color: white!important; */
 
       .editable:focus {
         border: 1px solid orange;
