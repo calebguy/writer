@@ -272,7 +272,7 @@ export default function Entry({
 				<MDX
 					markdown={editedContent}
 					onChange={setEditedContent}
-					className="border-[1px] border-primary border-dashed bg-neutral-900 !text-secondary flex-col grow flex w-full !aspect-auto"
+					className="border border-primary border-dashed bg-neutral-900 text-secondary! flex-col grow flex w-full aspect-auto!"
 					autoFocus={isEditing}
 				/>
 				<button

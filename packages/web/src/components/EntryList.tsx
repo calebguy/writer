@@ -45,12 +45,16 @@ export default function EntryList({ entries, writerAddress }: EntryListProps) {
 		async function processAllEntries() {
 			const processed = new Map<number, Entry>();
 
+			let derivedKey = undefined;
+
 			for (const entry of entries) {
 				if (isEntryPrivate(entry)) {
 					if (wallet && isWalletAuthor(wallet, entry)) {
+						if (!derivedKey) {
+							derivedKey = await getDerivedSigningKey(wallet);
+						}
 						// Decrypt if it's the author's private entry
-						const key = await getDerivedSigningKey(wallet);
-						const decryptedEntry = await processEntry(key, entry);
+						const decryptedEntry = await processEntry(derivedKey, entry);
 						processed.set(entry.id, decryptedEntry);
 					}
 				} else {
