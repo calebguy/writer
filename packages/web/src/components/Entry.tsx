@@ -20,10 +20,10 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Hex } from "viem";
-import { MarkdownRenderer } from "./MarkdownRenderer";
 import { Lock } from "./icons/Lock";
 import { Logo } from "./icons/Logo";
 import { Unlock } from "./icons/Unlock";
+import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
 
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 
@@ -50,6 +50,7 @@ export default function Entry({
 	const [encrypted, setEncrypted] = useState(false);
 	const [editedContent, setEditedContent] = useState("");
 	const awaitingRefreshRef = useRef(false);
+	const initializedRef = useRef(false);
 
 	const { mutateAsync: mutateAsyncDelete, isPending: isPendingDelete } =
 		useMutation({
@@ -71,24 +72,46 @@ export default function Entry({
 
 	useEffect(() => {
 		async function loadProcessedEntry() {
+			if (!initialEntry) return;
+
+			// If already processed (has decompressed content), set immediately
+			if (initialEntry.decompressed) {
+				setProcessedEntry(initialEntry);
+				setEditedContent(initialEntry.decompressed);
+				setEncrypted(isEntryPrivate(initialEntry));
+				if (awaitingRefreshRef.current) {
+					awaitingRefreshRef.current = false;
+					setEditSubmitted(false);
+					setIsEditing(false);
+				}
+				initializedRef.current = true;
+				return;
+			}
+
+			// Skip if already initialized (avoid re-processing on wallet change)
+			if (initializedRef.current && processedEntry) return;
+
+			// Only sleep for unprocessed entries that need decryption
 			await sleep(200);
-			if (initialEntry) {
-				if (isEntryPrivate(initialEntry)) {
-					setEncrypted(true);
-					if (isWalletAuthor(wallet, initialEntry)) {
-						const key = await getDerivedSigningKey(wallet);
-						const processed = await processEntry(key, initialEntry);
-						setProcessedEntry(processed);
-						setEditedContent(processed.decompressed ?? "");
-					} else {
-						setProcessedEntry(initialEntry);
-						setEditedContent(initialEntry.decompressed ?? "");
-					}
+
+			if (isEntryPrivate(initialEntry)) {
+				setEncrypted(true);
+				if (isWalletAuthor(wallet, initialEntry)) {
+					const key = await getDerivedSigningKey(wallet);
+					const processed = await processEntry(key, initialEntry);
+					setProcessedEntry(processed);
+					setEditedContent(processed.decompressed ?? "");
 				} else {
 					setProcessedEntry(initialEntry);
 					setEditedContent(initialEntry.decompressed ?? "");
 				}
+			} else {
+				setProcessedEntry(initialEntry);
+				setEditedContent(initialEntry.decompressed ?? "");
 			}
+
+			initializedRef.current = true;
+
 			if (awaitingRefreshRef.current) {
 				awaitingRefreshRef.current = false;
 				setEditSubmitted(false);
@@ -96,7 +119,7 @@ export default function Entry({
 			}
 		}
 		loadProcessedEntry();
-	}, [initialEntry, wallet]);
+	}, [initialEntry, wallet, processedEntry]);
 
 	const canEdit = useMemo(() => {
 		return initialEntry && isWalletAuthor(wallet, initialEntry) && !isPending;

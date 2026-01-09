@@ -14,8 +14,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { Hex } from "viem";
 import CreateInput, { type CreateInputData } from "./CreateInput";
-import { MarkdownRenderer } from "./MarkdownRenderer";
 import { ClosedEye } from "./icons/ClosedEye";
+import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 
 export function WritersForManager({

@@ -1,17 +1,16 @@
 "use client";
 
-import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { Lock } from "@/components/icons/Lock";
+import { MarkdownRenderer } from "@/components/markdown/MarkdownRenderer";
 import type { Entry } from "@/utils/api";
 import { cn } from "@/utils/cn";
+import { setCachedEntry } from "@/utils/entryCache";
 import { useOPWallet } from "@/utils/hooks";
 import { getDerivedSigningKey } from "@/utils/signer";
 import { isEntryPrivate, isWalletAuthor, processEntry } from "@/utils/utils";
 import { format } from "date-fns";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-const MDX = dynamic(() => import("@/components/markdown/MDX"), { ssr: false });
 
 function EntryCardSkeleton() {
 	return (
@@ -70,8 +69,14 @@ export default function EntryList({ entries, writerAddress }: EntryListProps) {
 		processAllEntries().then((processed) => {
 			setProcessedEntriesMap(processed);
 			setIsProcessing(false);
+
+			// Cache each processed entry for instant navigation
+			for (const [, entry] of processed) {
+				const entryId = entry.onChainId?.toString() ?? entry.id.toString();
+				setCachedEntry(writerAddress, entryId, entry);
+			}
 		});
-	}, [entries, wallet, ready]);
+	}, [entries, wallet, ready, writerAddress]);
 
 	return (
 		<>
@@ -100,7 +105,7 @@ export default function EntryList({ entries, writerAddress }: EntryListProps) {
 							key={entry.id}
 							className="aspect-square bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 hover:cursor-zoom-in overflow-hidden"
 						>
-							<div className="overflow-y-scroll flex-grow min-h-0">
+							<div className="overflow-y-scroll grow min-h-0">
 								<MarkdownRenderer
 									markdown={entry.decompressed ?? entry.raw}
 									className="text-white"
@@ -109,7 +114,7 @@ export default function EntryList({ entries, writerAddress }: EntryListProps) {
 							</div>
 							<div
 								className={cn(
-									"flex items-end text-neutral-600 text-sm leading-3 pt-2 flex-shrink-0 pb-2",
+									"flex items-end text-neutral-600 text-sm leading-3 pt-2 shrink-0 pb-2",
 									{
 										"justify-between": isEntryPrivate(entry),
 										"justify-end": !isEntryPrivate(entry),

@@ -1,7 +1,7 @@
 import { getWriter } from "@/utils/api";
 import type { Hex } from "viem";
 import { LogoDropdown } from "../LogoDropdown";
-import { MarkdownRenderer } from "../MarkdownRenderer";
+import { MarkdownRenderer } from "../markdown/MarkdownRenderer";
 import { BackButton } from "./BackButton";
 
 export async function WriterHeader({
@@ -14,10 +14,7 @@ export async function WriterHeader({
 		<div className="flex items-center justify-between">
 			<div className="flex items-center gap-2 text-primary">
 				<BackButton writerAddress={address} />
-				<MarkdownRenderer
-					markdown={writer.title}
-					className="text-primary"
-				/>
+				<MarkdownRenderer markdown={writer.title} className="text-primary" />
 			</div>
 
 			<LogoDropdown />

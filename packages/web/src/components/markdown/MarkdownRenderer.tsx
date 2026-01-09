@@ -1,7 +1,7 @@
 import { cn } from "@/utils/cn";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
-import "./markdown/MDX.css";
+import "./MDX.css";
 
 interface MarkdownRendererProps {
 	markdown: string;

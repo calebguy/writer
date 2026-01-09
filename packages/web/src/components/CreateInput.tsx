@@ -8,8 +8,8 @@ import { useIsMac } from "@/utils/hooks";
 import type { MDXEditorMethods } from "@mdxeditor/editor";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
-import { MarkdownRenderer } from "./MarkdownRenderer";
 import { Logo } from "./icons/Logo";
+import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
 
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 
