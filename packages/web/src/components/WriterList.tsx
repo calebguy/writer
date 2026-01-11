@@ -17,21 +17,20 @@ import type { Hex } from "viem";
 import CreateInput, { type CreateInputData } from "./CreateInput";
 import { ClosedEye } from "./icons/ClosedEye";
 import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
+import { WriterCardSkeleton } from "./WriterCardSkeleton";
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 
-export function WriterList({
-	writers: initialWriters,
-	user,
-}: { writers: Array<Writer>; user?: UserWithWallet }) {
+const SKELETON_COUNT = 6;
+
+export function WriterList({ user }: { user?: UserWithWallet }) {
 	const [isPolling, setIsPolling] = useState(false);
 	const queryClient = useQueryClient();
 
 	const address = user?.wallet.address;
-	const { data: writers, refetch } = useQuery({
+	const { data: writers, isLoading, refetch } = useQuery({
 		queryFn: () => getWritersByManager(address as Hex),
 		queryKey: ["get-writers", address],
 		enabled: !!address,
-		initialData: initialWriters, // Hydrate from server-fetched data
 		refetchInterval: isPolling ? POLLING_INTERVAL : false,
 	});
 
@@ -78,9 +77,6 @@ export function WriterList({
 	// 	}
 	// }, [data, isPolling]);
 
-	console.log("writers", writers);
-	// console.log("data", data);
-
 	return (
 		<div
 			className="grid gap-2"
@@ -95,7 +91,11 @@ export function WriterList({
 					isLoading={isPending}
 				/>
 			)}
-			{writers?.map((writer) => (
+			{isLoading &&
+				Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+					<WriterCardSkeleton key={`skeleton-${i}`} />
+				))}
+			{!isLoading && writers?.map((writer) => (
 				<Link
 					href={`/writer/${writer.address}`}
 					key={writer.address}

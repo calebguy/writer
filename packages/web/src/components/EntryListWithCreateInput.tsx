@@ -20,7 +20,7 @@ export default function EntryListWithCreateInput({
 }: {
 	writerTitle: string;
 	writerAddress: string;
-	processedEntries: Map<number, Entry>;
+	processedEntries: Entry[];
 	isProcessing: boolean;
 }) {
 	const [isExpanded, setIsExpanded] = useState(false);

@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import type { Entry } from "./api";
 import { getCachedEntry, setCachedEntry } from "./entryCache";
 import { getDerivedSigningKey } from "./signer";
-import { isEntryPrivate, isWalletAuthor, processEntry } from "./utils";
+import { isEntryPrivate, isWalletAuthor, processPrivateEntry } from "./utils";
 
 export function useIsMac() {
 	const [isMac, setIsMac] = useState(false);
@@ -28,9 +28,7 @@ export function useProcessedEntries(
 	writerAddress: string,
 ) {
 	const [wallet, walletReady] = useOPWallet();
-	const [processedEntries, setProcessedEntries] = useState<Map<number, Entry>>(
-		new Map(),
-	);
+	const [processedEntries, setProcessedEntries] = useState<Entry[]>([]);
 	const [isProcessing, setIsProcessing] = useState(true);
 
 	useEffect(() => {
@@ -39,55 +37,59 @@ export function useProcessedEntries(
 		}
 
 		setIsProcessing(true);
-		// Reset entries when inputs change to avoid stale data
-		setProcessedEntries(new Map());
 
 		async function processAllEntries() {
-			let derivedKey: Uint8Array | undefined;
 			const walletAddress = wallet?.address;
+			const results: Entry[] = [];
 
-			// Process all entries in parallel
-			const processPromises = entries!.map(async (entry) => {
+			// Get derived key once upfront if we have any private entries to decrypt
+			const hasPrivateEntriesToDecrypt = entries!.some(
+				(entry) =>
+					isEntryPrivate(entry) && wallet && isWalletAuthor(wallet, entry),
+			);
+
+			let derivedKey: Uint8Array | undefined;
+			if (hasPrivateEntriesToDecrypt && wallet) {
+				derivedKey = await getDerivedSigningKey(wallet);
+			}
+
+			// Process entries sequentially to avoid race conditions
+			for (const entry of entries!) {
 				const entryId = entry.onChainId?.toString() ?? entry.id.toString();
 				const isPrivate = isEntryPrivate(entry);
 
-				// Check cache first (async for IndexedDB)
+				// Check cache first
 				const cached = await getCachedEntry(writerAddress, entryId, {
 					walletAddress,
 					isPrivate,
 				});
+
 				if (cached) {
-					setProcessedEntries((prev) => new Map(prev).set(entry.id, cached));
-					return;
+					results.push(cached);
+					continue;
 				}
 
 				if (isPrivate) {
-					if (wallet && isWalletAuthor(wallet, entry)) {
-						if (!derivedKey) {
-							derivedKey = await getDerivedSigningKey(wallet);
-						}
-						const processed = await processEntry(derivedKey, entry);
-
-						// Cache to memory (private entries don't persist to IndexedDB)
+					if (wallet && isWalletAuthor(wallet, entry) && derivedKey) {
+						const processed = await processPrivateEntry(derivedKey, entry);
 						await setCachedEntry(writerAddress, entryId, processed, {
 							walletAddress,
 							isPrivate: true,
 						});
-						setProcessedEntries((prev) =>
-							new Map(prev).set(entry.id, processed),
-						);
+						results.push(processed);
 					}
 					// Private entries from other authors are not shown
 				} else {
-					// Public entries - cache to IndexedDB (persistent)
+					// Public entries - cache to IndexedDB
 					await setCachedEntry(writerAddress, entryId, entry, {
 						isPrivate: false,
 					});
-					setProcessedEntries((prev) => new Map(prev).set(entry.id, entry));
+					results.push(entry);
 				}
-			});
+			}
 
-			await Promise.all(processPromises);
+			// Single state update at the end
+			setProcessedEntries(results);
 			setIsProcessing(false);
 		}
 

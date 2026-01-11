@@ -4,9 +4,8 @@ import type { Entry as EntryType } from "@/utils/api";
 import { deleteEntry, editEntry, getPendingEntry } from "@/utils/api";
 import { cn } from "@/utils/cn";
 import {
-	clearCachedEntry,
-	clearPublicCachedEntry,
 	clearPrivateCachedEntry,
+	clearPublicCachedEntry,
 } from "@/utils/entryCache";
 import { useOPWallet } from "@/utils/hooks";
 import { getDerivedSigningKey, signRemove, signUpdate } from "@/utils/signer";
@@ -15,7 +14,7 @@ import {
 	encrypt,
 	isEntryPrivate,
 	isWalletAuthor,
-	processEntry,
+	processPrivateEntry,
 	shortenAddress,
 	sleep,
 } from "@/utils/utils";
@@ -118,7 +117,7 @@ export default function Entry({
 				setEncrypted(true);
 				if (isWalletAuthor(wallet, initialEntry)) {
 					const key = await getDerivedSigningKey(wallet);
-					const processed = await processEntry(key, initialEntry);
+					const processed = await processPrivateEntry(key, initialEntry);
 					setProcessedEntry(processed);
 					setEditedContent(processed.decompressed ?? "");
 				} else {

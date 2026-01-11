@@ -1,9 +1,9 @@
 import { WriterList } from "@/components/WriterList";
-import { getWritersByManager } from "@/utils/api";
 import { requireAuth } from "@/utils/auth";
 
 export default async function Home() {
 	const user = await requireAuth();
-	const writers = await getWritersByManager(user.wallet.address);
-	return <WriterList writers={writers} user={user} />;
+	// Data fetching moved to client-side (WriterList) for React Query caching
+	// This makes navigating back to /home instant from cache
+	return <WriterList user={user} />;
 }

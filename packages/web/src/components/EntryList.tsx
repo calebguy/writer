@@ -9,11 +9,11 @@ import { isEntryPrivate } from "@/utils/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import Link from "next/link";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { EntryCardSkeleton } from "./EntryCardSkeleton";
 
 interface EntryListProps {
-	processedEntries: Map<number, Entry>;
+	processedEntries: Entry[];
 	isProcessing: boolean;
 	writerAddress: string;
 }
@@ -26,7 +26,16 @@ export default function EntryList({
 	const queryClient = useQueryClient();
 
 	// Show skeletons while processing AND no entries have loaded yet
-	const showSkeletons = isProcessing && processedEntries.size === 0;
+	const showSkeletons = isProcessing && processedEntries.length === 0;
+
+	// Sort entries by date (newest first)
+	const sortedEntries = useMemo(() => {
+		return [...processedEntries].sort((a, b) => {
+			const dateA = new Date(a.createdAtBlockDatetime ?? a.createdAt).getTime();
+			const dateB = new Date(b.createdAtBlockDatetime ?? b.createdAt).getTime();
+			return dateB - dateA; // Reverse chronological (newest first)
+		});
+	}, [processedEntries]);
 
 	// Pre-populate React Query cache on hover for instant entry page loads
 	const prefetchEntry = useCallback(
@@ -44,8 +53,8 @@ export default function EntryList({
 				Array.from({ length: LOADING_SKELETON_AMOUNT }).map((_, idx) => (
 					<EntryCardSkeleton key={`skeleton-${idx}`} />
 				))}
-			{processedEntries.size > 0 &&
-				Array.from(processedEntries.values()).map((entry) => {
+			{sortedEntries.length > 0 &&
+				sortedEntries.map((entry) => {
 					const dateFmt = "MMM do, yyyy";
 					let createdAt: string | undefined = undefined;
 					if (entry.createdAtBlockDatetime) {

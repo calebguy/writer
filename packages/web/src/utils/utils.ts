@@ -222,7 +222,7 @@ export async function decrypt(key: Uint8Array, encryptedMessage: string) {
 	return new TextDecoder().decode(decrypted);
 }
 
-export async function processEntry(
+export async function processPrivateEntry(
 	key: Uint8Array,
 	entry: Entry,
 ): Promise<Entry> {
