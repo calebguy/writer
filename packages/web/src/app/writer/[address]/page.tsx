@@ -1,10 +1,15 @@
 "use client";
 
-import WriterContent from "@/components/WriterContent";
+import CreateInput from "@/components/CreateInput";
+import { EntryCardSkeleton } from "@/components/EntryCardSkeleton";
+import EntryListWithCreateInput from "@/components/EntryListWithCreateInput";
 import { type Writer, getWriter } from "@/utils/api";
+import { useProcessedEntries } from "@/utils/hooks";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { use } from "react";
 import type { Hex } from "viem";
+
+export const LOADING_SKELETON_AMOUNT = 6;
 
 export default function WriterPage({
 	params,
@@ -14,7 +19,7 @@ export default function WriterPage({
 	const { address } = use(params);
 	const queryClient = useQueryClient();
 
-	const { data: writer } = useQuery({
+	const { data: writer, isLoading } = useQuery({
 		queryKey: ["writer", address],
 		queryFn: () => getWriter(address as Hex),
 		placeholderData: () => {
@@ -32,29 +37,35 @@ export default function WriterPage({
 		},
 	});
 
-	if (!writer) {
+	// Process entries as soon as they arrive - parallel processing with incremental caching
+	const { processedEntries, isProcessing } = useProcessedEntries(
+		writer?.entries,
+		address,
+	);
+
+	if (!writer || isLoading) {
 		return (
 			<div
 				className="grid gap-2"
 				style={{ gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))" }}
 			>
-				<div className="aspect-square bg-neutral-900 animate-pulse" />
-				{Array.from({ length: 6 }).map((_, i) => (
-					<div
-						key={i}
-						className="aspect-square bg-neutral-900 animate-pulse"
-						style={{ animationDelay: `${i * 50}ms` }}
-					/>
+				<div className="relative">
+					<CreateInput onSubmit={() => {}} isLoading={false} />
+					<div className="absolute inset-0 bg-neutral-900/90 flex flex-col items-center justify-center" />
+				</div>
+				{Array.from({ length: LOADING_SKELETON_AMOUNT }).map((_, i) => (
+					<EntryCardSkeleton key={`skeleton-${i}`} />
 				))}
 			</div>
 		);
 	}
 
 	return (
-		<WriterContent
+		<EntryListWithCreateInput
 			writerTitle={writer.title}
 			writerAddress={writer.address}
-			entries={writer.entries}
+			processedEntries={processedEntries}
+			isProcessing={isProcessing}
 		/>
 	);
 }

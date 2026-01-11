@@ -2,7 +2,9 @@
 
 import Entry from "@/components/Entry";
 import { type Entry as EntryType, getEntry } from "@/utils/api";
-import { getCachedEntry } from "@/utils/entryCache";
+import { getPrivateCachedEntry, getPublicCachedEntry } from "@/utils/entryCache";
+import { useOPWallet } from "@/utils/hooks";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
 import type { Hex } from "viem";
@@ -14,20 +16,51 @@ export default function EntryPage({
 }) {
 	const { address, id } = use(params);
 	const router = useRouter();
+	const queryClient = useQueryClient();
+	const [wallet] = useOPWallet();
 
-	// Initialize with cached entry if available (sync read from global cache)
-	const [entry, setEntry] = useState<EntryType | undefined>(() =>
-		getCachedEntry(address, id),
-	);
+	// Check cache on mount (async for IndexedDB)
+	const [cachedEntry, setCachedEntry] = useState<EntryType | null>(null);
+	const [cacheChecked, setCacheChecked] = useState(false);
 
-	// Fetch if not cached
 	useEffect(() => {
-		if (!entry) {
-			getEntry(address as Hex, Number(id)).then(setEntry);
-		}
-	}, [address, id, entry]);
+		async function checkCache() {
+			// Try public cache first (IndexedDB)
+			const publicCached = await getPublicCachedEntry(address, id);
+			if (publicCached) {
+				setCachedEntry(publicCached);
+				setCacheChecked(true);
+				return;
+			}
 
-	if (!entry) {
+			// Try private cache (memory) if we have a wallet
+			if (wallet?.address) {
+				const privateCached = getPrivateCachedEntry(wallet.address, address, id);
+				if (privateCached) {
+					setCachedEntry(privateCached);
+					setCacheChecked(true);
+					return;
+				}
+			}
+
+			setCacheChecked(true);
+		}
+
+		checkCache();
+	}, [address, id, wallet?.address]);
+
+	// Use React Query with cache as initial data
+	const { data: entry, refetch } = useQuery({
+		queryKey: ["entry", address, id],
+		queryFn: () => getEntry(address as Hex, Number(id)),
+		initialData: cachedEntry ?? undefined,
+		enabled: cacheChecked && !cachedEntry, // Only fetch if cache miss
+		staleTime: 30 * 1000, // 30 seconds
+	});
+
+	const displayEntry = entry ?? cachedEntry;
+
+	if (!displayEntry) {
 		return (
 			<div className="grow flex flex-col animate-pulse">
 				<div className="grow flex flex-col p-2 space-y-3">
@@ -43,11 +76,13 @@ export default function EntryPage({
 	return (
 		<div className="grow flex flex-col">
 			<Entry
-				initialEntry={entry}
+				initialEntry={displayEntry}
 				address={address}
 				id={id}
 				onEntryUpdate={() => {
-					getEntry(address as Hex, Number(id)).then(setEntry);
+					// Invalidate and refetch
+					queryClient.invalidateQueries({ queryKey: ["entry", address, id] });
+					refetch();
 					router.refresh();
 				}}
 			/>

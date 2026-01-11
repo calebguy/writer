@@ -18,7 +18,16 @@ import { useCallback, useEffect, useState } from "react";
 import { optimism } from "viem/chains";
 
 const PRIVY_APP_ID = "clzekejfs079912zv96ahfm5a";
-export const queryClient = new QueryClient();
+
+export const queryClient = new QueryClient({
+	defaultOptions: {
+		queries: {
+			staleTime: 30 * 1000, // 30 seconds before data is considered stale
+			gcTime: 10 * 60 * 1000, // 10 minutes cache retention
+			refetchOnWindowFocus: false, // Don't refetch on tab focus
+		},
+	},
+});
 
 export function Providers({
 	children,

@@ -5,30 +5,35 @@ import { createWithChunk } from "@/utils/api";
 import { useOPWallet } from "@/utils/hooks";
 import { getDerivedSigningKey, signCreateWithChunk } from "@/utils/signer";
 import { compress, encrypt } from "@/utils/utils";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Hex } from "viem";
 import CreateInput, { type CreateInputData } from "./CreateInput";
 import EntryList from "./EntryList";
 
-export default function WriterContent({
+export default function EntryListWithCreateInput({
 	writerTitle,
 	writerAddress,
-	entries,
+	processedEntries,
+	isProcessing,
 }: {
 	writerTitle: string;
 	writerAddress: string;
-	entries: Entry[];
+	processedEntries: Map<number, Entry>;
+	isProcessing: boolean;
 }) {
 	const [isExpanded, setIsExpanded] = useState(false);
 	const [wallet] = useOPWallet();
 	const router = useRouter();
+	const queryClient = useQueryClient();
 
 	const { mutateAsync, isPending } = useMutation({
 		mutationFn: createWithChunk,
 		mutationKey: ["create-with-chunk", writerAddress],
 		onSuccess: () => {
+			// Invalidate writer query to refetch entries including the new one
+			queryClient.invalidateQueries({ queryKey: ["writer", writerAddress] });
 			router.refresh();
 		},
 	});
@@ -84,7 +89,11 @@ export default function WriterContent({
 				isLoading={isPending}
 			/>
 			{!isExpanded && (
-				<EntryList entries={entries} writerAddress={writerAddress} />
+				<EntryList
+					processedEntries={processedEntries}
+					isProcessing={isProcessing}
+					writerAddress={writerAddress}
+				/>
 			)}
 		</div>
 	);

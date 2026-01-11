@@ -3,6 +3,11 @@
 import type { Entry as EntryType } from "@/utils/api";
 import { deleteEntry, editEntry, getPendingEntry } from "@/utils/api";
 import { cn } from "@/utils/cn";
+import {
+	clearCachedEntry,
+	clearPublicCachedEntry,
+	clearPrivateCachedEntry,
+} from "@/utils/entryCache";
 import { useOPWallet } from "@/utils/hooks";
 import { getDerivedSigningKey, signRemove, signUpdate } from "@/utils/signer";
 import {
@@ -14,7 +19,7 @@ import {
 	shortenAddress,
 	sleep,
 } from "@/utils/utils";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
@@ -42,6 +47,7 @@ export default function Entry({
 }) {
 	const [wallet] = useOPWallet();
 	const router = useRouter();
+	const queryClient = useQueryClient();
 	const [isEditing, setIsEditing] = useState(false);
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [deleteSubmitted, setDeletedSubmitted] = useState(false);
@@ -56,7 +62,14 @@ export default function Entry({
 		useMutation({
 			mutationFn: deleteEntry,
 			mutationKey: ["delete-entry", address, id],
-			onSuccess: () => {
+			onSuccess: async () => {
+				// Invalidate caches
+				await clearPublicCachedEntry(address, id);
+				if (wallet?.address) {
+					clearPrivateCachedEntry(wallet.address, address, id);
+				}
+				queryClient.invalidateQueries({ queryKey: ["writer", address] });
+				queryClient.removeQueries({ queryKey: ["entry", address, id] });
 				router.push(`/writer/${address}`);
 			},
 		});
@@ -65,7 +78,14 @@ export default function Entry({
 		useMutation({
 			mutationFn: editEntry,
 			mutationKey: ["edit-entry", address, id],
-			onSuccess: () => {
+			onSuccess: async () => {
+				// Invalidate caches - entry will be re-fetched and re-processed
+				await clearPublicCachedEntry(address, id);
+				if (wallet?.address) {
+					clearPrivateCachedEntry(wallet.address, address, id);
+				}
+				queryClient.invalidateQueries({ queryKey: ["entry", address, id] });
+				queryClient.invalidateQueries({ queryKey: ["writer", address] });
 				onEntryUpdate();
 			},
 		});

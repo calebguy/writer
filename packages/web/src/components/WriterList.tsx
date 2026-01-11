@@ -4,33 +4,48 @@ import {
 	type Writer,
 	deleteWriter,
 	factoryCreate,
+	getWriter,
 	getWritersByManager,
 } from "@/utils/api";
 import type { UserWithWallet } from "@/utils/auth";
 import { POLLING_INTERVAL } from "@/utils/constants";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import type { Hex } from "viem";
 import CreateInput, { type CreateInputData } from "./CreateInput";
 import { ClosedEye } from "./icons/ClosedEye";
 import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 
-export function WritersForManager({
-	writers,
+export function WriterList({
+	writers: initialWriters,
 	user,
 }: { writers: Array<Writer>; user?: UserWithWallet }) {
 	const [isPolling, setIsPolling] = useState(false);
+	const queryClient = useQueryClient();
 
 	const address = user?.wallet.address;
-	const { data, refetch } = useQuery({
+	const { data: writers, refetch } = useQuery({
 		queryFn: () => getWritersByManager(address as Hex),
 		queryKey: ["get-writers", address],
 		enabled: !!address,
+		initialData: initialWriters, // Hydrate from server-fetched data
 		refetchInterval: isPolling ? POLLING_INTERVAL : false,
 	});
+
+	// Prefetch writer data on hover for instant navigation
+	const prefetchWriter = useCallback(
+		(writerAddress: string) => {
+			queryClient.prefetchQuery({
+				queryKey: ["writer", writerAddress],
+				queryFn: () => getWriter(writerAddress as Hex),
+				staleTime: 30 * 1000,
+			});
+		},
+		[queryClient],
+	);
 
 	const { mutateAsync, isPending } = useMutation({
 		mutationFn: factoryCreate,
@@ -54,14 +69,17 @@ export function WritersForManager({
 		});
 	};
 
-	useEffect(() => {
-		const isAllOnChain = data?.every((writer) => writer.createdAtHash);
-		if (isAllOnChain) {
-			setIsPolling(false);
-		} else if (!isPolling) {
-			setIsPolling(true);
-		}
-	}, [data, isPolling]);
+	// useEffect(() => {
+	// 	const isAllOnChain = data?.every((writer) => writer.createdAtHash);
+	// 	if (isAllOnChain) {
+	// 		setIsPolling(false);
+	// 	} else if (!isPolling) {
+	// 		setIsPolling(true);
+	// 	}
+	// }, [data, isPolling]);
+
+	console.log("writers", writers);
+	// console.log("data", data);
 
 	return (
 		<div
@@ -77,11 +95,12 @@ export function WritersForManager({
 					isLoading={isPending}
 				/>
 			)}
-			{(data ?? writers)?.map((writer) => (
+			{writers?.map((writer) => (
 				<Link
 					href={`/writer/${writer.address}`}
 					key={writer.address}
 					className="aspect-square bg-neutral-900 flex flex-col justify-between px-2 pt-2 pb-1.5 hover:cursor-zoom-in relative"
+					onMouseEnter={() => prefetchWriter(writer.address)}
 				>
 					<MarkdownRenderer markdown={writer.title} className=" text-white" />
 					<div className="text-right text-sm text-neutral-600 leading-3 pt-2">
