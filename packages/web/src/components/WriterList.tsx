@@ -1,7 +1,6 @@
 "use client";
 
 import {
-	type Writer,
 	deleteWriter,
 	factoryCreate,
 	getWriter,
@@ -15,19 +14,24 @@ import Link from "next/link";
 import { useCallback, useState } from "react";
 import type { Hex } from "viem";
 import CreateInput, { type CreateInputData } from "./CreateInput";
+import { WriterCardSkeleton } from "./WriterCardSkeleton";
 import { ClosedEye } from "./icons/ClosedEye";
 import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
-import { WriterCardSkeleton } from "./WriterCardSkeleton";
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 
 const SKELETON_COUNT = 6;
 
 export function WriterList({ user }: { user?: UserWithWallet }) {
+	console.log("render writer list");
 	const [isPolling, setIsPolling] = useState(false);
 	const queryClient = useQueryClient();
 
 	const address = user?.wallet.address;
-	const { data: writers, isLoading, refetch } = useQuery({
+	const {
+		data: writers,
+		isLoading,
+		refetch,
+	} = useQuery({
 		queryFn: () => getWritersByManager(address as Hex),
 		queryKey: ["get-writers", address],
 		enabled: !!address,
@@ -95,38 +99,39 @@ export function WriterList({ user }: { user?: UserWithWallet }) {
 				Array.from({ length: SKELETON_COUNT }).map((_, i) => (
 					<WriterCardSkeleton key={`skeleton-${i}`} />
 				))}
-			{!isLoading && writers?.map((writer) => (
-				<Link
-					href={`/writer/${writer.address}`}
-					key={writer.address}
-					className="aspect-square bg-neutral-900 flex flex-col justify-between px-2 pt-2 pb-1.5 hover:cursor-zoom-in relative"
-					onMouseEnter={() => prefetchWriter(writer.address)}
-				>
-					<MarkdownRenderer markdown={writer.title} className=" text-white" />
-					<div className="text-right text-sm text-neutral-600 leading-3 pt-2">
-						<div className="group inline-block">
-							<span className="group-hover:hidden block">
-								{writer.entries.length.toString()}
-							</span>
-							<button
-								type="button"
-								className="group-hover:block hidden ml-auto absolute bottom-1.5 right-2 z-10 hover:text-primary cursor-pointer"
-								onClick={async (e) => {
-									e.preventDefault();
-									e.stopPropagation();
-									await hideWriter(writer.address as Hex);
-									refetch();
-								}}
-							>
-								<ClosedEye className="w-4 h-4" />
-							</button>
-							<div className="absolute left-0 top-0 w-full h-full bg-neutral-900/90 hidden group-hover:flex items-center justify-center">
-								<span className="text-primary italic">Hide?</span>
+			{!isLoading &&
+				writers?.map((writer) => (
+					<Link
+						href={`/writer/${writer.address}`}
+						key={writer.address}
+						className="aspect-square bg-neutral-900 flex flex-col justify-between px-2 pt-2 pb-1.5 hover:cursor-zoom-in relative"
+						onMouseEnter={() => prefetchWriter(writer.address)}
+					>
+						<MarkdownRenderer markdown={writer.title} className="text-white" />
+						<div className="text-right text-sm text-neutral-600 leading-3 pt-2">
+							<div className="group inline-block">
+								<span className="group-hover:hidden block">
+									{writer.entries.length.toString()}
+								</span>
+								<button
+									type="button"
+									className="group-hover:block hidden ml-auto absolute bottom-1.5 right-2 z-10 hover:text-primary cursor-pointer"
+									onClick={async (e) => {
+										e.preventDefault();
+										e.stopPropagation();
+										await hideWriter(writer.address as Hex);
+										refetch();
+									}}
+								>
+									<ClosedEye className="w-4 h-4" />
+								</button>
+								<div className="absolute left-0 top-0 w-full h-full bg-neutral-900/90 hidden group-hover:flex items-center justify-center">
+									<span className="text-primary italic">Hide?</span>
+								</div>
 							</div>
 						</div>
-					</div>
-				</Link>
-			))}
+					</Link>
+				))}
 		</div>
 	);
 }

@@ -216,6 +216,7 @@ function getRandomNonce() {
 export async function getDerivedSigningKey(
 	wallet: ConnectedWallet,
 ): Promise<Uint8Array> {
+	console.log("getting")
 	const message = "encryption-key-derivation";
 	const encodedMessage = `0x${Buffer.from(message, "utf8").toString("hex")}`;
 	const provider = await wallet.getEthereumProvider();

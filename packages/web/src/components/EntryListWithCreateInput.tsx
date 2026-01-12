@@ -16,12 +16,10 @@ export default function EntryListWithCreateInput({
 	writerTitle,
 	writerAddress,
 	processedEntries,
-	isProcessing,
 }: {
 	writerTitle: string;
 	writerAddress: string;
 	processedEntries: Entry[];
-	isProcessing: boolean;
 }) {
 	const [isExpanded, setIsExpanded] = useState(false);
 	const [wallet] = useOPWallet();
@@ -91,7 +89,6 @@ export default function EntryListWithCreateInput({
 			{!isExpanded && (
 				<EntryList
 					processedEntries={processedEntries}
-					isProcessing={isProcessing}
 					writerAddress={writerAddress}
 				/>
 			)}

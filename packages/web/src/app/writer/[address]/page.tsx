@@ -6,17 +6,13 @@ import EntryListWithCreateInput from "@/components/EntryListWithCreateInput";
 import { type Writer, getWriter } from "@/utils/api";
 import { useProcessedEntries } from "@/utils/hooks";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { use } from "react";
+import { useParams } from "next/navigation";
 import type { Hex } from "viem";
 
 export const LOADING_SKELETON_AMOUNT = 6;
 
-export default function WriterPage({
-	params,
-}: {
-	params: Promise<{ address: string }>;
-}) {
-	const { address } = use(params);
+export default function WriterPage() {
+	const { address } = useParams<{ address: string }>();
 	const queryClient = useQueryClient();
 
 	const { data: writer, isLoading } = useQuery({
@@ -37,11 +33,8 @@ export default function WriterPage({
 		},
 	});
 
-	// Process entries as soon as they arrive - parallel processing with incremental caching
-	const { processedEntries, isProcessing } = useProcessedEntries(
-		writer?.entries,
-		address,
-	);
+	// Process entries as soon as they arrive - shows immediately, processes private entries in background
+	const { processedEntries } = useProcessedEntries(writer?.entries, address);
 
 	if (!writer || isLoading) {
 		return (
@@ -65,7 +58,6 @@ export default function WriterPage({
 			writerTitle={writer.title}
 			writerAddress={writer.address}
 			processedEntries={processedEntries}
-			isProcessing={isProcessing}
 		/>
 	);
 }

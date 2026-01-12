@@ -29,72 +29,75 @@ export function useProcessedEntries(
 ) {
 	const [wallet, walletReady] = useOPWallet();
 	const [processedEntries, setProcessedEntries] = useState<Entry[]>([]);
-	const [isProcessing, setIsProcessing] = useState(true);
 
 	useEffect(() => {
 		if (!entries || !walletReady) {
 			return;
 		}
 
-		setIsProcessing(true);
+		// Immediately show public entries + private entries (unprocessed)
+		// Filter out private entries from other authors
+		const visibleEntries = entries.filter((entry) => {
+			if (isEntryPrivate(entry)) {
+				return wallet && isWalletAuthor(wallet, entry);
+			}
+			return true;
+		});
+		setProcessedEntries(visibleEntries);
 
-		async function processAllEntries() {
+		// Process private entries in background (non-blocking)
+		async function processPrivateEntriesInBackground() {
 			const walletAddress = wallet?.address;
-			const results: Entry[] = [];
-
-			// Get derived key once upfront if we have any private entries to decrypt
-			const hasPrivateEntriesToDecrypt = entries!.some(
+			const privateEntriesToProcess = visibleEntries.filter(
 				(entry) =>
-					isEntryPrivate(entry) && wallet && isWalletAuthor(wallet, entry),
+					isEntryPrivate(entry) &&
+					!entry.decompressed && // Not already processed
+					wallet &&
+					isWalletAuthor(wallet, entry),
 			);
 
-			let derivedKey: Uint8Array | undefined;
-			if (hasPrivateEntriesToDecrypt && wallet) {
-				derivedKey = await getDerivedSigningKey(wallet);
+			if (privateEntriesToProcess.length === 0) {
+				return;
 			}
 
-			// Process entries sequentially to avoid race conditions
-			for (const entry of entries!) {
+			// Get derived key once
+			const derivedKey = await getDerivedSigningKey(wallet!);
+
+			// Process each private entry and update state
+			const processedMap = new Map<number, Entry>();
+
+			for (const entry of privateEntriesToProcess) {
 				const entryId = entry.onChainId?.toString() ?? entry.id.toString();
-				const isPrivate = isEntryPrivate(entry);
 
 				// Check cache first
 				const cached = await getCachedEntry(writerAddress, entryId, {
 					walletAddress,
-					isPrivate,
+					isPrivate: true,
 				});
 
 				if (cached) {
-					results.push(cached);
+					processedMap.set(entry.id, cached);
 					continue;
 				}
 
-				if (isPrivate) {
-					if (wallet && isWalletAuthor(wallet, entry) && derivedKey) {
-						const processed = await processPrivateEntry(derivedKey, entry);
-						await setCachedEntry(writerAddress, entryId, processed, {
-							walletAddress,
-							isPrivate: true,
-						});
-						results.push(processed);
-					}
-					// Private entries from other authors are not shown
-				} else {
-					// Public entries - cache to IndexedDB
-					await setCachedEntry(writerAddress, entryId, entry, {
-						isPrivate: false,
-					});
-					results.push(entry);
-				}
+				const processed = await processPrivateEntry(derivedKey, entry);
+				await setCachedEntry(writerAddress, entryId, processed, {
+					walletAddress,
+					isPrivate: true,
+				});
+				processedMap.set(entry.id, processed);
 			}
 
-			// Single state update at the end
-			setProcessedEntries(results);
-			setIsProcessing(false);
+			// Update state with processed entries
+			if (processedMap.size > 0) {
+				setProcessedEntries((prev) =>
+					prev.map((entry) => processedMap.get(entry.id) ?? entry),
+				);
+			}
 		}
 
-		processAllEntries();
+		processPrivateEntriesInBackground();
 	}, [entries, wallet, walletReady, writerAddress]);
 
-	return { processedEntries, isProcessing };
+	return { processedEntries };
 }
