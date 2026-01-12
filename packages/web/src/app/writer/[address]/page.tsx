@@ -36,7 +36,9 @@ export default function WriterPage() {
 	// Process entries as soon as they arrive - shows immediately, processes private entries in background
 	const { processedEntries } = useProcessedEntries(writer?.entries, address);
 
-	if (!writer || isLoading) {
+	// Show loading state during the gap where entries exist but processedEntries hasn't been populated yet
+	const isEntriesProcessing = writer?.entries?.length && processedEntries.length === 0;
+	if (!writer || isLoading || isEntriesProcessing) {
 		return (
 			<div
 				className="grid gap-2"

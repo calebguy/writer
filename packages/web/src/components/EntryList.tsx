@@ -1,5 +1,6 @@
 "use client";
 
+import { EntryCardSkeleton } from "@/components/EntryCardSkeleton";
 import { Lock } from "@/components/icons/Lock";
 import { MarkdownRenderer } from "@/components/markdown/MarkdownRenderer";
 import type { Entry } from "@/utils/api";
@@ -43,6 +44,11 @@ export default function EntryList({
 	return (
 		<>
 			{sortedEntries.map((entry) => {
+				// Show skeleton for private entries that haven't been decrypted yet
+				if (isEntryPrivate(entry) && !entry.decompressed) {
+					return <EntryCardSkeleton key={entry.id} />;
+				}
+
 				const dateFmt = "MMM do, yyyy";
 				const createdAt = entry.createdAtBlockDatetime
 					? format(new Date(entry.createdAtBlockDatetime), dateFmt)
