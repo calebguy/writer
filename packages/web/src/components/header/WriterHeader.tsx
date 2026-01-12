@@ -36,8 +36,10 @@ export function WriterHeader({
 		<div className="flex items-center justify-between">
 			<div className="flex items-center gap-2 text-primary">
 				<BackButton writerAddress={address} />
-				{writer?.title && (
+				{writer?.title ? (
 					<MarkdownRenderer markdown={writer.title} className="text-primary" />
+				) : (
+					<div className="h-[39px] w-18 bg-neutral-700 animate-pulse rounded-lg" />
 				)}
 			</div>
 
