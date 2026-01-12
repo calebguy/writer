@@ -9,7 +9,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import type { Hex } from "viem";
 
-export const LOADING_SKELETON_AMOUNT = 6;
+const LOADING_SKELETON_AMOUNT = 6;
 
 export default function WriterPage() {
 	const { address } = useParams<{ address: string }>();
