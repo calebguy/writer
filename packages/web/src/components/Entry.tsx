@@ -1,7 +1,7 @@
 "use client";
 
 import type { Entry as EntryType } from "@/utils/api";
-import { deleteEntry, editEntry, getPendingEntry } from "@/utils/api";
+import { deleteEntry, editEntry, getEntry, getPendingEntry } from "@/utils/api";
 import { cn } from "@/utils/cn";
 import {
 	clearPrivateCachedEntry,
@@ -56,8 +56,8 @@ export default function Entry({
 	const [processedEntry, setProcessedEntry] = useState<EntryType | null>(null);
 	const [encrypted, setEncrypted] = useState(false);
 	const [editedContent, setEditedContent] = useState("");
-	const awaitingRefreshRef = useRef(false);
 	const initializedRef = useRef(false);
+	const expectedRawContentRef = useRef<string | null>(null);
 
 	// Signal to header that entry is ready to display
 	useEffect(() => {
@@ -108,11 +108,6 @@ export default function Entry({
 				setProcessedEntry(initialEntry);
 				setEditedContent(initialEntry.decompressed);
 				setEncrypted(isEntryPrivate(initialEntry));
-				if (awaitingRefreshRef.current) {
-					awaitingRefreshRef.current = false;
-					setEditSubmitted(false);
-					setIsEditing(false);
-				}
 				initializedRef.current = true;
 				return;
 			}
@@ -148,12 +143,6 @@ export default function Entry({
 				setEditedContent(initialEntry.decompressed ?? "");
 				initializedRef.current = true;
 			}
-
-			if (awaitingRefreshRef.current) {
-				awaitingRefreshRef.current = false;
-				setEditSubmitted(false);
-				setIsEditing(false);
-			}
 		}
 		loadProcessedEntry();
 	}, [initialEntry, wallet, processedEntry]);
@@ -181,6 +170,33 @@ export default function Entry({
 		return () => clearInterval(pollInterval);
 	}, [isPending, address, id, router]);
 
+	// Poll for edit confirmation when edit is submitted
+	useEffect(() => {
+		if (!editSubmitted || !expectedRawContentRef.current) return;
+
+		const pollInterval = setInterval(async () => {
+			try {
+				const entry = await getEntry(address as Hex, Number(id));
+				if (entry.raw === expectedRawContentRef.current) {
+					clearInterval(pollInterval);
+					expectedRawContentRef.current = null;
+					// Update processedEntry with the new content before exiting edit mode
+					setProcessedEntry((prev) =>
+						prev ? { ...prev, decompressed: editedContent, raw: entry.raw } : prev,
+					);
+					setEditSubmitted(false);
+					setIsEditing(false);
+					// Refresh entry data in background
+					onEntryUpdate();
+				}
+			} catch (error) {
+				console.error("Error polling for edit confirmation:", error);
+			}
+		}, 3000);
+
+		return () => clearInterval(pollInterval);
+	}, [editSubmitted, address, id, editedContent, onEntryUpdate]);
+
 	const isContentChanged = useMemo(() => {
 		return (
 			editedContent !== processedEntry?.decompressed ||
@@ -204,6 +220,8 @@ export default function Entry({
 			const encryptedContent = await encrypt(key, compressedContent);
 			versionedCompressedContent = `enc:br:${encryptedContent}`;
 		}
+		// Store expected raw content for polling comparison
+		expectedRawContentRef.current = versionedCompressedContent;
 		const { signature, nonce, entryId, totalChunks, content } =
 			await signUpdate(wallet, {
 				entryId: Number(id),
@@ -218,8 +236,6 @@ export default function Entry({
 			totalChunks,
 			content,
 		});
-		awaitingRefreshRef.current = true;
-		onEntryUpdate();
 	};
 
 	useEffect(() => {
