@@ -107,8 +107,13 @@ export default function Entry({
 				return;
 			}
 
-			// Skip if already initialized (avoid re-processing on wallet change)
-			if (initializedRef.current && processedEntry) return;
+			// Skip if already initialized, but allow re-processing for undecrypted private entries
+			// when wallet becomes available (fixes direct page load race condition)
+			if (initializedRef.current && processedEntry) {
+				const needsReprocessing =
+					isEntryPrivate(processedEntry) && !processedEntry.decompressed && wallet;
+				if (!needsReprocessing) return;
+			}
 
 			// Only sleep for unprocessed entries that need decryption
 			await sleep(200);
@@ -120,16 +125,19 @@ export default function Entry({
 					const processed = await processPrivateEntry(key, initialEntry);
 					setProcessedEntry(processed);
 					setEditedContent(processed.decompressed ?? "");
-				} else {
+					initializedRef.current = true;
+				} else if (wallet) {
+					// Wallet is ready but user is not the author - they can't decrypt
 					setProcessedEntry(initialEntry);
 					setEditedContent(initialEntry.decompressed ?? "");
+					initializedRef.current = true;
 				}
+				// If wallet is undefined, don't set initialized - let it retry when wallet is ready
 			} else {
 				setProcessedEntry(initialEntry);
 				setEditedContent(initialEntry.decompressed ?? "");
+				initializedRef.current = true;
 			}
-
-			initializedRef.current = true;
 
 			if (awaitingRefreshRef.current) {
 				awaitingRefreshRef.current = false;
