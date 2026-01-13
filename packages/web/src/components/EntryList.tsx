@@ -54,15 +54,21 @@ export default function EntryList({
 					? format(new Date(entry.createdAtBlockDatetime), dateFmt)
 					: format(new Date(entry.createdAt), dateFmt);
 
+				const isPending = !entry.onChainId;
+
 				return (
 					<Link
 						href={
-							entry.onChainId
-								? `/writer/${writerAddress}/${entry.onChainId.toString()}`
-								: `/writer/${writerAddress}/pending/${entry.id}`
+							isPending
+								? "#"
+								: `/writer/${writerAddress}/${entry.onChainId.toString()}`
 						}
 						key={entry.id}
-						className="aspect-square bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 hover:cursor-zoom-in overflow-hidden"
+						className={cn(
+							"aspect-square bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 overflow-hidden",
+							isPending ? "cursor-loading" : "hover:cursor-zoom-in",
+						)}
+						onClick={isPending ? (e) => e.preventDefault() : undefined}
 						onMouseEnter={() => prefetchEntry(entry)}
 					>
 						<div className="overflow-y-scroll grow min-h-0">

@@ -7,6 +7,7 @@ import { type Writer, getWriter } from "@/utils/api";
 import { useProcessedEntries } from "@/utils/hooks";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import type { Hex } from "viem";
 
 const LOADING_SKELETON_AMOUNT = 6;
@@ -14,6 +15,7 @@ const LOADING_SKELETON_AMOUNT = 6;
 export default function WriterPage() {
 	const { address } = useParams<{ address: string }>();
 	const queryClient = useQueryClient();
+	const [shouldPoll, setShouldPoll] = useState(false);
 
 	const { data: writer, isLoading } = useQuery({
 		queryKey: ["writer", address],
@@ -31,7 +33,15 @@ export default function WriterPage() {
 			}
 			return undefined;
 		},
+		// Poll every 3 seconds when there are pending entries
+		refetchInterval: shouldPoll ? 3000 : false,
 	});
+
+	// Update polling state when pending entries change
+	const hasPendingEntries = writer?.entries?.some((entry) => !entry.onChainId) ?? false;
+	useEffect(() => {
+		setShouldPoll(hasPendingEntries);
+	}, [hasPendingEntries]);
 
 	// Process entries as soon as they arrive - shows immediately, processes private entries in background
 	const { processedEntries } = useProcessedEntries(writer?.entries, address);
