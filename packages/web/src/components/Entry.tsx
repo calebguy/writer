@@ -7,6 +7,7 @@ import {
 	clearPrivateCachedEntry,
 	clearPublicCachedEntry,
 } from "@/utils/entryCache";
+import { useEntryLoading } from "@/utils/EntryLoadingContext";
 import { useOPWallet } from "@/utils/hooks";
 import { getDerivedSigningKey, signRemove, signUpdate } from "@/utils/signer";
 import {
@@ -47,6 +48,7 @@ export default function Entry({
 	const [wallet] = useOPWallet();
 	const router = useRouter();
 	const queryClient = useQueryClient();
+	const { setEntryLoading } = useEntryLoading();
 	const [isEditing, setIsEditing] = useState(false);
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [deleteSubmitted, setDeletedSubmitted] = useState(false);
@@ -56,6 +58,14 @@ export default function Entry({
 	const [editedContent, setEditedContent] = useState("");
 	const awaitingRefreshRef = useRef(false);
 	const initializedRef = useRef(false);
+
+	// Signal to header that entry is ready to display
+	useEffect(() => {
+		if (processedEntry) {
+			// Entry is ready: either public, or private with content (viewable or showing "Private")
+			setEntryLoading(false);
+		}
+	}, [processedEntry, setEntryLoading]);
 
 	const { mutateAsync: mutateAsyncDelete, isPending: isPendingDelete } =
 		useMutation({

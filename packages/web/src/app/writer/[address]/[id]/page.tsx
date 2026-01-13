@@ -3,6 +3,7 @@
 import Entry from "@/components/Entry";
 import { type Entry as EntryType, getEntry } from "@/utils/api";
 import { getPrivateCachedEntry, getPublicCachedEntry } from "@/utils/entryCache";
+import { useEntryLoading } from "@/utils/EntryLoadingContext";
 import { useOPWallet } from "@/utils/hooks";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -18,6 +19,13 @@ export default function EntryPage({
 	const router = useRouter();
 	const queryClient = useQueryClient();
 	const [wallet] = useOPWallet();
+	const { setEntryLoading } = useEntryLoading();
+
+	// Set loading state on mount
+	useEffect(() => {
+		setEntryLoading(true);
+		return () => setEntryLoading(false);
+	}, [setEntryLoading]);
 
 	// Check cache on mount (async for IndexedDB)
 	const [cachedEntry, setCachedEntry] = useState<EntryType | null>(null);
