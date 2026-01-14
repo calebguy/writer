@@ -61,7 +61,7 @@ export default function EntryList({
 						href={
 							isPending
 								? "#"
-								: `/writer/${writerAddress}/${entry.onChainId.toString()}`
+								: `/writer/${writerAddress}/${entry.onChainId?.toString()}`
 						}
 						key={entry.id}
 						className={cn(

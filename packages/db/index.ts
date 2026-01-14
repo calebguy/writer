@@ -1,4 +1,4 @@
-import { and, arrayContains, eq, inArray, isNull } from "drizzle-orm";
+import { and, arrayContains, eq, inArray, isNull, notLike, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { processRawContent } from "utils";
 import type { Hex } from "viem";
@@ -122,6 +122,52 @@ class Db {
 			return null;
 		}
 		return data;
+	}
+
+	async getPublicEntries(limit = 50, offset = 0) {
+		// Get all non-private writers
+		const publicWriters = await this.pg.query.writer.findMany({
+			where: and(
+				eq(writer.isPrivate, false),
+				isNull(writer.deletedAt),
+			),
+		});
+
+		if (publicWriters.length === 0) {
+			return [];
+		}
+
+		const storageAddresses = publicWriters.map((w) => w.storageAddress.toLowerCase());
+
+		// Get all public entries (not encrypted) from public writers
+		const entries = await this.pg.query.entry.findMany({
+			where: and(
+				inArray(entry.storageAddress, storageAddresses),
+				isNull(entry.deletedAt),
+			),
+			orderBy: (entry, { desc }) => [desc(entry.createdAt)],
+			with: {
+				chunks: {
+					orderBy: (chunk, { desc }) => [desc(chunk.index)],
+				},
+			},
+			limit,
+			offset,
+		});
+
+		// Filter out encrypted entries (private entries start with 'enc:')
+		// and attach writer info
+		const writerMap = new Map(publicWriters.map((w) => [w.storageAddress.toLowerCase(), w]));
+
+		return entries
+			.filter((e) => {
+				const raw = e.chunks.map((c) => c.content).join("");
+				return !raw.startsWith("enc:");
+			})
+			.map((e) => ({
+				...e,
+				writer: writerMap.get(e.storageAddress.toLowerCase()),
+			}));
 	}
 
 	createTx(tx: Omit<InsertSyndicateTransaction, "updatedAt" | "createdAt">) {
@@ -296,4 +342,29 @@ type InsertChunk = Omit<typeof chunk.$inferInsert, "createdAt">;
 type EntryWithChunks = SelectEntry & {
 	chunks: SelectChunk[];
 };
+type PublicEntryWithWriter = EntryWithChunks & {
+	writer: SelectWriter | undefined;
+};
+
+export function publicEntryToJsonSafe({ chunks, writer, ...data }: PublicEntryWithWriter) {
+	const raw = chunks.map((c) => c.content).join("");
+	const { version, decompressed } = processRawContent(raw);
+	return {
+		...data,
+		chunks,
+		raw,
+		version,
+		decompressed,
+		onChainId: data.onChainId?.toString(),
+		createdAtBlock: data.createdAtBlock?.toString(),
+		deletedAtBlock: data.deletedAtBlock?.toString(),
+		updatedAtBlock: data.updatedAtBlock?.toString(),
+		writer: writer ? {
+			address: writer.address,
+			title: writer.title,
+			admin: writer.admin,
+		} : undefined,
+	};
+}
+
 export { Db };

@@ -1,6 +1,7 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
+import Link from "next/link";
 import { useState } from "react";
 import { ColorModal } from "./ColorModal";
 import { Dropdown, DropdownItem } from "./dsl/Dropdown";
@@ -14,6 +15,11 @@ export function LogoDropdown() {
 			<Dropdown
 				trigger={<Logo className="h-8 transition-colors text-primary" />}
 			>
+				<DropdownItem>
+					<Link href="/explore" className="w-full">
+						Explore
+					</Link>
+				</DropdownItem>
 				<DropdownItem onClick={() => setOpen(true)}>
 					<div className="flex items-center justify-between gap-2 w-full">
 						<span>Color</span>
