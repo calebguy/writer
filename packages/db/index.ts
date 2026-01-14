@@ -124,13 +124,14 @@ class Db {
 		return data;
 	}
 
-	async getPublicEntries(limit = 50, offset = 0) {
+	async getPublicWriters() {
 		// Get all non-private writers
 		const publicWriters = await this.pg.query.writer.findMany({
 			where: and(
 				eq(writer.isPrivate, false),
 				isNull(writer.deletedAt),
 			),
+			orderBy: (writer, { desc }) => [desc(writer.createdAt)],
 		});
 
 		if (publicWriters.length === 0) {
@@ -139,35 +140,40 @@ class Db {
 
 		const storageAddresses = publicWriters.map((w) => w.storageAddress.toLowerCase());
 
-		// Get all public entries (not encrypted) from public writers
+		// Get all entries from public writers
 		const entries = await this.pg.query.entry.findMany({
 			where: and(
 				inArray(entry.storageAddress, storageAddresses),
 				isNull(entry.deletedAt),
 			),
-			orderBy: (entry, { desc }) => [desc(entry.createdAt)],
 			with: {
 				chunks: {
 					orderBy: (chunk, { desc }) => [desc(chunk.index)],
 				},
 			},
-			limit,
-			offset,
 		});
 
-		// Filter out encrypted entries (private entries start with 'enc:')
-		// and attach writer info
-		const writerMap = new Map(publicWriters.map((w) => [w.storageAddress.toLowerCase(), w]));
+		// Group entries by writer and count public/private
+		const writerEntryCounts = new Map<string, { publicCount: number; privateCount: number }>();
 
-		return entries
-			.filter((e) => {
-				const raw = e.chunks.map((c) => c.content).join("");
-				return !raw.startsWith("enc:");
-			})
-			.map((e) => ({
-				...e,
-				writer: writerMap.get(e.storageAddress.toLowerCase()),
-			}));
+		for (const e of entries) {
+			const storageAddr = e.storageAddress.toLowerCase();
+			const raw = e.chunks.map((c) => c.content).join("");
+			const isPrivate = raw.startsWith("enc:");
+
+			const counts = writerEntryCounts.get(storageAddr) ?? { publicCount: 0, privateCount: 0 };
+			if (isPrivate) {
+				counts.privateCount++;
+			} else {
+				counts.publicCount++;
+			}
+			writerEntryCounts.set(storageAddr, counts);
+		}
+
+		return publicWriters.map((w) => ({
+			...w,
+			...writerEntryCounts.get(w.storageAddress.toLowerCase()) ?? { publicCount: 0, privateCount: 0 },
+		}));
 	}
 
 	createTx(tx: Omit<InsertSyndicateTransaction, "updatedAt" | "createdAt">) {
@@ -342,28 +348,20 @@ type InsertChunk = Omit<typeof chunk.$inferInsert, "createdAt">;
 type EntryWithChunks = SelectEntry & {
 	chunks: SelectChunk[];
 };
-type PublicEntryWithWriter = EntryWithChunks & {
-	writer: SelectWriter | undefined;
+type PublicWriterWithCounts = SelectWriter & {
+	publicCount: number;
+	privateCount: number;
 };
 
-export function publicEntryToJsonSafe({ chunks, writer, ...data }: PublicEntryWithWriter) {
-	const raw = chunks.map((c) => c.content).join("");
-	const { version, decompressed } = processRawContent(raw);
+export function publicWriterToJsonSafe(data: PublicWriterWithCounts) {
 	return {
-		...data,
-		chunks,
-		raw,
-		version,
-		decompressed,
-		onChainId: data.onChainId?.toString(),
+		address: data.address,
+		title: data.title,
+		admin: data.admin,
+		publicCount: data.publicCount,
+		privateCount: data.privateCount,
+		createdAt: data.createdAt,
 		createdAtBlock: data.createdAtBlock?.toString(),
-		deletedAtBlock: data.deletedAtBlock?.toString(),
-		updatedAtBlock: data.updatedAtBlock?.toString(),
-		writer: writer ? {
-			address: writer.address,
-			title: writer.title,
-			admin: writer.admin,
-		} : undefined,
 	};
 }
 

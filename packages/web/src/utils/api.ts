@@ -128,14 +128,12 @@ export async function getWritersByManager(address: Hex | string) {
 	return (await res.json()).writers;
 }
 
-export async function getPublicEntries(limit = 50, offset = 0) {
-	const res = await client.entry.public.$get({
-		query: { limit: String(limit), offset: String(offset) },
-	});
+export async function getPublicWriters() {
+	const res = await client.writer.public.$get();
 	if (!res.ok) {
 		throw new Error(res.statusText);
 	}
-	return (await res.json()).entries;
+	return (await res.json()).writers;
 }
 
 export async function factoryCreate(json: {
@@ -182,7 +180,7 @@ export type GetWritersResponse = InferResponseType<
 export type Writer = GetWritersResponse["writers"][number];
 export type Entry = Writer["entries"][number];
 
-export type GetPublicEntriesResponse = InferResponseType<
-	(typeof client.entry)["public"]["$get"]
+export type GetPublicWritersResponse = InferResponseType<
+	(typeof client.writer)["public"]["$get"]
 >;
-export type PublicEntry = GetPublicEntriesResponse["entries"][number];
+export type PublicWriter = GetPublicWritersResponse["writers"][number];

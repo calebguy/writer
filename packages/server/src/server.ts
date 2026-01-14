@@ -1,4 +1,4 @@
-import { entryToJsonSafe, publicEntryToJsonSafe, writerToJsonSafe } from "db";
+import { entryToJsonSafe, publicWriterToJsonSafe, writerToJsonSafe } from "db";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { randomBytes } from "node:crypto";
@@ -50,11 +50,9 @@ const api = app
 		const user = await db.getUser(address as Hex);
 		return c.json({ user });
 	})
-	.get("/entry/public", async (c) => {
-		const limit = Number(c.req.query("limit") ?? 50);
-		const offset = Number(c.req.query("offset") ?? 0);
-		const entries = await db.getPublicEntries(limit, offset);
-		return c.json({ entries: entries.map(publicEntryToJsonSafe) });
+	.get("/writer/public", async (c) => {
+		const writers = await db.getPublicWriters();
+		return c.json({ writers: writers.map(publicWriterToJsonSafe) });
 	})
 	.get("/writer/:address", async (c) => {
 		const address = getAddress(c.req.param("address"));
