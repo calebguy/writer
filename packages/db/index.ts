@@ -170,10 +170,12 @@ class Db {
 			writerEntryCounts.set(storageAddr, counts);
 		}
 
-		return publicWriters.map((w) => ({
-			...w,
-			...writerEntryCounts.get(w.storageAddress.toLowerCase()) ?? { publicCount: 0, privateCount: 0 },
-		}));
+		return publicWriters
+			.map((w) => ({
+				...w,
+				...writerEntryCounts.get(w.storageAddress.toLowerCase()) ?? { publicCount: 0, privateCount: 0 },
+			}))
+			.filter((w) => w.publicCount > 0);
 	}
 
 	createTx(tx: Omit<InsertSyndicateTransaction, "updatedAt" | "createdAt">) {
