@@ -76,15 +76,30 @@ export function Providers({
 			<PrivyProvider
 				appId={PRIVY_APP_ID}
 				config={{
-					loginMethods: ["sms", "email"],
+					loginMethods: ["sms", "email", "wallet"],
 					defaultChain: optimism,
 					supportedChains: [optimism],
+					walletConnectCloudProjectId: "d178d559d87d6933a4950314767bf38d",
 					appearance: {
 						theme: "dark",
 						accentColor: RGBToHex(primaryColor),
+						// loginMessage: "Write today, forever",
+						landingHeader: "Write today, forever",
+						walletList: [
+							"metamask",
+							"coinbase_wallet",
+							"rainbow",
+							"wallet_connect_qr",
+						],
+						walletChainType: "ethereum-only",
 					},
 					embeddedWallets: {
-						createOnLogin: "users-without-wallets",
+						ethereum: {
+							createOnLogin: "users-without-wallets",
+						},
+					},
+					externalWallets: {
+						walletConnect: { enabled: true },
 					},
 				}}
 			>
