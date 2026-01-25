@@ -9,12 +9,8 @@ import {
 } from "@/utils/entryCache";
 import { useEntryLoading } from "@/utils/EntryLoadingContext";
 import { useOPWallet } from "@/utils/hooks";
-import {
-	getDerivedSigningKeyV1,
-	getDerivedSigningKeyV2,
-	signRemove,
-	signUpdate,
-} from "@/utils/signer";
+import { getCachedDerivedKeys } from "@/utils/keyCache";
+import { signRemove, signUpdate } from "@/utils/signer";
 import {
 	compress,
 	encrypt,
@@ -131,8 +127,7 @@ export default function Entry({
 			if (isEntryPrivate(initialEntry)) {
 				setEncrypted(true);
 				if (isWalletAuthor(wallet, initialEntry)) {
-					const keyV2 = await getDerivedSigningKeyV2(wallet);
-					const keyV1 = await getDerivedSigningKeyV1(wallet);
+					const { keyV2, keyV1 } = await getCachedDerivedKeys(wallet);
 					const processed = await processPrivateEntry(keyV2, initialEntry, keyV1);
 					setProcessedEntry(processed);
 					setEditedContent(processed.decompressed ?? "");
@@ -222,7 +217,7 @@ export default function Entry({
 		const compressedContent = await compress(editedContent);
 		let versionedCompressedContent = `br:${compressedContent}`;
 		if (encrypted) {
-			const key = await getDerivedSigningKeyV2(wallet);
+			const { keyV2: key } = await getCachedDerivedKeys(wallet);
 			const encryptedContent = await encrypt(key, compressedContent);
 			versionedCompressedContent = `enc:v2:br:${encryptedContent}`;
 		}

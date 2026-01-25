@@ -4,10 +4,7 @@ import { useWallets } from "@privy-io/react-auth";
 import { useEffect, useState } from "react";
 import type { Entry } from "./api";
 import { getCachedEntry, setCachedEntry } from "./entryCache";
-import {
-	getDerivedSigningKeyV1,
-	getDerivedSigningKeyV2,
-} from "./signer";
+import { getCachedDerivedKeys } from "./keyCache";
 import { isEntryPrivate, isWalletAuthor, processPrivateEntry } from "./utils";
 
 export function useIsMac() {
@@ -63,9 +60,9 @@ export function useProcessedEntries(
 				return;
 			}
 
-			// Get derived keys once
-			const derivedKeyV2 = await getDerivedSigningKeyV2(wallet!);
-			const derivedKeyV1 = await getDerivedSigningKeyV1(wallet!);
+			// Get derived keys (cached to avoid multiple signature requests)
+			const { keyV2: derivedKeyV2, keyV1: derivedKeyV1 } =
+				await getCachedDerivedKeys(wallet!);
 
 			// Process each private entry and update state
 			const processedMap = new Map<number, Entry>();

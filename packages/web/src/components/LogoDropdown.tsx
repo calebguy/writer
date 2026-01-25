@@ -1,5 +1,6 @@
 "use client";
 
+import { clearAllCachedKeys } from "@/utils/keyCache";
 import { usePrivy } from "@privy-io/react-auth";
 import { useState } from "react";
 import { ColorModal } from "./ColorModal";
@@ -23,7 +24,8 @@ export function LogoDropdown() {
 				<DropdownItem
 					onClick={() =>
 						logout().then(() => {
-							window.location.href = "/";
+							clearAllCachedKeys();
+						window.location.href = "/";
 						})
 					}
 				>
