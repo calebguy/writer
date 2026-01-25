@@ -254,10 +254,7 @@ const api = app
 			if (!writer) {
 				return c.json({ error: "writer not found" }, 404);
 			}
-			const entry = await db.getEntry(
-				writer.storageAddress as Hex,
-				Number(id),
-			);
+			const entry = await db.getEntry(writer.storageAddress as Hex, Number(id));
 			if (!entry) {
 				return c.json({ error: "entry not found" }, 404);
 			}

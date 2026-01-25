@@ -22,7 +22,6 @@ const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 const SKELETON_COUNT = 6;
 
 export function WriterList({ user }: { user?: UserWithWallet }) {
-	console.log("render writer list");
 	const [isPolling, setIsPolling] = useState(false);
 	const queryClient = useQueryClient();
 

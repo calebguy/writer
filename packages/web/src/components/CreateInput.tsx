@@ -4,7 +4,7 @@ import { Arrow } from "@/components/icons/Arrow";
 import { Lock } from "@/components/icons/Lock";
 import { Unlock } from "@/components/icons/Unlock";
 import { cn } from "@/utils/cn";
-import { useIsMac } from "@/utils/hooks";
+import { useIsMac, useIsMobile } from "@/utils/hooks";
 import type { MDXEditorMethods } from "@mdxeditor/editor";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
@@ -34,6 +34,7 @@ export default function CreateInput({
 	isLoading = false,
 }: CreateInputProps) {
 	const isMac = useIsMac();
+	const isMobile = useIsMobile();
 	const [hasFocus, setHasFocus] = useState(false);
 	const [isExpanded, setIsExpanded] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -112,6 +113,21 @@ export default function CreateInput({
 		const hasSignificantContent = markdown.length > 50 || lineCount > 5;
 		setShowHint(!hasSignificantContent);
 	}, [markdown]);
+
+	// Mobile submit handler
+	const handleMobileSubmit = async () => {
+		if (markdown.trim() !== "") {
+			setLoadingContent(markdown);
+			setIsSubmitting(true);
+			await onSubmit({ markdown, encrypted });
+			editorRef.current?.setMarkdown("");
+			setMarkdown("");
+			setIsSubmitting(false);
+			setHasFocus(false);
+			setIsExpanded(false);
+			onExpand?.(false);
+		}
+	};
 
 	const isLoadingOrSubmitting = isLoading || isSubmitting;
 
@@ -218,6 +234,18 @@ export default function CreateInput({
 						)}
 					</div>
 				</>
+			)}
+			{isMobile && hasFocus && markdown.trim() !== "" && (
+				<div className="fixed bottom-0 left-0 right-0 p-4 bg-black/80 backdrop-blur-sm border-t border-neutral-800 z-50">
+					<button
+						type="button"
+						onClick={handleMobileSubmit}
+						disabled={isSubmitting}
+						className="w-full py-3 px-4 bg-primary text-black font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-transform"
+					>
+						{isSubmitting ? "Creating..." : "Create Writer"}
+					</button>
+				</div>
 			)}
 		</div>
 	);

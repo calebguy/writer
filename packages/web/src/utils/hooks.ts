@@ -17,6 +17,26 @@ export function useIsMac() {
 	return isMac;
 }
 
+export function useIsMobile() {
+	const [isMobile, setIsMobile] = useState(false);
+
+	useEffect(() => {
+		// Detect touch devices using media queries
+		// hover: none = device can't hover (touch device)
+		// pointer: coarse = imprecise pointing device (finger vs mouse)
+		const mediaQuery = window.matchMedia(
+			"(hover: none) and (pointer: coarse)",
+		);
+		setIsMobile(mediaQuery.matches);
+
+		const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+		mediaQuery.addEventListener("change", handler);
+		return () => mediaQuery.removeEventListener("change", handler);
+	}, []);
+
+	return isMobile;
+}
+
 export function useOPWallet() {
 	const { wallets, ready } = useWallets();
 	const opWallets = wallets.filter((wallet) => wallet.chainId === "eip155:10");
