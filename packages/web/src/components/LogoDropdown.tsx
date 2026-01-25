@@ -15,7 +15,9 @@ export function LogoDropdown() {
 	return (
 		<>
 			<Dropdown
-				trigger={<Logo className="h-8 transition-colors text-primary" />}
+				trigger={
+					<Logo className="h-8 transition-colors text-primary hover:text-secondary" />
+				}
 			>
 				<DropdownItem onClick={() => router.push("/explore")}>
 					Explore
@@ -30,7 +32,7 @@ export function LogoDropdown() {
 					onClick={() =>
 						logout().then(() => {
 							clearAllCachedKeys();
-						window.location.href = "/";
+							window.location.href = "/";
 						})
 					}
 				>

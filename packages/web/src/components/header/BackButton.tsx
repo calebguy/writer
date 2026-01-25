@@ -12,7 +12,8 @@ export function BackButton({ writerAddress }: { writerAddress: string }) {
 	// - /writer/:address/:entryId (3 segments)
 	// - /writer/:address/pending/:id (4 segments)
 	const isEntryPage =
-		segments.length === 3 || (segments.length === 4 && segments[2] === "pending");
+		segments.length === 3 ||
+		(segments.length === 4 && segments[2] === "pending");
 
 	const handleBack = () => {
 		// If there's no history to go back to, navigate to the appropriate fallback
@@ -28,8 +29,8 @@ export function BackButton({ writerAddress }: { writerAddress: string }) {
 	};
 
 	return (
-		<button type="button" onClick={handleBack}>
-			<FiArrowLeft className="w-7 h-7" />
+		<button type="button" onClick={handleBack} className="cursor-pointer">
+			<FiArrowLeft className="w-7 h-7 text-primary hover:text-secondary transition-colors" />
 		</button>
 	);
 }
