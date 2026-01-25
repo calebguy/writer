@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { FiArrowLeft } from "react-icons/fi";
 
 export function BackButton({ writerAddress }: { writerAddress: string }) {
 	const pathname = usePathname();
+	const router = useRouter();
 	const segments = pathname.split("/").filter(Boolean);
 
 	// Check if we're on an entry page:
@@ -14,11 +14,22 @@ export function BackButton({ writerAddress }: { writerAddress: string }) {
 	const isEntryPage =
 		segments.length === 3 || (segments.length === 4 && segments[2] === "pending");
 
-	const backHref = isEntryPage ? `/writer/${writerAddress}` : "/home";
+	const handleBack = () => {
+		// If there's no history to go back to, navigate to the appropriate fallback
+		if (window.history.length <= 1) {
+			if (isEntryPage) {
+				router.push(`/writer/${writerAddress}`);
+			} else {
+				router.push("/home");
+			}
+		} else {
+			router.back();
+		}
+	};
 
 	return (
-		<Link href={backHref}>
+		<button type="button" onClick={handleBack}>
 			<FiArrowLeft className="w-7 h-7" />
-		</Link>
+		</button>
 	);
 }
