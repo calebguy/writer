@@ -3,7 +3,10 @@
 import type { Entry } from "@/utils/api";
 import { createWithChunk } from "@/utils/api";
 import { useOPWallet } from "@/utils/hooks";
-import { getDerivedSigningKey, signCreateWithChunk } from "@/utils/signer";
+import {
+	getDerivedSigningKeyV2,
+	signCreateWithChunk,
+} from "@/utils/signer";
 import { compress, encrypt } from "@/utils/utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -50,9 +53,9 @@ export default function EntryListWithCreateInput({
 		const compressedContent = await compress(markdown);
 		let versionedCompressedContent = `br:${compressedContent}`;
 		if (encrypted) {
-			const key = await getDerivedSigningKey(wallet);
+			const key = await getDerivedSigningKeyV2(wallet);
 			const encryptedContent = await encrypt(key, compressedContent);
-			versionedCompressedContent = `enc:br:${encryptedContent}`;
+			versionedCompressedContent = `enc:v2:br:${encryptedContent}`;
 		}
 
 		const { signature, nonce, chunkCount, chunkContent } =

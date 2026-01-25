@@ -213,10 +213,10 @@ function getRandomNonce() {
 	return Math.floor(Math.random() * 1000000000000);
 }
 
-export async function getDerivedSigningKey(
+// Keep old function for reading legacy entries
+export async function getDerivedSigningKeyV1(
 	wallet: ConnectedWallet,
 ): Promise<Uint8Array> {
-	console.log("getting")
 	const message = "encryption-key-derivation";
 	const encodedMessage = `0x${Buffer.from(message, "utf8").toString("hex")}`;
 	const provider = await wallet.getEthereumProvider();
@@ -237,3 +237,31 @@ export async function getDerivedSigningKey(
 	// Truncate or expand the key to match AES requirements (e.g., 128 bits = 16 bytes)
 	return key.slice(0, 16); // Use the first 16 bytes for a 128-bit key
 }
+
+// New function with user-friendly message
+export async function getDerivedSigningKeyV2(
+	wallet: ConnectedWallet,
+): Promise<Uint8Array> {
+	const message = "Writer: write (privately) today, forever";
+	const encodedMessage = `0x${Buffer.from(message, "utf8").toString("hex")}`;
+	const provider = await wallet.getEthereumProvider();
+	const method = "personal_sign";
+
+	// Sign the message with the wallet
+	const signature = await provider.request({
+		method,
+		params: [encodedMessage, wallet.address],
+	});
+
+	// Hash the signature using Keccak-256 to derive a 256-bit key
+	const hash = keccak256(signature);
+
+	// Convert the hash to a Uint8Array
+	const key = Uint8Array.from(Buffer.from(hash.slice(2), "hex"));
+
+	// Truncate or expand the key to match AES requirements (e.g., 128 bits = 16 bytes)
+	return key.slice(0, 16); // Use the first 16 bytes for a 128-bit key
+}
+
+// Default export uses v2 for new encryptions
+export const getDerivedSigningKey = getDerivedSigningKeyV2;

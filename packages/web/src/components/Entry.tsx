@@ -9,7 +9,12 @@ import {
 } from "@/utils/entryCache";
 import { useEntryLoading } from "@/utils/EntryLoadingContext";
 import { useOPWallet } from "@/utils/hooks";
-import { getDerivedSigningKey, signRemove, signUpdate } from "@/utils/signer";
+import {
+	getDerivedSigningKeyV1,
+	getDerivedSigningKeyV2,
+	signRemove,
+	signUpdate,
+} from "@/utils/signer";
 import {
 	compress,
 	encrypt,
@@ -126,8 +131,9 @@ export default function Entry({
 			if (isEntryPrivate(initialEntry)) {
 				setEncrypted(true);
 				if (isWalletAuthor(wallet, initialEntry)) {
-					const key = await getDerivedSigningKey(wallet);
-					const processed = await processPrivateEntry(key, initialEntry);
+					const keyV2 = await getDerivedSigningKeyV2(wallet);
+					const keyV1 = await getDerivedSigningKeyV1(wallet);
+					const processed = await processPrivateEntry(keyV2, initialEntry, keyV1);
 					setProcessedEntry(processed);
 					setEditedContent(processed.decompressed ?? "");
 					initializedRef.current = true;
@@ -216,9 +222,9 @@ export default function Entry({
 		const compressedContent = await compress(editedContent);
 		let versionedCompressedContent = `br:${compressedContent}`;
 		if (encrypted) {
-			const key = await getDerivedSigningKey(wallet);
+			const key = await getDerivedSigningKeyV2(wallet);
 			const encryptedContent = await encrypt(key, compressedContent);
-			versionedCompressedContent = `enc:br:${encryptedContent}`;
+			versionedCompressedContent = `enc:v2:br:${encryptedContent}`;
 		}
 		// Store expected raw content for polling comparison
 		expectedRawContentRef.current = versionedCompressedContent;

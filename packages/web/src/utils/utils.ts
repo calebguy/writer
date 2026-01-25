@@ -223,12 +223,25 @@ export async function decrypt(key: Uint8Array, encryptedMessage: string) {
 }
 
 export async function processPrivateEntry(
-	key: Uint8Array,
+	keyV2: Uint8Array,
 	entry: Entry,
+	keyV1?: Uint8Array,
 ): Promise<Entry> {
+	if (entry.raw?.startsWith("enc:v2:br:")) {
+		// New format - use v2 key
+		const decrypted = await decrypt(keyV2, entry.raw.slice(10)); // "enc:v2:br:" = 10 chars
+		const decompressed = await decompress(decrypted);
+		return {
+			...entry,
+			decompressed,
+		};
+	}
 	if (entry.raw?.startsWith("enc:br:")) {
-		// Remove the "enc:br:" prefix
-		const decrypted = await decrypt(key, entry.raw.slice(7));
+		// Old format - use v1 key
+		if (!keyV1) {
+			throw new Error("V1 key required to decrypt legacy entry");
+		}
+		const decrypted = await decrypt(keyV1, entry.raw.slice(7)); // "enc:br:" = 7 chars
 		const decompressed = await decompress(decrypted);
 		return {
 			...entry,
@@ -239,7 +252,11 @@ export async function processPrivateEntry(
 }
 
 export function isEntryPrivate(entry: Entry) {
-	return entry.version?.startsWith("enc:") || entry.raw?.startsWith("enc:br:");
+	return (
+		entry.version?.startsWith("enc:") ||
+		entry.raw?.startsWith("enc:br:") ||
+		entry.raw?.startsWith("enc:v2:br:")
+	);
 }
 
 export function isWalletAuthor(wallet: ConnectedWallet, entry: Entry) {
