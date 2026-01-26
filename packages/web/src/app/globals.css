@@ -186,6 +186,14 @@ body,
   box-shadow: none;
 }
 
+.dRJJao h3 {
+  font-family: "ltRemark", "ltRemark Fallback" !important;
+}
+
+.dRJJao {
+  font-family: "basicallyAMono" !important;
+}
+
 .break-anywhere {
   overflow-wrap: anywhere;
 }
