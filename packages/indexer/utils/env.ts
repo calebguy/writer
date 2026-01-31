@@ -22,6 +22,7 @@ const schema = z.object({
 	APP_ENV: z.enum([AppEnv.Development, AppEnv.Production]),
 	DATABASE_URL: minString(),
 	RPC_URL: minString(),
+	WS_RPC_URL: minString(),
 	TARGET_CHAIN_ID: minString().transform((val) => Number(val)),
 	SYNDICATE_API_KEY: minString(),
 	SYNDICATE_PROJECT_ID: minString(),

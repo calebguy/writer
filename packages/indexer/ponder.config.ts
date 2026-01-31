@@ -18,6 +18,7 @@ export default createConfig({
 		target: {
 			id: Number(env.TARGET_CHAIN_ID),
 			rpc: env.RPC_URL,
+			ws: env.WS_RPC_URL,
 		},
 	},
 	contracts: {
