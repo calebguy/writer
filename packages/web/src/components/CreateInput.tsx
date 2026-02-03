@@ -173,7 +173,7 @@ export default function CreateInput({
 						<span>+</span>
 					</div>
 					<div
-						className={cn("h-full relative", {
+						className={cn("h-full relative min-h-0 overflow-hidden", {
 							hidden: !hasFocus && !isExpanded,
 							flex: hasFocus || isExpanded,
 							"border border-dashed border-primary w-full": isExpanded,

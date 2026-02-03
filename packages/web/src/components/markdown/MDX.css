@@ -58,11 +58,14 @@
     display: flex!important;
     flex-direction: column;
     flex: 1!important;
+    min-height: 0;
 
     .mdxeditor-root-contenteditable {
       flex: 1; 
       display: flex;
       flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
 
       div {
         height: 100%;
@@ -312,6 +315,8 @@
       outline: none;
       padding: 0;
       height: 100%;
+      overflow-y: auto;
+      overflow-x: hidden;
       /* color: rgb(var(--color-white))!important; */
       font-family: "LTRemark";
       caret-color: rgb(var(--color-primary))!important;
