@@ -1,6 +1,11 @@
 "use client";
 
-import { useActiveWallet, useWallets } from "@privy-io/react-auth";
+import {
+	type BaseConnectedWalletType,
+	type ConnectedWallet,
+	useActiveWallet,
+	useWallets,
+} from "@privy-io/react-auth";
 import { useEffect, useState } from "react";
 import type { Entry } from "./api";
 import { getCachedEntry, setCachedEntry } from "./entryCache";
@@ -41,8 +46,21 @@ export function useOPWallet() {
 	const { wallets, ready } = useWallets();
 	const { wallet: activeWallet } = useActiveWallet();
 	const opWallets = wallets.filter((wallet) => wallet.chainId === "eip155:10");
-	// Prefer the active (user-selected) wallet; fall back to OP or any connected wallet.
-	const wallet = activeWallet ?? opWallets[0] ?? wallets[0];
+
+	function isEthereumWallet(
+		wallet: BaseConnectedWalletType | undefined,
+	): wallet is ConnectedWallet {
+		return wallet?.type === "ethereum";
+	}
+
+	const activeEthereumWallet = isEthereumWallet(activeWallet)
+		? activeWallet
+		: undefined;
+	const fallbackEthereumWallet =
+		opWallets[0] ?? wallets.find((wallet) => wallet.type === "ethereum");
+
+	// Prefer the active (user-selected) Ethereum wallet; fall back to OP or any Ethereum wallet.
+	const wallet = activeEthereumWallet ?? fallbackEthereumWallet;
 	return [wallet, ready] as const;
 }
 

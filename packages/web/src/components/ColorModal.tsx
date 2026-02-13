@@ -108,6 +108,11 @@ export function ColorModal({ open, onClose }: ModalProps) {
 					}
 					onClick={async () => {
 						setSaveClicked(true);
+						if (!wallet) {
+							console.error("No ethereum wallet available for signing");
+							setSaveClicked(false);
+							return;
+						}
 						setPrimaryColor([rgbColor.r, rgbColor.g, rgbColor.b]);
 						const hexColor = hexColorToBytes32(
 							RGBToHex([rgbColor.r, rgbColor.g, rgbColor.b]),
