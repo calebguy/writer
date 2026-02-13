@@ -1,10 +1,10 @@
 "use client";
 
-import { useWallets } from "@privy-io/react-auth";
+import { useActiveWallet, useWallets } from "@privy-io/react-auth";
 import { useEffect, useState } from "react";
 import type { Entry } from "./api";
 import { getCachedEntry, setCachedEntry } from "./entryCache";
-import { getCachedDerivedKeys } from "./keyCache";
+import { getCachedDerivedKey } from "./keyCache";
 import { isEntryPrivate, isWalletAuthor, processPrivateEntry } from "./utils";
 
 export function useIsMac() {
@@ -39,8 +39,11 @@ export function useIsMobile() {
 
 export function useOPWallet() {
 	const { wallets, ready } = useWallets();
+	const { wallet: activeWallet } = useActiveWallet();
 	const opWallets = wallets.filter((wallet) => wallet.chainId === "eip155:10");
-	return [opWallets[0], ready] as const;
+	// Prefer the active (user-selected) wallet; fall back to OP or any connected wallet.
+	const wallet = activeWallet ?? opWallets[0] ?? wallets[0];
+	return [wallet, ready] as const;
 }
 
 export function useProcessedEntries(
@@ -81,8 +84,18 @@ export function useProcessedEntries(
 			}
 
 			// Get derived keys (cached to avoid multiple signature requests)
-			const { keyV2: derivedKeyV2, keyV1: derivedKeyV1 } =
-				await getCachedDerivedKeys(wallet!);
+			const needsV2 = privateEntriesToProcess.some((entry) =>
+				entry.raw?.startsWith("enc:v2:br:"),
+			);
+			const needsV1 = privateEntriesToProcess.some((entry) =>
+				entry.raw?.startsWith("enc:br:"),
+			);
+			const derivedKeyV2 = needsV2
+				? await getCachedDerivedKey(wallet!, "v2")
+				: undefined;
+			const derivedKeyV1 = needsV1
+				? await getCachedDerivedKey(wallet!, "v1")
+				: undefined;
 
 			// Process each private entry and update state
 			const processedMap = new Map<number, Entry>();
@@ -102,10 +115,10 @@ export function useProcessedEntries(
 				}
 
 				const processed = await processPrivateEntry(
-				derivedKeyV2,
-				entry,
-				derivedKeyV1,
-			);
+					derivedKeyV2,
+					entry,
+					derivedKeyV1,
+				);
 				await setCachedEntry(writerAddress, entryId, processed, {
 					walletAddress,
 					isPrivate: true,

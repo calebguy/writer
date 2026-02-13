@@ -3,7 +3,7 @@
 import type { Entry } from "@/utils/api";
 import { createWithChunk } from "@/utils/api";
 import { useOPWallet } from "@/utils/hooks";
-import { getCachedDerivedKeys } from "@/utils/keyCache";
+import { getCachedDerivedKey } from "@/utils/keyCache";
 import { signCreateWithChunk } from "@/utils/signer";
 import { compress, encrypt } from "@/utils/utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -51,7 +51,7 @@ export default function EntryListWithCreateInput({
 		const compressedContent = await compress(markdown);
 		let versionedCompressedContent = `br:${compressedContent}`;
 		if (encrypted) {
-			const { keyV2: key } = await getCachedDerivedKeys(wallet);
+			const key = await getCachedDerivedKey(wallet, "v2");
 			const encryptedContent = await encrypt(key, compressedContent);
 			versionedCompressedContent = `enc:v2:br:${encryptedContent}`;
 		}

@@ -223,11 +223,14 @@ export async function decrypt(key: Uint8Array, encryptedMessage: string) {
 }
 
 export async function processPrivateEntry(
-	keyV2: Uint8Array,
+	keyV2: Uint8Array | undefined,
 	entry: Entry,
 	keyV1?: Uint8Array,
 ): Promise<Entry> {
 	if (entry.raw?.startsWith("enc:v2:br:")) {
+		if (!keyV2) {
+			throw new Error("V2 key required to decrypt entry");
+		}
 		// New format - use v2 key
 		const decrypted = await decrypt(keyV2, entry.raw.slice(10)); // "enc:v2:br:" = 10 chars
 		const decompressed = await decompress(decrypted);
