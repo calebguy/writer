@@ -2,6 +2,7 @@
 
 import { EntryCardSkeleton } from "@/components/EntryCardSkeleton";
 import { Lock } from "@/components/icons/Lock";
+import { Unlock } from "@/components/icons/Unlock";
 import { MarkdownRenderer } from "@/components/markdown/MarkdownRenderer";
 import type { Entry } from "@/utils/api";
 import { cn } from "@/utils/cn";
@@ -14,11 +15,19 @@ import { useCallback, useMemo } from "react";
 interface EntryListProps {
 	processedEntries: Entry[];
 	writerAddress: string;
+	showLockedEntries?: boolean;
+	isUnlocking?: boolean;
+	unlockError?: string | null;
+	onUnlock?: () => void;
 }
 
 export default function EntryList({
 	processedEntries,
 	writerAddress,
+	showLockedEntries = false,
+	isUnlocking = false,
+	unlockError,
+	onUnlock,
 }: EntryListProps) {
 	const queryClient = useQueryClient();
 
@@ -46,7 +55,51 @@ export default function EntryList({
 			{sortedEntries.map((entry) => {
 				// Show skeleton for private entries that haven't been decrypted yet
 				if (isEntryPrivate(entry) && !entry.decompressed) {
-					return <EntryCardSkeleton key={entry.id} />;
+					if (!showLockedEntries) {
+						return <EntryCardSkeleton key={entry.id} />;
+					}
+					const isClickable = Boolean(onUnlock) && !isUnlocking;
+					const Wrapper = isClickable ? "button" : "div";
+					return (
+						<Wrapper
+							key={entry.id}
+							type={isClickable ? "button" : undefined}
+							onClick={isClickable ? onUnlock : undefined}
+							disabled={isClickable ? isUnlocking : undefined}
+							className={cn(
+								"group aspect-square bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 overflow-hidden border border-neutral-800/50 transition-colors",
+								isClickable &&
+									"cursor-pointer hover:border-primary/70 hover:text-primary",
+							)}
+						>
+							<div className="flex flex-col items-center justify-center grow text-neutral-600 gap-2">
+								{isUnlocking ? (
+									<Unlock className="h-4 w-4 text-primary" />
+								) : (
+									<>
+										<span className="block group-hover:hidden">
+											<Lock className="h-4 w-4 text-neutral-600" />
+										</span>
+										<span className="hidden group-hover:block">
+											<Unlock className="h-4 w-4 text-primary" />
+										</span>
+									</>
+								)}
+								<span className="text-sm">Private entry</span>
+								<span className="text-xs">
+									{isUnlocking ? "Unlocking..." : "Unlock to view"}
+								</span>
+								{unlockError && (
+									<span className="text-[10px] text-red-500">
+										Signature rejected
+									</span>
+								)}
+							</div>
+							<div className="flex items-end text-neutral-600 text-sm leading-3 pt-2 shrink-0 pb-2 justify-end">
+								<span>—</span>
+							</div>
+						</Wrapper>
+					);
 				}
 
 				const dateFmt = "MMM do, yyyy";

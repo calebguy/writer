@@ -17,10 +17,20 @@ export default function EntryListWithCreateInput({
 	writerTitle,
 	writerAddress,
 	processedEntries,
+	showUnlockBanner = false,
+	isUnlocking = false,
+	unlockError,
+	onUnlock,
+	showLockedEntries = false,
 }: {
 	writerTitle: string;
 	writerAddress: string;
 	processedEntries: Entry[];
+	showUnlockBanner?: boolean;
+	isUnlocking?: boolean;
+	unlockError?: string | null;
+	onUnlock?: () => void;
+	showLockedEntries?: boolean;
 }) {
 	const [isExpanded, setIsExpanded] = useState(false);
 	const [wallet] = useOPWallet();
@@ -91,6 +101,10 @@ export default function EntryListWithCreateInput({
 				<EntryList
 					processedEntries={processedEntries}
 					writerAddress={writerAddress}
+					showLockedEntries={showLockedEntries}
+					isUnlocking={isUnlocking}
+					unlockError={unlockError}
+					onUnlock={showUnlockBanner ? onUnlock : undefined}
 				/>
 			)}
 		</div>

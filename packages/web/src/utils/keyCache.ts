@@ -31,6 +31,14 @@ export async function getCachedDerivedKey(
 	return key;
 }
 
+export function hasCachedDerivedKey(
+	wallet: ConnectedWallet,
+	version: "v1" | "v2",
+): boolean {
+	const cacheKey = keyCacheKey(wallet.address, version);
+	return keyCache.has(cacheKey);
+}
+
 export async function getCachedDerivedKeys(wallet: ConnectedWallet): Promise<{
 	keyV2: Uint8Array;
 	keyV1: Uint8Array;

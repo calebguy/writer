@@ -4,10 +4,12 @@ import CreateInput from "@/components/CreateInput";
 import { EntryCardSkeleton } from "@/components/EntryCardSkeleton";
 import EntryListWithCreateInput from "@/components/EntryListWithCreateInput";
 import { type Writer, getWriter } from "@/utils/api";
-import { useProcessedEntries } from "@/utils/hooks";
+import { useOPWallet, useProcessedEntries } from "@/utils/hooks";
+import { hasCachedDerivedKey } from "@/utils/keyCache";
+import { isEntryPrivate } from "@/utils/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Hex } from "viem";
 
 const LOADING_SKELETON_AMOUNT = 6;
@@ -15,7 +17,10 @@ const LOADING_SKELETON_AMOUNT = 6;
 export default function WriterPage() {
 	const { address } = useParams<{ address: string }>();
 	const queryClient = useQueryClient();
+	const [wallet] = useOPWallet();
 	const [shouldPoll, setShouldPoll] = useState(false);
+	const [allowDecryption, setAllowDecryption] = useState(false);
+	const [unlockError, setUnlockError] = useState<string | null>(null);
 
 	const { data: writer, isLoading } = useQuery({
 		queryKey: ["writer", address],
@@ -44,7 +49,33 @@ export default function WriterPage() {
 	}, [hasPendingEntries]);
 
 	// Process entries as soon as they arrive - shows immediately, processes private entries in background
-	const { processedEntries } = useProcessedEntries(writer?.entries, address);
+	const handleDecryptError = useCallback((error: unknown) => {
+		console.error("Unlock private entries failed", error);
+		setAllowDecryption(false);
+		setUnlockError("Signature request was rejected.");
+	}, []);
+
+	const { processedEntries, hasLockedPrivateEntries } = useProcessedEntries(
+		writer?.entries,
+		address,
+		{
+			allowDecryption,
+			onDecryptError: handleDecryptError,
+		},
+	);
+
+	const hasPrivateEntries =
+		writer?.entries?.some((entry) => isEntryPrivate(entry)) ?? false;
+	const showUnlockBanner = hasPrivateEntries && hasLockedPrivateEntries;
+	const showLockedEntries = !allowDecryption || Boolean(unlockError);
+
+	useEffect(() => {
+		if (!wallet || !hasPrivateEntries) return;
+		// Auto-unlock only if the key is already cached (no signature prompt).
+		if (hasCachedDerivedKey(wallet, "v2")) {
+			setAllowDecryption(true);
+		}
+	}, [wallet, hasPrivateEntries]);
 
 	// Show loading state during the gap where entries exist but processedEntries hasn't been populated yet
 	const isEntriesProcessing = writer?.entries?.length && processedEntries.length === 0;
@@ -70,6 +101,14 @@ export default function WriterPage() {
 			writerTitle={writer.title}
 			writerAddress={writer.address}
 			processedEntries={processedEntries}
+			showUnlockBanner={showUnlockBanner}
+			isUnlocking={allowDecryption && !unlockError}
+			unlockError={unlockError}
+			showLockedEntries={showLockedEntries}
+			onUnlock={() => {
+				setUnlockError(null);
+				setAllowDecryption(true);
+			}}
 		/>
 	);
 }
