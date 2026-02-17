@@ -5,6 +5,21 @@
   --color-secondary: 125 125 125;
 }
 
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-neutral-950: 10 10 10;
+  --color-neutral-900: 250 250 250;
+  --color-neutral-800: 245 245 245;
+  --color-neutral-700: 229 229 229;
+  --color-neutral-600: 82 82 82;
+  --color-neutral-500: 115 115 115;
+  --color-neutral-400: 163 163 163;
+  --color-neutral-300: 212 212 212;
+  --color-neutral-200: 229 229 229;
+  --color-neutral-100: 245 245 245;
+  --color-neutral-50: 250 250 250;
+}
+
 /* biome-ignore lint/suspicious/noUnknownAtRules: Tailwind CSS @theme directive */
 @theme inline {
   --color-primary: rgb(var(--color-primary));
@@ -109,6 +124,10 @@ body {
     color: rgb(var(--color-white));
     background-color: var(--color-neutral-800);
   }
+  :root[data-theme="light"] {
+    color: rgb(var(--color-black));
+    background-color: rgb(var(--color-neutral-50));
+  }
 }
 
 ::-webkit-scrollbar {
@@ -166,6 +185,81 @@ body {
 ::selection {
   background-color: rgb(var(--color-secondary));
   color: rgb(var(--color-primary));
+}
+
+:root[data-theme="light"] .text-white {
+  color: rgb(var(--color-black));
+}
+
+:root[data-theme="light"] .text-neutral-600 {
+  color: rgb(var(--color-neutral-700));
+}
+
+:root[data-theme="light"] .text-neutral-500 {
+  color: rgb(var(--color-neutral-600));
+}
+
+:root[data-theme="light"] .text-neutral-400 {
+  color: rgb(var(--color-neutral-600));
+}
+
+:root[data-theme="light"] .text-neutral-300 {
+  color: rgb(var(--color-neutral-700));
+}
+
+:root[data-theme="light"] .bg-black\/80 {
+  background-color: rgb(255 255 255 / 0.8);
+}
+
+:root[data-theme="light"] .bg-neutral-900 {
+  background-color: rgb(var(--color-neutral-100));
+}
+
+:root[data-theme="light"] .bg-neutral-900\/60 {
+  background-color: rgb(255 255 255 / 0.6);
+}
+
+:root[data-theme="light"] .bg-neutral-800 {
+  background-color: rgb(var(--color-neutral-200));
+}
+
+:root[data-theme="light"] .bg-neutral-700 {
+  background-color: rgb(var(--color-neutral-200));
+}
+
+:root[data-theme="light"] .border-neutral-800 {
+  border-color: rgb(var(--color-neutral-300));
+}
+
+:root[data-theme="light"] .border-neutral-800\/50 {
+  border-color: rgb(var(--color-neutral-300));
+}
+
+:root[data-theme="light"] .border-neutral-700 {
+  border-color: rgb(var(--color-neutral-300));
+}
+
+:root[data-theme="light"] .writer-title {
+  color: rgb(var(--color-black));
+}
+
+:root[data-theme="light"] .writer-title .prose,
+:root[data-theme="light"] .writer-title .prose * {
+  color: rgb(var(--color-black));
+}
+
+:root[data-theme="light"] .mdx .mdxeditor-root-contenteditable,
+:root[data-theme="light"] .mdx ._contentEditable_sects_380,
+:root[data-theme="light"] .mdx ._contentEditable_1e2ox_380 {
+  color: rgb(var(--color-black)) !important;
+}
+
+:root[data-theme="light"] .mdx .mdxeditor {
+  color: rgb(var(--color-black));
+}
+
+:root[data-theme="light"] .create-input-border {
+  border-color: rgb(var(--color-neutral-200));
 }
 
 html,
@@ -330,4 +424,3 @@ body,
 ._contentEditable_sets_380 {
   color: inherit !important;
 }
-

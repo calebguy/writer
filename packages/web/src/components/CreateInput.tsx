@@ -158,7 +158,7 @@ export default function CreateInput({
 				<>
 					<div
 						className={cn(
-							"border border-neutral-900 h-full flex justify-center items-center text-primary text-2xl bg-transparent hover:bg-neutral-900 hover:cursor-text transition-colors",
+							"border border-neutral-900 h-full flex justify-center items-center text-primary text-2xl bg-transparent hover:bg-neutral-900 hover:cursor-text transition-colors create-input-border",
 							{
 								hidden: hasFocus || isExpanded,
 							},

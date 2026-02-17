@@ -42,7 +42,7 @@ export default function PublicWriterList({ writers }: PublicWriterListProps) {
 					className="aspect-square bg-neutral-900 flex flex-col justify-between px-2 pt-2 pb-1.5 hover:cursor-zoom-in"
 					onMouseEnter={() => prefetchWriter(writer.address)}
 				>
-					<MarkdownRenderer markdown={writer.title} className="text-white" />
+					<MarkdownRenderer markdown={writer.title} className="text-white writer-title" />
 					<div className="flex items-center justify-end gap-3 text-sm text-neutral-600 leading-3 pt-2">
 						{writer.privateCount > 0 && (
 							<span className="flex items-end gap-1">

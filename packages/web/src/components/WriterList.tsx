@@ -106,7 +106,7 @@ export function WriterList({ user }: { user?: UserWithWallet }) {
 						className="aspect-square bg-neutral-900 flex flex-col justify-between px-2 pt-2 pb-1.5 hover:cursor-zoom-in relative"
 						onMouseEnter={() => prefetchWriter(writer.address)}
 					>
-						<MarkdownRenderer markdown={writer.title} className="text-white" />
+						<MarkdownRenderer markdown={writer.title} className="text-white writer-title" />
 						<div className="text-right text-sm text-neutral-600 leading-3 pt-2">
 							<div className="group inline-block">
 								<span className="group-hover:hidden block">

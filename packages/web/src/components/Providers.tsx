@@ -57,6 +57,13 @@ export function Providers({
 		setPrimaryAndSecondaryCSSVariables(primaryColor);
 	}, [primaryColor]);
 
+	useEffect(() => {
+		if (typeof window === "undefined") return;
+		const stored = window.localStorage.getItem("writer-theme");
+		const initial = stored === "light" ? "light" : "dark";
+		document.documentElement.dataset.theme = initial;
+	}, []);
+
 	const handleSetPrimaryColor = useCallback(
 		(rgb: WriterContextType["primaryColor"]) => {
 			setPrimaryColor(rgb);

@@ -58,8 +58,14 @@ export default async function RootLayout({
 	}
 
 	return (
-		<html lang="en" style={colorStyle} className="h-full">
+		<html lang="en" style={colorStyle} className="h-full" suppressHydrationWarning>
 			<body className="flex justify-center">
+				<script
+					dangerouslySetInnerHTML={{
+						__html:
+							"(function(){try{var t=localStorage.getItem('writer-theme');if(t){document.documentElement.dataset.theme=t;}}catch(e){}})();",
+					}}
+				/>
 				<div
 					className={cn(
 						"antialiased w-full grow flex flex-col px-4 md:px-8 pt-4 md:pt-8 pb-2 font-serif max-w-7xl",
