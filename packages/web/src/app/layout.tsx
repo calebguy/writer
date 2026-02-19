@@ -58,7 +58,12 @@ export default async function RootLayout({
 	}
 
 	return (
-		<html lang="en" style={colorStyle} className="h-full" suppressHydrationWarning>
+		<html
+			lang="en"
+			style={colorStyle}
+			className="h-full"
+			suppressHydrationWarning
+		>
 			<body className="flex justify-center">
 				<script
 					dangerouslySetInnerHTML={{

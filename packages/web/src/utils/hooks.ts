@@ -3,7 +3,7 @@
 import {
 	type BaseConnectedWalletType,
 	type ConnectedWallet,
-	useActiveWallet,
+	usePrivy,
 	useWallets,
 } from "@privy-io/react-auth";
 import { useEffect, useState } from "react";
@@ -29,9 +29,7 @@ export function useIsMobile() {
 		// Detect touch devices using media queries
 		// hover: none = device can't hover (touch device)
 		// pointer: coarse = imprecise pointing device (finger vs mouse)
-		const mediaQuery = window.matchMedia(
-			"(hover: none) and (pointer: coarse)",
-		);
+		const mediaQuery = window.matchMedia("(hover: none) and (pointer: coarse)");
 		setIsMobile(mediaQuery.matches);
 
 		const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
@@ -44,7 +42,7 @@ export function useIsMobile() {
 
 export function useOPWallet() {
 	const { wallets, ready } = useWallets();
-	const { wallet: activeWallet } = useActiveWallet();
+	const { user } = usePrivy();
 	const opWallets = wallets.filter((wallet) => wallet.chainId === "eip155:10");
 
 	function isEthereumWallet(
@@ -53,14 +51,17 @@ export function useOPWallet() {
 		return wallet?.type === "ethereum";
 	}
 
-	const activeEthereumWallet = isEthereumWallet(activeWallet)
-		? activeWallet
+	const ethereumWallets = wallets.filter(isEthereumWallet);
+	const opEthereumWallet = opWallets.find(isEthereumWallet);
+	const userWalletAddress = user?.wallet?.address?.toLowerCase();
+	const userWallet = userWalletAddress
+		? ethereumWallets.find(
+				(wallet) => wallet.address.toLowerCase() === userWalletAddress,
+			)
 		: undefined;
-	const fallbackEthereumWallet =
-		opWallets[0] ?? wallets.find((wallet) => wallet.type === "ethereum");
 
-	// Prefer the active (user-selected) Ethereum wallet; fall back to OP or any Ethereum wallet.
-	const wallet = activeEthereumWallet ?? fallbackEthereumWallet;
+	const wallet = userWallet ?? opEthereumWallet ?? ethereumWallets[0];
+
 	return [wallet, ready] as const;
 }
 

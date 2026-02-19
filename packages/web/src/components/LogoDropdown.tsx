@@ -46,14 +46,14 @@ export function LogoDropdown() {
 						<span className="w-2 h-2 bg-primary" />
 					</div>
 				</DropdownItem>
-				{/* <DropdownItem onClick={toggleTheme}>
+				<DropdownItem onClick={toggleTheme}>
 					<div className="flex items-center justify-between gap-2 w-full">
 						<span>Light Mode</span>
 						<span className="text-xs text-neutral-500">
 							{theme === "light" ? "On" : "Off"}
 						</span>
 					</div>
-				</DropdownItem> */}
+				</DropdownItem>
 				<DropdownItem
 					onClick={() =>
 						logout().then(() => {
