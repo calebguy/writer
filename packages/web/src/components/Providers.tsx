@@ -83,7 +83,7 @@ export function Providers({
 			<PrivyProvider
 				appId={PRIVY_APP_ID}
 				config={{
-					loginMethods: ["sms", "email", "wallet"],
+					loginMethods: ["sms", "email", "wallet", "passkey"],
 					defaultChain: optimism,
 					supportedChains: [optimism],
 					walletConnectCloudProjectId: "d178d559d87d6933a4950314767bf38d",
