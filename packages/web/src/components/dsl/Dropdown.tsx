@@ -15,7 +15,7 @@ const dropdownMenuItemClasses = cn(
 );
 
 const dropdownMenuContentClasses = cn(
-	"logo-dropdown-content min-w-24 bg-neutral-900 p-1.5 shadow-sm border border-neutral-800",
+	"logo-dropdown-content min-w-24 bg-neutral-900 p-1.5 shadow-sm border border-neutral-800 z-[200]",
 );
 
 export function Dropdown({

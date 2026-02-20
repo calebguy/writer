@@ -17,6 +17,7 @@ export default function EntryListWithCreateInput({
 	writerTitle,
 	writerAddress,
 	processedEntries,
+	canCreateEntries = true,
 	showUnlockBanner = false,
 	isUnlocking = false,
 	unlockError,
@@ -26,6 +27,7 @@ export default function EntryListWithCreateInput({
 	writerTitle: string;
 	writerAddress: string;
 	processedEntries: Entry[];
+	canCreateEntries?: boolean;
 	showUnlockBanner?: boolean;
 	isUnlocking?: boolean;
 	unlockError?: string | null;
@@ -90,13 +92,15 @@ export default function EntryListWithCreateInput({
 					: undefined
 			}
 		>
-			<CreateInput
-				placeholder={`Write in ${writerTitle}`}
-				onExpand={setIsExpanded}
-				canExpand={true}
-				onSubmit={handleSubmit}
-				isLoading={isPending}
-			/>
+			{canCreateEntries && (
+				<CreateInput
+					placeholder={`Write in ${writerTitle}`}
+					onExpand={setIsExpanded}
+					canExpand={true}
+					onSubmit={handleSubmit}
+					isLoading={isPending}
+				/>
+			)}
 			{!isExpanded && (
 				<EntryList
 					processedEntries={processedEntries}

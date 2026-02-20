@@ -79,16 +79,26 @@ export default function WriterPage() {
 
 	// Show loading state during the gap where entries exist but processedEntries hasn't been populated yet
 	const isEntriesProcessing = writer?.entries?.length && processedEntries.length === 0;
+	const walletAddress = wallet?.address?.toLowerCase();
+	const canCreateEntries = Boolean(
+		walletAddress &&
+			writer?.managers?.some(
+				(manager) => manager.toLowerCase() === walletAddress,
+			),
+	);
+
 	if (!writer || isLoading || isEntriesProcessing) {
 		return (
 			<div
 				className="grid gap-2"
 				style={{ gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))" }}
 			>
-				<div className="relative">
-					<CreateInput onSubmit={() => {}} isLoading={false} />
-					<div className="absolute inset-0 bg-neutral-900/90 flex flex-col items-center justify-center" />
-				</div>
+				{canCreateEntries && (
+					<div className="relative">
+						<CreateInput onSubmit={() => {}} isLoading={false} />
+						<div className="absolute inset-0 bg-neutral-900/90 flex flex-col items-center justify-center" />
+					</div>
+				)}
 				{Array.from({ length: LOADING_SKELETON_AMOUNT }).map((_, i) => (
 					<EntryCardSkeleton key={`skeleton-${i}`} />
 				))}
@@ -101,6 +111,7 @@ export default function WriterPage() {
 			writerTitle={writer.title}
 			writerAddress={writer.address}
 			processedEntries={processedEntries}
+			canCreateEntries={canCreateEntries}
 			showUnlockBanner={showUnlockBanner}
 			isUnlocking={allowDecryption && !unlockError}
 			unlockError={unlockError}
