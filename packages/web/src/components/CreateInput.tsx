@@ -203,7 +203,7 @@ export default function CreateInput({
 								<button
 									type="button"
 									onClick={() => setEncrypted?.(!encrypted)}
-									className="hover:text-primary text-neutral-600 cursor-pointer"
+									className="create-input-control hover:text-primary text-neutral-600 cursor-pointer"
 								>
 									{encrypted ? (
 										<Lock className="h-3.5 w-3.5" />
@@ -213,7 +213,7 @@ export default function CreateInput({
 								</button>
 								<button
 									type="button"
-									className="hover:text-primary text-neutral-600 mt-1 cursor-pointer"
+									className="create-input-control hover:text-primary text-neutral-600 mt-1 cursor-pointer"
 									onClick={() => {
 										setIsExpanded(!isExpanded);
 										onExpand?.(!isExpanded);

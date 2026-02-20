@@ -385,6 +385,14 @@ body {
   color: rgb(142 142 136);
 }
 
+:root[data-theme="light"] .create-input-control {
+  color: rgb(103 103 98);
+}
+
+:root[data-theme="light"] .create-input-control:hover {
+  color: rgb(var(--color-primary));
+}
+
 :root[data-theme="light"] .modal-overlay {
   background-color: rgb(0 0 0 / 0.62) !important;
 }
