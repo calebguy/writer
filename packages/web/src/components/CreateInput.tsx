@@ -158,7 +158,7 @@ export default function CreateInput({
 				<>
 					<div
 						className={cn(
-							"border border-neutral-900 h-full flex justify-center items-center text-primary text-2xl bg-transparent hover:bg-neutral-900 hover:cursor-text transition-colors create-input-border create-input-idle",
+							"border border-neutral-900 h-full flex justify-center items-center text-primary text-2xl bg-transparent hover:bg-neutral-900 hover:cursor-text create-input-border create-input-idle",
 							{
 								hidden: hasFocus || isExpanded,
 							},
@@ -184,7 +184,7 @@ export default function CreateInput({
 							markdown={markdown}
 							autoFocus
 							className={cn(
-								"bg-neutral-900 text-white! flex-col placeholder:text-green-300 h-full flex w-full p-2 create-input-editor",
+								"bg-neutral-900 text-white! flex-col placeholder:text-green-300 h-full flex w-full p-2 create-input-editor create-input-mdx",
 								{
 									"border-dashed border-primary": hasFocus && !isExpanded,
 								},
@@ -193,7 +193,7 @@ export default function CreateInput({
 							onChange={setMarkdown}
 						/>
 						{showHint && (
-							<div className="text-neutral-700 text-base leading-[16px] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+							<div className="create-input-hint text-neutral-700 text-base leading-[16px] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
 								<div>{isMac ? "⌘" : "ctrl"} + ↵</div>
 								<div>to create</div>
 							</div>

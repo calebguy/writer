@@ -10,7 +10,7 @@ export function IndexButton() {
 	return (
 		<button
 			type="button"
-			className="bg-neutral-900 text-primary px-2 py-1.5 cursor-pointer"
+			className="index-enter-btn bg-neutral-900 px-2 py-1.5 cursor-pointer"
 			onClick={() => login()}
 		>
 			Enter
