@@ -34,7 +34,7 @@ export function LogoDropdown() {
 		<>
 			<Dropdown
 				trigger={
-					<Logo className="h-8 transition-colors text-primary hover:text-secondary" />
+					<Logo className="logo-dropdown-trigger h-8 transition-colors text-primary hover:text-secondary" />
 				}
 			>
 				<DropdownItem onClick={() => router.push("/explore")}>
@@ -49,7 +49,7 @@ export function LogoDropdown() {
 				<DropdownItem onClick={toggleTheme}>
 					<div className="flex items-center justify-between gap-2 w-full">
 						<span>Light Mode</span>
-						<span className="text-xs text-neutral-500">
+						<span className="logo-dropdown-meta text-xs text-neutral-500">
 							{theme === "light" ? "On" : "Off"}
 						</span>
 					</div>

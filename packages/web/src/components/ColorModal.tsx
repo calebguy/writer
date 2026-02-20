@@ -52,6 +52,7 @@ export function ColorModal({ open, onClose }: ModalProps) {
 	return (
 		<Modal
 			open={open}
+			className="color-modal-surface"
 			onClose={() => {
 				setRgbColor({
 					r: primaryColor[0],

@@ -1,4 +1,6 @@
 @import 'tailwindcss';
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+@custom-variant light (&:where([data-theme=light], [data-theme=light] *));
 
 :root {
   --color-primary: 255 255 255;
@@ -9,15 +11,24 @@
   color-scheme: light;
   --color-neutral-950: 10 10 10;
   --color-neutral-900: 250 250 250;
-  --color-neutral-800: 245 245 245;
+  --color-neutral-800: 229 229 229;
   --color-neutral-700: 229 229 229;
   --color-neutral-600: 82 82 82;
   --color-neutral-500: 115 115 115;
   --color-neutral-400: 163 163 163;
-  --color-neutral-300: 212 212 212;
-  --color-neutral-200: 229 229 229;
-  --color-neutral-100: 245 245 245;
-  --color-neutral-50: 250 250 250;
+  --color-neutral-300: 204 204 204;
+  --color-neutral-200: 220 220 220;
+  --color-neutral-100: 229 229 224;
+  --color-neutral-50: 255 255 255;
+  --create-input-surface: 229 229 224;
+  --skeleton-surface: 250 250 246;
+  --dropdown-bg: 238 238 233;
+  --dropdown-hover-bg: 250 250 246;
+  --dropdown-border: 214 214 208;
+  --dropdown-text: 20 20 20;
+  --dropdown-muted: 98 98 94;
+  --dropdown-trigger: 20 20 20;
+  --dropdown-trigger-hover: 82 82 82;
 }
 
 /* biome-ignore lint/suspicious/noUnknownAtRules: Tailwind CSS @theme directive */
@@ -216,7 +227,7 @@ body {
 }
 
 :root[data-theme="light"] .bg-neutral-900\/60 {
-  background-color: rgb(255 255 255 / 0.6);
+  background-color: rgb(220 220 220 / 0.72);
 }
 
 :root[data-theme="light"] .bg-neutral-800 {
@@ -259,7 +270,55 @@ body {
 }
 
 :root[data-theme="light"] .create-input-border {
-  border-color: rgb(var(--color-neutral-200));
+  border-color: rgb(var(--create-input-surface));
+}
+
+/* CreateInput light-mode states: idle, hover, focus */
+:root[data-theme="light"] .create-input-idle {
+  background-color: rgb(var(--color-neutral-50));
+}
+
+:root[data-theme="light"] .create-input-idle:hover {
+  background-color: rgb(var(--create-input-surface));
+}
+
+:root[data-theme="light"] .create-input-editor {
+  background-color: rgb(var(--create-input-surface));
+}
+
+:root[data-theme="light"] .color-modal-surface {
+  background-color: rgb(var(--color-neutral-50));
+}
+
+:root[data-theme="light"] .skeleton-bar {
+  background-color: rgb(var(--skeleton-surface));
+}
+
+:root[data-theme="light"] .header-title-skeleton {
+  background-color: rgb(var(--color-neutral-100));
+}
+
+:root[data-theme="light"] .logo-dropdown-content {
+  background-color: rgb(var(--color-neutral-100));
+  border-color: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+:root[data-theme="light"] .logo-dropdown-item {
+  color: rgb(var(--dropdown-text));
+}
+
+:root[data-theme="light"] .logo-dropdown-item:hover {
+  background-color: rgb(var(--dropdown-hover-bg));
+}
+
+:root[data-theme="light"] .logo-dropdown-meta {
+  color: rgb(var(--dropdown-muted));
+}
+
+:root[data-theme="light"] .modal-overlay {
+  opacity: 0.78 !important;
 }
 
 html,

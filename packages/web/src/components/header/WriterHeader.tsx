@@ -42,7 +42,7 @@ export function WriterHeader({
 			<div className="flex items-center gap-2 text-primary">
 				<BackButton writerAddress={address} />
 				{showSkeleton ? (
-					<div className="h-[39px] w-18 bg-neutral-700 animate-pulse rounded-lg" />
+					<div className="h-[39px] w-18 bg-neutral-700 header-title-skeleton animate-pulse rounded-lg" />
 				) : (
 					<MarkdownRenderer markdown={writer.title} className="text-primary" />
 				)}

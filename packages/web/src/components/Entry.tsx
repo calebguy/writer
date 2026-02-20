@@ -276,21 +276,21 @@ export default function Entry({
 
 	if (!processedEntry) {
 		return (
-			<div className="flex-grow flex flex-col animate-pulse">
+			<div className="flex-grow flex flex-col">
 				<div className="flex-grow flex flex-col p-2 space-y-3">
-					<div className="h-6 bg-neutral-700 rounded w-3/4" />
-					<div className="h-4 bg-neutral-700 rounded w-full" />
-					<div className="h-4 bg-neutral-700 rounded w-full" />
-					<div className="h-4 bg-neutral-700 rounded w-5/6" />
-					<div className="h-4 bg-neutral-700 rounded w-full" />
-					<div className="h-4 bg-neutral-700 rounded w-2/3" />
-					<div className="h-4 bg-neutral-700 rounded w-full" />
-					<div className="h-4 bg-neutral-700 rounded w-4/5" />
+					<div className="h-6 bg-neutral-700 skeleton-bar animate-pulse rounded w-3/4" />
+					<div className="h-4 bg-neutral-700 skeleton-bar animate-pulse rounded w-full" />
+					<div className="h-4 bg-neutral-700 skeleton-bar animate-pulse rounded w-full" />
+					<div className="h-4 bg-neutral-700 skeleton-bar animate-pulse rounded w-5/6" />
+					<div className="h-4 bg-neutral-700 skeleton-bar animate-pulse rounded w-full" />
+					<div className="h-4 bg-neutral-700 skeleton-bar animate-pulse rounded w-2/3" />
+					<div className="h-4 bg-neutral-700 skeleton-bar animate-pulse rounded w-full" />
+					<div className="h-4 bg-neutral-700 skeleton-bar animate-pulse rounded w-4/5" />
 				</div>
 				<div className="flex items-end mt-3">
 					<div className="space-y-1">
-						<div className="h-4 bg-neutral-700 rounded w-32" />
-						<div className="h-4 bg-neutral-700 rounded w-28" />
+						<div className="h-4 bg-neutral-700 skeleton-bar animate-pulse rounded w-32" />
+						<div className="h-4 bg-neutral-700 skeleton-bar animate-pulse rounded w-28" />
 					</div>
 				</div>
 			</div>
