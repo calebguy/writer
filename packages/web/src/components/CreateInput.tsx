@@ -176,7 +176,7 @@ export default function CreateInput({
 						className={cn("h-full relative min-h-0 overflow-hidden", {
 							hidden: !hasFocus && !isExpanded,
 							flex: hasFocus || isExpanded,
-							"border border-dashed border-primary w-full": isExpanded,
+							"border border-dashed border-primary w-full": hasFocus || isExpanded,
 						})}
 					>
 						<MDX
@@ -185,9 +185,6 @@ export default function CreateInput({
 							autoFocus
 							className={cn(
 								"bg-neutral-900 text-white! flex-col placeholder:text-green-300 h-full flex w-full p-2 create-input-editor create-input-mdx",
-								{
-									"border-dashed border-primary": hasFocus && !isExpanded,
-								},
 							)}
 							placeholder={placeholder}
 							onChange={setMarkdown}

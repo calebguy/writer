@@ -385,6 +385,12 @@ body {
   color: rgb(142 142 136);
 }
 
+:root[data-theme="light"] .create-input-mdx .mdxeditor-root-contenteditable,
+:root[data-theme="light"] .create-input-mdx [class*="_contentEditable_"] {
+  border: none !important;
+  outline: none !important;
+}
+
 :root[data-theme="light"] .create-input-control {
   color: rgb(103 103 98);
 }

@@ -171,7 +171,7 @@ const MDX: FC<EditorProps> = ({
 				lexicalTheme={exampleTheme}
 				contentEditableClassName="prose"
 				className={cn(
-					"border p-2 border-neutral-900 aspect-square min-w-24 relative",
+					"p-2 aspect-square min-w-24 relative",
 					className,
 				)}
 			/>
