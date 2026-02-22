@@ -147,6 +147,18 @@ export default function CreateInput({
 							className="create-input-loading-text"
 						/>
 					</div>
+					<div className="create-input-hint text-neutral-700 text-base leading-[16px] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-0">
+						<div>{isMac ? "⌘" : "ctrl"} + ↵</div>
+						<div>to create</div>
+					</div>
+					<div className="absolute bottom-1 flex justify-between w-full z-20 px-2 pb-0.5 opacity-0 pointer-events-none">
+						<span className="create-input-control">
+							<Unlock className="h-3.5 w-3.5 ml-0.5" />
+						</span>
+						<span className="create-input-control mt-1">
+							<Arrow title="expand" className="w-4 h-4 rotate-90" />
+						</span>
+					</div>
 					<div className="text-sm absolute inset-0 flex justify-center items-center text-primary">
 						<Logo
 							className={cn("rotating", {

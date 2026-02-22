@@ -404,6 +404,10 @@ body {
   color: rgb(var(--color-primary)) !important;
 }
 
+.create-input-loading-text .prose p {
+  margin: 0 !important;
+}
+
 :root[data-theme="light"] .modal-overlay {
   background-color: rgb(0 0 0 / 0.62) !important;
 }
