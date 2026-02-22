@@ -80,8 +80,8 @@ export const factoryCreateJsonValidator = zValidator(
 	"json",
 	z.object({
 		title: z.string(),
-		admin: z.string(),
-		managers: z.array(z.string()),
+		admin: ethAddress,
+		managers: z.array(ethAddress),
 		isPrivate: z.boolean().optional(),
 	}),
 );

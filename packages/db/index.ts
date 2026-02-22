@@ -248,19 +248,25 @@ class Db {
 	}
 
 	async upsertEntry(item: InsertEntry) {
+		const normalizedEntry = {
+			...item,
+			author: item.author.toLowerCase(),
+			storageAddress: item.storageAddress.toLowerCase(),
+		} satisfies InsertEntry;
+
 		const data = await this.pg
 			.insert(entry)
 			.values({
-				...item,
+				...normalizedEntry,
 				updatedAt: new Date(),
 				createdAt: new Date(),
 			})
 			.onConflictDoUpdate({
-				target: item.createdAtTransactionId
+				target: normalizedEntry.createdAtTransactionId
 					? [entry.createdAtTransactionId]
 					: [entry.storageAddress, entry.onChainId],
 				set: {
-					...item,
+					...normalizedEntry,
 					updatedAt: new Date(),
 				},
 			})

@@ -45,9 +45,9 @@ const api = app
 		}));
 		return c.json({ writers });
 	})
-	.get("/me/:address", async (c) => {
-		const address = c.req.param("address");
-		const user = await db.getUser(address as Hex);
+	.get("/me/:address", addressParamSchema, async (c) => {
+		const { address } = c.req.valid("param");
+		const user = await db.getUser(address);
 		return c.json({ user });
 	})
 	.get("/writer/public", async (c) => {
