@@ -95,7 +95,7 @@ export default function EntryList({
 									</span>
 								)}
 							</div>
-							<div className="flex items-end text-neutral-600 text-sm leading-3 pt-2 shrink-0 pb-2 justify-end">
+							<div className="writer-card-meta flex items-end text-sm leading-3 pt-2 shrink-0 pb-2 justify-end">
 								<span>—</span>
 							</div>
 						</Wrapper>
@@ -133,7 +133,7 @@ export default function EntryList({
 						</div>
 						<div
 							className={cn(
-								"flex items-end text-neutral-600 text-sm leading-3 pt-2 shrink-0 pb-2",
+								"writer-card-meta flex items-end text-sm leading-3 pt-2 shrink-0 pb-2",
 								{
 									"justify-between": isEntryPrivate(entry),
 									"justify-end": !isEntryPrivate(entry),
@@ -142,7 +142,7 @@ export default function EntryList({
 						>
 							{isEntryPrivate(entry) && (
 								<span>
-									<Lock className="h-3.5 w-3.5 text-neutral-600" />
+									<Lock className="writer-card-meta h-3.5 w-3.5" />
 								</span>
 							)}
 							<span>{createdAt}</span>

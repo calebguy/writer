@@ -140,9 +140,12 @@ export default function CreateInput({
 			ref={containerRef}
 		>
 			{isLoadingOrSubmitting && (
-				<div className="absolute inset-0 bg-secondary flex flex-col items-center justify-between h-full">
+				<div className="absolute inset-0 bg-secondary border border-secondary flex flex-col items-center justify-between h-full">
 					<div className="text-primary w-full text-left break-words p-2 overflow-hidden">
-						<MarkdownRenderer markdown={loadingContent} />
+						<MarkdownRenderer
+							markdown={loadingContent}
+							className="create-input-loading-text"
+						/>
 					</div>
 					<div className="text-sm absolute inset-0 flex justify-center items-center text-primary">
 						<Logo

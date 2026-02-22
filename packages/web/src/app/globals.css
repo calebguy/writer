@@ -399,6 +399,11 @@ body {
   color: rgb(var(--color-primary));
 }
 
+:root[data-theme="light"] .create-input-loading-text .prose,
+:root[data-theme="light"] .create-input-loading-text .prose * {
+  color: rgb(var(--color-primary)) !important;
+}
+
 :root[data-theme="light"] .modal-overlay {
   background-color: rgb(0 0 0 / 0.62) !important;
 }
