@@ -16,10 +16,16 @@ export function useAuthColor() {
 	);
 
 	const [wallet] = useOPWallet();
+	const walletAddress = wallet?.address as Hex | undefined;
 	const { data } = useQuery({
-		queryKey: ["me"],
-		queryFn: () => getMe(wallet?.address as Hex),
-		enabled: isLoggedIn && !!wallet?.address,
+		queryKey: ["me", walletAddress?.toLowerCase()],
+		queryFn: () => {
+			if (!walletAddress) {
+				throw new Error("wallet address is required");
+			}
+			return getMe(walletAddress);
+		},
+		enabled: isLoggedIn && !!walletAddress,
 	});
 
 	useEffect(() => {

@@ -59,8 +59,12 @@ export function useOPWallet() {
 				(wallet) => wallet.address.toLowerCase() === userWalletAddress,
 			)
 		: undefined;
-
-	const wallet = userWallet ?? opEthereumWallet ?? ethereumWallets[0];
+	// Keep wallet identity aligned with Privy user state. If Privy has a wallet
+	// but it isn't available in the connected wallet list yet, avoid falling back
+	// to another connected account.
+	const wallet = userWalletAddress
+		? userWallet
+		: opEthereumWallet ?? ethereumWallets[0];
 
 	return [wallet, ready] as const;
 }

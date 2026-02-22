@@ -2,8 +2,8 @@
 
 import { clearAllCachedKeys } from "@/utils/keyCache";
 import {
-	applyThemeMode,
 	type ThemeMode,
+	applyThemeMode,
 	getStoredThemeMode,
 	setStoredThemeMode,
 	subscribeSystemThemeChange,
@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import { IoMdMoon, IoMdSunny } from "react-icons/io";
 import { RiComputerFill } from "react-icons/ri";
 import { ColorModal } from "./ColorModal";
+import { queryClient } from "./Providers";
 import { Dropdown, DropdownItem } from "./dsl/Dropdown";
 import { Logo } from "./icons/Logo";
 
@@ -63,6 +64,7 @@ export function LogoDropdown() {
 					onClick={() =>
 						logout().then(() => {
 							clearAllCachedKeys();
+							queryClient.clear();
 							window.location.href = "/";
 						})
 					}
