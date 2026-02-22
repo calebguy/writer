@@ -377,6 +377,22 @@ body {
   color: rgb(97 97 92);
 }
 
+:root[data-theme="light"] .private-entry-card {
+  border-color: rgb(var(--color-neutral-300));
+}
+
+:root[data-theme="light"] .private-entry-content {
+  color: rgb(97 97 92);
+}
+
+:root[data-theme="light"] .private-entry-icon {
+  color: rgb(97 97 92);
+}
+
+:root[data-theme="light"] .private-entry-meta {
+  color: rgb(97 97 92);
+}
+
 :root[data-theme="light"] .create-input-hint {
   color: rgb(128 128 122);
 }

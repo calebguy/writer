@@ -58,6 +58,10 @@ export default function EntryList({
 					if (!showLockedEntries) {
 						return <EntryCardSkeleton key={entry.id} />;
 					}
+					const dateFmt = "MMM do, yyyy";
+					const createdAt = entry.createdAtBlockDatetime
+						? format(new Date(entry.createdAtBlockDatetime), dateFmt)
+						: format(new Date(entry.createdAt), dateFmt);
 					const isClickable = Boolean(onUnlock) && !isUnlocking;
 					const Wrapper = isClickable ? "button" : "div";
 					return (
@@ -67,18 +71,17 @@ export default function EntryList({
 							onClick={isClickable ? onUnlock : undefined}
 							disabled={isClickable ? isUnlocking : undefined}
 							className={cn(
-								"group aspect-square bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 overflow-hidden border border-neutral-800/50 transition-colors",
-								isClickable &&
-									"cursor-pointer hover:border-primary/70 hover:text-primary",
+								"group aspect-square bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 overflow-hidden transition-colors private-entry-card",
+								isClickable && "cursor-pointer hover:text-primary",
 							)}
 						>
-							<div className="flex flex-col items-center justify-center grow text-neutral-600 gap-2">
+							<div className="flex flex-col items-center justify-center grow text-neutral-600 gap-2 private-entry-content">
 								{isUnlocking ? (
 									<Unlock className="h-4 w-4 text-primary" />
 								) : (
 									<>
 										<span className="block group-hover:hidden">
-											<Lock className="h-4 w-4 text-neutral-600" />
+											<Lock className="h-4 w-4 text-neutral-600 private-entry-icon" />
 										</span>
 										<span className="hidden group-hover:block">
 											<Unlock className="h-4 w-4 text-primary" />
@@ -95,8 +98,8 @@ export default function EntryList({
 									</span>
 								)}
 							</div>
-							<div className="writer-card-meta flex items-end text-sm leading-3 pt-2 shrink-0 pb-2 justify-end">
-								<span>—</span>
+							<div className="writer-card-meta private-entry-meta text-neutral-600 flex items-end text-sm leading-3 pt-2 shrink-0 pb-2 justify-end">
+								<span>{createdAt}</span>
 							</div>
 						</Wrapper>
 					);
@@ -133,7 +136,7 @@ export default function EntryList({
 						</div>
 						<div
 							className={cn(
-								"writer-card-meta flex items-end text-sm leading-3 pt-2 shrink-0 pb-2",
+								"writer-card-meta text-neutral-600 flex items-end text-sm leading-3 pt-2 shrink-0 pb-2",
 								{
 									"justify-between": isEntryPrivate(entry),
 									"justify-end": !isEntryPrivate(entry),
@@ -142,7 +145,7 @@ export default function EntryList({
 						>
 							{isEntryPrivate(entry) && (
 								<span>
-									<Lock className="writer-card-meta h-3.5 w-3.5" />
+									<Lock className="h-3.5 w-3.5 text-neutral-600" />
 								</span>
 							)}
 							<span>{createdAt}</span>
