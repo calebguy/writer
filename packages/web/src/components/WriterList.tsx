@@ -234,7 +234,7 @@ export function WriterList({ user }: { user?: UserWithWallet }) {
 								>
 									<ClosedEye className="w-4 h-4" />
 								</button>
-								<div className="absolute left-0 top-0 w-full h-full bg-neutral-900/90 hidden group-hover:flex items-center justify-center">
+								<div className="absolute left-0 top-0 w-full h-full bg-neutral-900/90 hidden group-hover:flex items-center justify-center pointer-events-none">
 									<span className="text-primary italic">Hide?</span>
 								</div>
 							</div>
