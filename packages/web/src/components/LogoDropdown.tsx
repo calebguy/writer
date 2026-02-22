@@ -11,6 +11,8 @@ import {
 import { usePrivy } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { IoMdMoon, IoMdSunny } from "react-icons/io";
+import { RiComputerFill } from "react-icons/ri";
 import { ColorModal } from "./ColorModal";
 import { Dropdown, DropdownItem } from "./dsl/Dropdown";
 import { Logo } from "./icons/Logo";
@@ -35,24 +37,11 @@ export function LogoDropdown() {
 		});
 	}, [themeMode]);
 
-	const cycleThemeMode = () => {
-		const next: ThemeMode =
-			themeMode === "system"
-				? "light"
-				: themeMode === "light"
-					? "dark"
-					: "system";
-		setThemeMode(next);
-		applyThemeMode(next);
-		setStoredThemeMode(next);
+	const setTheme = (mode: ThemeMode) => {
+		setThemeMode(mode);
+		applyThemeMode(mode);
+		setStoredThemeMode(mode);
 	};
-
-	const themeModeLabel =
-		themeMode === "system"
-			? "System"
-			: themeMode === "light"
-				? "Light"
-				: "Dark";
 
 	return (
 		<>
@@ -70,14 +59,6 @@ export function LogoDropdown() {
 						<span className="w-2 h-2 bg-primary" />
 					</div>
 				</DropdownItem>
-				<DropdownItem onClick={cycleThemeMode}>
-					<div className="flex items-center justify-between gap-2 w-full">
-						<span>Theme</span>
-						<span className="logo-dropdown-meta text-xs text-neutral-500">
-							{themeModeLabel}
-						</span>
-					</div>
-				</DropdownItem>
 				<DropdownItem
 					onClick={() =>
 						logout().then(() => {
@@ -88,6 +69,38 @@ export function LogoDropdown() {
 				>
 					Leave
 				</DropdownItem>
+				<div className="logo-theme-switcher mt-1 pt-1 border-t border-neutral-800/60">
+					<button
+						type="button"
+						aria-label="Use light theme"
+						title="Light"
+						className="logo-theme-icon cursor-pointer"
+						data-active={themeMode === "light"}
+						onClick={() => setTheme("light")}
+					>
+						<IoMdSunny className="h-3.5 w-3.5" />
+					</button>
+					<button
+						type="button"
+						aria-label="Use dark theme"
+						title="Dark"
+						className="logo-theme-icon cursor-pointer"
+						data-active={themeMode === "dark"}
+						onClick={() => setTheme("dark")}
+					>
+						<IoMdMoon className="h-3.5 w-3.5" />
+					</button>
+					<button
+						type="button"
+						aria-label="Use system theme"
+						title="System"
+						className="logo-theme-icon cursor-pointer"
+						data-active={themeMode === "system"}
+						onClick={() => setTheme("system")}
+					>
+						<RiComputerFill className="h-3.5 w-3.5" />
+					</button>
+				</div>
 			</Dropdown>
 			<ColorModal open={open} onClose={() => setOpen(false)} />
 		</>

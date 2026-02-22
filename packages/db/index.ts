@@ -274,22 +274,25 @@ class Db {
 	}
 
 	upsertUser(item: InsertUser) {
+		const normalizedAddress = item.address.toLowerCase();
 		return this.pg
 			.insert(user)
 			.values({
 				...item,
+				address: normalizedAddress,
 				updatedAt: new Date(),
 			})
 			.onConflictDoUpdate({
 				target: [user.address],
-				set: { ...item, updatedAt: new Date() },
+				set: { ...item, address: normalizedAddress, updatedAt: new Date() },
 			})
 			.returning();
 	}
 
 	async getUser(address: Hex) {
+		const normalizedAddress = address.toLowerCase();
 		const data = await this.pg.query.user.findFirst({
-			where: eq(user.address, address.toLowerCase()),
+			where: eq(user.address, normalizedAddress),
 		});
 		return data;
 	}

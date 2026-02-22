@@ -373,6 +373,52 @@ body {
   color: rgb(var(--dropdown-muted));
 }
 
+.logo-theme-switcher {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem;
+}
+
+.logo-theme-icon {
+  width: 1.6rem;
+  height: 1.6rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgb(var(--color-secondary));
+  border: 1px solid transparent;
+  transition: color 120ms ease, border-color 120ms ease, background-color 120ms ease;
+}
+
+.logo-theme-icon:hover {
+  color: rgb(var(--color-primary));
+}
+
+.logo-theme-icon[data-active="true"] {
+  color: rgb(var(--color-primary));
+  border-color: rgb(var(--color-primary));
+}
+
+:root[data-theme="light"] .logo-theme-switcher {
+  border-color: rgb(var(--dropdown-border));
+}
+
+:root[data-theme="light"] .logo-theme-icon {
+  color: rgb(var(--dropdown-muted));
+}
+
+:root[data-theme="light"] .logo-theme-icon:hover {
+  color: rgb(var(--dropdown-text));
+  background-color: rgb(var(--dropdown-hover-bg));
+}
+
+:root[data-theme="light"] .logo-theme-icon[data-active="true"] {
+  color: rgb(var(--dropdown-text));
+  border-color: rgb(var(--dropdown-border));
+  background-color: rgb(var(--dropdown-hover-bg));
+}
+
 :root[data-theme="light"] .writer-card-meta {
   color: rgb(97 97 92);
 }
