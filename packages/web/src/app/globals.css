@@ -377,6 +377,11 @@ body {
   color: rgb(97 97 92);
 }
 
+:root[data-theme="light"] .home-writer-card:has(.home-hide-group:hover) .home-writer-content .prose,
+:root[data-theme="light"] .home-writer-card:has(.home-hide-group:hover) .home-writer-content .prose * {
+  color: rgb(160 160 154) !important;
+}
+
 :root[data-theme="light"] .private-entry-card {
   border-color: rgb(var(--color-neutral-300));
 }

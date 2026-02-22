@@ -189,7 +189,7 @@ export function WriterList({ user }: { user?: UserWithWallet }) {
 					<Link
 						href={writer.createdAtHash ? `/writer/${writer.address}` : "#"}
 						key={writer.address}
-						className={`aspect-square bg-neutral-900 flex flex-col justify-between px-2 pt-2 pb-1.5 relative ${
+						className={`home-writer-card aspect-square bg-neutral-900 flex flex-col justify-between px-2 pt-2 pb-1.5 relative ${
 							writer.createdAtHash ? "hover:cursor-zoom-in" : "cursor-progress"
 						}`}
 						onClick={
@@ -201,15 +201,18 @@ export function WriterList({ user }: { user?: UserWithWallet }) {
 								: undefined
 						}
 					>
-						<MarkdownRenderer markdown={writer.title} className="text-white writer-title" />
+						<MarkdownRenderer
+							markdown={writer.title}
+							className="text-white writer-title home-writer-content"
+						/>
 						<div className="writer-card-meta text-right text-sm text-neutral-600 leading-3 pt-2">
-							<div className="group inline-block">
+							<div className="group home-hide-group inline-block">
 								<span className="group-hover:hidden block">
 									{writer.entries.length.toString()}
 								</span>
 								<button
 									type="button"
-									className="group-hover:block hidden ml-auto absolute bottom-1.5 right-2 z-10 hover:text-primary cursor-pointer"
+									className="group-hover:block hidden ml-auto absolute bottom-1.5 right-2 z-10 text-primary hover:text-primary cursor-pointer"
 									onClick={async (e) => {
 										e.preventDefault();
 										e.stopPropagation();
