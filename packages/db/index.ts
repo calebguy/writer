@@ -204,17 +204,28 @@ class Db {
 	}
 
 	upsertWriter(item: InsertWriter) {
+		const normalizedManagers = Array.from(
+			new Set(item.managers.map((manager) => manager.toLowerCase())),
+		);
+		const normalizedWriter = {
+			...item,
+			address: item.address.toLowerCase(),
+			storageAddress: item.storageAddress.toLowerCase(),
+			admin: item.admin.toLowerCase(),
+			managers: normalizedManagers,
+		} satisfies InsertWriter;
+
 		if (item.transactionId) {
 			return this.pg
 				.insert(writer)
 				.values({
-					...item,
+					...normalizedWriter,
 					updatedAt: new Date(),
 					createdAt: new Date(),
 				})
 				.onConflictDoUpdate({
 					target: [writer.transactionId],
-					set: { ...item, updatedAt: new Date() },
+					set: { ...normalizedWriter, updatedAt: new Date() },
 				})
 				.returning();
 		}
@@ -222,14 +233,14 @@ class Db {
 		return this.pg
 			.insert(writer)
 			.values({
-				...item,
+				...normalizedWriter,
 				updatedAt: new Date(),
 				createdAt: new Date(),
 			})
 			.onConflictDoUpdate({
 				target: [writer.address],
 				set: {
-					...item,
+					...normalizedWriter,
 					updatedAt: new Date(),
 				},
 			})
