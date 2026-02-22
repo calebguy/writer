@@ -68,7 +68,7 @@ export default async function RootLayout({
 				<script
 					dangerouslySetInnerHTML={{
 						__html:
-							"(function(){try{var t=localStorage.getItem('writer-theme');if(t){document.documentElement.dataset.theme=t;}}catch(e){}})();",
+							"(function(){try{var t=localStorage.getItem('writer-theme');var m=(t==='light'||t==='dark'||t==='system')?t:'system';var d=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.dataset.theme=(m==='system')?(d?'dark':'light'):m;}catch(e){}})();",
 					}}
 				/>
 				<div

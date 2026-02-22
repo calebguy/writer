@@ -12,6 +12,11 @@ import {
 	hexToRGB,
 	setPrimaryAndSecondaryCSSVariables,
 } from "@/utils/utils";
+import {
+	applyThemeMode,
+	getStoredThemeMode,
+	subscribeSystemThemeChange,
+} from "@/utils/theme";
 import { PrivyProvider } from "@privy-io/react-auth";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
@@ -59,9 +64,12 @@ export function Providers({
 
 	useEffect(() => {
 		if (typeof window === "undefined") return;
-		const stored = window.localStorage.getItem("writer-theme");
-		const initial = stored === "light" ? "light" : "dark";
-		document.documentElement.dataset.theme = initial;
+		const mode = getStoredThemeMode();
+		applyThemeMode(mode);
+		if (mode !== "system") return;
+		return subscribeSystemThemeChange((resolvedTheme) => {
+			document.documentElement.dataset.theme = resolvedTheme;
+		});
 	}, []);
 
 	const handleSetPrimaryColor = useCallback(

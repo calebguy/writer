@@ -1,6 +1,13 @@
 "use client";
 
 import { clearAllCachedKeys } from "@/utils/keyCache";
+import {
+	applyThemeMode,
+	type ThemeMode,
+	getStoredThemeMode,
+	setStoredThemeMode,
+	subscribeSystemThemeChange,
+} from "@/utils/theme";
 import { usePrivy } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -12,24 +19,41 @@ export function LogoDropdown() {
 	const { logout } = usePrivy();
 	const router = useRouter();
 	const [open, setOpen] = useState(false);
-	const [theme, setTheme] = useState<"dark" | "light">("dark");
+	const [themeMode, setThemeMode] = useState<ThemeMode>("system");
 
 	useEffect(() => {
 		if (typeof window === "undefined") return;
-		const stored = window.localStorage.getItem("writer-theme");
-		const initial = stored === "light" ? "light" : "dark";
-		setTheme(initial);
-		document.documentElement.dataset.theme = initial;
+		const initialMode = getStoredThemeMode();
+		setThemeMode(initialMode);
+		applyThemeMode(initialMode);
 	}, []);
 
-	const toggleTheme = () => {
-		const next = theme === "dark" ? "light" : "dark";
-		setTheme(next);
-		if (typeof window !== "undefined") {
-			document.documentElement.dataset.theme = next;
-			window.localStorage.setItem("writer-theme", next);
-		}
+	useEffect(() => {
+		if (themeMode !== "system") return;
+		return subscribeSystemThemeChange(() => {
+			applyThemeMode("system");
+		});
+	}, [themeMode]);
+
+	const cycleThemeMode = () => {
+		const next: ThemeMode =
+			themeMode === "system"
+				? "light"
+				: themeMode === "light"
+					? "dark"
+					: "system";
+		setThemeMode(next);
+		applyThemeMode(next);
+		setStoredThemeMode(next);
 	};
+
+	const themeModeLabel =
+		themeMode === "system"
+			? "System"
+			: themeMode === "light"
+				? "Light"
+				: "Dark";
+
 	return (
 		<>
 			<Dropdown
@@ -46,11 +70,11 @@ export function LogoDropdown() {
 						<span className="w-2 h-2 bg-primary" />
 					</div>
 				</DropdownItem>
-				<DropdownItem onClick={toggleTheme}>
+				<DropdownItem onClick={cycleThemeMode}>
 					<div className="flex items-center justify-between gap-2 w-full">
-						<span>Light Mode</span>
+						<span>Theme</span>
 						<span className="logo-dropdown-meta text-xs text-neutral-500">
-							{theme === "light" ? "On" : "Off"}
+							{themeModeLabel}
 						</span>
 					</div>
 				</DropdownItem>
