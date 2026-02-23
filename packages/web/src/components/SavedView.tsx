@@ -20,16 +20,30 @@ import { useEffect, useMemo, useState } from "react";
 import type { Hex } from "viem";
 import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
 
-const SAVED_WRITER_SKELETON_KEYS = [
-	"saved-writer-0",
-	"saved-writer-1",
-	"saved-writer-2",
+const SAVED_SKELETON_KEYS = [
+	"saved-0",
+	"saved-1",
+	"saved-2",
+	"saved-3",
+	"saved-4",
+	"saved-5",
 ];
-const SAVED_ENTRY_SKELETON_KEYS = [
-	"saved-entry-0",
-	"saved-entry-1",
-	"saved-entry-2",
-];
+
+type MixedSavedItem =
+	| {
+			kind: "writer";
+			key: string;
+			savedAt: string | Date;
+			writer: SavedWriter["writer"];
+			entryCount: number;
+	  }
+	| {
+			kind: "entry";
+			key: string;
+			savedAt: string | Date;
+			entry: SavedEntry["entry"];
+			writer: SavedEntry["writer"];
+	  };
 
 export default function SavedView({ userAddress }: { userAddress: Hex }) {
 	const { data, isLoading } = useQuery({
@@ -39,50 +53,44 @@ export default function SavedView({ userAddress }: { userAddress: Hex }) {
 
 	const savedWriters = data?.writers ?? [];
 	const savedEntries = data?.entries ?? [];
-
-	const sortedWriters = useMemo(
-		() =>
-			[...savedWriters].sort(
-				(a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime(),
-			),
-		[savedWriters],
-	);
-	const sortedEntries = useMemo(
-		() =>
-			[...savedEntries].sort(
-				(a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime(),
-			),
-		[savedEntries],
-	);
+	const mixedItems = useMemo<MixedSavedItem[]>(() => {
+		const writerItems = savedWriters.map((item) => ({
+			kind: "writer" as const,
+			key: `writer-${item.writer.address}-${item.savedAt}`,
+			savedAt: item.savedAt,
+			writer: item.writer,
+			entryCount: item.entryCount,
+		}));
+		const entryItems = savedEntries.map((item) => ({
+			kind: "entry" as const,
+			key: `entry-${item.entry.id}-${item.savedAt}`,
+			savedAt: item.savedAt,
+			entry: item.entry,
+			writer: item.writer,
+		}));
+		return [...writerItems, ...entryItems].sort(
+			(a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime(),
+		);
+	}, [savedWriters, savedEntries]);
 
 	if (isLoading) {
 		return (
-			<div className="flex flex-col gap-4">
-				<div
-					className="grid gap-2"
-					style={{
-						gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-					}}
-				>
-					{SAVED_WRITER_SKELETON_KEYS.map((key) => (
+			<div
+				className="grid gap-2"
+				style={{ gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))" }}
+			>
+				{SAVED_SKELETON_KEYS.map((key, i) =>
+					i % 2 === 0 ? (
 						<WriterCardSkeleton key={key} />
-					))}
-				</div>
-				<div
-					className="grid gap-2"
-					style={{
-						gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-					}}
-				>
-					{SAVED_ENTRY_SKELETON_KEYS.map((key) => (
+					) : (
 						<EntryCardSkeleton key={key} />
-					))}
-				</div>
+					),
+				)}
 			</div>
 		);
 	}
 
-	if (sortedWriters.length === 0 && sortedEntries.length === 0) {
+	if (mixedItems.length === 0) {
 		return (
 			<div className="flex items-center justify-center h-full text-neutral-500">
 				Nothing saved yet
@@ -90,54 +98,16 @@ export default function SavedView({ userAddress }: { userAddress: Hex }) {
 		);
 	}
 
-	return (
-		<div className="flex flex-col gap-4">
-			{sortedWriters.length > 0 && (
-				<section className="flex flex-col gap-2">
-					<div className="text-primary text-sm uppercase tracking-wide">
-						Saved Writers
-					</div>
-					<SavedWriterGrid writers={sortedWriters} />
-				</section>
-			)}
-			{sortedEntries.length > 0 && (
-				<section className="flex flex-col gap-2">
-					<div className="text-primary text-sm uppercase tracking-wide">
-						Saved Entries
-					</div>
-					<SavedEntryGrid entries={sortedEntries} />
-				</section>
-			)}
-		</div>
-	);
+	return <MixedSavedGrid entries={savedEntries} items={mixedItems} />;
 }
 
-function SavedWriterGrid({ writers }: { writers: SavedWriter[] }) {
-	return (
-		<div
-			className="grid gap-2"
-			style={{ gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))" }}
-		>
-			{writers.map((item) => (
-				<Link
-					href={`/writer/${item.writer.address}`}
-					key={`${item.writer.address}-${item.savedAt}`}
-					className="aspect-square bg-neutral-900 flex flex-col justify-between px-2 pt-2 pb-1.5 hover:cursor-zoom-in"
-				>
-					<MarkdownRenderer
-						markdown={item.writer.title}
-						className="text-white writer-title"
-					/>
-					<div className="writer-card-meta text-right text-sm text-neutral-600 leading-3 pt-2">
-						Saved {format(new Date(item.savedAt), "MMM do, yyyy")}
-					</div>
-				</Link>
-			))}
-		</div>
-	);
-}
-
-function SavedEntryGrid({ entries }: { entries: SavedEntry[] }) {
+function MixedSavedGrid({
+	entries,
+	items,
+}: {
+	entries: SavedEntry[];
+	items: MixedSavedItem[];
+}) {
 	const [wallet] = useOPWallet();
 	const [allowDecryption, setAllowDecryption] = useState(false);
 	const [unlockError, setUnlockError] = useState<string | null>(null);
@@ -227,7 +197,29 @@ function SavedEntryGrid({ entries }: { entries: SavedEntry[] }) {
 			className="grid gap-2"
 			style={{ gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))" }}
 		>
-			{entries.map((item) => {
+			{items.map((item) => {
+				if (item.kind === "writer") {
+					return (
+						<Link
+							href={`/writer/${item.writer.address}`}
+							key={item.key}
+							className="aspect-square bg-neutral-900 flex flex-col justify-between px-2 pt-2 pb-1.5 hover:cursor-zoom-in"
+						>
+							<MarkdownRenderer
+								markdown={item.writer.title}
+								className="text-white writer-title"
+							/>
+							<div className="writer-card-meta text-neutral-600 flex items-end justify-between text-sm leading-3 pt-2 shrink-0 pb-2">
+								<span>Writer</span>
+								<span className="flex items-end gap-1">
+									<Unlock className="w-3 h-3 mb-[2px]" />
+									{item.entryCount}
+								</span>
+							</div>
+						</Link>
+					);
+				}
+
 				const entry = processedEntries[item.entry.id] ?? item.entry;
 				const isPending = !entry.onChainId;
 				const href = isPending
@@ -237,14 +229,15 @@ function SavedEntryGrid({ entries }: { entries: SavedEntry[] }) {
 				const canUnlock = Boolean(wallet && isWalletAuthor(wallet, entry));
 				const showLockedState = isPrivate && !entry.decompressed;
 				const isUnlocking = allowDecryption && canUnlock;
+
 				if (showLockedState && isUnlocking) {
-					return <EntryCardSkeleton key={`${entry.id}-${item.savedAt}`} />;
+					return <EntryCardSkeleton key={item.key} />;
 				}
 
 				return (
 					<Link
 						href={href}
-						key={`${entry.id}-${item.savedAt}`}
+						key={item.key}
 						className={cn(
 							"group aspect-square bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 overflow-hidden",
 							showLockedState
@@ -269,25 +262,17 @@ function SavedEntryGrid({ entries }: { entries: SavedEntry[] }) {
 					>
 						{showLockedState ? (
 							<div className="flex flex-col items-center justify-center grow text-neutral-600 gap-2">
-								{isUnlocking ? (
-									<Unlock className="h-4 w-4 text-primary" />
-								) : (
-									<>
-										<span className="block group-hover:hidden">
-											<Lock className="h-4 w-4 text-neutral-600" />
-										</span>
-										<span className="hidden group-hover:block">
-											<Unlock className="h-4 w-4 text-primary" />
-										</span>
-									</>
-								)}
+								<>
+									<span className="block group-hover:hidden">
+										<Lock className="h-4 w-4 text-neutral-600" />
+									</span>
+									<span className="hidden group-hover:block">
+										<Unlock className="h-4 w-4 text-primary" />
+									</span>
+								</>
 								<span className="text-sm">Private entry</span>
 								<span className="text-xs">
-									{canUnlock
-										? isUnlocking
-											? "Unlocking..."
-											: "Unlock to view"
-										: "Private"}
+									{canUnlock ? "Unlock to view" : "Private"}
 								</span>
 								{unlockError && canUnlock && (
 									<span className="text-[10px] text-red-500">

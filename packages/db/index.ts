@@ -424,6 +424,28 @@ class Db {
 					})
 				: [];
 		const writerMap = new Map(writers.map((item) => [item.address, item]));
+		const writerStorageAddresses = Array.from(
+			new Set(writers.map((item) => item.storageAddress.toLowerCase())),
+		);
+		const writerEntries =
+			writerStorageAddresses.length > 0
+				? await this.pg.query.entry.findMany({
+						where: and(
+							inArray(entry.storageAddress, writerStorageAddresses),
+							isNull(entry.deletedAt),
+						),
+						columns: {
+							id: true,
+							storageAddress: true,
+						},
+					})
+				: [];
+		const writerEntryCountMap = new Map<string, number>();
+		for (const item of writerEntries) {
+			const storageAddress = item.storageAddress.toLowerCase();
+			const current = writerEntryCountMap.get(storageAddress) ?? 0;
+			writerEntryCountMap.set(storageAddress, current + 1);
+		}
 
 		const savedWriters = savedWriterRows
 			.map((row) => {
@@ -432,9 +454,16 @@ class Db {
 				return {
 					writer: data,
 					savedAt: row.createdAt,
+					entryCount:
+						writerEntryCountMap.get(data.storageAddress.toLowerCase()) ?? 0,
 				};
 			})
-			.filter((row): row is { writer: SelectWriter; savedAt: Date } => !!row);
+			.filter(
+				(
+					row,
+				): row is { writer: SelectWriter; savedAt: Date; entryCount: number } =>
+					!!row,
+			);
 
 		const entryIds = savedEntryRows.map((row) => row.entryId);
 		const entries =
@@ -574,6 +603,7 @@ export function publicWriterToJsonSafe(data: PublicWriterWithCounts) {
 type SavedWriterWithWriter = {
 	writer: SelectWriter;
 	savedAt: SelectSavedWriter["createdAt"];
+	entryCount: number;
 };
 
 type SavedEntryWithWriter = {
@@ -586,6 +616,7 @@ export function savedWriterToJsonSafe(data: SavedWriterWithWriter) {
 	return {
 		writer: writerToJsonSafe(data.writer),
 		savedAt: data.savedAt,
+		entryCount: data.entryCount,
 	};
 }
 
