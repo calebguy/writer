@@ -4,11 +4,8 @@ import {
 	type Writer,
 	deleteWriter,
 	factoryCreate,
-	getSaved,
 	getWriter,
 	getWritersByManager,
-	saveWriter,
-	unsaveWriter,
 } from "@/utils/api";
 import type { UserWithWallet } from "@/utils/auth";
 import { POLLING_INTERVAL } from "@/utils/constants";
@@ -16,7 +13,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { RiBookmarkFill, RiBookmarkLine } from "react-icons/ri";
 import type { Hex } from "viem";
 import CreateInput, { type CreateInputData } from "./CreateInput";
 import { WriterCardSkeleton } from "./WriterCardSkeleton";
@@ -51,20 +47,6 @@ export function WriterList({ user }: { user?: UserWithWallet }) {
 		enabled: !!address,
 		refetchInterval: isPolling ? POLLING_INTERVAL : false,
 	});
-	const { data: savedData } = useQuery({
-		queryKey: ["saved", address?.toLowerCase()],
-		queryFn: () => getSaved(address as Hex),
-		enabled: !!address,
-	});
-	const savedWriterAddresses = useMemo(
-		() =>
-			new Set(
-				(savedData?.writers ?? []).map((item) =>
-					item.writer.address.toLowerCase(),
-				),
-			),
-		[savedData?.writers],
-	);
 
 	// Prefetch writer data on hover for instant navigation
 	const prefetchWriter = useCallback(
@@ -98,28 +80,6 @@ export function WriterList({ user }: { user?: UserWithWallet }) {
 	const { mutateAsync: hideWriter } = useMutation({
 		mutationFn: deleteWriter,
 		mutationKey: ["delete-writer"],
-	});
-	const { mutate: toggleSavedWriter, isPending: isTogglingSave } = useMutation({
-		mutationKey: ["toggle-saved-writer"],
-		mutationFn: async ({
-			writerAddress,
-			isSaved,
-		}: {
-			writerAddress: string;
-			isSaved: boolean;
-		}) => {
-			if (!address) return;
-			if (isSaved) {
-				await unsaveWriter({ userAddress: address, writerAddress });
-				return;
-			}
-			await saveWriter({ userAddress: address, writerAddress });
-		},
-		onSuccess: () => {
-			queryClient.invalidateQueries({
-				queryKey: ["saved", address?.toLowerCase()],
-			});
-		},
 	});
 
 	const handleSubmit = async ({ markdown }: CreateInputData) => {
@@ -245,35 +205,6 @@ export function WriterList({ user }: { user?: UserWithWallet }) {
 								: undefined
 						}
 					>
-						{address && (
-							<button
-								type="button"
-								className="absolute right-2 top-2 text-neutral-500 hover:text-primary z-10 cursor-pointer"
-								aria-label={
-									savedWriterAddresses.has(writer.address.toLowerCase())
-										? "Unsave writer"
-										: "Save writer"
-								}
-								onClick={(e) => {
-									e.preventDefault();
-									e.stopPropagation();
-									if (isTogglingSave) return;
-									const isSaved = savedWriterAddresses.has(
-										writer.address.toLowerCase(),
-									);
-									toggleSavedWriter({
-										writerAddress: writer.address,
-										isSaved,
-									});
-								}}
-							>
-								{savedWriterAddresses.has(writer.address.toLowerCase()) ? (
-									<RiBookmarkFill className="w-4 h-4" />
-								) : (
-									<RiBookmarkLine className="w-4 h-4" />
-								)}
-							</button>
-						)}
 						<MarkdownRenderer
 							markdown={writer.title}
 							className="text-white writer-title home-writer-content"

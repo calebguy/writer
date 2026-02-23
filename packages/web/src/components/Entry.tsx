@@ -2,7 +2,15 @@
 
 import { useEntryLoading } from "@/utils/EntryLoadingContext";
 import type { Entry as EntryType } from "@/utils/api";
-import { deleteEntry, editEntry, getEntry, getPendingEntry } from "@/utils/api";
+import {
+	deleteEntry,
+	editEntry,
+	getEntry,
+	getPendingEntry,
+	getSaved,
+	saveEntry,
+	unsaveEntry,
+} from "@/utils/api";
 import { cn } from "@/utils/cn";
 import {
 	clearPrivateCachedEntry,
@@ -20,7 +28,7 @@ import {
 	shortenAddress,
 	sleep,
 } from "@/utils/utils";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
@@ -59,6 +67,40 @@ export default function Entry({
 	const [editedContent, setEditedContent] = useState("");
 	const initializedRef = useRef(false);
 	const expectedRawContentRef = useRef<string | null>(null);
+	const walletAddress = wallet?.address?.toLowerCase();
+	const { data: savedData } = useQuery({
+		queryKey: ["saved", walletAddress],
+		queryFn: () => getSaved(walletAddress as Hex),
+		enabled: !!walletAddress,
+	});
+	const isSavedEntry = useMemo(
+		() =>
+			Boolean(
+				savedData?.entries?.some((item) => item.entry.id === initialEntry.id),
+			),
+		[savedData?.entries, initialEntry.id],
+	);
+	const { mutate: toggleSaveEntry, isPending: isTogglingSaveEntry } =
+		useMutation({
+			mutationKey: ["toggle-save-entry", walletAddress, initialEntry.id],
+			mutationFn: async () => {
+				if (!walletAddress) return;
+				if (isSavedEntry) {
+					await unsaveEntry({
+						userAddress: walletAddress,
+						entryId: initialEntry.id,
+					});
+					return;
+				}
+				await saveEntry({
+					userAddress: walletAddress,
+					entryId: initialEntry.id,
+				});
+			},
+			onSuccess: () => {
+				queryClient.invalidateQueries({ queryKey: ["saved", walletAddress] });
+			},
+		});
 
 	// Signal to header that entry is ready to display
 	useEffect(() => {
@@ -408,6 +450,18 @@ export default function Entry({
 					<span className="text-neutral-600 bold">
 						on: {format(new Date(processedEntry.createdAt), "MM/dd/yyyy")}
 					</span>
+					{walletAddress && (
+						<div>
+							<button
+								type="button"
+								className="text-neutral-600 hover:text-secondary cursor-pointer"
+								disabled={isTogglingSaveEntry}
+								onClick={() => toggleSaveEntry()}
+							>
+								{isSavedEntry ? "unsave" : "save"}
+							</button>
+						</div>
+					)}
 				</div>
 				{canEdit && (
 					<div className="flex gap-2 justify-between">

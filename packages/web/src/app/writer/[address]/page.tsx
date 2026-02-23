@@ -3,16 +3,26 @@
 import CreateInput from "@/components/CreateInput";
 import { EntryCardSkeleton } from "@/components/EntryCardSkeleton";
 import EntryListWithCreateInput from "@/components/EntryListWithCreateInput";
-import { type Writer, getWriter } from "@/utils/api";
+import {
+	type Writer,
+	getSaved,
+	getWriter,
+	saveWriter,
+	unsaveWriter,
+} from "@/utils/api";
 import { useOPWallet, useProcessedEntries } from "@/utils/hooks";
 import { hasCachedDerivedKey } from "@/utils/keyCache";
 import { isEntryPrivate } from "@/utils/utils";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Hex } from "viem";
 
 const LOADING_SKELETON_AMOUNT = 6;
+const LOADING_SKELETON_KEYS = Array.from(
+	{ length: LOADING_SKELETON_AMOUNT },
+	(_, i) => `writer-entry-skeleton-${i}`,
+);
 
 export default function WriterPage() {
 	const { address } = useParams<{ address: string }>();
@@ -43,7 +53,8 @@ export default function WriterPage() {
 	});
 
 	// Update polling state when pending entries change
-	const hasPendingEntries = writer?.entries?.some((entry) => !entry.onChainId) ?? false;
+	const hasPendingEntries =
+		writer?.entries?.some((entry) => !entry.onChainId) ?? false;
 	useEffect(() => {
 		setShouldPoll(hasPendingEntries);
 	}, [hasPendingEntries]);
@@ -78,8 +89,45 @@ export default function WriterPage() {
 	}, [wallet, hasPrivateEntries]);
 
 	// Show loading state during the gap where entries exist but processedEntries hasn't been populated yet
-	const isEntriesProcessing = writer?.entries?.length && processedEntries.length === 0;
+	const isEntriesProcessing =
+		writer?.entries?.length && processedEntries.length === 0;
 	const walletAddress = wallet?.address?.toLowerCase();
+	const { data: savedData } = useQuery({
+		queryKey: ["saved", walletAddress],
+		queryFn: () => getSaved(walletAddress as Hex),
+		enabled: !!walletAddress,
+	});
+	const isSavedWriter = useMemo(
+		() =>
+			Boolean(
+				savedData?.writers?.some(
+					(item) =>
+						item.writer.address.toLowerCase() === writer?.address.toLowerCase(),
+				),
+			),
+		[savedData?.writers, writer?.address],
+	);
+	const { mutate: toggleSaveWriter, isPending: isTogglingSaveWriter } =
+		useMutation({
+			mutationKey: ["toggle-save-writer", walletAddress, writer?.address],
+			mutationFn: async () => {
+				if (!walletAddress || !writer?.address) return;
+				if (isSavedWriter) {
+					await unsaveWriter({
+						userAddress: walletAddress,
+						writerAddress: writer.address,
+					});
+					return;
+				}
+				await saveWriter({
+					userAddress: walletAddress,
+					writerAddress: writer.address,
+				});
+			},
+			onSuccess: () => {
+				queryClient.invalidateQueries({ queryKey: ["saved", walletAddress] });
+			},
+		});
 	const canCreateEntries = Boolean(
 		walletAddress &&
 			writer?.managers?.some(
@@ -99,27 +147,41 @@ export default function WriterPage() {
 						<div className="absolute inset-0 bg-neutral-900/90 flex flex-col items-center justify-center" />
 					</div>
 				)}
-				{Array.from({ length: LOADING_SKELETON_AMOUNT }).map((_, i) => (
-					<EntryCardSkeleton key={`skeleton-${i}`} />
+				{LOADING_SKELETON_KEYS.map((key) => (
+					<EntryCardSkeleton key={key} />
 				))}
 			</div>
 		);
 	}
 
 	return (
-		<EntryListWithCreateInput
-			writerTitle={writer.title}
-			writerAddress={writer.address}
-			processedEntries={processedEntries}
-			canCreateEntries={canCreateEntries}
-			showUnlockBanner={showUnlockBanner}
-			isUnlocking={allowDecryption && !unlockError}
-			unlockError={unlockError}
-			showLockedEntries={showLockedEntries}
-			onUnlock={() => {
-				setUnlockError(null);
-				setAllowDecryption(true);
-			}}
-		/>
+		<div className="grow flex flex-col">
+			<EntryListWithCreateInput
+				writerTitle={writer.title}
+				writerAddress={writer.address}
+				processedEntries={processedEntries}
+				canCreateEntries={canCreateEntries}
+				showUnlockBanner={showUnlockBanner}
+				isUnlocking={allowDecryption && !unlockError}
+				unlockError={unlockError}
+				showLockedEntries={showLockedEntries}
+				onUnlock={() => {
+					setUnlockError(null);
+					setAllowDecryption(true);
+				}}
+			/>
+			{walletAddress && (
+				<div className="sticky bottom-0 left-0 pt-2">
+					<button
+						type="button"
+						className="text-neutral-600 hover:text-secondary cursor-pointer"
+						disabled={isTogglingSaveWriter}
+						onClick={() => toggleSaveWriter()}
+					>
+						{isSavedWriter ? "unsave" : "save"}
+					</button>
+				</div>
+			)}
+		</div>
 	);
 }
