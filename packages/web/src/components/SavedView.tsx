@@ -178,19 +178,19 @@ function SavedEntryGrid({ entries }: { entries: SavedEntry[] }) {
 							isEntryPrivate(entry) &&
 							!entry.decompressed &&
 							isWalletAuthor(activeWallet, entry),
-						);
+					);
 				if (needs.length === 0) return;
 
 				const needsV2 = needs.some((entry) =>
 					entry.raw?.startsWith("enc:v2:br:"),
 				);
 				const needsV1 = needs.some((entry) => entry.raw?.startsWith("enc:br:"));
-					const keyV2 = needsV2
-						? await getCachedDerivedKey(activeWallet, "v2")
-						: undefined;
-					const keyV1 = needsV1
-						? await getCachedDerivedKey(activeWallet, "v1")
-						: undefined;
+				const keyV2 = needsV2
+					? await getCachedDerivedKey(activeWallet, "v2")
+					: undefined;
+				const keyV1 = needsV1
+					? await getCachedDerivedKey(activeWallet, "v1")
+					: undefined;
 				const updates = await Promise.all(
 					needs.map(
 						async (entry) =>
@@ -237,13 +237,16 @@ function SavedEntryGrid({ entries }: { entries: SavedEntry[] }) {
 				const canUnlock = Boolean(wallet && isWalletAuthor(wallet, entry));
 				const showLockedState = isPrivate && !entry.decompressed;
 				const isUnlocking = allowDecryption && canUnlock;
+				if (showLockedState && isUnlocking) {
+					return <EntryCardSkeleton key={`${entry.id}-${item.savedAt}`} />;
+				}
 
 				return (
 					<Link
 						href={href}
 						key={`${entry.id}-${item.savedAt}`}
 						className={cn(
-							"aspect-square bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 overflow-hidden",
+							"group aspect-square bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 overflow-hidden",
 							showLockedState
 								? canUnlock
 									? "cursor-pointer"
@@ -269,7 +272,14 @@ function SavedEntryGrid({ entries }: { entries: SavedEntry[] }) {
 								{isUnlocking ? (
 									<Unlock className="h-4 w-4 text-primary" />
 								) : (
-									<Lock className="h-4 w-4 text-neutral-600" />
+									<>
+										<span className="block group-hover:hidden">
+											<Lock className="h-4 w-4 text-neutral-600" />
+										</span>
+										<span className="hidden group-hover:block">
+											<Unlock className="h-4 w-4 text-primary" />
+										</span>
+									</>
 								)}
 								<span className="text-sm">Private entry</span>
 								<span className="text-xs">
