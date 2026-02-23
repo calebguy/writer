@@ -289,9 +289,8 @@ function MixedSavedGrid({
 								/>
 							</div>
 						)}
-						<div className="writer-card-meta text-neutral-600 flex items-end justify-between text-sm leading-3 pt-2 shrink-0 pb-2">
+						<div className="writer-card-meta text-neutral-600 flex items-end justify-start text-sm leading-3 pt-2 shrink-0 pb-2">
 							<span>{item.writer.title}</span>
-							<span>{format(new Date(item.savedAt), "MMM do")}</span>
 						</div>
 					</Link>
 				);
