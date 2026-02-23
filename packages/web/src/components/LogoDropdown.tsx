@@ -54,6 +54,7 @@ export function LogoDropdown() {
 				<DropdownItem onClick={() => router.push("/explore")}>
 					Explore
 				</DropdownItem>
+				<DropdownItem onClick={() => router.push("/saved")}>Saved</DropdownItem>
 				<DropdownItem onClick={() => setOpen(true)}>
 					<div className="flex items-center justify-between gap-2 w-full">
 						<span>Color</span>

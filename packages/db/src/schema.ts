@@ -6,6 +6,7 @@ import {
 	jsonb,
 	pgEnum,
 	pgTable,
+	primaryKey,
 	serial,
 	text,
 	timestamp,
@@ -129,3 +130,37 @@ export const user = pgTable("user", {
 	createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
 	updatedAt: timestamp({ withTimezone: true }).notNull(),
 });
+
+export const savedWriter = pgTable(
+	"saved_writer",
+	{
+		userAddress: varchar({ length: 42 }).notNull(),
+		writerAddress: varchar({ length: 42 })
+			.notNull()
+			.references(() => writer.address),
+		createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+	},
+	(table) => ({
+		pk: primaryKey({ columns: [table.userAddress, table.writerAddress] }),
+		userAddressIndex: index("saved_writer_user_address_idx").on(
+			table.userAddress,
+		),
+	}),
+);
+
+export const savedEntry = pgTable(
+	"saved_entry",
+	{
+		userAddress: varchar({ length: 42 }).notNull(),
+		entryId: integer()
+			.notNull()
+			.references(() => entry.id),
+		createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+	},
+	(table) => ({
+		pk: primaryKey({ columns: [table.userAddress, table.entryId] }),
+		userAddressIndex: index("saved_entry_user_address_idx").on(
+			table.userAddress,
+		),
+	}),
+);

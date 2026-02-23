@@ -4,13 +4,16 @@ import { EntryCardSkeleton } from "@/components/EntryCardSkeleton";
 import { Lock } from "@/components/icons/Lock";
 import { Unlock } from "@/components/icons/Unlock";
 import { MarkdownRenderer } from "@/components/markdown/MarkdownRenderer";
-import type { Entry } from "@/utils/api";
+import { type Entry, getSaved, saveEntry, unsaveEntry } from "@/utils/api";
 import { cn } from "@/utils/cn";
+import { useOPWallet } from "@/utils/hooks";
 import { isEntryPrivate } from "@/utils/utils";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useCallback, useMemo } from "react";
+import { RiBookmarkFill, RiBookmarkLine } from "react-icons/ri";
+import type { Hex } from "viem";
 
 interface EntryListProps {
 	processedEntries: Entry[];
@@ -30,6 +33,37 @@ export default function EntryList({
 	onUnlock,
 }: EntryListProps) {
 	const queryClient = useQueryClient();
+	const [wallet] = useOPWallet();
+	const viewerAddress = wallet?.address.toLowerCase();
+	const { data: savedData } = useQuery({
+		queryKey: ["saved", viewerAddress],
+		queryFn: () => getSaved(viewerAddress as Hex),
+		enabled: !!viewerAddress,
+	});
+	const savedEntryIds = useMemo(
+		() => new Set((savedData?.entries ?? []).map((item) => item.entry.id)),
+		[savedData?.entries],
+	);
+	const { mutate: toggleSavedEntry, isPending: isTogglingSave } = useMutation({
+		mutationKey: ["toggle-saved-entry"],
+		mutationFn: async ({
+			entryId,
+			isSaved,
+		}: {
+			entryId: number;
+			isSaved: boolean;
+		}) => {
+			if (!viewerAddress) return;
+			if (isSaved) {
+				await unsaveEntry({ userAddress: viewerAddress, entryId });
+				return;
+			}
+			await saveEntry({ userAddress: viewerAddress, entryId });
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["saved", viewerAddress] });
+		},
+	});
 
 	// Sort entries by date (newest first)
 	const sortedEntries = useMemo(() => {
@@ -71,10 +105,32 @@ export default function EntryList({
 							onClick={isClickable ? onUnlock : undefined}
 							disabled={isClickable ? isUnlocking : undefined}
 							className={cn(
-								"group aspect-square bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 overflow-hidden transition-colors private-entry-card",
+								"group relative aspect-square bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 overflow-hidden transition-colors private-entry-card",
 								isClickable && "cursor-pointer hover:text-primary",
 							)}
 						>
+							{viewerAddress && (
+								<button
+									type="button"
+									className="absolute right-2 top-2 text-neutral-500 hover:text-primary z-10 cursor-pointer"
+									aria-label={
+										savedEntryIds.has(entry.id) ? "Unsave entry" : "Save entry"
+									}
+									onClick={(e) => {
+										e.preventDefault();
+										e.stopPropagation();
+										if (isTogglingSave) return;
+										const isSaved = savedEntryIds.has(entry.id);
+										toggleSavedEntry({ entryId: entry.id, isSaved });
+									}}
+								>
+									{savedEntryIds.has(entry.id) ? (
+										<RiBookmarkFill className="w-4 h-4" />
+									) : (
+										<RiBookmarkLine className="w-4 h-4" />
+									)}
+								</button>
+							)}
 							<div className="flex flex-col items-center justify-center grow text-neutral-600 gap-2 private-entry-content">
 								{isUnlocking ? (
 									<Unlock className="h-4 w-4 text-primary" />
@@ -121,12 +177,34 @@ export default function EntryList({
 						}
 						key={entry.id}
 						className={cn(
-							"aspect-square bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 overflow-hidden",
+							"relative aspect-square bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 overflow-hidden",
 							isPending ? "cursor-loading" : "hover:cursor-zoom-in",
 						)}
 						onClick={isPending ? (e) => e.preventDefault() : undefined}
 						onMouseEnter={() => prefetchEntry(entry)}
 					>
+						{viewerAddress && (
+							<button
+								type="button"
+								className="absolute right-2 top-2 text-neutral-500 hover:text-primary z-10 cursor-pointer"
+								aria-label={
+									savedEntryIds.has(entry.id) ? "Unsave entry" : "Save entry"
+								}
+								onClick={(e) => {
+									e.preventDefault();
+									e.stopPropagation();
+									if (isTogglingSave) return;
+									const isSaved = savedEntryIds.has(entry.id);
+									toggleSavedEntry({ entryId: entry.id, isSaved });
+								}}
+							>
+								{savedEntryIds.has(entry.id) ? (
+									<RiBookmarkFill className="w-4 h-4" />
+								) : (
+									<RiBookmarkLine className="w-4 h-4" />
+								)}
+							</button>
+						)}
 						<div className="overflow-y-scroll grow min-h-0">
 							<MarkdownRenderer
 								markdown={entry.decompressed ?? entry.raw}

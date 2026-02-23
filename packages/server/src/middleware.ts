@@ -56,6 +56,29 @@ export const addressAndIDParamSchema = zValidator(
 	}),
 );
 
+export const userAddressParamSchema = zValidator(
+	"param",
+	z.object({
+		userAddress: ethAddress,
+	}),
+);
+
+export const userAddressAndAddressParamSchema = zValidator(
+	"param",
+	z.object({
+		userAddress: ethAddress,
+		address: ethAddress,
+	}),
+);
+
+export const userAddressAndIDParamSchema = zValidator(
+	"param",
+	z.object({
+		userAddress: ethAddress,
+		id: bigIntSafe,
+	}),
+);
+
 export const createWithChunkJsonValidator = zValidator(
 	"json",
 	z.object({

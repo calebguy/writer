@@ -1,5 +1,6 @@
 "use client";
 
+import { useEntryLoading } from "@/utils/EntryLoadingContext";
 import type { Entry as EntryType } from "@/utils/api";
 import { deleteEntry, editEntry, getEntry, getPendingEntry } from "@/utils/api";
 import { cn } from "@/utils/cn";
@@ -7,7 +8,6 @@ import {
 	clearPrivateCachedEntry,
 	clearPublicCachedEntry,
 } from "@/utils/entryCache";
-import { useEntryLoading } from "@/utils/EntryLoadingContext";
 import { useOPWallet } from "@/utils/hooks";
 import { getCachedDerivedKey } from "@/utils/keyCache";
 import { signRemove, signUpdate } from "@/utils/signer";
@@ -117,7 +117,9 @@ export default function Entry({
 			// when wallet becomes available (fixes direct page load race condition)
 			if (initializedRef.current && processedEntry) {
 				const needsReprocessing =
-					isEntryPrivate(processedEntry) && !processedEntry.decompressed && wallet;
+					isEntryPrivate(processedEntry) &&
+					!processedEntry.decompressed &&
+					wallet;
 				if (!needsReprocessing) return;
 			}
 
@@ -126,7 +128,7 @@ export default function Entry({
 
 			if (isEntryPrivate(initialEntry)) {
 				setEncrypted(true);
-				if (isWalletAuthor(wallet, initialEntry)) {
+				if (wallet && isWalletAuthor(wallet, initialEntry)) {
 					const needsV2 = initialEntry.raw?.startsWith("enc:v2:br:");
 					const needsV1 = initialEntry.raw?.startsWith("enc:br:");
 					const keyV2 = needsV2
@@ -160,7 +162,12 @@ export default function Entry({
 	}, [initialEntry, wallet, processedEntry]);
 
 	const canEdit = useMemo(() => {
-		return initialEntry && isWalletAuthor(wallet, initialEntry) && !isPending;
+		return (
+			initialEntry &&
+			wallet &&
+			isWalletAuthor(wallet, initialEntry) &&
+			!isPending
+		);
 	}, [initialEntry, wallet, isPending]);
 
 	// Poll for on-chain confirmation when pending
@@ -194,7 +201,9 @@ export default function Entry({
 					expectedRawContentRef.current = null;
 					// Update processedEntry with the new content before exiting edit mode
 					setProcessedEntry((prev) =>
-						prev ? { ...prev, decompressed: editedContent, raw: entry.raw } : prev,
+						prev
+							? { ...prev, decompressed: editedContent, raw: entry.raw }
+							: prev,
 					);
 					setEditSubmitted(false);
 					setIsEditing(false);
@@ -222,7 +231,7 @@ export default function Entry({
 
 	const handleSave = async () => {
 		setEditSubmitted(true);
-		if (!editedContent) {
+		if (!editedContent || !wallet) {
 			return;
 		}
 		const compressedContent = await compress(editedContent);
@@ -267,7 +276,7 @@ export default function Entry({
 	const canView = useMemo(() => {
 		if (processedEntry) {
 			if (isEntryPrivate(processedEntry)) {
-				return isWalletAuthor(wallet, processedEntry);
+				return wallet && isWalletAuthor(wallet, processedEntry);
 			}
 			return true;
 		}
@@ -453,6 +462,10 @@ export default function Entry({
 										className="text-red-700 hover:text-red-900 cursor-pointer"
 										onClick={async () => {
 											setDeletedSubmitted(true);
+											if (!wallet) {
+												setDeletedSubmitted(false);
+												return;
+											}
 											const { signature, nonce } = await signRemove(wallet, {
 												id: Number(id),
 												address: address as Hex,

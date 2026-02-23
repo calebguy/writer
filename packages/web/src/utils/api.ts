@@ -136,6 +136,92 @@ export async function getPublicWriters() {
 	return (await res.json()).writers;
 }
 
+export async function getSaved(userAddress: Hex | string) {
+	const res = await client.saved[":userAddress"].$get({
+		param: { userAddress: getAddress(userAddress) },
+	});
+	if (!res.ok) {
+		throw new Error(res.statusText);
+	}
+	return res.json();
+}
+
+export async function saveWriter({
+	userAddress,
+	writerAddress,
+}: {
+	userAddress: Hex | string;
+	writerAddress: Hex | string;
+}) {
+	const res = await client.saved[":userAddress"].writer[":address"].$post({
+		param: {
+			userAddress: getAddress(userAddress),
+			address: getAddress(writerAddress),
+		},
+	});
+	if (!res.ok) {
+		throw new Error(res.statusText);
+	}
+	return res.json();
+}
+
+export async function unsaveWriter({
+	userAddress,
+	writerAddress,
+}: {
+	userAddress: Hex | string;
+	writerAddress: Hex | string;
+}) {
+	const res = await client.saved[":userAddress"].writer[":address"].$delete({
+		param: {
+			userAddress: getAddress(userAddress),
+			address: getAddress(writerAddress),
+		},
+	});
+	if (!res.ok) {
+		throw new Error(res.statusText);
+	}
+	return res.json();
+}
+
+export async function saveEntry({
+	userAddress,
+	entryId,
+}: {
+	userAddress: Hex | string;
+	entryId: number;
+}) {
+	const res = await client.saved[":userAddress"].entry[":id"].$post({
+		param: {
+			userAddress: getAddress(userAddress),
+			id: String(entryId),
+		},
+	});
+	if (!res.ok) {
+		throw new Error(res.statusText);
+	}
+	return res.json();
+}
+
+export async function unsaveEntry({
+	userAddress,
+	entryId,
+}: {
+	userAddress: Hex | string;
+	entryId: number;
+}) {
+	const res = await client.saved[":userAddress"].entry[":id"].$delete({
+		param: {
+			userAddress: getAddress(userAddress),
+			id: String(entryId),
+		},
+	});
+	if (!res.ok) {
+		throw new Error(res.statusText);
+	}
+	return res.json();
+}
+
 export async function factoryCreate(json: {
 	admin: string | Hex;
 	managers: string[] | Hex[];
@@ -184,3 +270,9 @@ export type GetPublicWritersResponse = InferResponseType<
 	(typeof client.writer)["public"]["$get"]
 >;
 export type PublicWriter = GetPublicWritersResponse["writers"][number];
+
+export type GetSavedResponse = InferResponseType<
+	(typeof client.saved)[":userAddress"]["$get"]
+>;
+export type SavedWriter = GetSavedResponse["writers"][number];
+export type SavedEntry = GetSavedResponse["entries"][number];

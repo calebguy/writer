@@ -1,14 +1,32 @@
-import { and, arrayContains, eq, inArray, isNull, notLike, desc } from "drizzle-orm";
+import {
+	and,
+	arrayContains,
+	desc,
+	eq,
+	inArray,
+	isNull,
+	notLike,
+} from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { processRawContent } from "utils";
 import type { Hex } from "viem";
 import {
 	chunkRelations,
 	entryRelations,
+	savedEntryRelations,
+	savedWriterRelations,
 	syndicateTxRelations,
 	writerRelations,
 } from "./src/relations";
-import { chunk, entry, syndicateTx, user, writer } from "./src/schema";
+import {
+	chunk,
+	entry,
+	savedEntry,
+	savedWriter,
+	syndicateTx,
+	user,
+	writer,
+} from "./src/schema";
 
 class Db {
 	private pg;
@@ -23,9 +41,13 @@ class Db {
 				syndicateTx,
 				user,
 				chunk,
+				savedWriter,
+				savedEntry,
 				writerRelations,
 				entryRelations,
 				chunkRelations,
+				savedWriterRelations,
+				savedEntryRelations,
 				syndicateTransactionRelations: syndicateTxRelations,
 			},
 		});
@@ -124,13 +146,22 @@ class Db {
 		return data;
 	}
 
+	async getEntryById(id: number) {
+		const data = await this.pg.query.entry.findFirst({
+			where: eq(entry.id, id),
+			with: {
+				chunks: {
+					orderBy: (chunk, { desc }) => [desc(chunk.index)],
+				},
+			},
+		});
+		return data;
+	}
+
 	async getPublicWriters() {
 		// Get all non-private writers
 		const publicWriters = await this.pg.query.writer.findMany({
-			where: and(
-				eq(writer.isPrivate, false),
-				isNull(writer.deletedAt),
-			),
+			where: and(eq(writer.isPrivate, false), isNull(writer.deletedAt)),
 			orderBy: (writer, { desc }) => [desc(writer.createdAt)],
 		});
 
@@ -138,7 +169,9 @@ class Db {
 			return [];
 		}
 
-		const storageAddresses = publicWriters.map((w) => w.storageAddress.toLowerCase());
+		const storageAddresses = publicWriters.map((w) =>
+			w.storageAddress.toLowerCase(),
+		);
 
 		// Get all entries from public writers
 		const entries = await this.pg.query.entry.findMany({
@@ -154,14 +187,20 @@ class Db {
 		});
 
 		// Group entries by writer and count public/private
-		const writerEntryCounts = new Map<string, { publicCount: number; privateCount: number }>();
+		const writerEntryCounts = new Map<
+			string,
+			{ publicCount: number; privateCount: number }
+		>();
 
 		for (const e of entries) {
 			const storageAddr = e.storageAddress.toLowerCase();
 			const raw = e.chunks.map((c) => c.content).join("");
 			const isPrivate = raw.startsWith("enc:");
 
-			const counts = writerEntryCounts.get(storageAddr) ?? { publicCount: 0, privateCount: 0 };
+			const counts = writerEntryCounts.get(storageAddr) ?? {
+				publicCount: 0,
+				privateCount: 0,
+			};
 			if (isPrivate) {
 				counts.privateCount++;
 			} else {
@@ -173,7 +212,10 @@ class Db {
 		return publicWriters
 			.map((w) => ({
 				...w,
-				...writerEntryCounts.get(w.storageAddress.toLowerCase()) ?? { publicCount: 0, privateCount: 0 },
+				...(writerEntryCounts.get(w.storageAddress.toLowerCase()) ?? {
+					publicCount: 0,
+					privateCount: 0,
+				}),
 			}))
 			.filter((w) => w.publicCount > 0);
 	}
@@ -314,6 +356,146 @@ class Db {
 		return data;
 	}
 
+	saveWriter(userAddress: Hex, writerAddress: Hex) {
+		return this.pg
+			.insert(savedWriter)
+			.values({
+				userAddress: userAddress.toLowerCase(),
+				writerAddress: writerAddress.toLowerCase(),
+				createdAt: new Date(),
+			})
+			.onConflictDoNothing();
+	}
+
+	unsaveWriter(userAddress: Hex, writerAddress: Hex) {
+		return this.pg
+			.delete(savedWriter)
+			.where(
+				and(
+					eq(savedWriter.userAddress, userAddress.toLowerCase()),
+					eq(savedWriter.writerAddress, writerAddress.toLowerCase()),
+				),
+			);
+	}
+
+	saveEntry(userAddress: Hex, entryId: number) {
+		return this.pg
+			.insert(savedEntry)
+			.values({
+				userAddress: userAddress.toLowerCase(),
+				entryId,
+				createdAt: new Date(),
+			})
+			.onConflictDoNothing();
+	}
+
+	unsaveEntry(userAddress: Hex, entryId: number) {
+		return this.pg
+			.delete(savedEntry)
+			.where(
+				and(
+					eq(savedEntry.userAddress, userAddress.toLowerCase()),
+					eq(savedEntry.entryId, entryId),
+				),
+			);
+	}
+
+	async getSaved(userAddress: Hex) {
+		const normalizedAddress = userAddress.toLowerCase();
+		const [savedWriterRows, savedEntryRows] = await Promise.all([
+			this.pg.query.savedWriter.findMany({
+				where: eq(savedWriter.userAddress, normalizedAddress),
+				orderBy: (savedWriter, { desc }) => [desc(savedWriter.createdAt)],
+			}),
+			this.pg.query.savedEntry.findMany({
+				where: eq(savedEntry.userAddress, normalizedAddress),
+				orderBy: (savedEntry, { desc }) => [desc(savedEntry.createdAt)],
+			}),
+		]);
+
+		const writerAddresses = savedWriterRows.map((row) => row.writerAddress);
+		const writers =
+			writerAddresses.length > 0
+				? await this.pg.query.writer.findMany({
+						where: and(
+							inArray(writer.address, writerAddresses),
+							isNull(writer.deletedAt),
+						),
+					})
+				: [];
+		const writerMap = new Map(writers.map((item) => [item.address, item]));
+
+		const savedWriters = savedWriterRows
+			.map((row) => {
+				const data = writerMap.get(row.writerAddress);
+				if (!data) return null;
+				return {
+					writer: data,
+					savedAt: row.createdAt,
+				};
+			})
+			.filter((row): row is { writer: SelectWriter; savedAt: Date } => !!row);
+
+		const entryIds = savedEntryRows.map((row) => row.entryId);
+		const entries =
+			entryIds.length > 0
+				? await this.pg.query.entry.findMany({
+						where: and(inArray(entry.id, entryIds), isNull(entry.deletedAt)),
+						with: {
+							chunks: {
+								orderBy: (chunk, { desc }) => [desc(chunk.index)],
+							},
+						},
+					})
+				: [];
+		const entryMap = new Map(entries.map((item) => [item.id, item]));
+
+		const entryStorageAddresses = Array.from(
+			new Set(entries.map((item) => item.storageAddress.toLowerCase())),
+		);
+		const entryWriters =
+			entryStorageAddresses.length > 0
+				? await this.pg.query.writer.findMany({
+						where: and(
+							inArray(writer.storageAddress, entryStorageAddresses),
+							isNull(writer.deletedAt),
+						),
+					})
+				: [];
+		const entryWriterMap = new Map(
+			entryWriters.map((item) => [item.storageAddress.toLowerCase(), item]),
+		);
+
+		const savedEntries = savedEntryRows
+			.map((row) => {
+				const data = entryMap.get(row.entryId);
+				if (!data) return null;
+				const dataWriter = entryWriterMap.get(
+					data.storageAddress.toLowerCase(),
+				);
+				if (!dataWriter) return null;
+				return {
+					entry: data,
+					writer: dataWriter,
+					savedAt: row.createdAt,
+				};
+			})
+			.filter(
+				(
+					row,
+				): row is {
+					entry: EntryWithChunks;
+					writer: SelectWriter;
+					savedAt: Date;
+				} => !!row,
+			);
+
+		return {
+			writers: savedWriters,
+			entries: savedEntries,
+		};
+	}
+
 	upsertChunk(item: InsertChunk) {
 		return this.pg
 			.insert(chunk)
@@ -359,6 +541,8 @@ export function entryToJsonSafe({ chunks, ...data }: EntryWithChunks) {
 type SelectWriter = typeof writer.$inferSelect;
 type SelectEntry = typeof entry.$inferSelect;
 type SelectChunk = typeof chunk.$inferSelect;
+type SelectSavedWriter = typeof savedWriter.$inferSelect;
+type SelectSavedEntry = typeof savedEntry.$inferSelect;
 type InsertWriter = Omit<typeof writer.$inferInsert, "createdAt" | "updatedAt">;
 type InsertSyndicateTransaction = Omit<
 	typeof syndicateTx.$inferInsert,
@@ -384,6 +568,32 @@ export function publicWriterToJsonSafe(data: PublicWriterWithCounts) {
 		privateCount: data.privateCount,
 		createdAt: data.createdAt,
 		createdAtBlock: data.createdAtBlock?.toString(),
+	};
+}
+
+type SavedWriterWithWriter = {
+	writer: SelectWriter;
+	savedAt: SelectSavedWriter["createdAt"];
+};
+
+type SavedEntryWithWriter = {
+	entry: EntryWithChunks;
+	writer: SelectWriter;
+	savedAt: SelectSavedEntry["createdAt"];
+};
+
+export function savedWriterToJsonSafe(data: SavedWriterWithWriter) {
+	return {
+		writer: writerToJsonSafe(data.writer),
+		savedAt: data.savedAt,
+	};
+}
+
+export function savedEntryToJsonSafe(data: SavedEntryWithWriter) {
+	return {
+		entry: entryToJsonSafe(data.entry),
+		writer: writerToJsonSafe(data.writer),
+		savedAt: data.savedAt,
 	};
 }
 

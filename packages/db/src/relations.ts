@@ -1,5 +1,12 @@
 import { relations } from "drizzle-orm/relations";
-import { chunk, entry, syndicateTx, writer } from "./schema";
+import {
+	chunk,
+	entry,
+	savedEntry,
+	savedWriter,
+	syndicateTx,
+	writer,
+} from "./schema";
 
 export const writerRelations = relations(writer, ({ one }) => ({
 	syndicateTransaction: one(syndicateTx, {
@@ -36,6 +43,20 @@ export const chunkRelations = relations(chunk, ({ one }) => ({
 	}),
 	entry: one(entry, {
 		fields: [chunk.entryId],
+		references: [entry.id],
+	}),
+}));
+
+export const savedWriterRelations = relations(savedWriter, ({ one }) => ({
+	writer: one(writer, {
+		fields: [savedWriter.writerAddress],
+		references: [writer.address],
+	}),
+}));
+
+export const savedEntryRelations = relations(savedEntry, ({ one }) => ({
+	entry: one(entry, {
+		fields: [savedEntry.entryId],
 		references: [entry.id],
 	}),
 }));

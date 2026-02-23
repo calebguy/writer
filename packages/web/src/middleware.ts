@@ -25,12 +25,12 @@ export function middleware(request: NextRequest) {
 		return NextResponse.redirect(refreshUrl);
 	}
 
-	// Unauthenticated users visiting /home → check if they need refresh or login
-	if (pathname === "/home" && !hasAuthToken) {
+	// Unauthenticated users visiting protected pages → check if they need refresh or login
+	if ((pathname === "/home" || pathname === "/saved") && !hasAuthToken) {
 		if (hasRefreshToken) {
 			// May be authenticated, needs token refresh
 			const refreshUrl = new URL("/refresh", request.url);
-			refreshUrl.searchParams.set("redirect_url", "/home");
+			refreshUrl.searchParams.set("redirect_url", pathname);
 			return NextResponse.redirect(refreshUrl);
 		}
 		// No session at all, redirect to login
@@ -41,5 +41,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-	matcher: ["/", "/home", "/refresh"],
+	matcher: ["/", "/home", "/saved", "/refresh"],
 };

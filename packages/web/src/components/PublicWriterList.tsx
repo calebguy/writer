@@ -1,10 +1,17 @@
 "use client";
 
-import { type PublicWriter, getWriter } from "@/utils/api";
+import {
+	type PublicWriter,
+	getSaved,
+	getWriter,
+	saveWriter,
+	unsaveWriter,
+} from "@/utils/api";
 import { useOPWallet } from "@/utils/hooks";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
+import { RiBookmarkFill, RiBookmarkLine } from "react-icons/ri";
 import type { Hex } from "viem";
 import { Lock } from "./icons/Lock";
 import { Unlock } from "./icons/Unlock";
@@ -18,6 +25,40 @@ export default function PublicWriterList({ writers }: PublicWriterListProps) {
 	const queryClient = useQueryClient();
 	const [wallet] = useOPWallet();
 	const viewerAddress = wallet?.address.toLowerCase();
+	const { data: savedData } = useQuery({
+		queryKey: ["saved", viewerAddress],
+		queryFn: () => getSaved(viewerAddress as Hex),
+		enabled: !!viewerAddress,
+	});
+	const savedWriterAddresses = useMemo(
+		() =>
+			new Set(
+				(savedData?.writers ?? []).map((item) =>
+					item.writer.address.toLowerCase(),
+				),
+			),
+		[savedData?.writers],
+	);
+	const { mutate: toggleSavedWriter, isPending: isTogglingSave } = useMutation({
+		mutationKey: ["toggle-saved-writer"],
+		mutationFn: async ({
+			writerAddress,
+			isSaved,
+		}: {
+			writerAddress: string;
+			isSaved: boolean;
+		}) => {
+			if (!viewerAddress) return;
+			if (isSaved) {
+				await unsaveWriter({ userAddress: viewerAddress, writerAddress });
+				return;
+			}
+			await saveWriter({ userAddress: viewerAddress, writerAddress });
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["saved", viewerAddress] });
+		},
+	});
 
 	// Prefetch writer data on hover for instant navigation
 	const prefetchWriter = useCallback(
@@ -42,9 +83,38 @@ export default function PublicWriterList({ writers }: PublicWriterListProps) {
 				<Link
 					href={`/writer/${writer.address}`}
 					key={writer.address}
-					className="aspect-square bg-neutral-900 flex flex-col justify-between px-2 pt-2 pb-1.5 hover:cursor-zoom-in"
+					className="relative aspect-square bg-neutral-900 flex flex-col justify-between px-2 pt-2 pb-1.5 hover:cursor-zoom-in"
 					onMouseEnter={() => prefetchWriter(writer.address)}
 				>
+					{viewerAddress && (
+						<button
+							type="button"
+							className="absolute right-2 top-2 text-neutral-500 hover:text-primary z-10 cursor-pointer"
+							aria-label={
+								savedWriterAddresses.has(writer.address.toLowerCase())
+									? "Unsave writer"
+									: "Save writer"
+							}
+							onClick={(e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								if (isTogglingSave) return;
+								const isSaved = savedWriterAddresses.has(
+									writer.address.toLowerCase(),
+								);
+								toggleSavedWriter({
+									writerAddress: writer.address,
+									isSaved,
+								});
+							}}
+						>
+							{savedWriterAddresses.has(writer.address.toLowerCase()) ? (
+								<RiBookmarkFill className="w-4 h-4" />
+							) : (
+								<RiBookmarkLine className="w-4 h-4" />
+							)}
+						</button>
+					)}
 					<MarkdownRenderer
 						markdown={writer.title}
 						className="text-white writer-title"
