@@ -448,6 +448,28 @@ body {
   color: rgb(64 64 60);
 }
 
+.pending-entry-spinner {
+  position: relative;
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.pending-entry-spinner-track {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  border: 1px solid currentColor;
+  opacity: 0.24;
+}
+
+.pending-entry-spinner-icon {
+  position: relative;
+}
+
+:root[data-theme="light"] .pending-entry-spinner-track {
+  opacity: 0.34;
+}
+
 :root[data-theme="light"] .create-input-hint {
   color: rgb(128 128 122);
 }

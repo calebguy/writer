@@ -18,6 +18,7 @@ import CreateInput, { type CreateInputData } from "./CreateInput";
 import { WriterCardSkeleton } from "./WriterCardSkeleton";
 import { ClosedEye } from "./icons/ClosedEye";
 import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 
 const SKELETON_COUNT = 6;
@@ -190,19 +191,18 @@ export function WriterList({ user }: { user?: UserWithWallet }) {
 				SKELETON_KEYS.map((key) => <WriterCardSkeleton key={key} />)}
 			{!isLoading &&
 				displayedWriters.map((writer) => (
+					(() => {
+						const isPendingWriter = !writer.createdAtHash;
+						return (
 					<Link
-						href={writer.createdAtHash ? `/writer/${writer.address}` : "#"}
+						href={isPendingWriter ? "#" : `/writer/${writer.address}`}
 						key={writer.address}
 						className={`home-writer-card aspect-square bg-neutral-900 flex flex-col justify-between px-2 pt-2 pb-1.5 relative ${
-							writer.createdAtHash ? "hover:cursor-zoom-in" : "cursor-progress"
+							isPendingWriter ? "cursor-loading" : "hover:cursor-zoom-in"
 						}`}
-						onClick={
-							writer.createdAtHash ? undefined : (e) => e.preventDefault()
-						}
+						onClick={isPendingWriter ? (e) => e.preventDefault() : undefined}
 						onMouseEnter={
-							writer.createdAtHash
-								? () => prefetchWriter(writer.address)
-								: undefined
+							isPendingWriter ? undefined : () => prefetchWriter(writer.address)
 						}
 					>
 						<MarkdownRenderer
@@ -210,40 +210,57 @@ export function WriterList({ user }: { user?: UserWithWallet }) {
 							className="text-white writer-title home-writer-content"
 						/>
 						<div className="writer-card-meta text-right text-sm text-neutral-600 leading-3 pt-2">
-							<div className="group home-hide-group inline-block">
-								<span className="group-hover:hidden block">
-									{writer.entries.length.toString()}
-								</span>
-								<button
-									type="button"
-									className="group-hover:block hidden ml-auto absolute bottom-1.5 right-2 z-10 text-primary hover:text-primary cursor-pointer"
-									onClick={async (e) => {
-										e.preventDefault();
-										e.stopPropagation();
-										await hideWriter(writer.address as Hex);
-										const writerAddress = writer.address.toLowerCase();
-										setPendingWriterAddresses((prev) =>
-											prev.filter((address) => address !== writerAddress),
-										);
-										setOptimisticWriters((prev) => {
-											if (!(writerAddress in prev)) {
-												return prev;
-											}
-											const next = { ...prev };
-											delete next[writerAddress];
-											return next;
-										});
-										refetch();
-									}}
-								>
-									<ClosedEye className="w-4 h-4" />
-								</button>
-								<div className="absolute left-0 top-0 w-full h-full bg-neutral-900/90 hidden group-hover:flex items-center justify-center pointer-events-none">
-									<span className="text-primary italic">Hide?</span>
-								</div>
+							<div
+								className={
+									isPendingWriter
+										? "inline-block"
+										: "group home-hide-group inline-block"
+								}
+							>
+								{isPendingWriter ? (
+									<span className="pending-entry-spinner inline-flex ml-auto">
+										<span className="pending-entry-spinner-track" />
+										<AiOutlineLoading3Quarters className="pending-entry-spinner-icon w-3 h-3 rotating" />
+									</span>
+								) : (
+									<>
+										<span className="group-hover:hidden block">
+											{writer.entries.length.toString()}
+										</span>
+										<button
+											type="button"
+											className="group-hover:block hidden ml-auto absolute bottom-1.5 right-2 z-10 text-primary hover:text-primary cursor-pointer"
+											onClick={async (e) => {
+												e.preventDefault();
+												e.stopPropagation();
+												await hideWriter(writer.address as Hex);
+												const writerAddress = writer.address.toLowerCase();
+												setPendingWriterAddresses((prev) =>
+													prev.filter((address) => address !== writerAddress),
+												);
+												setOptimisticWriters((prev) => {
+													if (!(writerAddress in prev)) {
+														return prev;
+													}
+													const next = { ...prev };
+													delete next[writerAddress];
+													return next;
+												});
+												refetch();
+											}}
+										>
+											<ClosedEye className="w-4 h-4" />
+										</button>
+										<div className="absolute left-0 top-0 w-full h-full bg-neutral-900/90 hidden group-hover:flex items-center justify-center pointer-events-none">
+											<span className="text-primary italic">Hide?</span>
+										</div>
+									</>
+								)}
 							</div>
 						</div>
 					</Link>
+						);
+					})()
 				))}
 		</div>
 	);

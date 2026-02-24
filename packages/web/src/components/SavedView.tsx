@@ -200,11 +200,16 @@ function MixedSavedGrid({
 		>
 			{items.map((item) => {
 				if (item.kind === "writer") {
+					const isPendingWriter = !item.writer.createdAtHash;
 					return (
 						<Link
-							href={`/writer/${item.writer.address}`}
+							href={isPendingWriter ? "#" : `/writer/${item.writer.address}`}
 							key={item.key}
-							className="aspect-square bg-neutral-900 flex flex-col justify-between px-2 pt-2 pb-1.5 hover:cursor-zoom-in"
+							className={cn(
+								"aspect-square bg-neutral-900 flex flex-col justify-between px-2 pt-2 pb-1.5",
+								isPendingWriter ? "cursor-loading" : "hover:cursor-zoom-in",
+							)}
+							onClick={isPendingWriter ? (e) => e.preventDefault() : undefined}
 						>
 							<MarkdownRenderer
 								markdown={item.writer.title}
@@ -212,10 +217,17 @@ function MixedSavedGrid({
 							/>
 							<div className="writer-card-meta text-neutral-600 flex items-end justify-between text-sm leading-3 pt-2 shrink-0 pb-2">
 								<span>Writer</span>
-								<span className="flex items-end gap-1">
-									<Unlock className="w-3 h-3 mb-[2px]" />
-									{item.entryCount}
-								</span>
+								{isPendingWriter ? (
+									<span className="pending-entry-spinner">
+										<span className="pending-entry-spinner-track" />
+										<AiOutlineLoading3Quarters className="pending-entry-spinner-icon w-3 h-3 rotating" />
+									</span>
+								) : (
+									<span className="flex items-end gap-1">
+										<Unlock className="w-3 h-3 mb-[2px]" />
+										{item.entryCount}
+									</span>
+								)}
 							</div>
 						</Link>
 					);
@@ -263,11 +275,6 @@ function MixedSavedGrid({
 							}
 						}}
 					>
-						{isPending && (
-							<div className="pending-entry-spinner absolute bottom-2 left-2 text-neutral-600 z-10">
-								<AiOutlineLoading3Quarters className="w-3.5 h-3.5 rotating" />
-							</div>
-						)}
 						{showLockedState ? (
 							<div className="flex flex-col items-center justify-center grow text-neutral-600 gap-2">
 								<>
@@ -299,11 +306,17 @@ function MixedSavedGrid({
 						)}
 						<div
 							className={cn(
-								"writer-card-meta text-neutral-600 flex items-end justify-start text-sm leading-3 pt-2 shrink-0 pb-2",
-								isPending && "pl-5",
+								"writer-card-meta text-neutral-600 flex items-end text-sm leading-3 pt-2 shrink-0 pb-2",
+								isPending ? "justify-between" : "justify-start",
 							)}
 						>
 							<span>{item.writer.title}</span>
+							{isPending && (
+								<span className="pending-entry-spinner">
+									<span className="pending-entry-spinner-track" />
+									<AiOutlineLoading3Quarters className="pending-entry-spinner-icon w-3 h-3 rotating" />
+								</span>
+							)}
 						</div>
 					</Link>
 				);
