@@ -444,6 +444,10 @@ body {
   color: rgb(97 97 92);
 }
 
+:root[data-theme="light"] .pending-entry-spinner {
+  color: rgb(64 64 60);
+}
+
 :root[data-theme="light"] .create-input-hint {
   color: rgb(128 128 122);
 }

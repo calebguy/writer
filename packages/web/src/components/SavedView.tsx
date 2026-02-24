@@ -17,6 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import type { Hex } from "viem";
 import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
 
@@ -239,12 +240,14 @@ function MixedSavedGrid({
 						href={href}
 						key={item.key}
 						className={cn(
-							"group aspect-square bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 overflow-hidden",
+							"group relative aspect-square bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 overflow-hidden",
 							showLockedState
 								? canUnlock
 									? "cursor-pointer"
 									: "cursor-default"
-								: "hover:cursor-zoom-in",
+								: isPending
+									? "cursor-loading"
+									: "hover:cursor-zoom-in",
 						)}
 						onClick={(e) => {
 							if (showLockedState) {
@@ -260,6 +263,11 @@ function MixedSavedGrid({
 							}
 						}}
 					>
+						{isPending && (
+							<div className="pending-entry-spinner absolute bottom-2 left-2 text-neutral-600 z-10">
+								<AiOutlineLoading3Quarters className="w-3.5 h-3.5 rotating" />
+							</div>
+						)}
 						{showLockedState ? (
 							<div className="flex flex-col items-center justify-center grow text-neutral-600 gap-2">
 								<>
@@ -289,7 +297,12 @@ function MixedSavedGrid({
 								/>
 							</div>
 						)}
-						<div className="writer-card-meta text-neutral-600 flex items-end justify-start text-sm leading-3 pt-2 shrink-0 pb-2">
+						<div
+							className={cn(
+								"writer-card-meta text-neutral-600 flex items-end justify-start text-sm leading-3 pt-2 shrink-0 pb-2",
+								isPending && "pl-5",
+							)}
+						>
 							<span>{item.writer.title}</span>
 						</div>
 					</Link>

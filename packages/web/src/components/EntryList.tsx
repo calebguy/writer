@@ -11,6 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useCallback, useMemo } from "react";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
 interface EntryListProps {
 	processedEntries: Entry[];
@@ -127,6 +128,11 @@ export default function EntryList({
 						onClick={isPending ? (e) => e.preventDefault() : undefined}
 						onMouseEnter={() => prefetchEntry(entry)}
 					>
+						{isPending && (
+							<div className="pending-entry-spinner absolute bottom-2 left-2 text-neutral-600 z-10">
+								<AiOutlineLoading3Quarters className="w-3.5 h-3.5 rotating" />
+							</div>
+						)}
 						<div className="overflow-y-scroll grow min-h-0">
 							<MarkdownRenderer
 								markdown={entry.decompressed ?? entry.raw}
@@ -137,6 +143,7 @@ export default function EntryList({
 						<div
 							className={cn(
 								"writer-card-meta text-neutral-600 flex items-end text-sm leading-3 pt-2 shrink-0 pb-2",
+								isPending && "pl-5",
 								{
 									"justify-between": isEntryPrivate(entry),
 									"justify-end": !isEntryPrivate(entry),
