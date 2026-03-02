@@ -128,7 +128,7 @@ export default function EntryList({
 						onClick={isPending ? (e) => e.preventDefault() : undefined}
 						onMouseEnter={() => prefetchEntry(entry)}
 					>
-						<div className="overflow-y-scroll grow min-h-0">
+						<div className="overflow-y-auto grow min-h-0">
 							<MarkdownRenderer
 								markdown={entry.decompressed ?? entry.raw}
 								className="text-white"
