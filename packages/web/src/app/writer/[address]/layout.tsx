@@ -4,6 +4,16 @@ import type { Metadata } from "next";
 import { use } from "react";
 
 type WriterRouteParams = Promise<{ address: string }>;
+const OG_IMAGE_URL =
+	"https://res.cloudinary.com/dm9gwanrg/image/upload/v1741159374/Artboard_1_1_3p_ztojhs.png";
+
+function sanitizeWriterTitle(input: string): string {
+	return input
+		// Remove common markdown punctuation.
+		.replace(/[#*_`~>\[\]\(\)!|\\]/g, " ")
+		.replace(/\s+/g, " ")
+		.trim();
+}
 
 async function getWriterTitle(address: string): Promise<string | null> {
 	const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
@@ -23,7 +33,7 @@ async function getWriterTitle(address: string): Promise<string | null> {
 		}
 		const data = (await response.json()) as {
 			writer?: { title?: string };
-		};
+	};
 		return data.writer?.title ?? null;
 	} catch {
 		return null;
@@ -36,7 +46,8 @@ export async function generateMetadata({
 	params: WriterRouteParams;
 }): Promise<Metadata> {
 	const { address } = await params;
-	const writerTitle = await getWriterTitle(address);
+	const rawWriterTitle = await getWriterTitle(address);
+	const writerTitle = rawWriterTitle ? sanitizeWriterTitle(rawWriterTitle) : null;
 	if (!writerTitle) {
 		return {};
 	}
@@ -49,10 +60,13 @@ export async function generateMetadata({
 		openGraph: {
 			title,
 			description,
+			images: [{ url: OG_IMAGE_URL }],
 		},
 		twitter: {
+			card: "summary_large_image",
 			title,
 			description,
+			images: [OG_IMAGE_URL],
 		},
 	};
 }
