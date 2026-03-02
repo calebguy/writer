@@ -1,13 +1,68 @@
 import { WriterHeader } from "@/components/header/WriterHeader";
 import { EntryLoadingProvider } from "@/utils/EntryLoadingContext";
+import type { Metadata } from "next";
 import { use } from "react";
+
+type WriterRouteParams = Promise<{ address: string }>;
+
+async function getWriterTitle(address: string): Promise<string | null> {
+	const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+	if (!baseUrl) {
+		return null;
+	}
+
+	try {
+		const response = await fetch(
+			`${baseUrl}/writer/${encodeURIComponent(address)}`,
+			{
+				next: { revalidate: 60 },
+			},
+		);
+		if (!response.ok) {
+			return null;
+		}
+		const data = (await response.json()) as {
+			writer?: { title?: string };
+		};
+		return data.writer?.title ?? null;
+	} catch {
+		return null;
+	}
+}
+
+export async function generateMetadata({
+	params,
+}: {
+	params: WriterRouteParams;
+}): Promise<Metadata> {
+	const { address } = await params;
+	const writerTitle = await getWriterTitle(address);
+	if (!writerTitle) {
+		return {};
+	}
+
+	const title = `${writerTitle} | Writer`;
+	const description = `Read ${writerTitle} on Writer`;
+	return {
+		title,
+		description,
+		openGraph: {
+			title,
+			description,
+		},
+		twitter: {
+			title,
+			description,
+		},
+	};
+}
 
 export default function Layout({
 	children,
 	params,
 }: Readonly<{
 	children: React.ReactNode;
-	params: Promise<{ address: string }>;
+	params: WriterRouteParams;
 }>) {
 	const { address } = use(params);
 	return (
