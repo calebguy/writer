@@ -5,7 +5,9 @@ import {
 	eq,
 	inArray,
 	isNull,
+	lt,
 	notLike,
+	or,
 } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { processRawContent } from "utils";
@@ -146,6 +148,45 @@ class Db {
 		return data;
 	}
 
+	async getEntryByStorageAndCreationHash(storageAddress: Hex, hash: string) {
+		const normalizedStorageAddress = storageAddress.toLowerCase();
+
+		const direct = await this.pg.query.entry.findFirst({
+			where: and(
+				eq(entry.storageAddress, normalizedStorageAddress),
+				eq(entry.createdAtHash, hash),
+			),
+			with: {
+				chunks: {
+					orderBy: (chunk, { desc }) => [desc(chunk.index)],
+				},
+			},
+		});
+		if (direct) {
+			return direct;
+		}
+
+		const joined = await this.pg
+			.select({
+				id: entry.id,
+			})
+			.from(entry)
+			.innerJoin(syndicateTx, eq(entry.createdAtTransactionId, syndicateTx.id))
+			.where(
+				and(
+					eq(entry.storageAddress, normalizedStorageAddress),
+					eq(syndicateTx.hash, hash),
+				),
+			)
+			.limit(1);
+
+		if (!joined[0]?.id) {
+			return null;
+		}
+
+		return this.getEntry(normalizedStorageAddress as Hex, joined[0].id);
+	}
+
 	async getEntryById(id: number) {
 		const data = await this.pg.query.entry.findFirst({
 			where: eq(entry.id, id),
@@ -156,6 +197,48 @@ class Db {
 			},
 		});
 		return data;
+	}
+
+	async getPendingEntries(options?: {
+		limit?: number;
+		olderThan?: Date;
+	}) {
+		const limit = options?.limit ?? 100;
+		const olderThan = options?.olderThan;
+		const whereBase = and(
+			isNull(entry.deletedAt),
+			or(isNull(entry.onChainId), isNull(entry.createdAtHash)),
+		);
+		const where = olderThan
+			? and(whereBase, lt(entry.createdAt, olderThan))
+			: whereBase;
+
+		return this.pg.query.entry.findMany({
+			where,
+			orderBy: (entry, { desc }) => [desc(entry.createdAt)],
+			limit,
+		});
+	}
+
+	async getPendingWriters(options?: {
+		limit?: number;
+		olderThan?: Date;
+	}) {
+		const limit = options?.limit ?? 100;
+		const olderThan = options?.olderThan;
+		const whereBase = and(
+			isNull(writer.deletedAt),
+			isNull(writer.createdAtHash),
+		);
+		const where = olderThan
+			? and(whereBase, lt(writer.createdAt, olderThan))
+			: whereBase;
+
+		return this.pg.query.writer.findMany({
+			where,
+			orderBy: (writer, { desc }) => [desc(writer.createdAt)],
+			limit,
+		});
 	}
 
 	async getPublicWriters() {

@@ -1,6 +1,8 @@
 import { zValidator } from "@hono/zod-validator";
+import type { Context } from "hono";
 import { getAddress } from "viem";
 import { z } from "zod";
+import { env } from "./env";
 
 // https://github.com/colinhacks/zod/discussions/1897
 export const bigIntSafe = z
@@ -53,6 +55,13 @@ export const addressAndIDParamSchema = zValidator(
 	z.object({
 		address: ethAddress,
 		id: bigIntSafe,
+	}),
+);
+
+export const entryIDParamSchema = zValidator(
+	"param",
+	z.object({
+		entryId: bigIntSafe,
 	}),
 );
 
@@ -125,3 +134,23 @@ export const colorRegistrySetJsonValidator = zValidator(
 		hexColor: hexColor,
 	}),
 );
+
+export function assertAdminKey(c: Context) {
+	const expectedKey = env.ADMIN_KEY;
+	if (!expectedKey) {
+		return {
+			ok: false as const,
+			status: 503 as const,
+			body: { error: "ADMIN_KEY is not configured" },
+		};
+	}
+	const providedKey = c.req.header("x-admin-key");
+	if (!providedKey || providedKey !== expectedKey) {
+		return {
+			ok: false as const,
+			status: 401 as const,
+			body: { error: "unauthorized" },
+		};
+	}
+	return { ok: true as const };
+}

@@ -1,6 +1,8 @@
+import { createPublicClient, http } from "viem";
 import { env } from "./env";
 
 import { Db } from "db";
+import { optimism } from "viem/chains";
 
 export const CREATE_FUNCTION_SIGNATURE =
 	"create(string title, address admin, address[] managers, bytes32 salt)";
@@ -14,3 +16,7 @@ export const SET_HEX_FUNCTION_SIGNATURE =
 	"setHexWithSig(bytes signature, uint256 nonce, bytes32 hexColor)";
 
 export const db = new Db(env.DATABASE_URL);
+export const publicClient = createPublicClient({
+	chain: optimism,
+	transport: http(env.RPC_URL),
+});

@@ -27,6 +27,7 @@ const schema = z.object({
 	SYNDICATE_API_KEY: minString(),
 	SYNDICATE_PROJECT_ID: minString(),
 	TARGET_CHAIN_ID: minString().transform((val) => Number(val)),
+	ADMIN_KEY: z.string().min(1).optional(),
 });
 
 export const env = schema.parse(process.env);

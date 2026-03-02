@@ -16,7 +16,8 @@
 		"indexer:start": "bun --filter 'indexer' start",
 		"db:migrate": "bun --filter 'db' migrate",
 		"server:install": "bun --filter 'server' install",
-		"server:start": "bun --filter 'server' start"
+		"server:start": "bun --filter 'server' start",
+		"cron:reconcile": "bun --filter 'cron' cron"
 	},
 	"packageManager": "^bun@1.2.0"
 }
