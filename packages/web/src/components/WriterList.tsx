@@ -174,12 +174,7 @@ export function WriterList({ user }: { user?: UserWithWallet }) {
 	}, [writers, optimisticWriters]);
 
 	return (
-		<div
-			className="grid gap-2"
-			style={{
-				gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-			}}
-		>
+		<div className="grid gap-2 grid-cols-1 min-[150px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
 			{!!user && (
 				<CreateInput
 					placeholder="Create a Place"
@@ -197,7 +192,7 @@ export function WriterList({ user }: { user?: UserWithWallet }) {
 					<Link
 						href={isPendingWriter ? "#" : `/writer/${writer.address}`}
 						key={writer.address}
-						className={`home-writer-card aspect-square bg-neutral-900 flex flex-col justify-between px-2 pt-2 pb-1.5 relative ${
+						className={`home-writer-card aspect-square bg-neutral-900 flex flex-col overflow-hidden px-2 pt-2 pb-1.5 relative ${
 							isPendingWriter ? "cursor-loading" : "hover:cursor-zoom-in"
 						}`}
 						onClick={isPendingWriter ? (e) => e.preventDefault() : undefined}
@@ -205,11 +200,13 @@ export function WriterList({ user }: { user?: UserWithWallet }) {
 							isPendingWriter ? undefined : () => prefetchWriter(writer.address)
 						}
 					>
-						<MarkdownRenderer
-							markdown={writer.title}
-							className="text-white writer-title home-writer-content"
-						/>
-						<div className="writer-card-meta text-right text-sm text-neutral-600 leading-3 pt-2">
+						<div className="grow min-h-0 min-w-0 overflow-y-auto">
+							<MarkdownRenderer
+								markdown={writer.title}
+								className="text-white writer-title home-writer-content"
+							/>
+						</div>
+						<div className="writer-card-meta shrink-0 text-right text-sm text-neutral-600 leading-3 pt-2">
 							<div
 								className={
 									isPendingWriter

@@ -85,12 +85,11 @@ export default function EntryListWithCreateInput({
 
 	return (
 		<div
-			className={`relative ${isExpanded ? "h-full" : "grid gap-2"}`}
-			style={
-				!isExpanded
-					? { gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))" }
-					: undefined
-			}
+			className={`relative ${
+				isExpanded
+					? "h-full"
+					: "grid gap-2 grid-cols-1 min-[150px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]"
+			}`}
 		>
 			{canCreateEntries && (
 				<CreateInput
