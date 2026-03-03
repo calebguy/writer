@@ -253,6 +253,7 @@ function MixedSavedGrid({
 						key={item.key}
 						className={cn(
 							"group relative aspect-square bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 overflow-hidden",
+							showLockedState && "private-entry-card",
 							showLockedState
 								? canUnlock
 									? "cursor-pointer"
@@ -276,10 +277,10 @@ function MixedSavedGrid({
 						}}
 					>
 						{showLockedState ? (
-							<div className="flex flex-col items-center justify-center grow text-neutral-600 gap-2">
+							<div className="flex flex-col items-center justify-center grow text-neutral-600 gap-2 private-entry-content">
 								<>
 									<span className="block group-hover:hidden">
-										<Lock className="h-4 w-4 text-neutral-600" />
+										<Lock className="h-4 w-4 text-neutral-600 private-entry-icon" />
 									</span>
 									<span className="hidden group-hover:block">
 										<Unlock className="h-4 w-4 text-primary" />
