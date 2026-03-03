@@ -311,7 +311,7 @@ function MixedSavedGrid({
 								isPending ? "justify-between" : "justify-start",
 							)}
 						>
-							<span>{item.writer.title}</span>
+							<span>{item.writer.title.replace(/^#{1,6}\s+/, "").replace(/[*_~`>\[\]]/g, "")}</span>
 							{isPending && (
 								<span className="pending-entry-spinner">
 									<span className="pending-entry-spinner-track" />
