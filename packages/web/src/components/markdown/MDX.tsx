@@ -26,6 +26,7 @@ interface EditorProps {
 	readOnly?: boolean;
 	placeholder?: string;
 	autoFocus?: boolean;
+	aspectSquare?: boolean;
 }
 
 const exampleTheme = {
@@ -109,6 +110,7 @@ const MDX: FC<EditorProps> = ({
 	readOnly,
 	placeholder,
 	autoFocus = false,
+	aspectSquare = true,
 }) => {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [overlayContainer, setOverlayContainer] =
@@ -171,7 +173,8 @@ const MDX: FC<EditorProps> = ({
 				lexicalTheme={exampleTheme}
 				contentEditableClassName="prose"
 				className={cn(
-					"p-2 aspect-square min-w-24 relative",
+					"p-2 min-w-24 relative",
+					aspectSquare && "aspect-square",
 					className,
 				)}
 			/>

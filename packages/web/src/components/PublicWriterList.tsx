@@ -32,24 +32,21 @@ export default function PublicWriterList({ writers }: PublicWriterListProps) {
 	);
 
 	return (
-		<div
-			className="grid gap-2"
-			style={{
-				gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-			}}
-		>
+		<div className="grid gap-2 grid-cols-1 min-[150px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
 			{writers.map((writer) => (
 				<Link
 					href={`/writer/${writer.address}`}
 					key={writer.address}
-					className="aspect-square bg-neutral-900 flex flex-col justify-between px-2 pt-2 pb-1.5 hover:cursor-zoom-in"
+					className="aspect-square bg-neutral-900 flex flex-col overflow-hidden px-2 pt-2 pb-1.5 hover:cursor-zoom-in"
 					onMouseEnter={() => prefetchWriter(writer.address)}
 				>
-					<MarkdownRenderer
-						markdown={writer.title}
-						className="text-white writer-title"
-					/>
-					<div className="writer-card-meta flex items-center justify-end gap-3 text-sm text-neutral-600 leading-3 pt-2">
+					<div className="grow min-h-0 min-w-0 overflow-y-auto">
+						<MarkdownRenderer
+							markdown={writer.title}
+							className="text-white writer-title"
+						/>
+					</div>
+					<div className="writer-card-meta shrink-0 flex items-center justify-end gap-3 text-sm text-neutral-600 leading-3 pt-2">
 						{writer.privateCount > 0 &&
 							viewerAddress === writer.admin.toLowerCase() && (
 								<span className="flex items-end gap-1">

@@ -76,10 +76,7 @@ export default function SavedView({ userAddress }: { userAddress: Hex }) {
 
 	if (isLoading) {
 		return (
-			<div
-				className="grid gap-2"
-				style={{ gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))" }}
-			>
+			<div className="grid gap-2 grid-cols-1 min-[150px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
 				{SAVED_SKELETON_KEYS.map((key, i) =>
 					i % 2 === 0 ? (
 						<WriterCardSkeleton key={key} />
@@ -194,10 +191,7 @@ function MixedSavedGrid({
 	}, [entries, wallet, allowDecryption]);
 
 	return (
-		<div
-			className="grid gap-2"
-			style={{ gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))" }}
-		>
+		<div className="grid gap-2 grid-cols-1 min-[150px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
 			{items.map((item) => {
 				if (item.kind === "writer") {
 					const isPendingWriter = !item.writer.createdAtHash;
@@ -206,15 +200,17 @@ function MixedSavedGrid({
 							href={isPendingWriter ? "#" : `/writer/${item.writer.address}`}
 							key={item.key}
 							className={cn(
-								"aspect-square bg-neutral-900 flex flex-col justify-between px-2 pt-2 pb-1.5",
+								"aspect-square bg-neutral-900 flex flex-col overflow-hidden px-2 pt-2 pb-1.5",
 								isPendingWriter ? "cursor-loading" : "hover:cursor-zoom-in",
 							)}
 							onClick={isPendingWriter ? (e) => e.preventDefault() : undefined}
 						>
-							<MarkdownRenderer
-								markdown={item.writer.title}
-								className="text-white writer-title"
-							/>
+							<div className="grow min-h-0 min-w-0 overflow-y-auto">
+								<MarkdownRenderer
+									markdown={item.writer.title}
+									className="text-white writer-title"
+								/>
+							</div>
 							<div className="writer-card-meta text-neutral-600 flex items-end justify-between text-sm leading-3 pt-2 shrink-0 pb-2">
 								<span>Writer</span>
 								{isPendingWriter ? (

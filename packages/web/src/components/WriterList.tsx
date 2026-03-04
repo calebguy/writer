@@ -1,7 +1,6 @@
 "use client";
 
 import {
-	type Writer,
 	deleteWriter,
 	factoryCreate,
 	getWriter,
@@ -12,7 +11,7 @@ import { POLLING_INTERVAL } from "@/utils/constants";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Hex } from "viem";
 import CreateInput, { type CreateInputData } from "./CreateInput";
 import { WriterCardSkeleton } from "./WriterCardSkeleton";
@@ -29,12 +28,6 @@ const SKELETON_KEYS = Array.from(
 
 export function WriterList({ user }: { user?: UserWithWallet }) {
 	const [isPolling, setIsPolling] = useState(false);
-	const [pendingWriterAddresses, setPendingWriterAddresses] = useState<
-		string[]
-	>([]);
-	const [optimisticWriters, setOptimisticWriters] = useState<
-		Record<string, Writer>
-	>({});
 	const queryClient = useQueryClient();
 
 	const address = user?.wallet.address;
@@ -61,30 +54,24 @@ export function WriterList({ user }: { user?: UserWithWallet }) {
 		[queryClient],
 	);
 
-	const { mutateAsync, isPending } = useMutation({
+	const { mutateAsync: hideWriter } = useMutation({
+		mutationFn: deleteWriter,
+		mutationKey: ["delete-writer"],
+	});
+	const { mutateAsync: createWriter, isPending: isCreatePending } = useMutation({
 		mutationFn: factoryCreate,
 		mutationKey: ["create-from-factory"],
-		onSuccess: ({ writer }) => {
-			const writerAddress = writer.address.toLowerCase();
-			setOptimisticWriters((prev) => ({
-				...prev,
-				[writerAddress]: { ...writer, entries: [] },
-			}));
-			setPendingWriterAddresses((prev) =>
-				prev.includes(writerAddress) ? prev : [...prev, writerAddress],
-			);
+		onSuccess: () => {
 			refetch();
 			setIsPolling(true);
 		},
 	});
 
-	const { mutateAsync: hideWriter } = useMutation({
-		mutationFn: deleteWriter,
-		mutationKey: ["delete-writer"],
-	});
-
 	const handleSubmit = async ({ markdown }: CreateInputData) => {
-		await mutateAsync({
+		if (!address) {
+			return;
+		}
+		await createWriter({
 			title: markdown,
 			admin: address as Hex,
 			managers: [address as Hex],
@@ -92,100 +79,42 @@ export function WriterList({ user }: { user?: UserWithWallet }) {
 	};
 
 	useEffect(() => {
-		if (!isPolling) {
+		if (isPolling || !writers || writers.length === 0) {
 			return;
 		}
 
-		if (pendingWriterAddresses.length > 0) {
-			if (!writers || writers.length === 0) {
-				return;
-			}
+		const hasPendingWriters = writers.some((writer) => !writer.createdAtHash);
+		if (hasPendingWriters) {
+			setIsPolling(true);
+		}
+	}, [isPolling, writers]);
 
-			const remainingPending = pendingWriterAddresses.filter(
-				(pendingAddress) => {
-					const createdWriter = writers.find(
-						(writer) => writer.address.toLowerCase() === pendingAddress,
-					);
-					// Keep polling until it appears and has an on-chain hash.
-					if (!createdWriter) {
-						return true;
-					}
-					return !createdWriter.createdAtHash;
-				},
-			);
-
-			if (remainingPending.length !== pendingWriterAddresses.length) {
-				setPendingWriterAddresses(remainingPending);
-			}
-
-			// Once a writer appears in server data, stop rendering it from optimistic state.
-			setOptimisticWriters((prev) => {
-				if (!writers || Object.keys(prev).length === 0) {
-					return prev;
-				}
-
-				let changed = false;
-				const next = { ...prev };
-				for (const writer of writers) {
-					const writerAddress = writer.address.toLowerCase();
-					if (writerAddress in next) {
-						delete next[writerAddress];
-						changed = true;
-					}
-				}
-				return changed ? next : prev;
-			});
-
-			if (remainingPending.length === 0) {
-				setIsPolling(false);
-			}
+	useEffect(() => {
+		if (!isPolling || !writers || writers.length === 0) {
 			return;
 		}
 
-		// Fallback behavior if we don't have locally tracked pending writers.
-		if (!writers || writers.length === 0) {
-			setIsPolling(false);
-			return;
-		}
 		const hasPendingWriters = writers.some((writer) => !writer.createdAtHash);
 		if (!hasPendingWriters) {
 			setIsPolling(false);
 		}
-	}, [isPolling, pendingWriterAddresses, writers]);
-
-	const displayedWriters = useMemo(() => {
-		const optimisticList = Object.values(optimisticWriters);
-		if (!writers) {
-			return optimisticList;
-		}
-
-		if (optimisticList.length === 0) {
-			return writers;
-		}
-
-		const serverAddressSet = new Set(
-			writers.map((writer) => writer.address.toLowerCase()),
-		);
-		const optimisticOnly = optimisticList.filter(
-			(writer) => !serverAddressSet.has(writer.address.toLowerCase()),
-		);
-
-		return [...optimisticOnly, ...writers];
-	}, [writers, optimisticWriters]);
+	}, [isPolling, writers]);
 
 	return (
 		<div className="grid gap-2 grid-cols-1 min-[150px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
 			{!!user && (
-				<CreateInput
-					placeholder="Create a Place"
-					onSubmit={handleSubmit}
-					isLoading={isPending}
-				/>
+				<div className="hidden md:block">
+					<CreateInput
+						placeholder="Create a Place"
+						onSubmit={handleSubmit}
+						isLoading={isCreatePending}
+					/>
+				</div>
 			)}
 			{isLoading &&
 				SKELETON_KEYS.map((key) => <WriterCardSkeleton key={key} />)}
 			{!isLoading &&
-				displayedWriters.map((writer) => (
+				(writers ?? []).map((writer) => (
 					(() => {
 						const isPendingWriter = !writer.createdAtHash;
 						return (
@@ -231,18 +160,6 @@ export function WriterList({ user }: { user?: UserWithWallet }) {
 												e.preventDefault();
 												e.stopPropagation();
 												await hideWriter(writer.address as Hex);
-												const writerAddress = writer.address.toLowerCase();
-												setPendingWriterAddresses((prev) =>
-													prev.filter((address) => address !== writerAddress),
-												);
-												setOptimisticWriters((prev) => {
-													if (!(writerAddress in prev)) {
-														return prev;
-													}
-													const next = { ...prev };
-													delete next[writerAddress];
-													return next;
-												});
 												refetch();
 											}}
 										>

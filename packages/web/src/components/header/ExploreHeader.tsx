@@ -15,7 +15,9 @@ export function ExploreHeader() {
 				</Link>
 				<span className="text-primary">Explore</span>
 			</div>
-			<LogoDropdown />
+			<div className="hidden md:block">
+				<LogoDropdown />
+			</div>
 		</div>
 	);
 }

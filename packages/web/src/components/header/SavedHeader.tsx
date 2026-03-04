@@ -15,7 +15,9 @@ export function SavedHeader() {
 				</Link>
 				<span className="text-primary">Saved</span>
 			</div>
-			<LogoDropdown />
+			<div className="hidden md:block">
+				<LogoDropdown />
+			</div>
 		</div>
 	);
 }
