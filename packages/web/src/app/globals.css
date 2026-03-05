@@ -5,7 +5,7 @@
 :root {
   --color-primary: 255 255 255;
   --color-secondary: 125 125 125;
-}
+  }
 
 :root[data-theme="light"] {
   color-scheme: light;
@@ -186,11 +186,11 @@ body {
   :root {
     font-family: var(--font-serif);
 
-    color: rgb(var(--color-white));
+    color: var(--color-white);
     background-color: var(--color-neutral-800);
   }
   :root[data-theme="light"] {
-    color: rgb(var(--color-black));
+    color: var(--color-black);
     background-color: rgb(var(--color-neutral-50));
   }
 }
@@ -253,7 +253,7 @@ body {
 }
 
 :root[data-theme="light"] .text-white {
-  color: rgb(var(--color-black));
+  color: var(--color-black);
 }
 
 :root[data-theme="light"] .text-neutral-600 {
@@ -305,22 +305,22 @@ body {
 }
 
 :root[data-theme="light"] .writer-title {
-  color: rgb(var(--color-black));
+  color: var(--color-black);
 }
 
 :root[data-theme="light"] .writer-title .prose,
 :root[data-theme="light"] .writer-title .prose * {
-  color: rgb(var(--color-black));
+  color: var(--color-black);
 }
 
 :root[data-theme="light"] .mdx .mdxeditor-root-contenteditable,
 :root[data-theme="light"] .mdx ._contentEditable_sects_380,
 :root[data-theme="light"] .mdx ._contentEditable_1e2ox_380 {
-  color: rgb(var(--color-black)) !important;
+  color: var(--color-black) !important;
 }
 
 :root[data-theme="light"] .mdx .mdxeditor {
-  color: rgb(var(--color-black));
+  color: var(--color-black);
 }
 
 :root[data-theme="light"] .create-input-border {
@@ -473,13 +473,35 @@ body {
 }
 
 :root[data-theme="light"] .create-input-mdx [class*="_placeholder_"] p {
-  color: rgb(142 142 136);
+  color: rgb(142 142 136) !important;
+}
+
+:root:not([data-theme="light"]) .create-input-mdx [class*="_placeholder_"] p {
+  color: rgb(112 112 108) !important;
 }
 
 :root[data-theme="light"] .create-input-mdx .mdxeditor-root-contenteditable,
 :root[data-theme="light"] .create-input-mdx [class*="_contentEditable_"] {
   border: none !important;
   outline: none !important;
+}
+
+:root[data-theme="light"] .create-input-mdx .prose,
+:root[data-theme="light"] .create-input-mdx .prose * {
+  color: var(--color-black) !important;
+}
+
+:root:not([data-theme="light"]) .create-input-mdx .prose,
+:root:not([data-theme="light"]) .create-input-mdx .prose * {
+  color: var(--color-white) !important;
+}
+
+:root[data-theme="light"] .create-input-mdx {
+  --baseTextContrast: rgb(0 0 0) !important;
+}
+
+:root:not([data-theme="light"]) .create-input-mdx {
+  --baseTextContrast: rgb(255 255 255) !important;
 }
 
 :root[data-theme="light"] .create-input-control {

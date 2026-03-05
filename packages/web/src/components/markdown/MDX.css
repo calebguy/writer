@@ -3,7 +3,7 @@
   width: 100%;
 
   ._contentEditable_sects_380, ._contentEditable_1e2ox_380 {
-    color: white!important;
+    color: inherit !important;
   }
 
   /* Fix popup container positioning */
@@ -34,21 +34,21 @@
 
   [data-radix-collection-item][data-state="checked"] {
     background-color: var(--color-neutral-900)!important;
-    color: rgb(var(--color-white))!important;
+    color: var(--color-white)!important;
     border: 1px dashed green!important;
   }
 
   [data-radix-collection-item][data-highlighted] {
     border: 1px dashed green!important;
     background-color: var(--color-neutral-900)!important;
-    color: rgb(var(--color-white))!important;
+    color: var(--color-white)!important;
   }
 
   .mdxeditor-select-content {
     border-radius: 0!important;
     font-family: "LTRemark"!important;
     background-color: var(--color-neutral-900)!important;
-    color: rgb(var(--color-white))!important;
+    color: var(--color-white)!important;
     border: 1px solid var(--color-neutral-700)!important;
     margin-top: 0.5rem!important;
     margin-right: 2rem!important;
@@ -71,7 +71,7 @@
         height: 100%;
       }
 
-      color: white!important;
+      color: inherit !important;
     }
 
     button,
@@ -93,7 +93,7 @@
 
     .cm-tooltip-autocomplete > ul > li[aria-selected="true"] {
       background-color: var(--color-neutral-900)!important;
-      color: rgb(var(--color-white))!important;
+      color: var(--color-white)!important;
     }
 
     .cm-tooltip-autocomplete > ul > li {
@@ -103,7 +103,7 @@
 
     .cm-tooltip-autocomplete > ul > li:hover {
       /* border: 1px dashed green!important; */
-      color: rgb(var(--color-white))!important;
+      color: var(--color-white)!important;
     }
 
     .PopoverContent {
@@ -317,7 +317,7 @@
       height: 100%;
       overflow-y: auto;
       overflow-x: hidden;
-      /* color: rgb(var(--color-white))!important; */
+      /* color: var(--color-white)!important; */
       font-family: "LTRemark";
       caret-color: rgb(var(--color-primary))!important;
       /* color: white!important; */

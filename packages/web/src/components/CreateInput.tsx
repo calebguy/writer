@@ -199,7 +199,7 @@ export default function CreateInput({
 							markdown={markdown}
 							autoFocus
 							className={cn(
-								"bg-neutral-900 text-white! flex-col placeholder:text-green-300 h-full flex w-full p-2 create-input-editor create-input-mdx",
+								"bg-neutral-900 text-white light:text-black flex-col placeholder:text-green-300 h-full flex w-full p-2 create-input-editor create-input-mdx",
 							)}
 							placeholder={placeholder}
 							onChange={setMarkdown}
