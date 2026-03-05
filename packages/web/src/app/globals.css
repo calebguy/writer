@@ -35,8 +35,6 @@
 @theme inline {
   --color-primary: rgb(var(--color-primary));
   --color-secondary: rgb(var(--color-secondary));
-  --color-white: rgb(255 255 255);
-  --color-black: 0 0 0;
   --font-serif: var(--font-lt-remark);
   --font-mono: var(--font-basically-a-mono);
 }
@@ -514,17 +512,20 @@ body {
   background-color: rgb(var(--color-neutral-50)) !important;
 }
 
+.index-title {
+  color: rgb(240 240 240);
+}
+
+.index-enter-btn {
+  color: rgb(240 240 240);
+}
+
 :root[data-theme="light"] .index-title {
   color: rgb(20 20 20);
 }
 
 :root[data-theme="light"] .index-enter-btn {
   color: rgb(20 20 20);
-  background-color: rgb(var(--color-neutral-100));
-}
-
-:root[data-theme="light"] .index-enter-btn:hover {
-  background-color: rgb(var(--skeleton-surface));
 }
 
 html,

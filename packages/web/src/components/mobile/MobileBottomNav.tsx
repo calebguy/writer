@@ -27,8 +27,8 @@ function isRouteActive(pathname: string, target: string) {
 
 function navIconClass(active: boolean) {
 	return active
-		? "text-primary bg-primary/15 dark:bg-primary/20"
-		: "text-neutral-700 dark:text-neutral-300 hover:text-primary";
+		? "cursor-pointer text-primary bg-primary/15 dark:bg-primary/20"
+		: "cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary";
 }
 
 export function MobileBottomNav() {
@@ -111,7 +111,7 @@ export function MobileBottomNav() {
 							<button
 								type="button"
 								title="Color"
-								className="p-2.5 rounded-full text-neutral-700 dark:text-neutral-300 hover:text-primary"
+								className="p-2.5 rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
 								onClick={() => {
 									setShowColorModal(true);
 									setShowSubMenu(false);
@@ -146,7 +146,7 @@ export function MobileBottomNav() {
 							<button
 								type="button"
 								title="Leave"
-								className="p-2.5 rounded-full text-neutral-700 dark:text-neutral-300 hover:text-primary"
+								className="p-2.5 rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
 								onClick={() =>
 									logout().then(() => {
 										clearAllCachedKeys();
