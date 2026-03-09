@@ -1,3 +1,52 @@
+/* Light mode overrides for .mdx editor */
+:root[data-theme="light"] .mdx .mdxeditor-root-contenteditable,
+:root[data-theme="light"] .mdx ._contentEditable_sects_380,
+:root[data-theme="light"] .mdx ._contentEditable_1e2ox_380 {
+  color: var(--color-black) !important;
+}
+
+:root[data-theme="light"] .mdx .mdxeditor {
+  color: var(--color-black);
+}
+
+/* CreateInput MDX overrides */
+:root[data-theme="light"] .create-input-mdx [class*="_placeholder_"] p {
+  color: rgb(142 142 136) !important;
+}
+
+:root:not([data-theme="light"]) .create-input-mdx [class*="_placeholder_"] p {
+  color: rgb(112 112 108) !important;
+}
+
+:root[data-theme="light"] .create-input-mdx .mdxeditor-root-contenteditable,
+:root[data-theme="light"] .create-input-mdx [class*="_contentEditable_"] {
+  border: none !important;
+  outline: none !important;
+}
+
+:root[data-theme="light"] .create-input-mdx .prose,
+:root[data-theme="light"] .create-input-mdx .prose * {
+  color: var(--color-black) !important;
+}
+
+:root:not([data-theme="light"]) .create-input-mdx .prose,
+:root:not([data-theme="light"]) .create-input-mdx .prose * {
+  color: var(--color-white) !important;
+}
+
+:root[data-theme="light"] .create-input-mdx {
+  --baseTextContrast: rgb(0 0 0) !important;
+}
+
+:root:not([data-theme="light"]) .create-input-mdx {
+  --baseTextContrast: rgb(255 255 255) !important;
+}
+
+/* Standalone contentEditable override */
+._contentEditable_sets_380 {
+  color: inherit !important;
+}
+
 .mdx {
 
   width: 100%;
