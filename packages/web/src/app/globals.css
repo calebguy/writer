@@ -5,6 +5,8 @@
 :root {
   --color-primary: 255 255 255;
   --color-secondary: 125 125 125;
+
+  --screen-space: 0px!important;
   }
 
 :root[data-theme="light"] {
@@ -43,16 +45,16 @@
 body {
     --privy-color-background: var(--color-neutral-900);
     --privy-color-background-2: var(--color-neutral-800);
-    --privy-color-background-3: #8B86FF;
+    --privy-color-background-3: #e5e5e5;
     --privy-color-foreground: #F8F8F8;
-    --privy-color-foreground-2: #9BA2AE;
-    --privy-color-foreground-3: #7B8491;
+    --privy-color-foreground-2: #a3a3a3;
+    --privy-color-foreground-3: #737373;
     --privy-color-foreground-4: var(--color-neutral-800);
-    --privy-color-foreground-accent: hsl(246, 84%, 5%);
+    --privy-color-foreground-accent: #0a0a0a;
     --privy-color-accent: hsl(0, 0%, 100%);
     --privy-color-accent-light: hsl(0, 0%, 100%);
-    --privy-color-accent-hover: hsl(0, 0%, 100%);
-    --privy-color-accent-dark: hsl(0, 0%, 94%);
+    --privy-color-accent-hover: hsl(0, 0%, 94%);
+    --privy-color-accent-dark: hsl(0, 0%, 88%);
     --privy-color-accent-darkest: hsl(0, 0%, 40%);
     --privy-color-success: #0E3E2D;
     --privy-color-success-dark: #ACEECB;
@@ -61,61 +63,61 @@ body {
     --privy-color-error: #FCA5A5;
     --privy-color-error-light: #2E0C18;
     --privy-color-error-bg: #2E0C18;
-    --privy-color-error-bg-hover: #441821;
+    --privy-color-error-bg-hover: #3d1a1a;
     --privy-color-warn: #373827;
     --privy-color-warn-light: #373827;
     --privy-color-warn-bg: #373827;
     --privy-color-warning-dark: #FEF9A0;
     --privy-color-error-dark: #FCA5A5;
-    --privy-color-info-bg: #1F2937;
-    --privy-color-info-bg-hover: #141824;
-    --privy-color-border-default: #1F2937;
-    --privy-color-border-hover: #34304A;
-    --privy-color-border-focus: #F8F8FC;
+    --privy-color-info-bg: #1a1a1a;
+    --privy-color-info-bg-hover: #141414;
+    --privy-color-border-default: #262626;
+    --privy-color-border-hover: #404040;
+    --privy-color-border-focus: #F8F8F8;
     --privy-color-border-error: #F87171;
     --privy-color-border-success: #317056;
     --privy-color-border-warning: #FBBF24;
-    --privy-color-border-info: #5B83D3;
-    --privy-color-border-interactive: #88B0FF;
-    --privy-color-border-interactive-hover: #88B0FF;
-    --privy-color-background-hover: #101724;
-    --privy-color-background-clicked: #1A2230;
-    --privy-color-background-disabled: #020713;
-    --privy-color-background-interactive: #8B86FF;
-    --privy-color-background-interactive-hover: #7B73E5;
-    --privy-color-background-interactive-clicked: #6560CC;
-    --privy-color-background-interactive-disabled: #141824;
+    --privy-color-border-info: #a3a3a3;
+    --privy-color-border-interactive: #d4d4d4;
+    --privy-color-border-interactive-hover: #e5e5e5;
+    --privy-color-background-hover: #1a1a1a;
+    --privy-color-background-clicked: #262626;
+    --privy-color-background-disabled: #0a0a0a;
+    --privy-color-background-interactive: #f5f5f5;
+    --privy-color-background-interactive-hover: #e5e5e5;
+    --privy-color-background-interactive-clicked: #d4d4d4;
+    --privy-color-background-interactive-disabled: #262626;
     --privy-color-foreground-hover: #F8F8F8;
     --privy-color-foreground-clicked: #F8F8F8;
-    --privy-color-foreground-disabled: #404452;
-    --privy-color-foreground-interactive: #A29EFF;
-    --privy-color-foreground-interactive-hover: #8C88E5;
+    --privy-color-foreground-disabled: #404040;
+    --privy-color-foreground-interactive: #e5e5e5;
+    --privy-color-foreground-interactive-hover: #d4d4d4;
     --privy-link-navigation-color: hsl(0, 0%, 100%);
     --privy-link-navigation-decoration: none;
     --privy-accent-has-good-contrast: 1;
     --privy-color-icon-default: #F8F8F8;
-    --privy-color-icon-muted: #9BA2AE;
-    --privy-color-icon-subtle: #7B8491;
-    --privy-color-icon-inverse: #020713;
+    --privy-color-icon-muted: #a3a3a3;
+    --privy-color-icon-subtle: #737373;
+    --privy-color-icon-inverse: #0a0a0a;
     --privy-color-icon-success: #88E3B5;
     --privy-color-icon-warning: #FDF27B;
     --privy-color-icon-error: #EF4444;
-    --privy-color-icon-interactive: #88B6FF;
+    --privy-color-icon-interactive: #d4d4d4;
     --privy-color-icon-default-hover: #F8F8F8;
-    --privy-color-icon-muted-hover: #AEB3BD;
-    --privy-color-icon-subtle-hover: #8B939E;
+    --privy-color-icon-muted-hover: #b5b5b5;
+    --privy-color-icon-subtle-hover: #8a8a8a;
     --privy-color-icon-default-clicked: #F8F8F8;
-    --privy-color-icon-muted-clicked: #9097A5;
-    --privy-color-icon-subtle-clicked: #78818E;
-    --privy-color-icon-default-disabled: #404452;
-    --privy-color-icon-muted-disabled: #404452;
-    --privy-color-icon-subtle-disabled: #404452;
+    --privy-color-icon-muted-clicked: #969696;
+    --privy-color-icon-subtle-clicked: #7a7a7a;
+    --privy-color-icon-default-disabled: #404040;
+    --privy-color-icon-muted-disabled: #404040;
+    --privy-color-icon-subtle-disabled: #404040;
     --privy-color-icon-error-hover: #F05555;
-    --privy-color-icon-interactive-hover: #7B73E5;
+    --privy-color-icon-interactive-hover: #e5e5e5;
     --privy-color-icon-error-clicked: #EF4444;
-    --privy-color-icon-interactive-clicked: #6560CC;
-    --privy-color-icon-muted-disabled-alt: #404452;
-    --privy-color-icon-subtle-disabled-alt: #404452;
+    --privy-color-icon-interactive-clicked: #d4d4d4;
+    --privy-color-icon-muted-disabled-alt: #404040;
+    --privy-color-icon-subtle-disabled-alt: #404040;
     --privy-border-radius-xs: 6px;
     --privy-border-radius-sm: 8px;
     --privy-border-radius-md: 12px;
@@ -529,6 +531,20 @@ body {
   background-color: rgb(0 0 0 / 0.52) !important;
 }
 
+#privy-modal-content {
+  font-family: "ltRemark", "ltRemark Fallback" !important;
+}
+
+#privy-modal-content h3 {
+  font-size: 38px;
+  font-family: "ltRemark", "ltRemark Fallback" !important;
+}
+
+#privy-modal-content img {
+  max-height: 105px!important;
+  max-width: 210px!important;
+}
+
 :root[data-theme="light"] #privy-modal-content {
   box-shadow: none !important;
   background-color: rgb(var(--color-neutral-50)) !important;
@@ -568,13 +584,6 @@ body,
   box-shadow: none;
 }
 
-.dRJJao h3 {
-  font-family: "ltRemark", "ltRemark Fallback" !important;
-}
-
-.dRJJao {
-  font-family: "basicallyAMono" !important;
-}
 
 .break-anywhere {
   overflow-wrap: anywhere;

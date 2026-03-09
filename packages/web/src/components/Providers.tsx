@@ -7,16 +7,16 @@ import {
 	defaultColor,
 } from "@/utils/context";
 import {
+	applyThemeMode,
+	getStoredThemeMode,
+	subscribeSystemThemeChange,
+} from "@/utils/theme";
+import {
 	RGBToHex,
 	bytes32ToHexColor,
 	hexToRGB,
 	setPrimaryAndSecondaryCSSVariables,
 } from "@/utils/utils";
-import {
-	applyThemeMode,
-	getStoredThemeMode,
-	subscribeSystemThemeChange,
-} from "@/utils/theme";
 import { PrivyProvider } from "@privy-io/react-auth";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
@@ -98,8 +98,7 @@ export function Providers({
 					appearance: {
 						theme: "dark",
 						accentColor: RGBToHex(primaryColor),
-						// loginMessage: "Write today, forever",
-						landingHeader: "Write today, forever",
+						landingHeader: "Writer",
 						walletList: [
 							"metamask",
 							"coinbase_wallet",
