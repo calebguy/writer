@@ -4,7 +4,7 @@
 @custom-variant light (&:where([data-theme=light], [data-theme=light] *));
 
 :root {
-  --color-primary: 255 255 255;
+  --color-primary: 201 255 0;
   --color-secondary: 125 125 125;
 
   --screen-space: 0px!important;
@@ -12,6 +12,7 @@
 
 :root[data-theme="light"] {
   color-scheme: light;
+  --color-primary: 123 133 19;
   --color-neutral-950: 10 10 10;
   --color-neutral-900: 250 250 250;
   --color-neutral-800: 229 229 229;
