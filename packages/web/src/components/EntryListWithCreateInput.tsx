@@ -92,15 +92,17 @@ export default function EntryListWithCreateInput({
 			}`}
 		>
 			{canCreateEntries && (
-				<CreateInput
-					placeholder={`Write in ${writerTitle}`}
-					onExpand={setIsExpanded}
-					canExpand={true}
-					onSubmit={handleSubmit}
-					isLoading={isPending}
-				/>
+				<div className="hidden md:block">
+					<CreateInput
+						placeholder={`Write in ${writerTitle}`}
+						onExpand={setIsExpanded}
+						canExpand={true}
+						onSubmit={handleSubmit}
+						isLoading={isPending}
+					/>
+				</div>
 			)}
-			{!isExpanded && (
+			{!isExpanded && processedEntries.length > 0 && (
 				<EntryList
 					processedEntries={processedEntries}
 					writerAddress={writerAddress}
@@ -109,6 +111,11 @@ export default function EntryListWithCreateInput({
 					unlockError={unlockError}
 					onUnlock={showUnlockBanner ? onUnlock : undefined}
 				/>
+			)}
+			{!isExpanded && processedEntries.length === 0 && (
+				<div className="col-span-full flex items-center justify-center min-h-[60vh] text-neutral-500">
+					no entries yet
+				</div>
 			)}
 		</div>
 	);

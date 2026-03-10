@@ -19,7 +19,7 @@ import { ColorModal } from "../ColorModal";
 import { queryClient } from "../Providers";
 import { Logo } from "../icons/Logo";
 
-const VISIBLE_PATHS = new Set(["/home", "/explore", "/saved"]);
+const VISIBLE_PATHS = new Set(["/home", "/explore", "/saved", "/writer"]);
 
 function isRouteActive(pathname: string, target: string) {
 	return pathname === target || pathname.startsWith(`${target}/`);

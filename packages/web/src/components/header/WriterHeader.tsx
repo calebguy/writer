@@ -3,6 +3,7 @@
 import { type Writer, getWriter } from "@/utils/api";
 import { useEntryLoading } from "@/utils/EntryLoadingContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { FiPlus } from "react-icons/fi";
 import type { Hex } from "viem";
 import { LogoDropdown } from "../LogoDropdown";
 import { MarkdownRenderer } from "../markdown/MarkdownRenderer";
@@ -48,7 +49,19 @@ export function WriterHeader({
 				)}
 			</div>
 
-			<LogoDropdown />
+			<button
+				type="button"
+				aria-label="Create entry"
+				onClick={() =>
+					window.dispatchEvent(new CustomEvent("open-create-entry-drawer"))
+				}
+				className="md:hidden text-primary hover:opacity-80 transition-opacity cursor-pointer p-1"
+			>
+				<FiPlus className="h-6 w-6" />
+			</button>
+			<div className="hidden md:block">
+				<LogoDropdown />
+			</div>
 		</div>
 	);
 }

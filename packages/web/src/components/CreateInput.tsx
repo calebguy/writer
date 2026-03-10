@@ -8,6 +8,11 @@ import { useIsMac, useIsMobile } from "@/utils/hooks";
 import type { MDXEditorMethods } from "@mdxeditor/editor";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
+import {
+	DynamicDrawerContent,
+	DynamicDrawerRoot,
+	DynamicDrawerTitle,
+} from "./dsl/DynamicDrawer";
 import { Logo } from "./icons/Logo";
 import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
 
@@ -37,6 +42,7 @@ export default function CreateInput({
 	const isMobile = useIsMobile();
 	const [hasFocus, setHasFocus] = useState(false);
 	const [isExpanded, setIsExpanded] = useState(false);
+	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [markdown, setMarkdown] = useState<string>("");
 	const editorRef = useRef<MDXEditorMethods>(null);
@@ -45,8 +51,9 @@ export default function CreateInput({
 	const [loadingContent, setLoadingContent] = useState<string>("");
 	const [encrypted, setEncrypted] = useState(false);
 
-	// Handle clicks inside or outside the container
+	// Handle clicks inside or outside the container (desktop only)
 	useEffect(() => {
+		if (isMobile) return;
 		const handleClick = (event: MouseEvent) => {
 			if (containerRef.current) {
 				if (!containerRef.current.contains(event.target as Node)) {
@@ -63,7 +70,7 @@ export default function CreateInput({
 		return () => {
 			document.removeEventListener("mousedown", handleClick);
 		};
-	}, [markdown, onExpand]);
+	}, [markdown, onExpand, isMobile]);
 
 	// Focus the editor when hasFocus changes to true
 	useEffect(() => {
@@ -75,6 +82,14 @@ export default function CreateInput({
 		}
 	}, [hasFocus]);
 
+	// Listen for header + button to open the mobile drawer
+	useEffect(() => {
+		const handleOpenDrawer = () => setIsDrawerOpen(true);
+		window.addEventListener("open-create-entry-drawer", handleOpenDrawer);
+		return () =>
+			window.removeEventListener("open-create-entry-drawer", handleOpenDrawer);
+	}, []);
+
 	// Handle keyboard shortcuts
 	useEffect(() => {
 		const handleKeyDown = async (event: KeyboardEvent) => {
@@ -82,22 +97,10 @@ export default function CreateInput({
 			if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
 				event.preventDefault();
 				if (markdown.trim() !== "") {
-					setLoadingContent(markdown);
-					setIsSubmitting(true);
-					await onSubmit({ markdown, encrypted });
-					editorRef.current?.setMarkdown("");
-					setMarkdown("");
-					setIsSubmitting(false);
-					setHasFocus(false);
-					setIsExpanded(false);
-					onExpand?.(false);
+					await handleSubmit();
 				}
 			} else if (event.key === "Escape") {
-				editorRef.current?.setMarkdown("");
-				setMarkdown("");
-				setHasFocus(false);
-				setIsExpanded(false);
-				onExpand?.(false);
+				handleReset();
 			}
 		};
 
@@ -114,151 +117,218 @@ export default function CreateInput({
 		setShowHint(!hasSignificantContent);
 	}, [markdown]);
 
-	// Mobile submit handler
-	const handleMobileSubmit = async () => {
-		if (markdown.trim() !== "") {
-			setLoadingContent(markdown);
-			setIsSubmitting(true);
-			await onSubmit({ markdown, encrypted });
-			editorRef.current?.setMarkdown("");
-			setMarkdown("");
-			setIsSubmitting(false);
-			setHasFocus(false);
-			setIsExpanded(false);
-			onExpand?.(false);
-		}
+	const handleReset = () => {
+		editorRef.current?.setMarkdown("");
+		setMarkdown("");
+		setHasFocus(false);
+		setIsExpanded(false);
+		setIsDrawerOpen(false);
+		setEncrypted(false);
+		onExpand?.(false);
+	};
+
+	const handleSubmit = async () => {
+		if (markdown.trim() === "") return;
+		setLoadingContent(markdown);
+		setIsSubmitting(true);
+		await onSubmit({ markdown, encrypted });
+		editorRef.current?.setMarkdown("");
+		setMarkdown("");
+		setIsSubmitting(false);
+		setHasFocus(false);
+		setIsExpanded(false);
+		setIsDrawerOpen(false);
+		setEncrypted(false);
+		onExpand?.(false);
 	};
 
 	const isLoadingOrSubmitting = isLoading || isSubmitting;
 
 	return (
-		<div
-			className={cn("group", {
-				"aspect-square relative": !isExpanded,
-				"absolute inset-0 z-50": isExpanded,
-			})}
-			ref={containerRef}
-		>
-			{isLoadingOrSubmitting && (
-				<div className="absolute inset-0 bg-secondary border border-secondary flex flex-col items-center justify-between h-full">
-					<div className="text-primary w-full text-left break-words p-2 overflow-hidden">
-						<MarkdownRenderer
-							markdown={loadingContent}
-							className="create-input-loading-text"
-						/>
+		<>
+			<div
+				className={cn("group", {
+					"aspect-square relative": !isExpanded,
+					"absolute inset-0 z-50": isExpanded,
+				})}
+				ref={containerRef}
+			>
+				{isLoadingOrSubmitting && (
+					<div className="absolute inset-0 bg-secondary border border-secondary flex flex-col items-center justify-between h-full">
+						<div className="text-primary w-full text-left break-words p-2 overflow-hidden">
+							<MarkdownRenderer
+								markdown={loadingContent}
+								className="create-input-loading-text"
+							/>
+						</div>
+						<div className="create-input-hint text-neutral-700 text-base leading-[16px] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-0">
+							<div>{isMac ? "⌘" : "ctrl"} + ↵</div>
+							<div>to create</div>
+						</div>
+						<div className="absolute bottom-1 flex justify-between w-full z-20 px-2 pb-0.5 opacity-0 pointer-events-none">
+							<span className="create-input-control">
+								<Unlock className="h-3.5 w-3.5 ml-0.5" />
+							</span>
+							<span className="create-input-control mt-1">
+								<Arrow title="expand" className="w-4 h-4 rotate-90" />
+							</span>
+						</div>
+						<div className="text-sm absolute inset-0 flex justify-center items-center text-primary">
+							<Logo
+								className={cn("rotating", {
+									"w-6 h-6": !isExpanded,
+									"w-8 h-8": isExpanded,
+								})}
+							/>
+						</div>
 					</div>
-					<div className="create-input-hint text-neutral-700 text-base leading-[16px] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-0">
-						<div>{isMac ? "⌘" : "ctrl"} + ↵</div>
-						<div>to create</div>
-					</div>
-					<div className="absolute bottom-1 flex justify-between w-full z-20 px-2 pb-0.5 opacity-0 pointer-events-none">
-						<span className="create-input-control">
-							<Unlock className="h-3.5 w-3.5 ml-0.5" />
-						</span>
-						<span className="create-input-control mt-1">
-							<Arrow title="expand" className="w-4 h-4 rotate-90" />
-						</span>
-					</div>
-					<div className="text-sm absolute inset-0 flex justify-center items-center text-primary">
-						<Logo
-							className={cn("rotating", {
-								"w-6 h-6": !isExpanded,
-								"w-8 h-8": isExpanded,
-							})}
-						/>
-					</div>
-				</div>
-			)}
-			{!isLoadingOrSubmitting && (
-				<>
-					<div
-						className={cn(
-							"border border-neutral-900 h-full flex justify-center items-center text-primary text-2xl bg-transparent hover:bg-neutral-900 hover:cursor-text create-input-border create-input-idle",
-							{
-								hidden: hasFocus || isExpanded,
-							},
-						)}
-						onClick={() => setHasFocus(true)}
-						onKeyDown={(e) => {
-							if (e.key === "Enter") {
-								setHasFocus(true);
-							}
-						}}
-					>
-						<span>+</span>
-					</div>
-					<div
-						className={cn("h-full relative min-h-0 overflow-hidden", {
-							hidden: !hasFocus && !isExpanded,
-							flex: hasFocus || isExpanded,
-							"border border-dashed border-primary w-full": hasFocus || isExpanded,
-						})}
-					>
-						<MDX
-							ref={editorRef}
-							markdown={markdown}
-							autoFocus
+				)}
+				{!isLoadingOrSubmitting && (
+					<>
+						<div
 							className={cn(
-								"bg-neutral-900 text-white light:text-black flex-col placeholder:text-green-300 h-full flex w-full p-2 create-input-editor create-input-mdx",
+								"border border-neutral-900 h-full flex justify-center items-center text-primary text-2xl bg-transparent hover:bg-neutral-900 hover:cursor-text create-input-border create-input-idle",
+								{
+									hidden: hasFocus || isExpanded,
+								},
 							)}
-							placeholder={placeholder}
-							onChange={setMarkdown}
-						/>
-						{showHint && (
-							<div className="create-input-hint text-neutral-700 text-base leading-[16px] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-								<div>{isMac ? "⌘" : "ctrl"} + ↵</div>
-								<div>to create</div>
+							onClick={() => {
+								if (isMobile) {
+									setIsDrawerOpen(true);
+								} else {
+									setHasFocus(true);
+								}
+							}}
+							onKeyDown={(e) => {
+								if (e.key === "Enter") {
+									if (isMobile) {
+										setIsDrawerOpen(true);
+									} else {
+										setHasFocus(true);
+									}
+								}
+							}}
+						>
+							<span>+</span>
+						</div>
+						<div
+							className={cn("h-full relative min-h-0 overflow-hidden", {
+								hidden: !hasFocus && !isExpanded,
+								flex: hasFocus || isExpanded,
+								"border border-dashed border-primary w-full":
+									hasFocus || isExpanded,
+							})}
+						>
+							<MDX
+								ref={editorRef}
+								markdown={markdown}
+								autoFocus
+								className={cn(
+									"bg-neutral-900 text-white light:text-black flex-col placeholder:text-green-300 h-full flex w-full p-2 create-input-editor create-input-mdx",
+								)}
+								placeholder={placeholder}
+								onChange={setMarkdown}
+							/>
+							{showHint && (
+								<div className="create-input-hint text-neutral-700 text-base leading-[16px] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+									<div>{isMac ? "⌘" : "ctrl"} + ↵</div>
+									<div>to create</div>
+								</div>
+							)}
+							{hasFocus && canExpand && !isLoading && (
+								<div className="absolute bottom-1 flex justify-between w-full z-20 px-2 pb-0.5">
+									<button
+										type="button"
+										onClick={() => setEncrypted?.(!encrypted)}
+										className="create-input-control hover:text-primary text-neutral-600 cursor-pointer"
+									>
+										{encrypted ? (
+											<Lock className="h-3.5 w-3.5" />
+										) : (
+											<Unlock className="h-3.5 w-3.5 ml-0.5" />
+										)}
+									</button>
+									<button
+										type="button"
+										className="create-input-control hover:text-primary text-neutral-600 mt-1 cursor-pointer"
+										onClick={() => {
+											setIsExpanded(!isExpanded);
+											onExpand?.(!isExpanded);
+										}}
+										onMouseDown={(e) => {
+											e.preventDefault();
+										}}
+									>
+										<Arrow
+											title={isExpanded ? "collapse" : "expand"}
+											className={cn("w-4 h-4", {
+												"rotate-90": !isExpanded,
+												"-rotate-90": isExpanded,
+											})}
+										/>
+									</button>
+								</div>
+							)}
+						</div>
+					</>
+				)}
+			</div>
+			<DynamicDrawerRoot
+				open={isDrawerOpen}
+				onOpenChange={(open) => {
+					setIsDrawerOpen(open);
+					if (!open) {
+						handleReset();
+					}
+				}}
+			>
+				<DynamicDrawerContent>
+					<DynamicDrawerTitle className="sr-only">
+						Create Entry
+					</DynamicDrawerTitle>
+					{isSubmitting ? (
+						<div className="h-56 flex justify-center items-center">
+							<Logo className="w-6 h-6 rotating" />
+						</div>
+					) : (
+						<>
+							<div className="h-56 flex flex-col">
+								<MDX
+									markdown={markdown}
+									autoFocus
+									aspectSquare={false}
+									placeholder={placeholder}
+									onChange={setMarkdown}
+									className="bg-transparent text-black dark:text-white h-full flex w-full p-2 create-input-mdx"
+								/>
 							</div>
-						)}
-						{hasFocus && canExpand && !isLoading && (
-							<div className="absolute bottom-1 flex justify-between w-full z-20 px-2 pb-0.5">
+							<div className="mt-2 flex justify-end">
 								<button
 									type="button"
-									onClick={() => setEncrypted?.(!encrypted)}
-									className="create-input-control hover:text-primary text-neutral-600 cursor-pointer"
+									onClick={() => setEncrypted(!encrypted)}
+									className="p-1 text-neutral-400 hover:text-primary cursor-pointer"
 								>
 									{encrypted ? (
-										<Lock className="h-3.5 w-3.5" />
+										<Lock className="h-4 w-4" />
 									) : (
-										<Unlock className="h-3.5 w-3.5 ml-0.5" />
+										<Unlock className="h-4 w-4" />
 									)}
 								</button>
+							</div>
+							<div className="mt-1">
 								<button
 									type="button"
-									className="create-input-control hover:text-primary text-neutral-600 mt-1 cursor-pointer"
-									onClick={() => {
-										setIsExpanded(!isExpanded);
-										onExpand?.(!isExpanded);
-									}}
-									onMouseDown={(e) => {
-										e.preventDefault();
-									}}
+									onClick={() => void handleSubmit()}
+									disabled={!markdown.trim()}
+									className="w-full h-10 rounded-md bg-primary text-black dark:text-white disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
 								>
-									<Arrow
-										title={isExpanded ? "collapse" : "expand"}
-										className={cn("w-4 h-4", {
-											"rotate-90": !isExpanded,
-											"-rotate-90": isExpanded,
-										})}
-									/>
+									Create
 								</button>
 							</div>
-						)}
-					</div>
-				</>
-			)}
-			{isMobile && hasFocus && markdown.trim() !== "" && (
-				<div className="fixed bottom-0 left-0 right-0 p-4 bg-black/80 backdrop-blur-sm border-t border-neutral-800 z-50">
-					<button
-						type="button"
-						onClick={handleMobileSubmit}
-						disabled={isSubmitting}
-						className="w-full py-3 px-4 bg-primary text-black font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-transform"
-					>
-						{isSubmitting ? "Creating..." : "Create Writer"}
-					</button>
-				</div>
-			)}
-		</div>
+						</>
+					)}
+				</DynamicDrawerContent>
+			</DynamicDrawerRoot>
+		</>
 	);
 }

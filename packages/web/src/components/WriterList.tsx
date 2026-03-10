@@ -113,6 +113,11 @@ export function WriterList({ user }: { user?: UserWithWallet }) {
 			)}
 			{isLoading &&
 				SKELETON_KEYS.map((key) => <WriterCardSkeleton key={key} />)}
+			{!isLoading && (writers ?? []).length === 0 && (
+				<div className="col-span-full flex items-center justify-center min-h-[60vh] text-neutral-500">
+					no writers created yet
+				</div>
+			)}
 			{!isLoading &&
 				(writers ?? []).map((writer) => (
 					(() => {

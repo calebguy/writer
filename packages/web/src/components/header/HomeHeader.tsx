@@ -7,6 +7,11 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { FiPlus } from "react-icons/fi";
 import type { Hex } from "viem";
+import {
+	DynamicDrawerContent,
+	DynamicDrawerRoot,
+	DynamicDrawerTitle,
+} from "../dsl/DynamicDrawer";
 import { LogoDropdown } from "../LogoDropdown";
 
 const MDX = dynamic(() => import("../markdown/MDX"), { ssr: false });
@@ -45,9 +50,6 @@ export function HomeHeader() {
 		if (!isCreateSheetOpen) return;
 
 		const onKeyDown = (event: KeyboardEvent) => {
-			if (event.key === "Escape") {
-				setIsCreateSheetOpen(false);
-			}
 			if (
 				event.key === "Enter" &&
 				(event.metaKey || event.ctrlKey) &&
@@ -100,40 +102,38 @@ export function HomeHeader() {
 				</div>
 			</div>
 		</div>
-		{isCreateSheetOpen && (
-			<div className="fixed inset-0 z-50" role="dialog" aria-modal="true">
-				<button
-					type="button"
-					aria-label="Close create writer"
-					className="absolute inset-0 bg-black/45 backdrop-blur-[4px]"
-					onClick={() => setIsCreateSheetOpen(false)}
-				/>
-				<div className="absolute bottom-0 left-0 right-0 rounded-t-2xl bg-white dark:bg-neutral-900 p-3 md:left-auto md:max-w-xl md:right-4 md:bottom-4 md:rounded-2xl">
-					<div className="h-56 md:h-64 border border-dashed border-primary">
-						<MDX
-							markdown={markdown}
-							autoFocus
-							aspectSquare={false}
-							placeholder="Create a Place"
-							onChange={setMarkdown}
-							className="bg-transparent text-black dark:text-white h-full flex w-full p-2 create-input-mdx"
-						/>
-					</div>
-					<div className="mt-3 flex gap-2">
-						<button
-							type="button"
-							onClick={() => {
-								void handleCreateWriter();
-							}}
-							disabled={isPending || !markdown.trim() || !wallet?.address}
-							className="w-full h-10 rounded-md bg-primary text-black disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
-						>
-							{isPending ? "Creating..." : "Create Writer"}
-						</button>
-					</div>
+		<DynamicDrawerRoot
+			open={isCreateSheetOpen}
+			onOpenChange={setIsCreateSheetOpen}
+		>
+			<DynamicDrawerContent>
+				<DynamicDrawerTitle className="sr-only">
+					Create Writer
+				</DynamicDrawerTitle>
+				<div className="h-56 md:h-64 flex flex-col">
+					<MDX
+						markdown={markdown}
+						autoFocus
+						aspectSquare={false}
+						placeholder="Create a Place"
+						onChange={setMarkdown}
+						className="bg-transparent text-black dark:text-white h-full flex w-full p-2 create-input-mdx"
+					/>
 				</div>
-			</div>
-		)}
+				<div className="mt-3 flex gap-2">
+					<button
+						type="button"
+						onClick={() => {
+							void handleCreateWriter();
+						}}
+						disabled={isPending || !markdown.trim() || !wallet?.address}
+						className="w-full h-10 rounded-md bg-primary text-black dark:text-white disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+					>
+						{isPending ? "Creating..." : "Create"}
+					</button>
+				</div>
+			</DynamicDrawerContent>
+		</DynamicDrawerRoot>
 		</>
 	);
 }

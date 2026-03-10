@@ -1,4 +1,5 @@
 import { WriterHeader } from "@/components/header/WriterHeader";
+import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
 import { EntryLoadingProvider } from "@/utils/EntryLoadingContext";
 import type { Metadata } from "next";
 import { use } from "react";
@@ -85,10 +86,11 @@ export default function Layout({
 				<div className="mb-4 shrink-0">
 					<WriterHeader address={address} />
 				</div>
-				<div className="grow flex flex-col relative min-h-0 overflow-auto">
+				<div className="grow flex flex-col relative min-h-0 overflow-auto pb-20 md:pb-0">
 					{children}
 				</div>
 			</div>
+			<MobileBottomNav />
 		</EntryLoadingProvider>
 	);
 }
