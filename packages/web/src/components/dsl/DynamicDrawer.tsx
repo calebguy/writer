@@ -3,7 +3,9 @@
 import { cn } from "@/utils/cn";
 import { Drawer } from "vaul";
 
-const DynamicDrawerRoot = Drawer.Root;
+function DynamicDrawerRoot(props: React.ComponentPropsWithoutRef<typeof Drawer.Root>) {
+	return <Drawer.Root repositionInputs={false} {...props} />;
+}
 const DynamicDrawerTrigger = Drawer.Trigger;
 const DynamicDrawerClose = Drawer.Close;
 const DynamicDrawerHandle = Drawer.Handle;

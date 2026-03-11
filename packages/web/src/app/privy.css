@@ -27,7 +27,7 @@ body {
     --privy-color-warning-dark: #FEF9A0;
     --privy-color-error-dark: #FCA5A5;
     --privy-color-info-bg: #1a1a1a;
-    --privy-color-info-bg-hover: #141414;
+    --privy-color-info-bg-hover: var(--privy-color-background-2);
     --privy-color-border-default: #262626;
     --privy-color-border-hover: #404040;
     --privy-color-border-focus: #F8F8F8;

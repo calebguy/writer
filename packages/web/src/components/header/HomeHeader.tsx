@@ -127,7 +127,7 @@ export function HomeHeader() {
 							void handleCreateWriter();
 						}}
 						disabled={isPending || !markdown.trim() || !wallet?.address}
-						className="w-full h-10 rounded-md bg-primary text-black dark:text-white disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+						className="w-full h-10 rounded-md bg-neutral-200 dark:bg-neutral-600 text-black dark:text-white disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
 					>
 						{isPending ? "Creating..." : "Create"}
 					</button>
