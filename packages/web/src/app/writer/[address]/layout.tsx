@@ -1,5 +1,6 @@
 import { WriterHeader } from "@/components/header/WriterHeader";
 import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
+import { CreateEntryDrawerProvider } from "@/components/writer/CreateEntryDrawerContext";
 import { EntryLoadingProvider } from "@/utils/EntryLoadingContext";
 import type { Metadata } from "next";
 import { use } from "react";
@@ -82,15 +83,17 @@ export default function Layout({
 	const { address } = use(params);
 	return (
 		<EntryLoadingProvider>
-			<div className="flex flex-col grow min-h-0">
-				<div className="mb-4 shrink-0">
-					<WriterHeader address={address} />
+			<CreateEntryDrawerProvider>
+				<div className="flex flex-col grow min-h-0">
+					<div className="mb-4 shrink-0">
+						<WriterHeader address={address} />
+					</div>
+					<div className="grow flex flex-col relative min-h-0 overflow-auto pb-20 md:pb-0">
+						{children}
+					</div>
 				</div>
-				<div className="grow flex flex-col relative min-h-0 overflow-auto pb-20 md:pb-0">
-					{children}
-				</div>
-			</div>
-			<MobileBottomNav />
+				<MobileBottomNav />
+			</CreateEntryDrawerProvider>
 		</EntryLoadingProvider>
 	);
 }

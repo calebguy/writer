@@ -4,15 +4,10 @@ import { Arrow } from "@/components/icons/Arrow";
 import { Lock } from "@/components/icons/Lock";
 import { Unlock } from "@/components/icons/Unlock";
 import { cn } from "@/utils/cn";
-import { useIsMac, useIsMobile } from "@/utils/hooks";
+import { useIsMac } from "@/utils/hooks";
 import type { MDXEditorMethods } from "@mdxeditor/editor";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
-import {
-	DynamicDrawerContent,
-	DynamicDrawerRoot,
-	DynamicDrawerTitle,
-} from "./dsl/DynamicDrawer";
 import { Logo } from "./icons/Logo";
 import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
 
@@ -39,10 +34,8 @@ export default function CreateInput({
 	isLoading = false,
 }: CreateInputProps) {
 	const isMac = useIsMac();
-	const isMobile = useIsMobile();
 	const [hasFocus, setHasFocus] = useState(false);
 	const [isExpanded, setIsExpanded] = useState(false);
-	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [markdown, setMarkdown] = useState<string>("");
 	const editorRef = useRef<MDXEditorMethods>(null);
@@ -51,9 +44,8 @@ export default function CreateInput({
 	const [loadingContent, setLoadingContent] = useState<string>("");
 	const [encrypted, setEncrypted] = useState(false);
 
-	// Handle clicks inside or outside the container (desktop only)
+	// Handle clicks inside or outside the container
 	useEffect(() => {
-		if (isMobile) return;
 		const handleClick = (event: MouseEvent) => {
 			if (containerRef.current) {
 				if (!containerRef.current.contains(event.target as Node)) {
@@ -70,7 +62,7 @@ export default function CreateInput({
 		return () => {
 			document.removeEventListener("mousedown", handleClick);
 		};
-	}, [markdown, onExpand, isMobile]);
+	}, [markdown, onExpand]);
 
 	// Focus the editor when hasFocus changes to true
 	useEffect(() => {
@@ -81,14 +73,6 @@ export default function CreateInput({
 			}, 0);
 		}
 	}, [hasFocus]);
-
-	// Listen for header + button to open the mobile drawer
-	useEffect(() => {
-		const handleOpenDrawer = () => setIsDrawerOpen(true);
-		window.addEventListener("open-create-entry-drawer", handleOpenDrawer);
-		return () =>
-			window.removeEventListener("open-create-entry-drawer", handleOpenDrawer);
-	}, []);
 
 	// Handle keyboard shortcuts
 	useEffect(() => {
@@ -122,7 +106,6 @@ export default function CreateInput({
 		setMarkdown("");
 		setHasFocus(false);
 		setIsExpanded(false);
-		setIsDrawerOpen(false);
 		setEncrypted(false);
 		onExpand?.(false);
 	};
@@ -137,7 +120,6 @@ export default function CreateInput({
 		setIsSubmitting(false);
 		setHasFocus(false);
 		setIsExpanded(false);
-		setIsDrawerOpen(false);
 		setEncrypted(false);
 		onExpand?.(false);
 	};
@@ -192,20 +174,10 @@ export default function CreateInput({
 									hidden: hasFocus || isExpanded,
 								},
 							)}
-							onClick={() => {
-								if (isMobile) {
-									setIsDrawerOpen(true);
-								} else {
-									setHasFocus(true);
-								}
-							}}
+							onClick={() => setHasFocus(true)}
 							onKeyDown={(e) => {
 								if (e.key === "Enter") {
-									if (isMobile) {
-										setIsDrawerOpen(true);
-									} else {
-										setHasFocus(true);
-									}
+									setHasFocus(true);
 								}
 							}}
 						>
@@ -273,62 +245,6 @@ export default function CreateInput({
 					</>
 				)}
 			</div>
-			<DynamicDrawerRoot
-				open={isDrawerOpen}
-				onOpenChange={(open) => {
-					setIsDrawerOpen(open);
-					if (!open) {
-						handleReset();
-					}
-				}}
-			>
-				<DynamicDrawerContent>
-					<DynamicDrawerTitle className="sr-only">
-						Create Entry
-					</DynamicDrawerTitle>
-					{isSubmitting ? (
-						<div className="h-56 flex justify-center items-center">
-							<Logo className="w-6 h-6 rotating" />
-						</div>
-					) : (
-						<>
-							<div className="h-56 flex flex-col">
-								<MDX
-									markdown={markdown}
-									autoFocus
-									aspectSquare={false}
-									placeholder={placeholder}
-									onChange={setMarkdown}
-									className="bg-transparent text-black dark:text-white h-full flex w-full p-2 create-input-mdx"
-								/>
-							</div>
-							<div className="mt-2 flex justify-end">
-								<button
-									type="button"
-									onClick={() => setEncrypted(!encrypted)}
-									className="p-1 text-neutral-400 hover:text-primary cursor-pointer"
-								>
-									{encrypted ? (
-										<Lock className="h-4 w-4" />
-									) : (
-										<Unlock className="h-4 w-4" />
-									)}
-								</button>
-							</div>
-							<div className="mt-1">
-								<button
-									type="button"
-									onClick={() => void handleSubmit()}
-									disabled={!markdown.trim()}
-									className="w-full h-10 rounded-md bg-neutral-900 text-black dark:text-white disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
-								>
-									Create
-								</button>
-							</div>
-						</>
-					)}
-				</DynamicDrawerContent>
-			</DynamicDrawerRoot>
 		</>
 	);
 }

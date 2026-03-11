@@ -3,18 +3,11 @@
 import { type Writer, factoryCreate } from "@/utils/api";
 import { useOPWallet } from "@/utils/hooks";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { FiPlus } from "react-icons/fi";
 import type { Hex } from "viem";
+import { CreateWriterDrawer } from "../CreateWriterDrawer";
 import { LogoDropdown } from "../LogoDropdown";
-import {
-	DynamicDrawerContent,
-	DynamicDrawerRoot,
-	DynamicDrawerTitle,
-} from "../dsl/DynamicDrawer";
-
-const MDX = dynamic(() => import("../markdown/MDX"), { ssr: false });
 
 export function HomeHeader() {
 	const queryClient = useQueryClient();
@@ -82,6 +75,13 @@ export function HomeHeader() {
 		setIsCreateSheetOpen(false);
 	};
 
+	const handleOpenChange = (open: boolean) => {
+		setIsCreateSheetOpen(open);
+		if (!open) {
+			setMarkdown("");
+		}
+	};
+
 	return (
 		<>
 			<div className="flex items-center justify-between">
@@ -102,38 +102,17 @@ export function HomeHeader() {
 					</div>
 				</div>
 			</div>
-			<DynamicDrawerRoot
+			<CreateWriterDrawer
 				open={isCreateSheetOpen}
-				onOpenChange={setIsCreateSheetOpen}
-			>
-				<DynamicDrawerContent>
-					<DynamicDrawerTitle className="sr-only">
-						Create Writer
-					</DynamicDrawerTitle>
-					<div className="h-56 md:h-64 flex flex-col">
-						<MDX
-							markdown={markdown}
-							autoFocus
-							aspectSquare={false}
-							placeholder="Create a Place"
-							onChange={setMarkdown}
-							className="bg-transparent text-black dark:text-white h-full flex w-full p-2 create-input-mdx"
-						/>
-					</div>
-					<div className="mt-3 flex gap-2">
-						<button
-							type="button"
-							onClick={() => {
-								void handleCreateWriter();
-							}}
-							disabled={isPending || !markdown.trim() || !wallet?.address}
-							className="w-full h-10 rounded-md bg-neutral-900 text-black dark:text-white disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
-						>
-							{isPending ? "Creating..." : "Create"}
-						</button>
-					</div>
-				</DynamicDrawerContent>
-			</DynamicDrawerRoot>
+				onOpenChange={handleOpenChange}
+				markdown={markdown}
+				onMarkdownChange={setMarkdown}
+				onCreate={() => {
+					void handleCreateWriter();
+				}}
+				isPending={isPending}
+				isDisabled={isPending || !markdown.trim() || !wallet?.address}
+			/>
 		</>
 	);
 }

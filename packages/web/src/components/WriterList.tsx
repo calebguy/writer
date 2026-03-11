@@ -5,6 +5,7 @@ import {
 	factoryCreate,
 	getWriter,
 	getWritersByManager,
+	type Writer,
 } from "@/utils/api";
 import type { UserWithWallet } from "@/utils/auth";
 import { POLLING_INTERVAL } from "@/utils/constants";
@@ -57,6 +58,29 @@ export function WriterList({ user }: { user?: UserWithWallet }) {
 	const { mutateAsync: hideWriter } = useMutation({
 		mutationFn: deleteWriter,
 		mutationKey: ["delete-writer"],
+		onMutate: async (writerAddress: Hex | string) => {
+			if (!address) return { previousWriters: undefined as undefined };
+			const queryKey = ["get-writers", address] as const;
+			await queryClient.cancelQueries({ queryKey });
+			const previousWriters = queryClient.getQueryData<Writer[]>(queryKey);
+
+			queryClient.setQueryData<Writer[]>(queryKey, (current) =>
+				(current ?? []).filter(
+					(writer) =>
+						writer.address.toLowerCase() !== writerAddress.toLowerCase(),
+				),
+			);
+
+			return { previousWriters, queryKey };
+		},
+		onError: (_error, _writerAddress, context) => {
+			if (!context?.queryKey) return;
+			queryClient.setQueryData(context.queryKey, context.previousWriters);
+		},
+		onSettled: () => {
+			if (!address) return;
+			queryClient.invalidateQueries({ queryKey: ["get-writers", address] });
+		},
 	});
 	const { mutateAsync: createWriter, isPending: isCreatePending } = useMutation(
 		{
@@ -103,7 +127,7 @@ export function WriterList({ user }: { user?: UserWithWallet }) {
 	}, [isPolling, writers]);
 
 	return (
-		<div className="grid gap-2 grid-cols-1 min-[150px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
+		<div className="grid gap-2 grid-cols-1 min-[321px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
 			{!!user && (
 				<div className="hidden md:block">
 					<CreateInput
@@ -167,11 +191,10 @@ export function WriterList({ user }: { user?: UserWithWallet }) {
 												<button
 													type="button"
 													className="group-hover:block hidden ml-auto absolute bottom-1.5 right-2 z-10 text-primary hover:text-primary cursor-pointer"
-													onClick={async (e) => {
+													onClick={(e) => {
 														e.preventDefault();
 														e.stopPropagation();
-														await hideWriter(writer.address as Hex);
-														refetch();
+														hideWriter(writer.address as Hex);
 													}}
 												>
 													<ClosedEye className="w-4 h-4" />

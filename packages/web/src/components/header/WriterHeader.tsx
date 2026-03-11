@@ -5,6 +5,7 @@ import { useEntryLoading } from "@/utils/EntryLoadingContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FiPlus } from "react-icons/fi";
 import type { Hex } from "viem";
+import { useCreateEntryDrawer } from "../writer/CreateEntryDrawerContext";
 import { LogoDropdown } from "../LogoDropdown";
 import { MarkdownRenderer } from "../markdown/MarkdownRenderer";
 import { BackButton } from "./BackButton";
@@ -16,6 +17,7 @@ export function WriterHeader({
 }) {
 	const queryClient = useQueryClient();
 	const { isEntryLoading } = useEntryLoading();
+	const { open } = useCreateEntryDrawer();
 
 	const { data: writer } = useQuery({
 		queryKey: ["writer", address],
@@ -52,9 +54,7 @@ export function WriterHeader({
 			<button
 				type="button"
 				aria-label="Create entry"
-				onClick={() =>
-					window.dispatchEvent(new CustomEvent("open-create-entry-drawer"))
-				}
+				onClick={open}
 				className="md:hidden text-primary hover:opacity-80 transition-opacity cursor-pointer p-1"
 			>
 				<FiPlus className="h-6 w-6" />

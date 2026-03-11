@@ -10,6 +10,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Hex } from "viem";
+import { CreateEntryDrawer } from "./CreateEntryDrawer";
 import CreateInput, { type CreateInputData } from "./CreateInput";
 import EntryList from "./EntryList";
 
@@ -84,39 +85,48 @@ export default function EntryListWithCreateInput({
 	};
 
 	return (
-		<div
-			className={`relative ${
-				isExpanded
-					? "h-full"
-					: "grid gap-2 grid-cols-1 min-[150px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]"
-			}`}
-		>
-			{canCreateEntries && (
-				<div className="hidden md:block">
-					<CreateInput
-						placeholder={`Write in ${writerTitle}`}
-						onExpand={setIsExpanded}
-						canExpand={true}
-						onSubmit={handleSubmit}
-						isLoading={isPending}
+		<>
+			<div
+				className={`relative ${
+					isExpanded
+						? "h-full"
+						: "grid gap-2 grid-cols-1 min-[321px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]"
+				}`}
+			>
+				{canCreateEntries && (
+					<div className="hidden md:block">
+						<CreateInput
+							placeholder={`Write in ${writerTitle}`}
+							onExpand={setIsExpanded}
+							canExpand={true}
+							onSubmit={handleSubmit}
+							isLoading={isPending}
+						/>
+					</div>
+				)}
+				{!isExpanded && processedEntries.length > 0 && (
+					<EntryList
+						processedEntries={processedEntries}
+						writerAddress={writerAddress}
+						showLockedEntries={showLockedEntries}
+						isUnlocking={isUnlocking}
+						unlockError={unlockError}
+						onUnlock={showUnlockBanner ? onUnlock : undefined}
 					/>
-				</div>
-			)}
-			{!isExpanded && processedEntries.length > 0 && (
-				<EntryList
-					processedEntries={processedEntries}
-					writerAddress={writerAddress}
-					showLockedEntries={showLockedEntries}
-					isUnlocking={isUnlocking}
-					unlockError={unlockError}
-					onUnlock={showUnlockBanner ? onUnlock : undefined}
+				)}
+				{!isExpanded && processedEntries.length === 0 && (
+					<div className="col-span-full flex items-center justify-center min-h-[60vh] text-neutral-500">
+						no entries yet
+					</div>
+				)}
+			</div>
+			{canCreateEntries && (
+				<CreateEntryDrawer
+					placeholder={`Write in ${writerTitle}`}
+					onSubmit={handleSubmit}
+					isLoading={isPending}
 				/>
 			)}
-			{!isExpanded && processedEntries.length === 0 && (
-				<div className="col-span-full flex items-center justify-center min-h-[60vh] text-neutral-500">
-					no entries yet
-				</div>
-			)}
-		</div>
+		</>
 	);
 }

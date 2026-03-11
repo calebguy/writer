@@ -137,7 +137,7 @@ export default function WriterPage() {
 
 	if (!writer || isLoading || isEntriesProcessing) {
 		return (
-			<div className="grid gap-2 grid-cols-1 min-[150px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
+			<div className="grid gap-2 grid-cols-1 min-[321px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
 				{canCreateEntries && (
 					<div className="relative">
 						<CreateInput onSubmit={() => {}} isLoading={false} />
