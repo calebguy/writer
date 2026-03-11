@@ -320,7 +320,7 @@ export default function CreateInput({
 									type="button"
 									onClick={() => void handleSubmit()}
 									disabled={!markdown.trim()}
-									className="w-full h-10 rounded-md bg-neutral-200 dark:bg-neutral-600 text-black dark:text-white disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+									className="w-full h-10 rounded-md bg-neutral-900 text-black dark:text-white disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
 								>
 									Create
 								</button>
