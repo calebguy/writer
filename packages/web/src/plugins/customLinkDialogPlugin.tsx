@@ -30,17 +30,18 @@ const closeLinkDialog$ = Action((r) => {
 	);
 });
 
-const LinkEditForm: React.FC<{ initialUrl: string | undefined }> = ({
-	initialUrl,
-}) => {
+const LinkEditForm: React.FC<{
+	initialUrl: string | undefined;
+	initialText: string | undefined;
+}> = ({ initialUrl, initialText }) => {
 	const updateLink = usePublisher(updateLink$);
 	const cancelLinkEdit = usePublisher(cancelLinkEdit$);
 
-	const handleSave = (url: string) => {
+	const handleSave = (url: string, text: string) => {
 		updateLink({
 			url: url,
 			title: undefined,
-			text: undefined,
+			text: text,
 		});
 	};
 
@@ -51,6 +52,7 @@ const LinkEditForm: React.FC<{ initialUrl: string | undefined }> = ({
 	return (
 		<LinkEdit
 			url={initialUrl || ""}
+			text={initialText || ""}
 			title=""
 			onSave={handleSave}
 			onCancel={handleCancel}
@@ -71,7 +73,7 @@ const LinkPreview: React.FC<{ url: string }> = ({ url }) => {
 	};
 
 	return (
-		<div className="w-64 max-w-md p-2 shadow-xl bg-neutral-900 relative flex flex-col gap-2">
+		<div className="w-64 max-w-md p-2 bg-neutral-900 border border-neutral-800 relative flex flex-col gap-2">
 			<div className="bg-neutral-800 p-2 overflow-x-auto flex items-center gap-1 scrollbar-none">
 				<a
 					href={url}
@@ -135,7 +137,10 @@ const CustomLinkDialogComponent: React.FC = () => {
 					}}
 				>
 					{linkDialogState.type === "edit" && (
-						<LinkEditForm initialUrl={linkDialogState.url} />
+						<LinkEditForm
+							initialUrl={linkDialogState.url}
+							initialText={linkDialogState.text}
+						/>
 					)}
 					{linkDialogState.type === "preview" && (
 						<LinkPreview url={linkDialogState.url} />

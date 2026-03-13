@@ -5,22 +5,26 @@ import { RiArrowGoBackLine } from "react-icons/ri";
 
 interface LinkEditProps {
 	url: string;
+	text: string;
 	title: string;
-	onSave: (url: string) => void;
+	onSave: (url: string, text: string) => void;
 	onCancel: () => void;
 }
 
 export const LinkEdit: React.FC<LinkEditProps> = ({
 	url,
+	text,
 	onSave,
 	onCancel,
 }) => {
 	const [linkUrl, setLinkUrl] = useState(url);
+	const [linkText, setLinkText] = useState(text);
 	const [originalUrl, setOriginalUrl] = useState(url);
+	const [originalText, setOriginalText] = useState(text);
 	const inputRef = useRef<HTMLInputElement>(null);
 
 	// Check if URL has changed and is valid
-	const hasChanged = linkUrl !== originalUrl;
+	const hasChanged = linkUrl !== originalUrl || linkText !== originalText;
 	const isValidUrl = (() => {
 		if (!linkUrl.trim()) return false;
 		try {
@@ -30,7 +34,7 @@ export const LinkEdit: React.FC<LinkEditProps> = ({
 			return false;
 		}
 	})();
-	const canSave = hasChanged && isValidUrl;
+	const canSave = hasChanged && isValidUrl && linkText.trim().length > 0;
 
 	useEffect(() => {
 		if (inputRef.current) {
@@ -46,8 +50,12 @@ export const LinkEdit: React.FC<LinkEditProps> = ({
 		setLinkUrl(url);
 	}, [url]);
 
+	useEffect(() => {
+		setLinkText(text);
+	}, [text]);
+
 	const handleSave = () => {
-		onSave(linkUrl);
+		onSave(linkUrl, linkText);
 	};
 
 	const handleCancel = () => {
@@ -63,10 +71,19 @@ export const LinkEdit: React.FC<LinkEditProps> = ({
 	};
 
 	return (
-		<div className="w-64 max-w-md p-2 shadow-xl bg-neutral-900 relative flex flex-col gap-2">
+		<div className="w-64 max-w-md p-2 bg-neutral-900 border border-neutral-800 relative flex flex-col gap-2">
 			<div className="bg-neutral-800 py-1.5 px-2 overflow-x-auto flex items-center gap-1 scrollbar-none">
 				<input
-					// This is needed to make sure the switch from preview to edit works properly
+					type="text"
+					value={linkText}
+					onChange={(e) => setLinkText(e.target.value)}
+					onKeyDown={handleKeyDown}
+					className="flex-1 bg-transparent text-secondary text-sm leading-3 border-none outline-none placeholder:text-neutral-500"
+					placeholder="Link text"
+				/>
+			</div>
+			<div className="bg-neutral-800 py-1.5 px-2 overflow-x-auto flex items-center gap-1 scrollbar-none">
+				<input
 					autoFocus
 					ref={inputRef}
 					type="url"

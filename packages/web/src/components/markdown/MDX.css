@@ -28,10 +28,18 @@
 :root[data-theme="light"] .create-input-mdx .prose * {
   color: var(--color-black) !important;
 }
+:root[data-theme="light"] .create-input-mdx .prose a,
+:root[data-theme="light"] .create-input-mdx .prose a * {
+  color: rgb(var(--color-primary)) !important;
+}
 
 :root:not([data-theme="light"]) .create-input-mdx .prose,
 :root:not([data-theme="light"]) .create-input-mdx .prose * {
   color: var(--color-white) !important;
+}
+:root:not([data-theme="light"]) .create-input-mdx .prose a,
+:root:not([data-theme="light"]) .create-input-mdx .prose a * {
+  color: rgb(var(--color-primary)) !important;
 }
 
 :root[data-theme="light"] .create-input-mdx {

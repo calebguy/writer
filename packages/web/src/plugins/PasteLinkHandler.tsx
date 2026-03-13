@@ -34,9 +34,20 @@ export const PasteLinkHandler: React.FC<PasteLinkHandlerProps> = ({
 					if (!pastedText) return false;
 
 					// Check if pasted content looks like a URL
-					const urlRegex =
-						/^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
-					const isUrl = urlRegex.test(pastedText.trim());
+					const trimmed = pastedText.trim();
+					let parsedUrl: URL | null = null;
+					try {
+						parsedUrl = new URL(
+							trimmed.startsWith("http") ? trimmed : `https://${trimmed}`,
+						);
+					} catch {
+						// not a valid URL
+					}
+					const isUrl =
+						parsedUrl !== null &&
+						(parsedUrl.protocol === "http:" ||
+							parsedUrl.protocol === "https:") &&
+						parsedUrl.hostname.includes(".");
 
 					if (isUrl) {
 						// Get the current selection
@@ -47,18 +58,13 @@ export const PasteLinkHandler: React.FC<PasteLinkHandlerProps> = ({
 
 						const selectedText = selection.getTextContent().trim();
 						if (selectedText) {
-
-							// Create the URL
-							const url = pastedText.trim().startsWith("http")
-								? pastedText.trim()
-								: `https://${pastedText.trim()}`;
-
 							// Create a link node with the selected text as content
-							const linkNode = $createLinkNode(url);
+							const linkNode = $createLinkNode(parsedUrl!.href);
 							const textNode = $createTextNode(selectedText);
 							linkNode.append(textNode);
 
-							// Replace the selection with the link node
+							// Remove selected text first, then insert the link
+							selection.removeText();
 							selection.insertNodes([linkNode]);
 
 							return true; // Prevent default paste behavior
