@@ -1,13 +1,13 @@
 "use client";
 
-import { type Writer, getWriter } from "@/utils/api";
 import { useEntryLoading } from "@/utils/EntryLoadingContext";
+import { type Writer, getWriter } from "@/utils/api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FiPlus } from "react-icons/fi";
 import type { Hex } from "viem";
-import { useCreateEntryDrawer } from "../writer/CreateEntryDrawerContext";
 import { LogoDropdown } from "../LogoDropdown";
 import { MarkdownRenderer } from "../markdown/MarkdownRenderer";
+import { useCreateEntryDrawer } from "../writer/CreateEntryDrawerContext";
 import { BackButton } from "./BackButton";
 
 export function WriterHeader({
@@ -55,7 +55,7 @@ export function WriterHeader({
 				type="button"
 				aria-label="Create entry"
 				onClick={open}
-				className="md:hidden text-primary hover:opacity-80 transition-opacity cursor-pointer p-1"
+				className="md:hidden text-primary hover:opacity-80 transition-opacity cursor-pointer"
 			>
 				<FiPlus className="h-6 w-6" />
 			</button>

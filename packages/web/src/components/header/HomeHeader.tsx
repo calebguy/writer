@@ -93,7 +93,7 @@ export function HomeHeader() {
 						type="button"
 						aria-label="Create writer"
 						onClick={() => setIsCreateSheetOpen(true)}
-						className="md:hidden text-primary hover:opacity-80 transition-opacity cursor-pointer p-1"
+						className="md:hidden text-primary hover:opacity-80 transition-opacity cursor-pointer"
 					>
 						<FiPlus className="h-6 w-6" />
 					</button>
