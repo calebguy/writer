@@ -293,16 +293,23 @@ function useStarCounts(gridRef: React.RefObject<HTMLDivElement | null>) {
 			const gap = parseFloat(
 				styles.getPropertyValue("--star-gap") || String(STAR_GAP_DEFAULT),
 			);
-			const starSlot = STAR_SIZE + gap;
+
+			// Get actual rendered star size from the first star element
+			const firstStar = gridRef.current.querySelector(".landing-star");
+			const actualStarSize = firstStar
+				? firstStar.getBoundingClientRect().width
+				: STAR_SIZE;
+
+			const starSlot = actualStarSize + gap;
 
 			// Side stars based on height
 			const gridHeight = gridRef.current.scrollHeight;
-			const availableHeight = gridHeight - STAR_SIZE * 2 - gap;
-			setSideCols(Math.max(1, Math.floor(availableHeight / starSlot)));
+			const availableHeight = gridHeight - actualStarSize * 2 - gap;
+			setSideCols(Math.max(1, Math.ceil(availableHeight / starSlot)));
 
 			// Top/bottom stars based on width
 			const gridWidth = gridRef.current.clientWidth;
-			const availableWidth = gridWidth - STAR_SIZE * 2 - gap;
+			const availableWidth = gridWidth - actualStarSize * 2 - gap;
 			setTopRows(Math.max(1, Math.floor(availableWidth / starSlot)));
 		}
 
