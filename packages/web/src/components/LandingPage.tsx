@@ -233,7 +233,6 @@ const FOR_LINES = [
 	"for private",
 ];
 
-
 function ArtifactBar({ items }: { items: typeof BAR_1_ITEMS }) {
 	return (
 		<div className="landing-bar">
@@ -334,13 +333,17 @@ export function LandingPage() {
 		<div className="landing-root">
 			<div className="landing-grid" ref={gridRef} data-ready={ready}>
 				{/* Row 1: corner + top + corner */}
-				<div className="landing-border-corner"><StarImage /></div>
+				<div className="landing-border-corner">
+					<StarImage />
+				</div>
 				<div className="landing-border-top">
 					{Array.from({ length: topRows }).map((_, i) => (
 						<StarImage key={`top-${i}`} />
 					))}
 				</div>
-				<div className="landing-border-corner"><StarImage /></div>
+				<div className="landing-border-corner">
+					<StarImage />
+				</div>
 
 				{/* Row 2: left + content + right */}
 				<div className="landing-border-left">
@@ -397,19 +400,23 @@ export function LandingPage() {
 				</div>
 
 				{/* Row 3: corner + bottom + corner */}
-				<div className="landing-border-corner"><StarImage /></div>
+				<div className="landing-border-corner">
+					<StarImage />
+				</div>
 				<div className="landing-border-bottom">
 					{Array.from({ length: topRows }).map((_, i) => (
 						<StarImage key={`bottom-${i}`} />
 					))}
 				</div>
-				<div className="landing-border-corner"><StarImage /></div>
+				<div className="landing-border-corner">
+					<StarImage />
+				</div>
 			</div>
 
 			{/* Footer — below the border */}
 			<footer className="landing-footer">
-				<span className="landing-footer-tagline">write today, forever</span>
-				<span className="landing-footer-url">writer.place</span>
+				<span className="landing-footer-tagline">writer.place</span>
+				<span className="landing-footer-url">write today, forever</span>
 				<span className="landing-footer-links">
 					<a href="/about">about</a>
 					<a href="/docs">docs</a>
