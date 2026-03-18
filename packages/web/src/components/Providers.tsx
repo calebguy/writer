@@ -98,7 +98,7 @@ export function Providers({
 					appearance: {
 						theme: "dark",
 						accentColor: RGBToHex(primaryColor),
-						landingHeader: "Writer",
+						landingHeader: "",
 						walletList: [
 							"metamask",
 							"coinbase_wallet",

@@ -1,3 +1,1 @@
-![Writer](https://res.cloudinary.com/dm9gwanrg/image/upload/v1741159374/Artboard_1_1_3p_ztojhs.png)
-
--- write today, forever --
+![Writer](https://res.cloudinary.com/dm9gwanrg/image/upload/v1773854931/gh-poster_ve7hco.png)
