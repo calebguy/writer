@@ -20,8 +20,21 @@ const BAR_2_ITEMS = [
 
 const BAR_3_ITEMS = [
 	{ src: "/images/human/logo-7.png", alt: "figurine" },
-	{ src: "/images/relics/relic-13.png", alt: "totem" },
+	{ src: "/images/relics/relic-13.png", alt: "squiggle relic" },
 	{ src: "/images/human/logo-9.png", alt: "figurine" },
+];
+
+// Extra bars shown only on mobile to fill the hero
+const BAR_MOBILE_1_ITEMS = [
+	{ src: "/images/human/logo-5.png", alt: "figurine" },
+	{ src: "/images/relics/relic-11.png", alt: "relic pressed" },
+	{ src: "/images/human/logo-6.png", alt: "figurine" },
+];
+
+const BAR_MOBILE_2_ITEMS = [
+	{ src: "/images/human/logo-8.png", alt: "figurine" },
+	{ src: "/images/relics/relic-12.png", alt: "relic squaggle" },
+	{ src: "/images/human/logo-10.png", alt: "figurine" },
 ];
 
 const FOR_LINES = [
@@ -171,16 +184,26 @@ export function LandingPage() {
 				<div className="landing-content">
 					{/* First viewport */}
 					<div className="landing-hero">
-						<ArtifactBar items={BAR_1_ITEMS} />
+						<div className="landing-hero-bars">
+							<ArtifactBar items={BAR_1_ITEMS} />
+							<div className="landing-mobile-only">
+								<ArtifactBar items={BAR_MOBILE_1_ITEMS} />
+							</div>
+							<div className="landing-mobile-only">
+								<ArtifactBar items={BAR_MOBILE_2_ITEMS} />
+							</div>
+						</div>
 
-						<div className="landing-wordmark">Writer</div>
-						<button
-							type="button"
-							className="landing-open"
-							onClick={() => login()}
-						>
-							open
-						</button>
+						<div className="landing-hero-bottom">
+							<div className="landing-wordmark">Writer</div>
+							<button
+								type="button"
+								className="landing-open"
+								onClick={() => login()}
+							>
+								open
+							</button>
+						</div>
 					</div>
 
 					{/* Scroll reveal section */}

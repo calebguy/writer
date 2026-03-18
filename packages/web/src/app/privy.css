@@ -155,6 +155,7 @@ body {
 #privy-modal-content img {
   max-height: 105px!important;
   max-width: 210px!important;
+  margin-bottom: 0px!important;
 }
 
 :root[data-theme="light"] #privy-modal-content {
@@ -171,4 +172,12 @@ body {
 #headlessui-dialog-panel-\:r3\:,
 #privy-modal-content {
   box-shadow: none;
+}
+
+.epCqPF {
+  gap: 0px!important;
+}
+
+.bDmsky {
+  margin-bottom: 0px!important;
 }
