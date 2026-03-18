@@ -673,6 +673,16 @@ body,
   object-fit: contain;
 }
 
+.landing-bar-artifact:nth-child(2) {
+  display: none;
+}
+
+@media (min-width: 480px) {
+  .landing-bar-artifact:nth-child(2) {
+    display: block;
+  }
+}
+
 @media (min-width: 768px) {
   .landing-bar-artifact {
     width: 110px;
