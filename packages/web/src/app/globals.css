@@ -618,8 +618,6 @@ body,
 
 @media (min-width: 768px) {
   .landing-hero {
-    justify-content: space-between;
-    padding-top: 120px;
     padding-bottom: 120px;
     gap: 32px;
   }
@@ -645,6 +643,10 @@ body,
   .landing-hero-bottom {
     gap: 32px;
   }
+}
+
+.landing-section-spacer {
+  height: 120px;
 }
 
 .landing-mobile-only {
@@ -731,13 +733,7 @@ body,
   }
 }
 
-.landing-scroll-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-bottom: 120px;
-  gap: 120px;
-}
+/* kept for reference - sections now use .landing-section-spacer */
 
 .landing-for-section {
   display: flex;
@@ -776,7 +772,6 @@ body,
   font-family: var(--font-serif);
   font-size: 0.9rem;
   color: rgba(0, 0, 0, 0.4);
-  font-style: italic;
   margin-top: 18px;
 }
 

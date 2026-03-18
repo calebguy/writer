@@ -336,12 +336,20 @@ export function LandingPage() {
 						</div>
 					</div>
 
+					<div className="landing-section-spacer" />
+
 					{/* Scroll reveal section */}
-					<div className="landing-scroll-section">
-						<ArtifactBar items={BAR_2_ITEMS} />
-						<ForLines />
-						<ArtifactBar items={BAR_3_ITEMS} />
-					</div>
+					<ArtifactBar items={BAR_2_ITEMS} />
+
+					<div className="landing-section-spacer" />
+
+					<ForLines />
+
+					<div className="landing-section-spacer" />
+
+					<ArtifactBar items={BAR_3_ITEMS} />
+
+					<div className="landing-section-spacer" />
 				</div>
 
 				<div className="landing-border-right">
