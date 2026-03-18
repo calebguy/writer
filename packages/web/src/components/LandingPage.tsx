@@ -179,7 +179,8 @@ const FOR_LINES = [
 	"for private",
 ];
 
-const STAR_COLS = 60;
+const STAR_SIZE = 44; // max display size
+const STAR_GAP_DEFAULT = 80;
 const STAR_ROWS_HORIZONTAL = 8;
 
 function StarImage() {
@@ -281,6 +282,41 @@ function ForLines() {
 	);
 }
 
+function useStarCounts(gridRef: React.RefObject<HTMLDivElement | null>) {
+	const [sideCols, setSideCols] = useState(20);
+	const [topRows, setTopRows] = useState(STAR_ROWS_HORIZONTAL);
+
+	useEffect(() => {
+		function calculate() {
+			if (!gridRef.current) return;
+			const styles = getComputedStyle(gridRef.current);
+			const gap = parseFloat(
+				styles.getPropertyValue("--star-gap") || String(STAR_GAP_DEFAULT),
+			);
+			const starSlot = STAR_SIZE + gap;
+
+			// Side stars based on height
+			const gridHeight = gridRef.current.scrollHeight;
+			const availableHeight = gridHeight - STAR_SIZE * 2 - gap;
+			setSideCols(Math.max(1, Math.floor(availableHeight / starSlot)));
+
+			// Top/bottom stars based on width
+			const gridWidth = gridRef.current.clientWidth;
+			const availableWidth = gridWidth - STAR_SIZE * 2 - gap;
+			setTopRows(Math.max(1, Math.floor(availableWidth / starSlot)));
+		}
+
+		calculate();
+
+		const observer = new ResizeObserver(calculate);
+		if (gridRef.current) observer.observe(gridRef.current);
+
+		return () => observer.disconnect();
+	}, [gridRef]);
+
+	return { sideCols, topRows };
+}
+
 export function LandingPage() {
 	const { login } = useLogin({
 		onComplete: () => {
@@ -288,15 +324,18 @@ export function LandingPage() {
 		},
 	});
 
+	const gridRef = useRef<HTMLDivElement>(null);
+	const { sideCols, topRows } = useStarCounts(gridRef);
+
 	return (
 		<div className="landing-root">
-			<div className="landing-grid">
+			<div className="landing-grid" ref={gridRef}>
 				{/* Row 1: corner + top stars + corner */}
 				<div className="landing-border-corner">
 					<StarImage />
 				</div>
 				<div className="landing-border-top">
-					{Array.from({ length: STAR_ROWS_HORIZONTAL }).map((_, i) => (
+					{Array.from({ length: topRows }).map((_, i) => (
 						<StarImage key={`top-${i}`} />
 					))}
 				</div>
@@ -306,7 +345,7 @@ export function LandingPage() {
 
 				{/* Row 2: left stars + content + right stars */}
 				<div className="landing-border-left">
-					{Array.from({ length: STAR_COLS }).map((_, i) => (
+					{Array.from({ length: sideCols }).map((_, i) => (
 						<StarImage key={`left-${i}`} />
 					))}
 				</div>
@@ -353,7 +392,7 @@ export function LandingPage() {
 				</div>
 
 				<div className="landing-border-right">
-					{Array.from({ length: STAR_COLS }).map((_, i) => (
+					{Array.from({ length: sideCols }).map((_, i) => (
 						<StarImage key={`right-${i}`} />
 					))}
 				</div>
@@ -363,7 +402,7 @@ export function LandingPage() {
 					<StarImage />
 				</div>
 				<div className="landing-border-bottom">
-					{Array.from({ length: STAR_ROWS_HORIZONTAL }).map((_, i) => (
+					{Array.from({ length: topRows }).map((_, i) => (
 						<StarImage key={`bottom-${i}`} />
 					))}
 				</div>
