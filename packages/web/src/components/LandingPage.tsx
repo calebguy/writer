@@ -5,6 +5,60 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
 const STAR_IMAGE = "/images/relics/relic-5.png";
+const STAR_SIZE = 44;
+const STAR_GAP_DEFAULT = 80;
+
+function StarImage() {
+	return (
+		<Image
+			src={STAR_IMAGE}
+			alt=""
+			width={88}
+			height={88}
+			className="landing-star"
+			unoptimized
+		/>
+	);
+}
+
+function useStarCounts(gridRef: React.RefObject<HTMLDivElement | null>) {
+	const [sideCols, setSideCols] = useState(0);
+	const [topRows, setTopRows] = useState(0);
+	const [ready, setReady] = useState(false);
+
+	useEffect(() => {
+		function calculate() {
+			if (!gridRef.current) return;
+			const styles = getComputedStyle(gridRef.current);
+			const gap = parseFloat(
+				styles.getPropertyValue("--star-gap") || String(STAR_GAP_DEFAULT),
+			);
+			const starSize = parseFloat(
+				styles.getPropertyValue("--star-size") || String(STAR_SIZE),
+			);
+			const starSlot = starSize + gap;
+
+			const gridHeight = gridRef.current.scrollHeight;
+			const availableHeight = gridHeight - starSize * 2 - gap;
+			setSideCols(Math.max(1, Math.ceil(availableHeight / starSlot)));
+
+			const gridWidth = gridRef.current.clientWidth;
+			const availableWidth = gridWidth - starSize * 2 - gap;
+			setTopRows(Math.max(1, Math.floor(availableWidth / starSlot)));
+
+			setReady(true);
+		}
+
+		calculate();
+
+		const observer = new ResizeObserver(calculate);
+		if (gridRef.current) observer.observe(gridRef.current);
+
+		return () => observer.disconnect();
+	}, [gridRef]);
+
+	return { sideCols, topRows, ready };
+}
 
 const BAR_1_ITEMS = [
 	{ src: "/images/human/logo-1.png", alt: "figurine" },
@@ -179,22 +233,6 @@ const FOR_LINES = [
 	"for private",
 ];
 
-const STAR_SIZE = 44; // max display size
-const STAR_GAP_DEFAULT = 80;
-const STAR_ROWS_HORIZONTAL = 8;
-
-function StarImage() {
-	return (
-		<Image
-			src={STAR_IMAGE}
-			alt=""
-			width={88}
-			height={88}
-			className="landing-star"
-			unoptimized
-		/>
-	);
-}
 
 function ArtifactBar({ items }: { items: typeof BAR_1_ITEMS }) {
 	return (
@@ -282,48 +320,6 @@ function ForLines() {
 	);
 }
 
-function useStarCounts(gridRef: React.RefObject<HTMLDivElement | null>) {
-	const [sideCols, setSideCols] = useState(20);
-	const [topRows, setTopRows] = useState(STAR_ROWS_HORIZONTAL);
-
-	useEffect(() => {
-		function calculate() {
-			if (!gridRef.current) return;
-			const styles = getComputedStyle(gridRef.current);
-			const gap = parseFloat(
-				styles.getPropertyValue("--star-gap") || String(STAR_GAP_DEFAULT),
-			);
-
-			// Get actual rendered star size from the first star element
-			const firstStar = gridRef.current.querySelector(".landing-star");
-			const actualStarSize = firstStar
-				? firstStar.getBoundingClientRect().width
-				: STAR_SIZE;
-
-			const starSlot = actualStarSize + gap;
-
-			// Side stars based on height
-			const gridHeight = gridRef.current.scrollHeight;
-			const availableHeight = gridHeight - actualStarSize * 2 - gap;
-			setSideCols(Math.max(1, Math.ceil(availableHeight / starSlot)));
-
-			// Top/bottom stars based on width
-			const gridWidth = gridRef.current.clientWidth;
-			const availableWidth = gridWidth - actualStarSize * 2 - gap;
-			setTopRows(Math.max(1, Math.floor(availableWidth / starSlot)));
-		}
-
-		calculate();
-
-		const observer = new ResizeObserver(calculate);
-		if (gridRef.current) observer.observe(gridRef.current);
-
-		return () => observer.disconnect();
-	}, [gridRef]);
-
-	return { sideCols, topRows };
-}
-
 export function LandingPage() {
 	const { login } = useLogin({
 		onComplete: () => {
@@ -332,25 +328,21 @@ export function LandingPage() {
 	});
 
 	const gridRef = useRef<HTMLDivElement>(null);
-	const { sideCols, topRows } = useStarCounts(gridRef);
+	const { sideCols, topRows, ready } = useStarCounts(gridRef);
 
 	return (
 		<div className="landing-root">
-			<div className="landing-grid" ref={gridRef}>
-				{/* Row 1: corner + top stars + corner */}
-				<div className="landing-border-corner">
-					<StarImage />
-				</div>
+			<div className="landing-grid" ref={gridRef} data-ready={ready}>
+				{/* Row 1: corner + top + corner */}
+				<div className="landing-border-corner"><StarImage /></div>
 				<div className="landing-border-top">
 					{Array.from({ length: topRows }).map((_, i) => (
 						<StarImage key={`top-${i}`} />
 					))}
 				</div>
-				<div className="landing-border-corner">
-					<StarImage />
-				</div>
+				<div className="landing-border-corner"><StarImage /></div>
 
-				{/* Row 2: left stars + content + right stars */}
+				{/* Row 2: left + content + right */}
 				<div className="landing-border-left">
 					{Array.from({ length: sideCols }).map((_, i) => (
 						<StarImage key={`left-${i}`} />
@@ -404,18 +396,14 @@ export function LandingPage() {
 					))}
 				</div>
 
-				{/* Row 3: corner + bottom stars + corner */}
-				<div className="landing-border-corner">
-					<StarImage />
-				</div>
+				{/* Row 3: corner + bottom + corner */}
+				<div className="landing-border-corner"><StarImage /></div>
 				<div className="landing-border-bottom">
 					{Array.from({ length: topRows }).map((_, i) => (
 						<StarImage key={`bottom-${i}`} />
 					))}
 				</div>
-				<div className="landing-border-corner">
-					<StarImage />
-				</div>
+				<div className="landing-border-corner"><StarImage /></div>
 			</div>
 
 			{/* Footer — below the border */}
