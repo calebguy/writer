@@ -2,6 +2,7 @@
 
 import { useLogin } from "@privy-io/react-auth";
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 const STAR_IMAGE = "/images/relics/relic-5.png";
@@ -15,7 +16,7 @@ function StarImage() {
 			alt=""
 			width={88}
 			height={88}
-			className="landing-star"
+			className="w-(--star-size) h-(--star-size) opacity-90 shrink-0 dark:invert"
 			unoptimized
 		/>
 	);
@@ -235,7 +236,7 @@ const FOR_LINES = [
 
 function ArtifactBar({ items }: { items: typeof BAR_1_ITEMS }) {
 	return (
-		<div className="landing-bar">
+		<div className="flex items-center justify-center gap-3 md:gap-7 bg-primary p-6 md:py-[30px] md:px-10 rounded-2xl">
 			{items.map((item, i) => (
 				<Image
 					key={i}
@@ -243,7 +244,9 @@ function ArtifactBar({ items }: { items: typeof BAR_1_ITEMS }) {
 					alt={item.alt}
 					width={80}
 					height={80}
-					className="landing-bar-artifact"
+					className={`w-[72px] h-[72px] md:w-[110px] md:h-[110px] object-contain ${
+						i === 1 ? "hidden min-[480px]:block" : ""
+					}`}
 				/>
 			))}
 		</div>
@@ -255,10 +258,10 @@ function ForLines() {
 	const [visibleCount, setVisibleCount] = useState(0);
 
 	useEffect(() => {
-		const lineEls = containerRef.current?.querySelectorAll(".for-line");
+		const lineEls = containerRef.current?.querySelectorAll("[data-for-line]");
 		if (!lineEls) return;
 
-		const scrollRoot = containerRef.current?.closest(".landing-root");
+		const scrollRoot = containerRef.current?.closest("[data-landing-root]");
 
 		const observer = new IntersectionObserver(
 			(entries) => {
@@ -284,12 +287,16 @@ function ForLines() {
 	}, []);
 
 	return (
-		<div ref={containerRef} className="landing-for-section">
+		<div
+			ref={containerRef}
+			className="flex flex-col items-center gap-4 font-serif italic text-[2.5rem] md:text-[4rem] text-center"
+		>
 			{FOR_LINES.map((line, i) => (
 				<div
 					key={line}
 					data-index={i}
-					className="for-line"
+					data-for-line
+					className="will-change-[opacity,transform] leading-[1.1]"
 					style={{
 						opacity: i < visibleCount ? 1 : 0,
 						transform: i < visibleCount ? "translateY(0)" : "translateY(12px)",
@@ -302,7 +309,8 @@ function ForLines() {
 			))}
 			<div
 				data-index={FOR_LINES.length}
-				className="for-line for-line-forever"
+				data-for-line
+				className="will-change-[opacity,transform] leading-[1.1] italic mt-2"
 				style={{
 					opacity: visibleCount > FOR_LINES.length ? 1 : 0,
 					transform:
@@ -330,96 +338,124 @@ export function LandingPage() {
 	const { sideCols, topRows, ready } = useStarCounts(gridRef);
 
 	return (
-		<div className="landing-root">
-			<div className="landing-grid" ref={gridRef} data-ready={ready}>
+		<div
+			data-landing-root
+			className="fixed inset-0 light:bg-white dark:bg-black light:text-black dark:text-white overflow-x-hidden overflow-y-auto"
+		>
+			<div
+				className="landing-grid opacity-0 data-[ready=true]:opacity-100 transition-opacity duration-300"
+				ref={gridRef}
+				data-ready={ready}
+			>
 				{/* Row 1: corner + top + corner */}
-				<div className="landing-border-corner">
+				<div className="flex items-center justify-center opacity-90">
 					<StarImage />
 				</div>
-				<div className="landing-border-top">
+				<div className="flex justify-center items-center gap-(--star-gap)">
 					{Array.from({ length: topRows }).map((_, i) => (
 						<StarImage key={`top-${i}`} />
 					))}
 				</div>
-				<div className="landing-border-corner">
+				<div className="flex items-center justify-center opacity-90">
 					<StarImage />
 				</div>
 
 				{/* Row 2: left + content + right */}
-				<div className="landing-border-left">
+				<div className="flex flex-col justify-start items-center gap-(--star-gap) py-[calc(var(--star-gap)/2)]">
 					{Array.from({ length: sideCols }).map((_, i) => (
 						<StarImage key={`left-${i}`} />
 					))}
 				</div>
 
-				<div className="landing-content">
+				<div className="flex flex-col items-center px-6 md:px-12">
 					{/* First viewport */}
-					<div className="landing-hero">
-						<div className="landing-hero-bars">
+					<div className="min-h-dvh flex flex-col items-center justify-between pt-[120px] pb-20 md:pb-[120px] gap-6 md:gap-8">
+						<div className="flex flex-col items-center gap-4">
 							<ArtifactBar items={BAR_1_ITEMS} />
-							<div className="landing-mobile-only">
+							<div className="block md:hidden">
 								<ArtifactBar items={BAR_MOBILE_1_ITEMS} />
 							</div>
-							<div className="landing-mobile-only">
+							<div className="block md:hidden">
 								<ArtifactBar items={BAR_MOBILE_2_ITEMS} />
 							</div>
 						</div>
 
-						<div className="landing-hero-bottom">
-							<div className="landing-wordmark">Writer</div>
-							<button
-								type="button"
-								className="landing-open"
-								onClick={() => login()}
-							>
-								open
-							</button>
+						<div className="flex flex-col items-center justify-center gap-6 md:gap-8 flex-1">
+							<div className="font-serif text-[4.5rem] md:text-[7rem] leading-none text-center">
+								Writer
+							</div>
+							<div className="flex flex-col sm:flex-row items-center sm:gap-1">
+								<button
+									type="button"
+									className="font-serif italic text-xl md:text-2xl bg-transparent border-none cursor-pointer transition-opacity duration-200 hover:opacity-50"
+									onClick={() => login()}
+								>
+									login,
+								</button>
+								{/* <span className="sm:text-lg italic">or</span> */}
+								<Link
+									href="/explore"
+									className="font-serif italic text-xl md:text-2xl bg-transparent border-none cursor-pointer transition-opacity duration-200 hover:opacity-50"
+								>
+									explore
+								</Link>
+							</div>
 						</div>
 					</div>
 
-					<div className="landing-section-spacer" />
+					<div className="h-[120px]" />
 
 					{/* Scroll reveal section */}
 					<ArtifactBar items={BAR_2_ITEMS} />
 
-					<div className="landing-section-spacer" />
+					<div className="h-[120px]" />
 
 					<ForLines />
 
-					<div className="landing-section-spacer" />
+					<div className="h-[120px]" />
 
 					<ArtifactBar items={BAR_3_ITEMS} />
 
-					<div className="landing-section-spacer" />
+					<div className="h-[120px]" />
 				</div>
 
-				<div className="landing-border-right">
+				<div className="flex flex-col justify-start items-center gap-(--star-gap) py-[calc(var(--star-gap)/2)]">
 					{Array.from({ length: sideCols }).map((_, i) => (
 						<StarImage key={`right-${i}`} />
 					))}
 				</div>
 
 				{/* Row 3: corner + bottom + corner */}
-				<div className="landing-border-corner">
+				<div className="flex items-center justify-center opacity-90">
 					<StarImage />
 				</div>
-				<div className="landing-border-bottom">
+				<div className="flex justify-center items-center gap-(--star-gap)">
 					{Array.from({ length: topRows }).map((_, i) => (
 						<StarImage key={`bottom-${i}`} />
 					))}
 				</div>
-				<div className="landing-border-corner">
+				<div className="flex items-center justify-center opacity-90">
 					<StarImage />
 				</div>
 			</div>
 
 			{/* Footer — below the border */}
-			<footer className="landing-footer">
-				<span className="landing-footer-tagline">writer.place</span>
-				<span className="landing-footer-url">write today, forever</span>
-				<span className="landing-footer-links">
-					<a href="/about">about</a>
-					<a href="/docs">docs</a>
+			<footer className="flex justify-between items-end w-full px-4 pb-3 pt-2 font-serif text-[0.9rem] md:text-[1.15rem] light:text-black/40 dark:text-white/40 mt-[18px]">
+				<span className="flex-1 text-left">writer.place</span>
+				<span className="flex-1 text-center">write today, forever</span>
+				<span className="flex-1 text-right flex justify-end gap-3">
+					<a
+						href="/about"
+						className="light:text-black/40 dark:text-white/40 no-underline transition-colors duration-200 light:hover:text-black/70 dark:hover:text-white/70"
+					>
+						about
+					</a>
+					<a
+						href="/docs"
+						className="light:text-black/40 dark:text-white/40 no-underline transition-colors duration-200 light:hover:text-black/70 dark:hover:text-white/70"
+					>
+						docs
+					</a>
 				</span>
 			</footer>
 		</div>

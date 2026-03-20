@@ -9,6 +9,7 @@ import {
 	subscribeSystemThemeChange,
 } from "@/utils/theme";
 import { usePrivy } from "@privy-io/react-auth";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { IoMdMoon, IoMdSunny } from "react-icons/io";
@@ -16,7 +17,6 @@ import { RiComputerFill } from "react-icons/ri";
 import { ColorModal } from "./ColorModal";
 import { queryClient } from "./Providers";
 import { Dropdown, DropdownItem } from "./dsl/Dropdown";
-import { Logo } from "./icons/Logo";
 
 export function LogoDropdown() {
 	const { logout } = usePrivy();
@@ -48,7 +48,14 @@ export function LogoDropdown() {
 		<>
 			<Dropdown
 				trigger={
-					<Logo className="logo-dropdown-trigger h-8 transition-colors text-primary hover:text-secondary" />
+					// <Logo className="logo-dropdown-trigger h-8 transition-colors text-primary hover:text-secondary" />
+					<Image
+						src={"/images/relics/relic-5.png"}
+						alt={"dropdown trigger"}
+						width={38}
+						height={38}
+						className="transition-transform duration-300 hover:rotate-12 active:scale-90 active:rotate-12 dark:invert"
+					/>
 				}
 			>
 				<DropdownItem onClick={() => router.push("/explore")}>
