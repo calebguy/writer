@@ -12,29 +12,11 @@ export function middleware(request: NextRequest) {
 		return NextResponse.next();
 	}
 
-	// Authenticated users visiting root → redirect to /home
-	if (pathname === "/" && hasAuthToken) {
-		return NextResponse.redirect(new URL("/home", request.url));
-	}
-
 	// User may be authenticated but token expired - redirect to refresh page
-	// The refresh page will attempt to get a new token client-side
-	if (pathname === "/" && !hasAuthToken && hasRefreshToken) {
+	if (!hasAuthToken && hasRefreshToken) {
 		const refreshUrl = new URL("/refresh", request.url);
-		refreshUrl.searchParams.set("redirect_url", "/home");
+		refreshUrl.searchParams.set("redirect_url", pathname);
 		return NextResponse.redirect(refreshUrl);
-	}
-
-	// Unauthenticated users visiting protected pages → check if they need refresh or login
-	if ((pathname === "/home" || pathname === "/saved") && !hasAuthToken) {
-		if (hasRefreshToken) {
-			// May be authenticated, needs token refresh
-			const refreshUrl = new URL("/refresh", request.url);
-			refreshUrl.searchParams.set("redirect_url", pathname);
-			return NextResponse.redirect(refreshUrl);
-		}
-		// No session at all, redirect to login
-		return NextResponse.redirect(new URL("/", request.url));
 	}
 
 	return NextResponse.next();

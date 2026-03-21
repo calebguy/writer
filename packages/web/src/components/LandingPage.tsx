@@ -296,11 +296,10 @@ function ForLines() {
 					key={line}
 					data-index={i}
 					data-for-line
-					className="will-change-[opacity,transform] leading-[1.1]"
+					className="will-change-opacity leading-[1.1]"
 					style={{
 						opacity: i < visibleCount ? 1 : 0,
-						transform: i < visibleCount ? "translateY(0)" : "translateY(12px)",
-						transition: "opacity 0.6s ease, transform 0.6s ease",
+						transition: "opacity 0.6s ease",
 						transitionDelay: `${(i - (visibleCount - 1)) * 0.05}s`,
 					}}
 				>
@@ -310,14 +309,10 @@ function ForLines() {
 			<div
 				data-index={FOR_LINES.length}
 				data-for-line
-				className="will-change-[opacity,transform] leading-[1.1] italic mt-2"
+				className="will-change-opacity leading-[1.1] italic mt-2"
 				style={{
 					opacity: visibleCount > FOR_LINES.length ? 1 : 0,
-					transform:
-						visibleCount > FOR_LINES.length
-							? "translateY(0)"
-							: "translateY(12px)",
-					transition: "opacity 0.8s ease, transform 0.8s ease",
+					transition: "opacity 0.8s ease",
 					transitionDelay: "0.3s",
 				}}
 			>
@@ -327,7 +322,7 @@ function ForLines() {
 	);
 }
 
-export function LandingPage() {
+export function LandingPage({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
 	const { login } = useLogin({
 		onComplete: () => {
 			window.location.href = "/home";
@@ -385,14 +380,22 @@ export function LandingPage() {
 								Writer
 							</div>
 							<div className="flex flex-col sm:flex-row items-center sm:gap-1">
-								<button
-									type="button"
-									className="font-serif italic text-xl md:text-2xl bg-transparent border-none cursor-pointer transition-opacity duration-200 hover:opacity-50"
-									onClick={() => login()}
-								>
-									login,
-								</button>
-								{/* <span className="sm:text-lg italic">or</span> */}
+								{isLoggedIn ? (
+									<Link
+										href="/home"
+										className="font-serif italic text-xl md:text-2xl bg-transparent border-none cursor-pointer transition-opacity duration-200 hover:opacity-50"
+									>
+										write,
+									</Link>
+								) : (
+									<button
+										type="button"
+										className="font-serif italic text-xl md:text-2xl bg-transparent border-none cursor-pointer transition-opacity duration-200 hover:opacity-50"
+										onClick={() => login()}
+									>
+										login,
+									</button>
+								)}
 								<Link
 									href="/explore"
 									className="font-serif italic text-xl md:text-2xl bg-transparent border-none cursor-pointer transition-opacity duration-200 hover:opacity-50"

@@ -8,7 +8,7 @@ import {
 	setStoredThemeMode,
 	subscribeSystemThemeChange,
 } from "@/utils/theme";
-import { usePrivy } from "@privy-io/react-auth";
+import { useLogin, usePrivy } from "@privy-io/react-auth";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -19,7 +19,12 @@ import { queryClient } from "./Providers";
 import { Dropdown, DropdownItem } from "./dsl/Dropdown";
 
 export function LogoDropdown() {
-	const { logout } = usePrivy();
+	const { logout, authenticated } = usePrivy();
+	const { login } = useLogin({
+		onComplete: () => {
+			window.location.reload();
+		},
+	});
 	const router = useRouter();
 	const [open, setOpen] = useState(false);
 	const [themeMode, setThemeMode] = useState<ThemeMode>("system");
@@ -61,24 +66,34 @@ export function LogoDropdown() {
 				<DropdownItem onClick={() => router.push("/explore")}>
 					Explore
 				</DropdownItem>
-				<DropdownItem onClick={() => router.push("/saved")}>Saved</DropdownItem>
-				<DropdownItem onClick={() => setOpen(true)}>
-					<div className="flex items-center justify-between gap-2 w-full">
-						<span>Color</span>
-						<span className="w-2 h-2 bg-primary" />
-					</div>
-				</DropdownItem>
-				<DropdownItem
-					onClick={() =>
-						logout().then(() => {
-							clearAllCachedKeys();
-							queryClient.clear();
-							window.location.href = "/";
-						})
-					}
-				>
-					Leave
-				</DropdownItem>
+				{authenticated && (
+					<>
+						<DropdownItem onClick={() => router.push("/saved")}>Saved</DropdownItem>
+						<DropdownItem onClick={() => setOpen(true)}>
+							<div className="flex items-center justify-between gap-2 w-full">
+								<span>Color</span>
+								<span className="w-2 h-2 bg-primary" />
+							</div>
+						</DropdownItem>
+					</>
+				)}
+				{authenticated ? (
+					<DropdownItem
+						onClick={() =>
+							logout().then(() => {
+								clearAllCachedKeys();
+								queryClient.clear();
+								window.location.href = "/";
+							})
+						}
+					>
+						Leave
+					</DropdownItem>
+				) : (
+					<DropdownItem onClick={() => login()}>
+						Login
+					</DropdownItem>
+				)}
 				<div className="logo-theme-switcher mt-1 pt-1 border-t border-neutral-800/60">
 					<button
 						type="button"

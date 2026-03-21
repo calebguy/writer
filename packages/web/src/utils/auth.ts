@@ -26,7 +26,7 @@ export async function getAuthenticatedUser() {
 
 	try {
 		const user = await privy.getUser({ idToken: privyIdToken });
-		return user;
+		return user as UserWithWallet;
 	} catch (error) {
 		console.error("Failed to verify Privy token:", error);
 		return null;
