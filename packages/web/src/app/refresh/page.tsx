@@ -17,21 +17,25 @@ function RefreshContent() {
 			try {
 				const token = await getAccessToken();
 				if (token) {
-					// User is authenticated, redirect to intended destination
-					router.replace(redirectUrl);
+					// User is authenticated — full reload so cookies are sent to middleware
+					window.location.replace(redirectUrl);
 				} else {
-					// User is not authenticated, redirect to login
-					router.replace("/");
+					// User is not authenticated — append refreshed param to prevent loop
+					const url = new URL("/", window.location.origin);
+					url.searchParams.set("refreshed", "1");
+					window.location.replace(url.toString());
 				}
 			} catch (error) {
 				console.error("Failed to refresh token:", error);
-				router.replace("/");
+				const url = new URL("/", window.location.origin);
+				url.searchParams.set("refreshed", "1");
+				window.location.replace(url.toString());
 			}
 		}
 
 		// If already authenticated, go directly to destination
 		if (authenticated) {
-			router.replace(redirectUrl);
+			window.location.replace(redirectUrl);
 		} else {
 			// Try to refresh the token
 			refreshAndRedirect();

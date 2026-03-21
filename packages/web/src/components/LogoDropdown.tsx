@@ -10,7 +10,7 @@ import {
 } from "@/utils/theme";
 import { useLogin, usePrivy } from "@privy-io/react-auth";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { IoMdMoon, IoMdSunny } from "react-icons/io";
 import { RiComputerFill } from "react-icons/ri";
@@ -26,6 +26,13 @@ export function LogoDropdown() {
 		},
 	});
 	const router = useRouter();
+	const pathname = usePathname();
+
+	const navItems = [
+		{ label: "Home", href: "/home" },
+		{ label: "Explore", href: "/explore" },
+		...(authenticated ? [{ label: "Saved", href: "/saved" }] : []),
+	].filter((item) => item.href !== pathname);
 	const [open, setOpen] = useState(false);
 	const [themeMode, setThemeMode] = useState<ThemeMode>("system");
 
@@ -63,19 +70,18 @@ export function LogoDropdown() {
 					/>
 				}
 			>
-				<DropdownItem onClick={() => router.push("/explore")}>
-					Explore
-				</DropdownItem>
+				{navItems.map((item) => (
+					<DropdownItem key={item.href} onClick={() => router.push(item.href)}>
+						{item.label}
+					</DropdownItem>
+				))}
 				{authenticated && (
-					<>
-						<DropdownItem onClick={() => router.push("/saved")}>Saved</DropdownItem>
-						<DropdownItem onClick={() => setOpen(true)}>
-							<div className="flex items-center justify-between gap-2 w-full">
-								<span>Color</span>
-								<span className="w-2 h-2 bg-primary" />
-							</div>
-						</DropdownItem>
-					</>
+					<DropdownItem onClick={() => setOpen(true)}>
+						<div className="flex items-center justify-between gap-2 w-full">
+							<span>Color</span>
+							<span className="w-2 h-2 bg-primary" />
+						</div>
+					</DropdownItem>
 				)}
 				{authenticated ? (
 					<DropdownItem

@@ -325,7 +325,9 @@ function ForLines() {
 export function LandingPage({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
 	const { login } = useLogin({
 		onComplete: () => {
-			window.location.href = "/home";
+			if (!isLoggedIn) {
+				window.location.href = "/home";
+			}
 		},
 	});
 
