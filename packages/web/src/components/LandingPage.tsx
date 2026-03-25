@@ -23,14 +23,17 @@ function StarImage() {
 	);
 }
 
-function useStarCounts(gridRef: React.RefObject<HTMLDivElement | null>) {
+function useStarCounts(
+	gridRef: React.RefObject<HTMLDivElement | null>,
+	contentRef: React.RefObject<HTMLDivElement | null>,
+) {
 	const [sideCols, setSideCols] = useState(0);
 	const [topRows, setTopRows] = useState(0);
 	const [ready, setReady] = useState(false);
 
 	useEffect(() => {
 		function calculate() {
-			if (!gridRef.current) return;
+			if (!gridRef.current || !contentRef.current) return;
 			const styles = getComputedStyle(gridRef.current);
 			const gap = Number.parseFloat(
 				styles.getPropertyValue("--star-gap") || String(STAR_GAP_DEFAULT),
@@ -40,8 +43,8 @@ function useStarCounts(gridRef: React.RefObject<HTMLDivElement | null>) {
 			);
 			const starSlot = starSize + gap;
 
-			const gridHeight = gridRef.current.scrollHeight;
-			const availableHeight = gridHeight - starSize * 2 - gap;
+			const contentHeight = contentRef.current.scrollHeight;
+			const availableHeight = contentHeight - starSize * 2 - gap;
 			setSideCols(Math.max(1, Math.ceil(availableHeight / starSlot)));
 
 			const gridWidth = gridRef.current.clientWidth;
@@ -54,10 +57,11 @@ function useStarCounts(gridRef: React.RefObject<HTMLDivElement | null>) {
 		calculate();
 
 		const observer = new ResizeObserver(calculate);
+		if (contentRef.current) observer.observe(contentRef.current);
 		if (gridRef.current) observer.observe(gridRef.current);
 
 		return () => observer.disconnect();
-	}, [gridRef]);
+	}, [gridRef, contentRef]);
 
 	return { sideCols, topRows, ready };
 }
@@ -334,7 +338,8 @@ export function LandingPage({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
 	});
 
 	const gridRef = useRef<HTMLDivElement>(null);
-	const { sideCols, topRows, ready } = useStarCounts(gridRef);
+	const contentRef = useRef<HTMLDivElement>(null);
+	const { sideCols, topRows, ready } = useStarCounts(gridRef, contentRef);
 
 	return (
 		<div
@@ -367,7 +372,7 @@ export function LandingPage({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
 					))}
 				</div>
 
-				<div className="flex flex-col items-center px-6 md:px-12">
+				<div ref={contentRef} className="flex flex-col items-center px-6 md:px-12">
 					{/* First viewport */}
 					<div className="min-h-dvh flex flex-col items-center justify-between pt-[120px] pb-20 md:pb-[120px] gap-6 md:gap-8">
 						<div className="flex flex-col items-center gap-4">
