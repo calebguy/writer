@@ -948,7 +948,6 @@ const FOR_LINES: string[] = [
 	"for the connecting flight",
 	"for the missed connection",
 	"for the turbulence",
-	"for the landing",
 
 	// ── animals ──
 	"for the stray you fed",
