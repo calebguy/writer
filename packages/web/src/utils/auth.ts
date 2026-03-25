@@ -1,11 +1,5 @@
-import {
-	PrivyClient,
-	type User,
-	type WalletWithMetadata,
-} from "@privy-io/server-auth";
+import { PrivyClient } from "@privy-io/server-auth";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { Routes } from "./routes";
 
 if (!process.env.PRIVY_APP_ID || !process.env.PRIVY_SECRET) {
 	throw new Error("PRIVY_APP_ID and PRIVY_SECRET must be set");
@@ -26,28 +20,9 @@ export async function getAuthenticatedUser() {
 
 	try {
 		const user = await privy.getUser({ idToken: privyIdToken });
-		return user as UserWithWallet;
+		return user;
 	} catch (error) {
 		console.error("Failed to verify Privy token:", error);
 		return null;
-	}
-}
-
-export type UserWithWallet = User & {
-	wallet: Omit<WalletWithMetadata, "type">;
-};
-export async function requireAuth(): Promise<UserWithWallet> {
-	const user = await getAuthenticatedUser();
-	if (!user) {
-		redirect(Routes.Index);
-	}
-
-	return user as UserWithWallet;
-}
-
-export async function requireGuest() {
-	const user = await getAuthenticatedUser();
-	if (user) {
-		redirect(Routes.Home);
 	}
 }

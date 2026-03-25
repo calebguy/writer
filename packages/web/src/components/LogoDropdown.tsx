@@ -8,7 +8,7 @@ import {
 	setStoredThemeMode,
 	subscribeSystemThemeChange,
 } from "@/utils/theme";
-import { useLogin, usePrivy } from "@privy-io/react-auth";
+import { usePrivy } from "@privy-io/react-auth";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -19,12 +19,7 @@ import { queryClient } from "./Providers";
 import { Dropdown, DropdownItem } from "./dsl/Dropdown";
 
 export function LogoDropdown() {
-	const { logout, authenticated } = usePrivy();
-	const { login } = useLogin({
-		onComplete: () => {
-			window.location.reload();
-		},
-	});
+	const { logout, authenticated, login } = usePrivy();
 	const router = useRouter();
 	const pathname = usePathname();
 
@@ -60,12 +55,12 @@ export function LogoDropdown() {
 		<>
 			<Dropdown
 				trigger={
-					// <Logo className="logo-dropdown-trigger h-8 transition-colors text-primary hover:text-secondary" />
 					<Image
 						src={"/images/relics/relic-5.png"}
 						alt={"dropdown trigger"}
 						width={38}
 						height={38}
+						priority
 						className="transition-transform duration-300 hover:rotate-12 active:scale-90 active:rotate-12 dark:invert"
 					/>
 				}
@@ -89,16 +84,13 @@ export function LogoDropdown() {
 							logout().then(() => {
 								clearAllCachedKeys();
 								queryClient.clear();
-								window.location.href = "/";
 							})
 						}
 					>
 						Leave
 					</DropdownItem>
 				) : (
-					<DropdownItem onClick={() => login()}>
-						Login
-					</DropdownItem>
+					<DropdownItem onClick={() => login()}>Login</DropdownItem>
 				)}
 				<div className="logo-theme-switcher mt-1 pt-1 border-t border-neutral-800/60">
 					<button

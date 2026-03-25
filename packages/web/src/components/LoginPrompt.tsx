@@ -3,12 +3,7 @@
 import { useLogin } from "@privy-io/react-auth";
 
 export function LoginPrompt() {
-	const { login } = useLogin({
-		onComplete: () => {
-			window.location.reload();
-		},
-	});
-
+	const { login } = useLogin();
 	return (
 		<div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
 			<button

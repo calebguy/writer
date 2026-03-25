@@ -3,6 +3,7 @@
 import { useLogin } from "@privy-io/react-auth";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 const STAR_IMAGE = "/images/relics/relic-5.png";
@@ -31,10 +32,10 @@ function useStarCounts(gridRef: React.RefObject<HTMLDivElement | null>) {
 		function calculate() {
 			if (!gridRef.current) return;
 			const styles = getComputedStyle(gridRef.current);
-			const gap = parseFloat(
+			const gap = Number.parseFloat(
 				styles.getPropertyValue("--star-gap") || String(STAR_GAP_DEFAULT),
 			);
-			const starSize = parseFloat(
+			const starSize = Number.parseFloat(
 				styles.getPropertyValue("--star-size") || String(STAR_SIZE),
 			);
 			const starSlot = starSize + gap;
@@ -323,10 +324,11 @@ function ForLines() {
 }
 
 export function LandingPage({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
+	const router = useRouter();
 	const { login } = useLogin({
-		onComplete: () => {
-			if (!isLoggedIn) {
-				window.location.href = "/home";
+		onComplete: ({ wasAlreadyAuthenticated }) => {
+			if (!wasAlreadyAuthenticated) {
+				router.push("/home");
 			}
 		},
 	});
