@@ -1,10 +1,11 @@
 "use client";
 
+import { getRandomForLines } from "@/utils/forLines";
 import { useLogin } from "@privy-io/react-auth";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const STAR_IMAGE = "/images/relics/relic-5.png";
 const STAR_SIZE = 44;
@@ -97,147 +98,6 @@ const BAR_MOBILE_2_ITEMS = [
 	{ src: "/images/human/logo-10.png", alt: "figurine" },
 ];
 
-const FOR_LINES = [
-	"for you",
-	"for me",
-	"for artists",
-	"for poets",
-	"for non-writers",
-	"for jotters",
-	"for scribblers",
-	"for dreamers",
-	"for thinkers",
-	"for overthinkers",
-	"for the sleepless",
-	"for the restless",
-	"for diarists",
-	"for journalists",
-	"for people who journal but won't call it that",
-	"for note-takers",
-	"for list-makers",
-	"for letter-writers",
-	"for love-letter-writers",
-	"for apology-drafters",
-	"for the unsent message",
-	"for 3am thoughts",
-	"for shower arguments",
-	"for the thing you'll forget by morning",
-	"for students",
-	"for dropouts",
-	"for teachers",
-	"for autodidacts",
-	"for philosophers",
-	"for armchair philosophers",
-	"for actual armchair owners",
-	"for novelists",
-	"for aspiring novelists",
-	"for people on chapter one for three years",
-	"for bloggers",
-	"for former bloggers",
-	"for people who miss blogspot",
-	"for lurkers",
-	"for posters",
-	"for reply guys",
-	"for the chronically online",
-	"for the intentionally offline",
-	"for travelers",
-	"for homebodies",
-	"for commuters",
-	"for the waiting room",
-	"for the back of the lecture hall",
-	"for lunch breaks",
-	"for insomniacs",
-	"for early risers",
-	"for the caffeinated",
-	"for the decaf curious",
-	"for musicians",
-	"for people who sing in the car",
-	"for cooks who don't use recipes",
-	"for programmers",
-	"for designers",
-	"for founders",
-	"for people between things",
-	"for the employed",
-	"for the unemployed",
-	"for the funemployed",
-	"for introverts",
-	"for extroverts who need to process",
-	"for ambiverts",
-	"for skeptics",
-	"for believers",
-	"for the spiritual but not religious",
-	"for the religious but not spiritual",
-	"for the confused",
-	"for the certain",
-	"for the temporarily certain",
-	"for kids",
-	"for adults",
-	"for adults who feel like kids",
-	"for your future self",
-	"for your past self",
-	"for the version of you that almost existed",
-	"for complaints never filed",
-	"for gratitude never expressed",
-	"for the epiphany on the subway",
-	"for the thing you overheard at the coffee shop",
-	"for manifestos",
-	"for grocery lists that became poems",
-	"for poems that became grocery lists",
-	"for the marginalia",
-	"for the footnotes",
-	"for the PS at the end",
-	"for ghost stories",
-	"for origin stories",
-	"for the story you keep telling differently",
-	"for conspiracies",
-	"for confessions",
-	"for the truth",
-	"for the almost truth",
-	"for the beautiful lie",
-	"for therapists",
-	"for people who can't afford therapists",
-	"for people who are their own therapist",
-	"for runners",
-	"for people who run from things",
-	"for people who run toward things",
-	"for dog people",
-	"for cat people",
-	"for people who talk to their plants",
-	"for twins",
-	"for only children",
-	"for middle children especially",
-	"for grandparents",
-	"for ancestors",
-	"for descendants who haven't been born",
-	"for the eulogy you hope someone writes",
-	"for the toast at the wedding",
-	"for the speech you gave in the mirror",
-	"for vows",
-	"for broken vows",
-	"for renewed vows",
-	"for new year's resolutions",
-	"for february",
-	"for the long weekend",
-	"for the Sunday scaries",
-	"for Monday mornings",
-	"for Friday at 4:58pm",
-	"for the gap year",
-	"for the lost decade",
-	"for the comeback",
-	"for rough drafts",
-	"for final drafts",
-	"for drafts that are never final",
-	"for the delete key",
-	"for the undo button",
-	"for the things you can't undo",
-	"for permanence",
-	"for impermanence",
-	"for the space between",
-	"for no one",
-	"for everyone",
-	"for public",
-	"for private",
-];
 
 function ArtifactBar({ items }: { items: typeof BAR_1_ITEMS }) {
 	return (
@@ -259,6 +119,7 @@ function ArtifactBar({ items }: { items: typeof BAR_1_ITEMS }) {
 }
 
 function ForLines() {
+	const lines = useMemo(() => getRandomForLines(), []);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [visibleCount, setVisibleCount] = useState(0);
 
@@ -296,7 +157,7 @@ function ForLines() {
 			ref={containerRef}
 			className="flex flex-col items-center gap-4 font-serif italic text-[2.5rem] md:text-[4rem] text-center"
 		>
-			{FOR_LINES.map((line, i) => (
+			{lines.map((line, i) => (
 				<div
 					key={line}
 					data-index={i}
@@ -312,11 +173,11 @@ function ForLines() {
 				</div>
 			))}
 			<div
-				data-index={FOR_LINES.length}
+				data-index={lines.length}
 				data-for-line
 				className="will-change-opacity leading-[1.1] italic mt-2"
 				style={{
-					opacity: visibleCount > FOR_LINES.length ? 1 : 0,
+					opacity: visibleCount > lines.length ? 1 : 0,
 					transition: "opacity 0.8s ease",
 					transitionDelay: "0.3s",
 				}}
