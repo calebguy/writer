@@ -13,12 +13,14 @@ import {
 	isWalletAuthor,
 	processPrivateEntry,
 } from "@/utils/utils";
+import { usePrivy } from "@privy-io/react-auth";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import type { Hex } from "viem";
+import { LoginPrompt } from "./LoginPrompt";
 import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
 
 const SAVED_SKELETON_KEYS = [
@@ -46,10 +48,15 @@ type MixedSavedItem =
 			writer: SavedEntry["writer"];
 	  };
 
-export default function SavedView({ userAddress }: { userAddress: Hex }) {
+export default function SavedView({ initialLoggedIn = false }: { initialLoggedIn?: boolean }) {
+	const { ready, authenticated, user } = usePrivy();
+	const isLoggedIn = ready ? authenticated : initialLoggedIn;
+	const userAddress = user?.wallet?.address as Hex | undefined;
+
 	const { data, isLoading } = useQuery({
-		queryKey: ["saved", userAddress.toLowerCase()],
-		queryFn: () => getSaved(userAddress),
+		queryKey: ["saved", userAddress?.toLowerCase()],
+		queryFn: () => getSaved(userAddress!),
+		enabled: !!userAddress && isLoggedIn,
 	});
 
 	const savedWriters = data?.writers ?? [];
@@ -74,7 +81,11 @@ export default function SavedView({ userAddress }: { userAddress: Hex }) {
 		);
 	}, [savedWriters, savedEntries]);
 
-	if (isLoading) {
+	if (!isLoggedIn) {
+		return <LoginPrompt />;
+	}
+
+	if (!ready || isLoading) {
 		return (
 			<div className="grid gap-2 grid-cols-1 min-[321px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
 				{SAVED_SKELETON_KEYS.map((key, i) =>

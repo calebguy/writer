@@ -1,11 +1,10 @@
 "use client";
 
-import { getRandomForLines } from "@/utils/forLines";
 import { useLogin } from "@privy-io/react-auth";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const STAR_IMAGE = "/images/relics/relic-5.png";
 const STAR_SIZE = 44;
@@ -118,8 +117,7 @@ function ArtifactBar({ items }: { items: typeof BAR_1_ITEMS }) {
 	);
 }
 
-function ForLines() {
-	const lines = useMemo(() => getRandomForLines(), []);
+function ForLines({ lines }: { lines: string[] }) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [visibleCount, setVisibleCount] = useState(0);
 
@@ -188,7 +186,7 @@ function ForLines() {
 	);
 }
 
-export function LandingPage({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
+export function LandingPage({ isLoggedIn = false, forLines }: { isLoggedIn?: boolean; forLines: string[] }) {
 	const router = useRouter();
 	const { login } = useLogin({
 		onComplete: ({ wasAlreadyAuthenticated }) => {
@@ -284,7 +282,7 @@ export function LandingPage({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
 
 					<div className="h-[120px]" />
 
-					<ForLines />
+					<ForLines lines={forLines} />
 
 					<div className="h-[120px]" />
 

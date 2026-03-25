@@ -239,6 +239,23 @@ toes, asymmetrical, action pose
 - Confident without being boastful
 - Inviting complexity to feel simple
 
+### Content Voice Dimensions
+
+The landing page "for ___" lines are a core brand artifact — 1000+ phrases randomly sampled on each visit. They define Writer's emotional range across ten dimensions:
+
+1. **Relatable identities** — who you are (poets, programmers, middle children, introverts)
+2. **Quiet moments** — the small, overlooked in-between (the pause, the walk home, the elevator silence)
+3. **Writing & words** — the act itself (rough drafts, the blank page, the sentence you keep rewriting)
+4. **Unspoken things** — what you feel but don't say (the unsent message, the apology you owe, the thing you didn't say)
+5. **Time & memory** — when things happen and how you remember them (3am thoughts, the lost decade, the smell that brought it all back)
+6. **Relationships** — the people in your life and the spaces between you (former best friends, strangers who smiled, the one who stayed)
+7. **Everyday mundanity** — the ordinary elevated (the junk drawer, laundry day, the snooze button)
+8. **Failure & becoming** — growth through mess (the spectacular failure, starting over, the person you're becoming)
+9. **Humor & self-awareness** — the wink (for february, for reply guys, for the funemployed)
+10. **Existential wonder** — the big questions made intimate (permanence, impermanence, the space between)
+
+These dimensions should guide new phrases and any brand copy. The voice is **intimate, never performative** — it speaks to the reader as if it already knows them. It earns depth through specificity, not grandness.
+
 ## Progress & Open Questions
 
 ### Resolved
