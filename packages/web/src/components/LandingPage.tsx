@@ -240,7 +240,7 @@ function ArtifactBar({ items }: { items: typeof BAR_1_ITEMS }) {
 		<div className="flex items-center justify-center gap-3 md:gap-7 bg-primary p-6 md:py-[30px] md:px-10 rounded-2xl">
 			{items.map((item, i) => (
 				<Image
-					key={i}
+					key={`${item.src}-${String(i)}`}
 					src={item.src}
 					alt={item.alt}
 					width={80}
@@ -352,7 +352,7 @@ export function LandingPage({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
 				</div>
 				<div className="flex justify-center items-center gap-(--star-gap)">
 					{Array.from({ length: topRows }).map((_, i) => (
-						<StarImage key={`top-${i}`} />
+						<StarImage key={`top-${String(i)}`} />
 					))}
 				</div>
 				<div className="flex items-center justify-center opacity-90">
@@ -362,7 +362,7 @@ export function LandingPage({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
 				{/* Row 2: left + content + right */}
 				<div className="flex flex-col justify-start items-center gap-(--star-gap) py-[calc(var(--star-gap)/2)]">
 					{Array.from({ length: sideCols }).map((_, i) => (
-						<StarImage key={`left-${i}`} />
+						<StarImage key={`left-${String(i)}`} />
 					))}
 				</div>
 
@@ -428,7 +428,7 @@ export function LandingPage({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
 
 				<div className="flex flex-col justify-start items-center gap-(--star-gap) py-[calc(var(--star-gap)/2)]">
 					{Array.from({ length: sideCols }).map((_, i) => (
-						<StarImage key={`right-${i}`} />
+						<StarImage key={`right-${String(i)}`} />
 					))}
 				</div>
 
@@ -438,7 +438,7 @@ export function LandingPage({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
 				</div>
 				<div className="flex justify-center items-center gap-(--star-gap)">
 					{Array.from({ length: topRows }).map((_, i) => (
-						<StarImage key={`bottom-${i}`} />
+						<StarImage key={`bottom-${String(i)}`} />
 					))}
 				</div>
 				<div className="flex items-center justify-center opacity-90">
