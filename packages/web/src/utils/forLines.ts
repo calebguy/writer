@@ -1047,7 +1047,6 @@ const FOR_LINES: string[] = [
 	"for the blank space after the period",
 	"for tomorrow",
 	"for today",
-	"for right now",
 	"for this",
 ];
 

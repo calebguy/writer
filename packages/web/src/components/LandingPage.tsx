@@ -203,7 +203,7 @@ export function LandingPage({ isLoggedIn = false, forLines }: { isLoggedIn?: boo
 	return (
 		<div
 			data-landing-root
-			className="fixed inset-0 light:bg-white dark:bg-black light:text-black dark:text-white overflow-x-hidden overflow-y-auto"
+			className="fixed inset-0 light:bg-white dark:bg-neutral-900 light:text-black dark:text-white overflow-x-hidden overflow-y-auto"
 		>
 			<div className="max-w-7xl mx-auto w-full">
 			<div
