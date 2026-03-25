@@ -341,8 +341,9 @@ export function LandingPage({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
 			data-landing-root
 			className="fixed inset-0 light:bg-white dark:bg-black light:text-black dark:text-white overflow-x-hidden overflow-y-auto"
 		>
+			<div className="max-w-7xl mx-auto w-full">
 			<div
-				className="landing-grid opacity-0 data-[ready=true]:opacity-100 transition-opacity duration-300"
+				className="landing-grid opacity-0 data-[ready=true]:opacity-100 transition-opacity duration-300 w-full"
 				ref={gridRef}
 				data-ready={ready}
 			>
@@ -465,6 +466,7 @@ export function LandingPage({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
 					</a>
 				</span>
 			</footer>
+			</div>
 		</div>
 	);
 }
