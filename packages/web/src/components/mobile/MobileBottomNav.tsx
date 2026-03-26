@@ -15,9 +15,9 @@ import { FaBookmark, FaGlobe, FaPalette } from "react-icons/fa";
 import { IoMdMoon, IoMdSunny } from "react-icons/io";
 import { IoExit } from "react-icons/io5";
 import { RiComputerFill } from "react-icons/ri";
+import Image from "next/image";
 import { ColorModal } from "../ColorModal";
 import { queryClient } from "../Providers";
-import { Logo } from "../icons/Logo";
 
 const VISIBLE_PATHS = new Set(["/home", "/explore", "/saved", "/writer"]);
 
@@ -167,7 +167,13 @@ export function MobileBottomNav() {
 							className={`p-2 rounded-full transition-colors ${navIconClass(isRouteActive(pathname, "/home"))}`}
 							onClick={onHomeTap}
 						>
-							<Logo className="h-5 w-5" />
+							<Image
+								src="/images/relics/relic-5.png"
+								alt="Home"
+								width={20}
+								height={20}
+								className="w-5 h-5 dark:invert"
+							/>
 						</button>
 						<button
 							type="button"
