@@ -9,13 +9,13 @@ import {
 	subscribeSystemThemeChange,
 } from "@/utils/theme";
 import { usePrivy } from "@privy-io/react-auth";
-import { useRouter, usePathname } from "next/navigation";
+import Image from "next/image";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FaBookmark, FaGlobe, FaPalette } from "react-icons/fa";
+import { FaPalette } from "react-icons/fa";
 import { IoMdMoon, IoMdSunny } from "react-icons/io";
 import { IoExit } from "react-icons/io5";
 import { RiComputerFill } from "react-icons/ri";
-import Image from "next/image";
 import { ColorModal } from "../ColorModal";
 import { queryClient } from "../Providers";
 
@@ -122,7 +122,9 @@ export function MobileBottomNav() {
 							<button
 								type="button"
 								title="Light"
-								className={`p-2.5 rounded-full transition-colors ${navIconClass(themeMode === "light")}`}
+								className={`p-2.5 rounded-full transition-colors ${navIconClass(
+									themeMode === "light",
+								)}`}
 								onClick={() => setTheme("light")}
 							>
 								<IoMdSunny className="h-4.5 w-4.5" />
@@ -130,7 +132,9 @@ export function MobileBottomNav() {
 							<button
 								type="button"
 								title="Dark"
-								className={`p-2.5 rounded-full transition-colors ${navIconClass(themeMode === "dark")}`}
+								className={`p-2.5 rounded-full transition-colors ${navIconClass(
+									themeMode === "dark",
+								)}`}
 								onClick={() => setTheme("dark")}
 							>
 								<IoMdMoon className="h-4.5 w-4.5" />
@@ -138,7 +142,9 @@ export function MobileBottomNav() {
 							<button
 								type="button"
 								title="System"
-								className={`p-2.5 rounded-full transition-colors ${navIconClass(themeMode === "system")}`}
+								className={`p-2.5 rounded-full transition-colors ${navIconClass(
+									themeMode === "system",
+								)}`}
 								onClick={() => setTheme("system")}
 							>
 								<RiComputerFill className="h-4.5 w-4.5" />
@@ -164,44 +170,67 @@ export function MobileBottomNav() {
 						<button
 							type="button"
 							title="Home"
-							className={`p-2 rounded-full transition-colors ${navIconClass(isRouteActive(pathname, "/home"))}`}
+							className={`p-2 rounded-full transition-colors ${navIconClass(
+								isRouteActive(pathname, "/home"),
+							)}`}
 							onClick={onHomeTap}
 						>
 							<Image
 								src="/images/relics/relic-5.png"
 								alt="Home"
-								width={20}
-								height={20}
-								className="w-5 h-5 dark:invert"
+								width={100}
+								height={100}
+								className={`w-6 h-6 dark:invert transition-transform duration-300 ${
+									showSubMenu ? "rotate-24" : ""
+								}`}
 							/>
 						</button>
 						<button
 							type="button"
 							title="Explore"
-							className={`p-2 rounded-full transition-colors ${navIconClass(isRouteActive(pathname, "/explore"))}`}
+							className={`p-2 rounded-full transition-colors ${navIconClass(
+								isRouteActive(pathname, "/explore"),
+							)}`}
 							onClick={() => {
 								setShowSubMenu(false);
 								router.push("/explore");
 							}}
 						>
-							<FaGlobe className="h-4.5 w-4.5" />
+							<Image
+								src="/images/relics/globe-1.png"
+								alt="Explore"
+								width={100}
+								height={100}
+								className="w-6 h-6 dark:invert"
+							/>
 						</button>
 						<button
 							type="button"
 							title="Saved"
-							className={`p-2 rounded-full transition-colors ${navIconClass(isRouteActive(pathname, "/saved"))}`}
+							className={`p-2 rounded-full transition-colors ${navIconClass(
+								isRouteActive(pathname, "/saved"),
+							)}`}
 							onClick={() => {
 								setShowSubMenu(false);
 								router.push("/saved");
 							}}
 						>
-							<FaBookmark className="h-4.5 w-4.5" />
+							<Image
+								src="/images/relics/hand-7.png"
+								alt="Saved"
+								width={100}
+								height={100}
+								className="w-6 h-6 dark:invert"
+							/>
 						</button>
 					</div>
 				</div>
 			</div>
 
-			<ColorModal open={showColorModal} onClose={() => setShowColorModal(false)} />
+			<ColorModal
+				open={showColorModal}
+				onClose={() => setShowColorModal(false)}
+			/>
 		</>
 	);
 }

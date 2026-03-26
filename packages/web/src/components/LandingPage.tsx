@@ -105,8 +105,8 @@ function ArtifactBar({ items }: { items: typeof BAR_1_ITEMS }) {
 					key={`${item.src}-${String(i)}`}
 					src={item.src}
 					alt={item.alt}
-					width={80}
-					height={80}
+					width={500}
+					height={500}
 					className={`w-[72px] h-[72px] md:w-[110px] md:h-[110px] object-contain ${
 						i === 1 ? "hidden min-[480px]:block" : ""
 					}`}
