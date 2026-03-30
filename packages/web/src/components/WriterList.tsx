@@ -7,8 +7,8 @@ import {
 	getWritersByManager,
 	type Writer,
 } from "@/utils/api";
-import type { UserWithWallet } from "@/utils/auth";
 import { POLLING_INTERVAL } from "@/utils/constants";
+import { usePrivy } from "@privy-io/react-auth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -16,6 +16,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import type { Hex } from "viem";
 import CreateInput, { type CreateInputData } from "./CreateInput";
+import { LoginPrompt } from "./LoginPrompt";
 import { WriterCardSkeleton } from "./WriterCardSkeleton";
 import { ClosedEye } from "./icons/ClosedEye";
 import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
@@ -27,11 +28,14 @@ const SKELETON_KEYS = Array.from(
 	(_, i) => `skeleton-${i}`,
 );
 
-export function WriterList({ user }: { user?: UserWithWallet }) {
+export function WriterList({ initialLoggedIn = false }: { initialLoggedIn?: boolean }) {
+	const { ready, authenticated, user } = usePrivy();
+	const isLoggedIn = ready ? authenticated : initialLoggedIn;
 	const [isPolling, setIsPolling] = useState(false);
 	const queryClient = useQueryClient();
 
-	const address = user?.wallet.address;
+	const address = user?.wallet?.address;
+
 	const {
 		data: writers,
 		isLoading,
@@ -39,7 +43,7 @@ export function WriterList({ user }: { user?: UserWithWallet }) {
 	} = useQuery({
 		queryFn: () => getWritersByManager(address as Hex),
 		queryKey: ["get-writers", address],
-		enabled: !!address,
+		enabled: !!address && authenticated,
 		refetchInterval: isPolling ? POLLING_INTERVAL : false,
 	});
 
@@ -126,26 +130,33 @@ export function WriterList({ user }: { user?: UserWithWallet }) {
 		}
 	}, [isPolling, writers]);
 
+	if (!isLoggedIn) {
+		return <LoginPrompt />;
+	}
+
+	if (!ready || isLoading) {
+		return (
+			<div className="grid gap-2 grid-cols-1 min-[321px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
+				{SKELETON_KEYS.map((key) => <WriterCardSkeleton key={key} />)}
+			</div>
+		);
+	}
+
 	return (
 		<div className="grid gap-2 grid-cols-1 min-[321px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
-			{!!user && (
-				<div className="hidden md:block">
-					<CreateInput
-						placeholder="Create a Place"
-						onSubmit={handleSubmit}
-						isLoading={isCreatePending}
-					/>
-				</div>
-			)}
-			{isLoading &&
-				SKELETON_KEYS.map((key) => <WriterCardSkeleton key={key} />)}
-			{!isLoading && (writers ?? []).length === 0 && (
+			<div className="hidden md:block">
+				<CreateInput
+					placeholder="Create a Place"
+					onSubmit={handleSubmit}
+					isLoading={isCreatePending}
+				/>
+			</div>
+			{(writers ?? []).length === 0 && (
 				<div className="col-span-full flex items-center justify-center min-h-[60vh] text-neutral-500">
 					no writers created yet
 				</div>
 			)}
-			{!isLoading &&
-				(writers ?? []).map((writer) =>
+			{(writers ?? []).map((writer) =>
 					(() => {
 						const isPendingWriter = !writer.createdAtHash;
 						return (

@@ -9,18 +9,25 @@ import {
 	subscribeSystemThemeChange,
 } from "@/utils/theme";
 import { usePrivy } from "@privy-io/react-auth";
-import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { IoMdMoon, IoMdSunny } from "react-icons/io";
 import { RiComputerFill } from "react-icons/ri";
 import { ColorModal } from "./ColorModal";
 import { queryClient } from "./Providers";
 import { Dropdown, DropdownItem } from "./dsl/Dropdown";
-import { Logo } from "./icons/Logo";
 
 export function LogoDropdown() {
-	const { logout } = usePrivy();
+	const { logout, authenticated, login } = usePrivy();
 	const router = useRouter();
+	const pathname = usePathname();
+
+	const navItems = [
+		{ label: "Home", href: "/home" },
+		{ label: "Explore", href: "/explore" },
+		...(authenticated ? [{ label: "Saved", href: "/saved" }] : []),
+	].filter((item) => item.href !== pathname);
 	const [open, setOpen] = useState(false);
 	const [themeMode, setThemeMode] = useState<ThemeMode>("system");
 
@@ -48,30 +55,43 @@ export function LogoDropdown() {
 		<>
 			<Dropdown
 				trigger={
-					<Logo className="logo-dropdown-trigger h-8 transition-colors text-primary hover:text-secondary" />
+					<Image
+						src={"/images/relics/relic-5.png"}
+						alt={"dropdown trigger"}
+						width={38}
+						height={38}
+						priority
+						className="transition-transform duration-300 hover:rotate-12 active:scale-90 active:rotate-12 dark:invert"
+					/>
 				}
 			>
-				<DropdownItem onClick={() => router.push("/explore")}>
-					Explore
-				</DropdownItem>
-				<DropdownItem onClick={() => router.push("/saved")}>Saved</DropdownItem>
-				<DropdownItem onClick={() => setOpen(true)}>
-					<div className="flex items-center justify-between gap-2 w-full">
-						<span>Color</span>
-						<span className="w-2 h-2 bg-primary" />
-					</div>
-				</DropdownItem>
-				<DropdownItem
-					onClick={() =>
-						logout().then(() => {
-							clearAllCachedKeys();
-							queryClient.clear();
-							window.location.href = "/";
-						})
-					}
-				>
-					Leave
-				</DropdownItem>
+				{navItems.map((item) => (
+					<DropdownItem key={item.href} onClick={() => router.push(item.href)}>
+						{item.label}
+					</DropdownItem>
+				))}
+				{authenticated && (
+					<DropdownItem onClick={() => setOpen(true)}>
+						<div className="flex items-center justify-between gap-2 w-full">
+							<span>Color</span>
+							<span className="w-2 h-2 bg-primary" />
+						</div>
+					</DropdownItem>
+				)}
+				{authenticated ? (
+					<DropdownItem
+						onClick={() =>
+							logout().then(() => {
+								clearAllCachedKeys();
+								queryClient.clear();
+							})
+						}
+					>
+						Leave
+					</DropdownItem>
+				) : (
+					<DropdownItem onClick={() => login()}>Login</DropdownItem>
+				)}
 				<div className="logo-theme-switcher mt-1 pt-1 border-t border-neutral-800/60">
 					<button
 						type="button"

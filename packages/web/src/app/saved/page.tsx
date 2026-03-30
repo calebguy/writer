@@ -1,8 +1,7 @@
 import SavedView from "@/components/SavedView";
-import { requireAuth } from "@/utils/auth";
-import type { Hex } from "viem";
+import { getAuthenticatedUser } from "@/utils/auth";
 
 export default async function SavedPage() {
-	const user = await requireAuth();
-	return <SavedView userAddress={user.wallet.address as Hex} />;
+	const user = await getAuthenticatedUser();
+	return <SavedView initialLoggedIn={!!user} />;
 }

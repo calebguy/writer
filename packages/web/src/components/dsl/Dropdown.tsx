@@ -24,15 +24,19 @@ export function Dropdown({
 	side = "bottom",
 }: DropdownProps) {
 	const [mounted, setMounted] = useState(false);
+	const [open, setOpen] = useState(false);
 
 	useEffect(() => {
 		setMounted(true);
 	}, []);
 
 	return (
-		<DropdownMenu.Root>
+		<DropdownMenu.Root open={open} onOpenChange={setOpen}>
 			<DropdownMenu.Trigger
 				asChild
+				onPointerDown={(e) => {
+					e.preventDefault();
+				}}
 				onClick={(e) => {
 					e.stopPropagation();
 					e.preventDefault();
@@ -41,6 +45,7 @@ export function Dropdown({
 				<button
 					type="button"
 					className="inline-flex items-center justify-center outline-none cursor-pointer"
+					onPointerUp={() => setOpen((prev) => !prev)}
 				>
 					{trigger}
 				</button>
@@ -52,7 +57,6 @@ export function Dropdown({
 						align="start"
 						className={cn(dropdownMenuContentClasses)}
 						sideOffset={10}
-						// alignOffset={10}
 						collisionPadding={28}
 						onCloseAutoFocus={(e) => e.preventDefault()}
 					>

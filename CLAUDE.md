@@ -156,6 +156,16 @@ bun run format
 - `RPC_URL` - Optimism RPC endpoint
 - `FACTORY_ADDRESS` - WriterFactory contract address
 
+## Frontend Auth Pattern
+
+Auth uses a **server-hint + client-reactive** model:
+- Server components call `getAuthenticatedUser()` (cookie-based) and pass `initialLoggedIn` as a prop to client components
+- Client components use `usePrivy()` for reactive auth state (`ready`, `authenticated`, `user`)
+- While Privy initializes (`ready=false`), the server hint determines what to show (e.g., skeletons vs LoginPrompt)
+- Once `ready=true`, client-side `authenticated` takes over, enabling dynamic updates on login/logout without page reloads
+
+**Privy `useLogin` caveat:** Do NOT use `useLogin({ onComplete })` for side effects like `window.location.reload()` — the `onComplete` callback can fire on mount when Privy auto-detects an existing session, causing infinite reload loops. Use `usePrivy().login` instead when you don't need the callback, or guard with a ref tracking explicit user interaction.
+
 ## Architecture Decisions
 
 1. **Dual Contract Model:** Separates logic (Writer) from state (WriterStorage)
