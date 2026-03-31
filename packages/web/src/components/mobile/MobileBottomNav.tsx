@@ -130,6 +130,7 @@ export function MobileBottomNav() {
 									width={100}
 									height={100}
 									className="w-5 h-5 min-w-5 shrink-0 dark:invert"
+									priority
 								/>
 							</button>
 							<button
@@ -143,9 +144,10 @@ export function MobileBottomNav() {
 								<Image
 									src="/images/relics/moon-3.png"
 									alt="Dark"
-									width={2029}
-									height={2104}
+									width={96.4}
+									height={100}
 									className="h-5 w-full min-w-5 shrink-0 dark:invert"
+									priority
 								/>
 							</button>
 							<button
@@ -162,6 +164,7 @@ export function MobileBottomNav() {
 									width={100}
 									height={100}
 									className="w-5 h-5 min-w-5 shrink-0 dark:invert"
+									priority
 								/>
 							</button>
 							<button
@@ -198,6 +201,7 @@ export function MobileBottomNav() {
 								className={`w-6 h-6 dark:invert transition-transform duration-300 ${
 									showSubMenu ? "rotate-24" : ""
 								}`}
+								priority
 							/>
 						</button>
 						<button
@@ -217,6 +221,7 @@ export function MobileBottomNav() {
 								width={100}
 								height={100}
 								className="w-6 h-6 dark:invert"
+								priority
 							/>
 						</button>
 						<button
@@ -236,6 +241,7 @@ export function MobileBottomNav() {
 								width={100}
 								height={100}
 								className="w-6 h-6 dark:invert"
+								priority
 							/>
 						</button>
 					</div>

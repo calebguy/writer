@@ -61,7 +61,9 @@ export function LogoDropdown() {
 						width={38}
 						height={38}
 						priority
-						className={`transition-transform duration-300 hover:rotate-12 active:scale-90 dark:invert ${dropdownOpen ? "rotate-12" : ""}`}
+						className={`transition-transform duration-300 hover:rotate-12 active:scale-90 dark:invert ${
+							dropdownOpen ? "rotate-12" : ""
+						}`}
 					/>
 				}
 			>
@@ -107,6 +109,7 @@ export function LogoDropdown() {
 							width={100}
 							height={100}
 							className="h-4.5 w-4.5 min-w-4.5 shrink-0 dark:invert"
+							priority
 						/>
 					</button>
 					<button
@@ -123,6 +126,7 @@ export function LogoDropdown() {
 							width={100}
 							height={100}
 							className="h-4.5 w-4.5 min-w-4.5 shrink-0 dark:invert"
+							priority
 						/>
 					</button>
 					<button
@@ -139,6 +143,7 @@ export function LogoDropdown() {
 							width={100}
 							height={100}
 							className="h-4.5 w-4.5 min-w-4.5 shrink-0 dark:invert"
+							priority
 						/>
 					</button>
 				</div>

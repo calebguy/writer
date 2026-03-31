@@ -1,6 +1,6 @@
 "use client";
 
-import { useLogin } from "@privy-io/react-auth";
+import { useLogin, usePrivy } from "@privy-io/react-auth";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -186,10 +186,12 @@ function ForLines({ lines }: { lines: string[] }) {
 }
 
 export function LandingPage({
-	isLoggedIn = false,
+	isLoggedIn: initialLoggedIn = false,
 	forLines,
 }: { isLoggedIn?: boolean; forLines: string[] }) {
 	const router = useRouter();
+	const { ready: privyReady, authenticated } = usePrivy();
+	const isLoggedIn = privyReady ? authenticated : initialLoggedIn;
 	const { login } = useLogin({
 		onComplete: ({ wasAlreadyAuthenticated }) => {
 			if (!wasAlreadyAuthenticated) {
