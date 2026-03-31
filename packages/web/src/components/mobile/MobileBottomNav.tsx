@@ -12,11 +12,8 @@ import { usePrivy } from "@privy-io/react-auth";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FaPalette } from "react-icons/fa";
-import { IoMdMoon, IoMdSunny } from "react-icons/io";
 import { IoExit } from "react-icons/io5";
-import { RiComputerFill } from "react-icons/ri";
-import { ColorModal } from "../ColorModal";
+import { ColorDrawer } from "../ColorDrawer";
 import { queryClient } from "../Providers";
 
 const VISIBLE_PATHS = new Set(["/home", "/explore", "/saved", "/writer"]);
@@ -36,7 +33,7 @@ export function MobileBottomNav() {
 	const router = useRouter();
 	const { logout } = usePrivy();
 	const [showSubMenu, setShowSubMenu] = useState(false);
-	const [showColorModal, setShowColorModal] = useState(false);
+	const [showColorDrawer, setShowColorDrawer] = useState(false);
 	const [themeMode, setThemeMode] = useState<ThemeMode>("system");
 	const containerRef = useRef<HTMLDivElement>(null);
 
@@ -113,11 +110,11 @@ export function MobileBottomNav() {
 								title="Color"
 								className="p-2.5 rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
 								onClick={() => {
-									setShowColorModal(true);
 									setShowSubMenu(false);
+									setShowColorDrawer(true);
 								}}
 							>
-								<FaPalette className="h-4 w-4" />
+								<span className="block w-3.5 h-3.5 bg-primary rounded-sm" />
 							</button>
 							<button
 								type="button"
@@ -127,7 +124,13 @@ export function MobileBottomNav() {
 								)}`}
 								onClick={() => setTheme("light")}
 							>
-								<IoMdSunny className="h-4.5 w-4.5" />
+								<Image
+									src="/images/relics/relic-10.png"
+									alt="Light"
+									width={100}
+									height={100}
+									className="w-5 h-5 min-w-5 shrink-0 dark:invert"
+								/>
 							</button>
 							<button
 								type="button"
@@ -137,7 +140,13 @@ export function MobileBottomNav() {
 								)}`}
 								onClick={() => setTheme("dark")}
 							>
-								<IoMdMoon className="h-4.5 w-4.5" />
+								<Image
+									src="/images/relics/moon-3.png"
+									alt="Dark"
+									width={2029}
+									height={2104}
+									className="h-5 w-full min-w-5 shrink-0 dark:invert"
+								/>
 							</button>
 							<button
 								type="button"
@@ -147,7 +156,13 @@ export function MobileBottomNav() {
 								)}`}
 								onClick={() => setTheme("system")}
 							>
-								<RiComputerFill className="h-4.5 w-4.5" />
+								<Image
+									src="/images/relics/computer-1.png"
+									alt="System"
+									width={100}
+									height={100}
+									className="w-5 h-5 min-w-5 shrink-0 dark:invert"
+								/>
 							</button>
 							<button
 								type="button"
@@ -216,7 +231,7 @@ export function MobileBottomNav() {
 							}}
 						>
 							<Image
-								src="/images/relics/hand-7.png"
+								src="/images/relics/splat-1.png"
 								alt="Saved"
 								width={100}
 								height={100}
@@ -227,10 +242,7 @@ export function MobileBottomNav() {
 				</div>
 			</div>
 
-			<ColorModal
-				open={showColorModal}
-				onClose={() => setShowColorModal(false)}
-			/>
+			<ColorDrawer open={showColorDrawer} onOpenChange={setShowColorDrawer} />
 		</>
 	);
 }
