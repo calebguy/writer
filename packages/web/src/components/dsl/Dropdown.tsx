@@ -8,6 +8,7 @@ interface DropdownProps {
 	children: React.ReactNode;
 	trigger: React.ReactNode;
 	side?: "left" | "right" | "top" | "bottom";
+	onOpenChange?: (open: boolean) => void;
 }
 
 const dropdownMenuItemClasses = cn(
@@ -22,6 +23,7 @@ export function Dropdown({
 	children,
 	trigger,
 	side = "bottom",
+	onOpenChange: onOpenChangeProp,
 }: DropdownProps) {
 	const [mounted, setMounted] = useState(false);
 	const [open, setOpen] = useState(false);
@@ -30,8 +32,13 @@ export function Dropdown({
 		setMounted(true);
 	}, []);
 
+	const handleOpenChange = (value: boolean) => {
+		setOpen(value);
+		onOpenChangeProp?.(value);
+	};
+
 	return (
-		<DropdownMenu.Root open={open} onOpenChange={setOpen}>
+		<DropdownMenu.Root open={open} onOpenChange={handleOpenChange}>
 			<DropdownMenu.Trigger
 				asChild
 				onPointerDown={(e) => {
@@ -45,7 +52,7 @@ export function Dropdown({
 				<button
 					type="button"
 					className="inline-flex items-center justify-center outline-none cursor-pointer"
-					onPointerUp={() => setOpen((prev) => !prev)}
+					onPointerUp={() => handleOpenChange(!open)}
 				>
 					{trigger}
 				</button>

@@ -12,8 +12,6 @@ import { usePrivy } from "@privy-io/react-auth";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { IoMdMoon, IoMdSunny } from "react-icons/io";
-import { RiComputerFill } from "react-icons/ri";
 import { ColorModal } from "./ColorModal";
 import { queryClient } from "./Providers";
 import { Dropdown, DropdownItem } from "./dsl/Dropdown";
@@ -29,6 +27,7 @@ export function LogoDropdown() {
 		...(authenticated ? [{ label: "Saved", href: "/saved" }] : []),
 	].filter((item) => item.href !== pathname);
 	const [open, setOpen] = useState(false);
+	const [dropdownOpen, setDropdownOpen] = useState(false);
 	const [themeMode, setThemeMode] = useState<ThemeMode>("system");
 
 	useEffect(() => {
@@ -54,6 +53,7 @@ export function LogoDropdown() {
 	return (
 		<>
 			<Dropdown
+				onOpenChange={setDropdownOpen}
 				trigger={
 					<Image
 						src={"/images/relics/relic-5.png"}
@@ -61,7 +61,7 @@ export function LogoDropdown() {
 						width={38}
 						height={38}
 						priority
-						className="transition-transform duration-300 hover:rotate-12 active:scale-90 active:rotate-12 dark:invert"
+						className={`transition-transform duration-300 hover:rotate-12 active:scale-90 dark:invert ${dropdownOpen ? "rotate-12" : ""}`}
 					/>
 				}
 			>
@@ -101,7 +101,13 @@ export function LogoDropdown() {
 						data-active={themeMode === "light"}
 						onClick={() => setTheme("light")}
 					>
-						<IoMdSunny className="h-3.5 w-3.5" />
+						<Image
+							src="/images/relics/relic-10.png"
+							alt="Light"
+							width={100}
+							height={100}
+							className="h-4.5 w-4.5 min-w-4.5 shrink-0 dark:invert"
+						/>
 					</button>
 					<button
 						type="button"
@@ -111,7 +117,13 @@ export function LogoDropdown() {
 						data-active={themeMode === "dark"}
 						onClick={() => setTheme("dark")}
 					>
-						<IoMdMoon className="h-3.5 w-3.5" />
+						<Image
+							src="/images/relics/moon-3.png"
+							alt="Dark"
+							width={100}
+							height={100}
+							className="h-4.5 w-4.5 min-w-4.5 shrink-0 dark:invert"
+						/>
 					</button>
 					<button
 						type="button"
@@ -121,7 +133,13 @@ export function LogoDropdown() {
 						data-active={themeMode === "system"}
 						onClick={() => setTheme("system")}
 					>
-						<RiComputerFill className="h-3.5 w-3.5" />
+						<Image
+							src="/images/relics/computer-1.png"
+							alt="System"
+							width={100}
+							height={100}
+							className="h-4.5 w-4.5 min-w-4.5 shrink-0 dark:invert"
+						/>
 					</button>
 				</div>
 			</Dropdown>
