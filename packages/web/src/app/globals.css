@@ -507,8 +507,16 @@ body,
   display: grid;
   grid-template-columns: auto 1fr auto;
   grid-template-rows: auto 1fr auto;
-  min-height: 100%;
+  min-height: 100dvh;
   padding: 10px;
+}
+
+.landing-continuation {
+  --star-size: 36px;
+  --star-gap: 60px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  padding: 0 10px;
 }
 
 @media (min-width: 768px) {
@@ -516,5 +524,10 @@ body,
     --star-size: 44px;
     --star-gap: 80px;
     padding: 24px;
+  }
+  .landing-continuation {
+    --star-size: 44px;
+    --star-gap: 80px;
+    padding: 0 24px;
   }
 }
