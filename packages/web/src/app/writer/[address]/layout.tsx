@@ -1,3 +1,4 @@
+import { Footer } from "@/components/Footer";
 import { WriterHeader } from "@/components/header/WriterHeader";
 import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
 import { CreateEntryDrawerProvider } from "@/components/writer/CreateEntryDrawerContext";
@@ -92,6 +93,7 @@ export default function Layout({
 						{children}
 					</div>
 				</div>
+				<Footer />
 				<MobileBottomNav />
 			</CreateEntryDrawerProvider>
 		</EntryLoadingProvider>
