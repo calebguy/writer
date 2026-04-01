@@ -240,7 +240,7 @@ export function LandingPage({
 						className="flex flex-col items-center px-6 md:px-12"
 					>
 						{/* First viewport */}
-						<div className="min-h-dvh flex flex-col items-center justify-between pt-[120px] pb-20 md:pb-[120px] gap-6 md:gap-8">
+						<div className="min-h-dvh flex flex-col items-center justify-between pt-12 md:pt-[120px] pb-20 md:pb-[120px] gap-6 md:gap-8">
 							<div className="flex flex-col items-center gap-4">
 								<ArtifactBar items={BAR_1_ITEMS} />
 								<div className="block md:hidden">
@@ -251,7 +251,7 @@ export function LandingPage({
 								</div>
 							</div>
 
-							<div className="flex flex-col items-center justify-center gap-6 md:gap-8 flex-1">
+							<div className="flex flex-col items-center justify-center gap-6 md:gap-8 md:flex-1">
 								<div className="font-serif text-[4.5rem] md:text-[7rem] leading-none text-center">
 									Writer
 								</div>

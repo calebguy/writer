@@ -82,6 +82,21 @@ Create a new entry with the first chunk of content. Caller becomes the entry aut
 
 **Events:** `EntryCreated(id, author)`, `ChunkReceived(author, id, index, content)`
 
+##### `createWithChunkWithSig(signature, nonce, chunkCount, content)` → `(uint256, Entry)`
+
+Create a new entry with the first chunk via EIP-712 signature. Signer becomes the entry author.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `signature` | `bytes` | EIP-712 typed data signature |
+| `nonce` | `uint256` | Unique nonce for replay protection |
+| `chunkCount` | `uint256` | Total number of chunks |
+| `content` | `string` | First chunk content |
+
+**Access:** Signer must have WRITER_ROLE
+
+**Events:** `EntryCreated(id, author)`, `ChunkReceived(author, id, index, content)`
+
 ##### `addChunk(id, index, content)` → `Entry`
 
 Add a chunk to an existing entry at a specific index.
@@ -93,6 +108,22 @@ Add a chunk to an existing entry at a specific index.
 | `content` | `string` | Chunk content |
 
 **Access:** Author + WRITER_ROLE
+
+**Events:** `ChunkReceived(author, id, index, content)`
+
+##### `addChunkWithSig(signature, nonce, id, index, content)` → `Entry`
+
+Add a chunk to an existing entry via EIP-712 signature.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `signature` | `bytes` | EIP-712 typed data signature |
+| `nonce` | `uint256` | Unique nonce for replay protection |
+| `id` | `uint256` | Entry ID |
+| `index` | `uint256` | Chunk index |
+| `content` | `string` | Chunk content |
+
+**Access:** Signer must be author + WRITER_ROLE
 
 **Events:** `ChunkReceived(author, id, index, content)`
 
@@ -110,6 +141,22 @@ Replace an entry's content. Clears all previous chunks and sets new content.
 
 **Events:** `EntryUpdated(id, author)`, `ChunkReceived(author, id, index, content)`
 
+##### `updateWithSig(signature, nonce, id, totalChunks, content)`
+
+Replace an entry's content via EIP-712 signature.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `signature` | `bytes` | EIP-712 typed data signature |
+| `nonce` | `uint256` | Unique nonce for replay protection |
+| `id` | `uint256` | Entry ID |
+| `totalChunks` | `uint256` | New total chunks |
+| `content` | `string` | New first chunk content |
+
+**Access:** Signer must be author + WRITER_ROLE
+
+**Events:** `EntryUpdated(id, author)`, `ChunkReceived(author, id, index, content)`
+
 ##### `remove(id)`
 
 Delete an entry.
@@ -119,6 +166,20 @@ Delete an entry.
 | `id` | `uint256` | Entry ID |
 
 **Access:** Author + WRITER_ROLE
+
+**Events:** `EntryRemoved(id, author)`
+
+##### `removeWithSig(signature, nonce, id)`
+
+Delete an entry via EIP-712 signature.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `signature` | `bytes` | EIP-712 typed data signature |
+| `nonce` | `uint256` | Unique nonce for replay protection |
+| `id` | `uint256` | Entry ID |
+
+**Access:** Signer must be author + WRITER_ROLE
 
 **Events:** `EntryRemoved(id, author)`
 
@@ -136,6 +197,20 @@ Update the writer's title.
 
 **Events:** `TitleSet(title)`
 
+##### `setTitleWithSig(signature, nonce, newTitle)`
+
+Update the writer's title via EIP-712 signature.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `signature` | `bytes` | EIP-712 typed data signature |
+| `nonce` | `uint256` | Unique nonce for replay protection |
+| `newTitle` | `string` | New title |
+
+**Access:** Signer must have DEFAULT_ADMIN_ROLE
+
+**Events:** `TitleSet(title)`
+
 ##### `replaceAdmin(newAdmin)`
 
 Transfer admin role to a new address. Revokes admin from the caller.
@@ -145,18 +220,6 @@ Transfer admin role to a new address. Revokes admin from the caller.
 | `newAdmin` | `address` | New admin address |
 
 **Access:** DEFAULT_ADMIN_ROLE
-
-#### Signature Variants
-
-All write functions have `*WithSig` variants that accept an EIP-712 signature and nonce:
-
-- `createWithChunkWithSig(signature, nonce, chunkCount, content)`
-- `addChunkWithSig(signature, nonce, id, index, content)`
-- `updateWithSig(signature, nonce, id, totalChunks, content)`
-- `removeWithSig(signature, nonce, id)`
-- `setTitleWithSig(signature, nonce, newTitle)`
-
-These enable gasless transactions — the server recovers the signer, validates their role, and relays the transaction via Syndicate.
 
 ---
 

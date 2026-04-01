@@ -392,6 +392,23 @@ export default function DocsPage() {
 					/>
 
 					<ContractFunction
+						name="createWithChunkWithSig(signature, nonce, chunkCount, content)"
+						description="Create a new entry with the first chunk via EIP-712 signature. Signer becomes the entry author."
+						params={[
+							{ name: "signature", type: "bytes", description: "EIP-712 typed data signature" },
+							{ name: "nonce", type: "uint256", description: "Unique nonce for replay protection" },
+							{ name: "chunkCount", type: "uint256", description: "Total number of chunks" },
+							{ name: "content", type: "string", description: "First chunk content" },
+						]}
+						returns="(uint256 entryId, Entry entry)"
+						access="Signer must have WRITER_ROLE"
+						events={[
+							"EntryCreated(id, author)",
+							"ChunkReceived(author, id, index, content)",
+						]}
+					/>
+
+					<ContractFunction
 						name="addChunk(id, index, content)"
 						description="Add a chunk to an existing entry at a specific index."
 						params={[
@@ -401,6 +418,21 @@ export default function DocsPage() {
 						]}
 						returns="Entry"
 						access="Author + WRITER_ROLE"
+						events={["ChunkReceived(author, id, index, content)"]}
+					/>
+
+					<ContractFunction
+						name="addChunkWithSig(signature, nonce, id, index, content)"
+						description="Add a chunk to an existing entry via EIP-712 signature."
+						params={[
+							{ name: "signature", type: "bytes", description: "EIP-712 typed data signature" },
+							{ name: "nonce", type: "uint256", description: "Unique nonce for replay protection" },
+							{ name: "id", type: "uint256", description: "Entry ID" },
+							{ name: "index", type: "uint256", description: "Chunk index" },
+							{ name: "content", type: "string", description: "Chunk content" },
+						]}
+						returns="Entry"
+						access="Signer must be author + WRITER_ROLE"
 						events={["ChunkReceived(author, id, index, content)"]}
 					/>
 
@@ -429,10 +461,39 @@ export default function DocsPage() {
 					/>
 
 					<ContractFunction
+						name="updateWithSig(signature, nonce, id, totalChunks, content)"
+						description="Replace an entry's content via EIP-712 signature."
+						params={[
+							{ name: "signature", type: "bytes", description: "EIP-712 typed data signature" },
+							{ name: "nonce", type: "uint256", description: "Unique nonce for replay protection" },
+							{ name: "id", type: "uint256", description: "Entry ID" },
+							{ name: "totalChunks", type: "uint256", description: "New total chunks" },
+							{ name: "content", type: "string", description: "New first chunk content" },
+						]}
+						access="Signer must be author + WRITER_ROLE"
+						events={[
+							"EntryUpdated(id, author)",
+							"ChunkReceived(author, id, index, content)",
+						]}
+					/>
+
+					<ContractFunction
 						name="remove(id)"
 						description="Delete an entry."
 						params={[{ name: "id", type: "uint256", description: "Entry ID" }]}
 						access="Author + WRITER_ROLE"
+						events={["EntryRemoved(id, author)"]}
+					/>
+
+					<ContractFunction
+						name="removeWithSig(signature, nonce, id)"
+						description="Delete an entry via EIP-712 signature."
+						params={[
+							{ name: "signature", type: "bytes", description: "EIP-712 typed data signature" },
+							{ name: "nonce", type: "uint256", description: "Unique nonce for replay protection" },
+							{ name: "id", type: "uint256", description: "Entry ID" },
+						]}
+						access="Signer must be author + WRITER_ROLE"
 						events={["EntryRemoved(id, author)"]}
 					/>
 
@@ -447,6 +508,18 @@ export default function DocsPage() {
 							{ name: "newTitle", type: "string", description: "New title" },
 						]}
 						access="DEFAULT_ADMIN_ROLE"
+						events={["TitleSet(title)"]}
+					/>
+
+					<ContractFunction
+						name="setTitleWithSig(signature, nonce, newTitle)"
+						description="Update the writer's title via EIP-712 signature."
+						params={[
+							{ name: "signature", type: "bytes", description: "EIP-712 typed data signature" },
+							{ name: "nonce", type: "uint256", description: "Unique nonce for replay protection" },
+							{ name: "newTitle", type: "string", description: "New title" },
+						]}
+						access="Signer must have DEFAULT_ADMIN_ROLE"
 						events={["TitleSet(title)"]}
 					/>
 
