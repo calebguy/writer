@@ -1,12 +1,56 @@
+"use client";
+
+import { useEffect } from "react";
+
 const secondaryGray = "dark:text-neutral-200 text-neutral-800";
+
+function slugify(text: string) {
+	return text
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, "-")
+		.replace(/(^-|-$)/g, "");
+}
+
+function copyAnchor(id: string) {
+	const url = `${window.location.origin}${window.location.pathname}#${id}`;
+	navigator.clipboard.writeText(url);
+	window.history.replaceState(null, "", `#${id}`);
+	document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+}
+
+function AnchorHeading({
+	id,
+	className,
+	as: Tag = "h2",
+	children,
+}: {
+	id: string;
+	className?: string;
+	as?: "h2" | "h3" | "code";
+	children: React.ReactNode;
+}) {
+	return (
+		<Tag
+			id={id}
+			className={`${className ?? ""} cursor-pointer scroll-mt-24 group inline-flex items-center`}
+			onClick={() => copyAnchor(id)}
+		>
+			{children}
+			<span className="opacity-0 group-hover:opacity-100 transition-opacity font-normal ml-2 text-sm text-neutral-400 dark:text-neutral-500">&sect;</span>
+		</Tag>
+	);
+}
 
 function Section({
 	title,
 	children,
 }: { title: string; children: React.ReactNode }) {
+	const id = slugify(title);
 	return (
 		<section className="mb-16">
-			<h2 className="text-3xl font-serif mb-8 text-primary">{title}</h2>
+			<AnchorHeading id={id} className="text-3xl font-serif mb-8 text-primary">
+				{title}
+			</AnchorHeading>
 			{children}
 		</section>
 	);
@@ -35,11 +79,16 @@ function Endpoint({
 		DELETE: "text-red-600 dark:text-red-400",
 	}[method];
 
+	const id = slugify(`${method}-${path}`);
 	return (
-		<div className="mb-8 border-b border-neutral-200 dark:border-neutral-700 pb-8 last:border-b-0">
-			<div className="flex items-baseline gap-3 mb-2">
+		<div id={id} className="mb-8 border-b border-neutral-200 dark:border-neutral-700 pb-8 last:border-b-0 scroll-mt-24">
+			<div
+				className="flex items-baseline gap-3 mb-2 cursor-pointer group"
+				onClick={() => copyAnchor(id)}
+			>
 				<span className={`font-mono  font-bold ${methodColor}`}>{method}</span>
 				<code className="font-mono ">{path}</code>
+				<span className="opacity-0 group-hover:opacity-100 transition-opacity font-normal ml-2 text-sm text-neutral-400 dark:text-neutral-500">&sect;</span>
 			</div>
 			<p className={`${secondaryGray} mb-3`}>{description}</p>
 			{auth && <p className={`${secondaryGray} mb-3`}>Auth: {auth}</p>}
@@ -114,9 +163,12 @@ function ContractFunction({
 	access?: string;
 	events?: string[];
 }) {
+	const id = slugify(name);
 	return (
-		<div className="mb-8 border-b border-neutral-200 dark:border-neutral-700 pb-8 last:border-b-0">
-			<code className="font-mono  font-bold">{name}</code>
+		<div id={id} className="mb-8 border-b border-neutral-200 dark:border-neutral-700 pb-8 last:border-b-0 scroll-mt-24">
+			<AnchorHeading id={id} as="code" className="font-mono font-bold">
+				{name}
+			</AnchorHeading>
 			<p className={`${secondaryGray}  mt-1 mb-3`}>{description}</p>
 			{access && <p className={`${secondaryGray} mb-3`}>Access: {access}</p>}
 			{params && params.length > 0 && (
@@ -171,6 +223,16 @@ function ContractFunction({
 }
 
 export default function DocsPage() {
+	useEffect(() => {
+		const hash = window.location.hash.slice(1);
+		if (hash) {
+			const el = document.getElementById(hash);
+			if (el) {
+				setTimeout(() => el.scrollIntoView({ behavior: "smooth" }), 100);
+			}
+		}
+	}, []);
+
 	return (
 		<div className="max-w-3xl mx-auto py-8">
 			<p className={`${secondaryGray} mb-16 `}>
@@ -181,9 +243,9 @@ export default function DocsPage() {
 
 			{/* SMART CONTRACTS */}
 			<div className="mb-24">
-				<h2 className="text-xl font-serif italic text-primary mb-12">
+				<AnchorHeading id="smart-contracts" className="text-xl font-serif italic text-primary mb-12">
 					Smart Contracts
-				</h2>
+				</AnchorHeading>
 
 				<Section title="WriterFactory">
 					<p className={`${secondaryGray}  mb-8`}>
@@ -257,9 +319,9 @@ export default function DocsPage() {
 						that accept EIP-712 typed data signatures for gasless transactions.
 					</p>
 
-					<h3 className={`text-lg font-serif mb-6 ${secondaryGray}`}>
+					<AnchorHeading id="reading" as="h3" className={`text-lg font-serif mb-6 ${secondaryGray}`}>
 						Reading
-					</h3>
+					</AnchorHeading>
 
 					<ContractFunction
 						name="getEntryCount()"
@@ -302,9 +364,9 @@ export default function DocsPage() {
 						access="View"
 					/>
 
-					<h3 className={`text-lg font-serif mb-6 mt-12 ${secondaryGray}`}>
+					<AnchorHeading id="writing" as="h3" className={`text-lg font-serif mb-6 mt-12 ${secondaryGray}`}>
 						Writing
-					</h3>
+					</AnchorHeading>
 
 					<ContractFunction
 						name="createWithChunk(chunkCount, content)"
@@ -374,9 +436,9 @@ export default function DocsPage() {
 						events={["EntryRemoved(id, author)"]}
 					/>
 
-					<h3 className={`text-lg font-serif mb-6 mt-12 ${secondaryGray}`}>
+					<AnchorHeading id="administration" as="h3" className={`text-lg font-serif mb-6 mt-12 ${secondaryGray}`}>
 						Administration
-					</h3>
+					</AnchorHeading>
 
 					<ContractFunction
 						name="setTitle(newTitle)"
@@ -405,8 +467,7 @@ export default function DocsPage() {
 				<Section title="WriterStorage">
 					<p className={`${secondaryGray}  mb-8`}>
 						Storage contract that holds all entry data. Only the Writer logic
-						contract can modify state. Uses a proxy pattern to separate logic
-						from storage.
+						contract can modify state, enforced by the onlyLogic modifier.
 					</p>
 
 					<ContractFunction
@@ -503,7 +564,7 @@ export default function DocsPage() {
 
 			{/* API */}
 			<div className="mb-24">
-				<h2 className="text-xl font-serif italic text-primary mb-12">API</h2>
+				<AnchorHeading id="api" className="text-xl font-serif italic text-primary mb-12">API</AnchorHeading>
 				<p className={`${secondaryGray}  mb-12`}>
 					All write operations are authenticated via EIP-712 signatures — the
 					server recovers the signer address from the signature and validates

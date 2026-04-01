@@ -162,7 +162,7 @@ These enable gasless transactions — the server recovers the signer, validates 
 
 ### WriterStorage
 
-Storage contract that holds all entry data. Only the Writer logic contract can modify state. Uses a proxy pattern to separate logic from storage.
+Storage contract that holds all entry data. Only the Writer logic contract can modify state, enforced by the `onlyLogic` modifier.
 
 #### Entry Struct
 
