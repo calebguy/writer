@@ -100,7 +100,7 @@ export function MobileBottomNav() {
 			<div
 				ref={containerRef}
 				className="md:hidden fixed left-1/2 -translate-x-1/2 z-40"
-				style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 12px)" }}
+				style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 40px)" }}
 			>
 				<div className="relative flex items-center justify-center">
 					{showSubMenu && (
