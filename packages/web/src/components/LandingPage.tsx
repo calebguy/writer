@@ -23,9 +23,7 @@ function StarImage() {
 	);
 }
 
-function useStarLayout(
-	gridRef: React.RefObject<HTMLDivElement | null>,
-) {
+function useStarLayout(gridRef: React.RefObject<HTMLDivElement | null>) {
 	const [heroSideCols, setHeroSideCols] = useState(0);
 	const [topRows, setTopRows] = useState(0);
 	const [ready, setReady] = useState(false);
@@ -73,7 +71,9 @@ function useContinuationSideCols(
 	useEffect(() => {
 		function calculate() {
 			if (!contentRef.current) return;
-			const parent = contentRef.current.closest(".landing-grid, .landing-continuation") as HTMLElement;
+			const parent = contentRef.current.closest(
+				".landing-grid, .landing-continuation",
+			) as HTMLElement;
 			if (!parent) return;
 			const styles = getComputedStyle(parent);
 			const gap = Number.parseFloat(
@@ -284,17 +284,17 @@ export function LandingPage({
 					</div>
 
 					<div className="flex flex-col items-center justify-between px-6 md:px-12 py-6 md:py-12 min-h-0">
-						<div className="flex flex-col items-center gap-4">
+						<div className="flex flex-col items-center gap-4 grow justify-center">
 							<ArtifactBar items={BAR_1_ITEMS} />
 							<div className="block md:hidden">
 								<ArtifactBar items={BAR_MOBILE_1_ITEMS} />
 							</div>
-							<div className="block md:hidden">
+							{/* <div className="block md:hidden">
 								<ArtifactBar items={BAR_MOBILE_2_ITEMS} />
-							</div>
+							</div> */}
 						</div>
 
-						<div className="flex flex-col items-center justify-center gap-6 md:gap-8 md:flex-1">
+						<div className="flex flex-col items-center justify-center gap-6 md:gap-8 md:flex-1 mb-8">
 							<div className="font-serif text-[4.5rem] md:text-[7rem] leading-none text-center">
 								Writer
 							</div>
