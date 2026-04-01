@@ -86,7 +86,7 @@ function useContinuationSideCols(
 
 			const contentHeight = contentRef.current.scrollHeight;
 			const availableHeight = contentHeight - gap;
-			setSideCols(Math.max(1, Math.ceil(availableHeight / starSlot)));
+			setSideCols(Math.max(1, Math.floor(availableHeight / starSlot)));
 		}
 
 		calculate();
@@ -349,7 +349,7 @@ export function LandingPage({
 				{/* Continuation — side stars only, no top/bottom frame */}
 				<div className="landing-continuation w-full">
 					{/* Left side stars */}
-					<div className="flex flex-col justify-start items-center gap-(--star-gap) py-[calc(var(--star-gap)/2)]">
+					<div className="flex flex-col justify-between items-center py-[calc(var(--star-gap)/2)]">
 						{Array.from({ length: continuationSideCols }).map((_, i) => (
 							<StarImage key={`cont-left-${String(i)}`} />
 						))}
@@ -376,7 +376,7 @@ export function LandingPage({
 					</div>
 
 					{/* Right side stars */}
-					<div className="flex flex-col justify-start items-center gap-(--star-gap) py-[calc(var(--star-gap)/2)]">
+					<div className="flex flex-col justify-between items-center py-[calc(var(--star-gap)/2)]">
 						{Array.from({ length: continuationSideCols }).map((_, i) => (
 							<StarImage key={`cont-right-${String(i)}`} />
 						))}
