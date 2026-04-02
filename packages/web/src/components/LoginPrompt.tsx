@@ -12,7 +12,7 @@ export function LoginPrompt({ toWhat, logos }: LoginPromptProps) {
 	const { login } = useLogin();
 
 	return (
-		<div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+		<div className="grow flex flex-col items-center justify-center min-h-[60vh] gap-4">
 			<Image
 				src={`/images/human/logo-${logos[0]}.png`}
 				alt="Light"
