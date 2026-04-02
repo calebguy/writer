@@ -210,7 +210,7 @@ export async function signCreateWithChunk(
 }
 
 function getRandomNonce() {
-	return Math.floor(Math.random() * 1000000000000);
+	return Number(crypto.getRandomValues(new Uint32Array(1))[0]);
 }
 
 // Keep old function for reading legacy entries
