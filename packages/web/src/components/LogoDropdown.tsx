@@ -50,8 +50,17 @@ export function LogoDropdown() {
 		setStoredThemeMode(mode);
 	};
 
+	const preloadImages = [
+		"/images/relics/relic-10.png",
+		"/images/relics/moon-3.png",
+		"/images/relics/computer-1.png",
+	];
+
 	return (
 		<>
+			{preloadImages.map((src) => (
+				<link key={src} rel="preload" as="image" href={src} />
+			))}
 			<Dropdown
 				onOpenChange={setDropdownOpen}
 				trigger={
