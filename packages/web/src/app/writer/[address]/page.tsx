@@ -13,6 +13,7 @@ import {
 import { useOPWallet, useProcessedEntries } from "@/utils/hooks";
 import { hasCachedDerivedKey } from "@/utils/keyCache";
 import { isEntryPrivate } from "@/utils/utils";
+import { usePrivy } from "@privy-io/react-auth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -28,6 +29,7 @@ export default function WriterPage() {
 	const { address } = useParams<{ address: string }>();
 	const queryClient = useQueryClient();
 	const [wallet] = useOPWallet();
+	const { getAccessToken } = usePrivy();
 	const [shouldPoll, setShouldPoll] = useState(false);
 	const [allowDecryption, setAllowDecryption] = useState(false);
 	const [unlockError, setUnlockError] = useState<string | null>(null);
@@ -112,16 +114,20 @@ export default function WriterPage() {
 			mutationKey: ["toggle-save-writer", walletAddress, writer?.address],
 			mutationFn: async () => {
 				if (!walletAddress || !writer?.address) return;
+				const authToken = await getAccessToken();
+				if (!authToken) return;
 				if (isSavedWriter) {
 					await unsaveWriter({
 						userAddress: walletAddress,
 						writerAddress: writer.address,
+						authToken,
 					});
 					return;
 				}
 				await saveWriter({
 					userAddress: walletAddress,
 					writerAddress: writer.address,
+					authToken,
 				});
 			},
 			onSuccess: () => {

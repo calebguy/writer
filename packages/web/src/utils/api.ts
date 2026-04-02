@@ -149,16 +149,23 @@ export async function getSaved(userAddress: Hex | string) {
 export async function saveWriter({
 	userAddress,
 	writerAddress,
+	authToken,
 }: {
 	userAddress: Hex | string;
 	writerAddress: Hex | string;
+	authToken: string;
 }) {
-	const res = await client.saved[":userAddress"].writer[":address"].$post({
-		param: {
-			userAddress: getAddress(userAddress),
-			address: getAddress(writerAddress),
+	const res = await client.saved[":userAddress"].writer[":address"].$post(
+		{
+			param: {
+				userAddress: getAddress(userAddress),
+				address: getAddress(writerAddress),
+			},
 		},
-	});
+		{
+			headers: { Authorization: `Bearer ${authToken}` },
+		},
+	);
 	if (!res.ok) {
 		throw new Error(res.statusText);
 	}
@@ -168,16 +175,23 @@ export async function saveWriter({
 export async function unsaveWriter({
 	userAddress,
 	writerAddress,
+	authToken,
 }: {
 	userAddress: Hex | string;
 	writerAddress: Hex | string;
+	authToken: string;
 }) {
-	const res = await client.saved[":userAddress"].writer[":address"].$delete({
-		param: {
-			userAddress: getAddress(userAddress),
-			address: getAddress(writerAddress),
+	const res = await client.saved[":userAddress"].writer[":address"].$delete(
+		{
+			param: {
+				userAddress: getAddress(userAddress),
+				address: getAddress(writerAddress),
+			},
 		},
-	});
+		{
+			headers: { Authorization: `Bearer ${authToken}` },
+		},
+	);
 	if (!res.ok) {
 		throw new Error(res.statusText);
 	}
@@ -187,16 +201,23 @@ export async function unsaveWriter({
 export async function saveEntry({
 	userAddress,
 	entryId,
+	authToken,
 }: {
 	userAddress: Hex | string;
 	entryId: number;
+	authToken: string;
 }) {
-	const res = await client.saved[":userAddress"].entry[":id"].$post({
-		param: {
-			userAddress: getAddress(userAddress),
-			id: String(entryId),
+	const res = await client.saved[":userAddress"].entry[":id"].$post(
+		{
+			param: {
+				userAddress: getAddress(userAddress),
+				id: String(entryId),
+			},
 		},
-	});
+		{
+			headers: { Authorization: `Bearer ${authToken}` },
+		},
+	);
 	if (!res.ok) {
 		throw new Error(res.statusText);
 	}
@@ -206,16 +227,23 @@ export async function saveEntry({
 export async function unsaveEntry({
 	userAddress,
 	entryId,
+	authToken,
 }: {
 	userAddress: Hex | string;
 	entryId: number;
+	authToken: string;
 }) {
-	const res = await client.saved[":userAddress"].entry[":id"].$delete({
-		param: {
-			userAddress: getAddress(userAddress),
-			id: String(entryId),
+	const res = await client.saved[":userAddress"].entry[":id"].$delete(
+		{
+			param: {
+				userAddress: getAddress(userAddress),
+				id: String(entryId),
+			},
 		},
-	});
+		{
+			headers: { Authorization: `Bearer ${authToken}` },
+		},
+	);
 	if (!res.ok) {
 		throw new Error(res.statusText);
 	}

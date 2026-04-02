@@ -5,6 +5,7 @@ import {
 	userAddressAndIDParamSchema,
 	userAddressParamSchema,
 } from "../middleware";
+import { requireSavedAuth } from "../privy";
 import { Hono } from "hono";
 
 const savedRoutes = new Hono()
@@ -18,6 +19,7 @@ const savedRoutes = new Hono()
 	})
 	.post(
 		"/saved/:userAddress/writer/:address",
+		requireSavedAuth,
 		userAddressAndAddressParamSchema,
 		async (c) => {
 			const { userAddress, address } = c.req.valid("param");
@@ -31,6 +33,7 @@ const savedRoutes = new Hono()
 	)
 	.delete(
 		"/saved/:userAddress/writer/:address",
+		requireSavedAuth,
 		userAddressAndAddressParamSchema,
 		async (c) => {
 			const { userAddress, address } = c.req.valid("param");
@@ -40,6 +43,7 @@ const savedRoutes = new Hono()
 	)
 	.post(
 		"/saved/:userAddress/entry/:id",
+		requireSavedAuth,
 		userAddressAndIDParamSchema,
 		async (c) => {
 			const { userAddress, id } = c.req.valid("param");
@@ -57,6 +61,7 @@ const savedRoutes = new Hono()
 	)
 	.delete(
 		"/saved/:userAddress/entry/:id",
+		requireSavedAuth,
 		userAddressAndIDParamSchema,
 		async (c) => {
 			const { userAddress, id } = c.req.valid("param");

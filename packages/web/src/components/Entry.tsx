@@ -28,6 +28,7 @@ import {
 	shortenAddress,
 	sleep,
 } from "@/utils/utils";
+import { usePrivy } from "@privy-io/react-auth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import dynamic from "next/dynamic";
@@ -55,6 +56,7 @@ export default function Entry({
 	onEntryUpdate: () => void;
 }) {
 	const [wallet] = useOPWallet();
+	const { getAccessToken } = usePrivy();
 	const router = useRouter();
 	const queryClient = useQueryClient();
 	const { setEntryLoading } = useEntryLoading();
@@ -85,16 +87,20 @@ export default function Entry({
 			mutationKey: ["toggle-save-entry", walletAddress, initialEntry.id],
 			mutationFn: async () => {
 				if (!walletAddress) return;
+				const authToken = await getAccessToken();
+				if (!authToken) return;
 				if (isSavedEntry) {
 					await unsaveEntry({
 						userAddress: walletAddress,
 						entryId: initialEntry.id,
+						authToken,
 					});
 					return;
 				}
 				await saveEntry({
 					userAddress: walletAddress,
 					entryId: initialEntry.id,
+					authToken,
 				});
 			},
 			onSuccess: () => {
