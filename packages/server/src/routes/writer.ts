@@ -26,6 +26,7 @@ import {
 	factoryCreateJsonValidator,
 	updateEntryJsonValidator,
 } from "../middleware";
+import { requireWriterAdminAuth } from "../privy";
 import { syndicate } from "../syndicate";
 import { Hono } from "hono";
 
@@ -138,7 +139,7 @@ const writerRoutes = new Hono()
 		const writer = writerToJsonSafe(data[0]);
 		return c.json({ writer }, 201);
 	})
-	.delete("/writer/:address", addressParamSchema, async (c) => {
+	.post("/writer/:address/hide", addressParamSchema, requireWriterAdminAuth, async (c) => {
 		const { address } = c.req.valid("param");
 		const writer = await db.getWriter(address);
 		if (!writer) {

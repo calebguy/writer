@@ -15,7 +15,6 @@ import {
 } from "@/utils/utils";
 import { usePrivy } from "@privy-io/react-auth";
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
@@ -48,7 +47,10 @@ type MixedSavedItem =
 			writer: SavedEntry["writer"];
 	  };
 
-export default function SavedView({ initialLoggedIn = false }: { initialLoggedIn?: boolean }) {
+export default function SavedView({
+	initialLoggedIn = false,
+	loginLogos,
+}: { initialLoggedIn?: boolean; loginLogos: [number, number] }) {
 	const { ready, authenticated, user } = usePrivy();
 	const isLoggedIn = ready ? authenticated : initialLoggedIn;
 	const userAddress = user?.wallet?.address as Hex | undefined;
@@ -82,7 +84,7 @@ export default function SavedView({ initialLoggedIn = false }: { initialLoggedIn
 	}, [savedWriters, savedEntries]);
 
 	if (!isLoggedIn) {
-		return <LoginPrompt />;
+		return <LoginPrompt toWhat="save" logos={loginLogos} />;
 	}
 
 	if (!ready || isLoading) {
@@ -318,7 +320,11 @@ function MixedSavedGrid({
 								isPending ? "justify-between" : "justify-start",
 							)}
 						>
-							<span>{item.writer.title.replace(/^#{1,6}\s+/, "").replace(/[*_~`>\[\]]/g, "")}</span>
+							<span>
+								{item.writer.title
+									.replace(/^#{1,6}\s+/, "")
+									.replace(/[*_~`>\[\]]/g, "")}
+							</span>
 							{isPending && (
 								<span className="pending-entry-spinner">
 									<span className="pending-entry-spinner-track" />

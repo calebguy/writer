@@ -9,10 +9,21 @@ if (!process.env.NEXT_PUBLIC_BASE_URL) {
 
 const client = hc<Api>(process.env.NEXT_PUBLIC_BASE_URL);
 
-export async function deleteWriter(address: Hex | string) {
-	const res = await client.writer[":address"].$delete({
-		param: { address: getAddress(address) },
-	});
+export async function hideWriter({
+	address,
+	authToken,
+}: {
+	address: Hex | string;
+	authToken: string;
+}) {
+	const res = await client.writer[":address"].hide.$post(
+		{
+			param: { address: getAddress(address) },
+		},
+		{
+			headers: { Authorization: `Bearer ${authToken}` },
+		},
+	);
 	if (!res.ok) {
 		throw new Error(res.statusText);
 	}

@@ -701,19 +701,6 @@ export default function DocsPage() {
 						response="{ writer: Writer }"
 					/>
 
-					<Endpoint
-						method="DELETE"
-						path="/writer/:address"
-						description="Delete a writer."
-						params={[
-							{
-								name: "address",
-								type: "address",
-								description: "Writer contract address",
-							},
-						]}
-						response="{ writer: Writer }"
-					/>
 				</Section>
 
 				<Section title="Entries">
