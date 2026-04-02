@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "crypto";
 import { zValidator } from "@hono/zod-validator";
 import type { Context } from "hono";
 import { MAX_CONTENT_LENGTH, MAX_TITLE_LENGTH } from "utils";
@@ -145,7 +146,11 @@ export function assertAdminKey(c: Context) {
 		};
 	}
 	const providedKey = c.req.header("x-admin-key");
-	if (!providedKey || providedKey !== expectedKey) {
+	if (
+		!providedKey ||
+		providedKey.length !== expectedKey.length ||
+		!timingSafeEqual(Buffer.from(providedKey), Buffer.from(expectedKey))
+	) {
 		return {
 			ok: false as const,
 			status: 401 as const,
