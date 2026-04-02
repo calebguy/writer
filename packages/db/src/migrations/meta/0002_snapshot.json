@@ -1,6 +1,6 @@
 {
-  "id": "7e8e1840-adf3-4b46-97b9-46575f531453",
-  "prevId": "a2b3c4d5-e6f7-4a8b-9c0d-1e2f3a4b5c6d",
+  "id": "a2b3c4d5-e6f7-4a8b-9c0d-1e2f3a4b5c6d",
+  "prevId": "50377a7f-fec6-4ec2-993e-3516decd5804",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -612,6 +612,13 @@
           "type": "text[]",
           "primaryKey": false,
           "notNull": true
+        },
+        "is_private": {
+          "name": "is_private",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "created_at_hash": {
           "name": "created_at_hash",
