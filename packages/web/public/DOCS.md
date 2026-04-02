@@ -324,13 +324,6 @@ Deploy a new Writer + WriterStorage contract pair.
 | `title` | `string` | Writer title |
 | `admin` | `address` | Admin address |
 | `managers` | `address[]` | Manager addresses |
-| `isPrivate` | `boolean?` | Whether the writer is private |
-
-**Response:** `{ writer: Writer }`
-
-#### `DELETE /writer/:address`
-
-Delete a writer.
 
 **Response:** `{ writer: Writer }`
 
@@ -402,40 +395,6 @@ Delete an entry.
 | `nonce` | `bigint` | Unique nonce |
 
 **Response:** `{ writer: Writer }`
-
----
-
-### Saved
-
-#### `GET /saved/:userAddress`
-
-Get all saved writers and entries for a user.
-
-**Response:** `{ writers: SavedWriter[], entries: SavedEntry[] }`
-
-#### `POST /saved/:userAddress/writer/:address`
-
-Save a writer.
-
-**Response:** `{ ok: true }`
-
-#### `DELETE /saved/:userAddress/writer/:address`
-
-Unsave a writer.
-
-**Response:** `{ ok: true }`
-
-#### `POST /saved/:userAddress/entry/:id`
-
-Save an entry.
-
-**Response:** `{ ok: true }`
-
-#### `DELETE /saved/:userAddress/entry/:id`
-
-Unsave an entry.
-
-**Response:** `{ ok: true }`
 
 ---
 

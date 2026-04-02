@@ -97,7 +97,7 @@ const writerRoutes = new Hono()
 		return c.json({ user });
 	})
 	.post("/factory/create", factoryCreateJsonValidator, async (c) => {
-		const { admin, managers, title, isPrivate } = c.req.valid("json");
+		const { admin, managers, title } = c.req.valid("json");
 		const salt = toHex(randomBytes(32));
 		const args = { title, admin, managers, salt };
 		const [address, storageAddress] = await Promise.all([
@@ -134,7 +134,6 @@ const writerRoutes = new Hono()
 			transactionId,
 			address,
 			storageAddress,
-			isPrivate,
 		});
 		const writer = writerToJsonSafe(data[0]);
 		return c.json({ writer }, 201);

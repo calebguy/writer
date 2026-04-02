@@ -1,5 +1,6 @@
 import { zValidator } from "@hono/zod-validator";
 import type { Context } from "hono";
+import { MAX_CONTENT_LENGTH, MAX_TITLE_LENGTH } from "utils";
 import { getAddress } from "viem";
 import { z } from "zod";
 import { env } from "./env";
@@ -40,7 +41,7 @@ const ethAddress = z
 	.transform((val) => getAddress(val));
 
 export const createEntrySchema = z.object({
-	content: z.string(),
+	content: z.string().max(MAX_CONTENT_LENGTH),
 });
 
 export const addressParamSchema = zValidator(
@@ -94,7 +95,7 @@ export const createWithChunkJsonValidator = zValidator(
 		signature: z.string(),
 		nonce: bigIntSafe,
 		chunkCount: bigIntSafe,
-		chunkContent: z.string(),
+		chunkContent: z.string().max(MAX_CONTENT_LENGTH),
 	}),
 );
 
@@ -104,17 +105,16 @@ export const updateEntryJsonValidator = zValidator(
 		signature: z.string(),
 		nonce: bigIntSafe,
 		totalChunks: bigIntSafe,
-		content: z.string(),
+		content: z.string().max(MAX_CONTENT_LENGTH),
 	}),
 );
 
 export const factoryCreateJsonValidator = zValidator(
 	"json",
 	z.object({
-		title: z.string(),
+		title: z.string().max(MAX_TITLE_LENGTH),
 		admin: ethAddress,
 		managers: z.array(ethAddress),
-		isPrivate: z.boolean().optional(),
 	}),
 );
 

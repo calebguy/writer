@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { MAX_CONTENT_LENGTH, MAX_TITLE_LENGTH } from "utils/constants";
 
 const secondaryGray = "dark:text-neutral-200 text-neutral-800";
 
@@ -32,11 +33,15 @@ function AnchorHeading({
 	return (
 		<Tag
 			id={id}
-			className={`${className ?? ""} cursor-pointer scroll-mt-24 group inline-flex items-center`}
+			className={`${
+				className ?? ""
+			} cursor-pointer scroll-mt-24 group inline-flex items-center`}
 			onClick={() => copyAnchor(id)}
 		>
 			{children}
-			<span className="opacity-0 group-hover:opacity-100 transition-opacity font-normal ml-2 text-sm text-neutral-400 dark:text-neutral-500">&sect;</span>
+			<span className="opacity-0 group-hover:opacity-100 transition-opacity font-normal ml-2 text-sm text-neutral-400 dark:text-neutral-500">
+				&sect;
+			</span>
 		</Tag>
 	);
 }
@@ -81,14 +86,19 @@ function Endpoint({
 
 	const id = slugify(`${method}-${path}`);
 	return (
-		<div id={id} className="mb-8 border-b border-neutral-200 dark:border-neutral-700 pb-8 last:border-b-0 scroll-mt-24">
+		<div
+			id={id}
+			className="mb-8 border-b border-neutral-200 dark:border-neutral-700 pb-8 last:border-b-0 scroll-mt-24"
+		>
 			<div
 				className="flex items-baseline gap-3 mb-2 cursor-pointer group"
 				onClick={() => copyAnchor(id)}
 			>
 				<span className={`font-mono  font-bold ${methodColor}`}>{method}</span>
 				<code className="font-mono ">{path}</code>
-				<span className="opacity-0 group-hover:opacity-100 transition-opacity font-normal ml-2 text-sm text-neutral-400 dark:text-neutral-500">&sect;</span>
+				<span className="opacity-0 group-hover:opacity-100 transition-opacity font-normal ml-2 text-sm text-neutral-400 dark:text-neutral-500">
+					&sect;
+				</span>
 			</div>
 			<p className={`${secondaryGray} mb-3`}>{description}</p>
 			{auth && <p className={`${secondaryGray} mb-3`}>Auth: {auth}</p>}
@@ -165,7 +175,10 @@ function ContractFunction({
 }) {
 	const id = slugify(name);
 	return (
-		<div id={id} className="mb-8 border-b border-neutral-200 dark:border-neutral-700 pb-8 last:border-b-0 scroll-mt-24">
+		<div
+			id={id}
+			className="mb-8 border-b border-neutral-200 dark:border-neutral-700 pb-8 last:border-b-0 scroll-mt-24"
+		>
 			<AnchorHeading id={id} as="code" className="font-mono font-bold">
 				{name}
 			</AnchorHeading>
@@ -243,7 +256,10 @@ export default function DocsPage() {
 
 			{/* SMART CONTRACTS */}
 			<div className="mb-24">
-				<AnchorHeading id="smart-contracts" className="text-xl font-serif italic text-primary mb-12">
+				<AnchorHeading
+					id="smart-contracts"
+					className="text-xl font-serif italic text-primary mb-12"
+				>
 					Smart Contracts
 				</AnchorHeading>
 
@@ -319,7 +335,11 @@ export default function DocsPage() {
 						that accept EIP-712 typed data signatures for gasless transactions.
 					</p>
 
-					<AnchorHeading id="reading" as="h3" className={`text-lg font-serif mb-6 ${secondaryGray}`}>
+					<AnchorHeading
+						id="reading"
+						as="h3"
+						className={`text-lg font-serif mb-6 ${secondaryGray}`}
+					>
 						Reading
 					</AnchorHeading>
 
@@ -364,7 +384,11 @@ export default function DocsPage() {
 						access="View"
 					/>
 
-					<AnchorHeading id="writing" as="h3" className={`text-lg font-serif mb-6 mt-12 ${secondaryGray}`}>
+					<AnchorHeading
+						id="writing"
+						as="h3"
+						className={`text-lg font-serif mb-6 mt-12 ${secondaryGray}`}
+					>
 						Writing
 					</AnchorHeading>
 
@@ -395,10 +419,26 @@ export default function DocsPage() {
 						name="createWithChunkWithSig(signature, nonce, chunkCount, content)"
 						description="Create a new entry with the first chunk via EIP-712 signature. Signer becomes the entry author."
 						params={[
-							{ name: "signature", type: "bytes", description: "EIP-712 typed data signature" },
-							{ name: "nonce", type: "uint256", description: "Unique nonce for replay protection" },
-							{ name: "chunkCount", type: "uint256", description: "Total number of chunks" },
-							{ name: "content", type: "string", description: "First chunk content" },
+							{
+								name: "signature",
+								type: "bytes",
+								description: "EIP-712 typed data signature",
+							},
+							{
+								name: "nonce",
+								type: "uint256",
+								description: "Unique nonce for replay protection",
+							},
+							{
+								name: "chunkCount",
+								type: "uint256",
+								description: "Total number of chunks",
+							},
+							{
+								name: "content",
+								type: "string",
+								description: "First chunk content",
+							},
 						]}
 						returns="(uint256 entryId, Entry entry)"
 						access="Signer must have WRITER_ROLE"
@@ -425,8 +465,16 @@ export default function DocsPage() {
 						name="addChunkWithSig(signature, nonce, id, index, content)"
 						description="Add a chunk to an existing entry via EIP-712 signature."
 						params={[
-							{ name: "signature", type: "bytes", description: "EIP-712 typed data signature" },
-							{ name: "nonce", type: "uint256", description: "Unique nonce for replay protection" },
+							{
+								name: "signature",
+								type: "bytes",
+								description: "EIP-712 typed data signature",
+							},
+							{
+								name: "nonce",
+								type: "uint256",
+								description: "Unique nonce for replay protection",
+							},
 							{ name: "id", type: "uint256", description: "Entry ID" },
 							{ name: "index", type: "uint256", description: "Chunk index" },
 							{ name: "content", type: "string", description: "Chunk content" },
@@ -464,11 +512,27 @@ export default function DocsPage() {
 						name="updateWithSig(signature, nonce, id, totalChunks, content)"
 						description="Replace an entry's content via EIP-712 signature."
 						params={[
-							{ name: "signature", type: "bytes", description: "EIP-712 typed data signature" },
-							{ name: "nonce", type: "uint256", description: "Unique nonce for replay protection" },
+							{
+								name: "signature",
+								type: "bytes",
+								description: "EIP-712 typed data signature",
+							},
+							{
+								name: "nonce",
+								type: "uint256",
+								description: "Unique nonce for replay protection",
+							},
 							{ name: "id", type: "uint256", description: "Entry ID" },
-							{ name: "totalChunks", type: "uint256", description: "New total chunks" },
-							{ name: "content", type: "string", description: "New first chunk content" },
+							{
+								name: "totalChunks",
+								type: "uint256",
+								description: "New total chunks",
+							},
+							{
+								name: "content",
+								type: "string",
+								description: "New first chunk content",
+							},
 						]}
 						access="Signer must be author + WRITER_ROLE"
 						events={[
@@ -489,15 +553,27 @@ export default function DocsPage() {
 						name="removeWithSig(signature, nonce, id)"
 						description="Delete an entry via EIP-712 signature."
 						params={[
-							{ name: "signature", type: "bytes", description: "EIP-712 typed data signature" },
-							{ name: "nonce", type: "uint256", description: "Unique nonce for replay protection" },
+							{
+								name: "signature",
+								type: "bytes",
+								description: "EIP-712 typed data signature",
+							},
+							{
+								name: "nonce",
+								type: "uint256",
+								description: "Unique nonce for replay protection",
+							},
 							{ name: "id", type: "uint256", description: "Entry ID" },
 						]}
 						access="Signer must be author + WRITER_ROLE"
 						events={["EntryRemoved(id, author)"]}
 					/>
 
-					<AnchorHeading id="administration" as="h3" className={`text-lg font-serif mb-6 mt-12 ${secondaryGray}`}>
+					<AnchorHeading
+						id="administration"
+						as="h3"
+						className={`text-lg font-serif mb-6 mt-12 ${secondaryGray}`}
+					>
 						Administration
 					</AnchorHeading>
 
@@ -515,8 +591,16 @@ export default function DocsPage() {
 						name="setTitleWithSig(signature, nonce, newTitle)"
 						description="Update the writer's title via EIP-712 signature."
 						params={[
-							{ name: "signature", type: "bytes", description: "EIP-712 typed data signature" },
-							{ name: "nonce", type: "uint256", description: "Unique nonce for replay protection" },
+							{
+								name: "signature",
+								type: "bytes",
+								description: "EIP-712 typed data signature",
+							},
+							{
+								name: "nonce",
+								type: "uint256",
+								description: "Unique nonce for replay protection",
+							},
 							{ name: "newTitle", type: "string", description: "New title" },
 						]}
 						access="Signer must have DEFAULT_ADMIN_ROLE"
@@ -637,7 +721,12 @@ export default function DocsPage() {
 
 			{/* API */}
 			<div className="mb-24">
-				<AnchorHeading id="api" className="text-xl font-serif italic text-primary mb-12">API</AnchorHeading>
+				<AnchorHeading
+					id="api"
+					className="text-xl font-serif italic text-primary mb-12"
+				>
+					API
+				</AnchorHeading>
 				<p className={`${secondaryGray}  mb-12`}>
 					All write operations are authenticated via EIP-712 signatures — the
 					server recovers the signer address from the signature and validates
@@ -685,22 +774,20 @@ export default function DocsPage() {
 						path="/factory/create"
 						description="Deploy a new Writer + WriterStorage contract pair."
 						body={[
-							{ name: "title", type: "string", description: "Writer title" },
+							{
+								name: "title",
+								type: "string",
+								description: `Writer title (max ${MAX_TITLE_LENGTH.toLocaleString()} characters)`,
+							},
 							{ name: "admin", type: "address", description: "Admin address" },
 							{
 								name: "managers",
 								type: "address[]",
 								description: "Manager addresses",
 							},
-							{
-								name: "isPrivate",
-								type: "boolean?",
-								description: "Whether the writer is private",
-							},
 						]}
 						response="{ writer: Writer }"
 					/>
-
 				</Section>
 
 				<Section title="Entries">
@@ -761,7 +848,7 @@ export default function DocsPage() {
 							{
 								name: "chunkContent",
 								type: "string",
-								description: "First chunk content",
+								description: `First chunk content (max ${MAX_CONTENT_LENGTH.toLocaleString()} characters)`,
 							},
 						]}
 						response="{ entry: Entry }"
@@ -792,7 +879,11 @@ export default function DocsPage() {
 								type: "bigint",
 								description: "New total chunks",
 							},
-							{ name: "content", type: "string", description: "New content" },
+							{
+								name: "content",
+								type: "string",
+								description: `New content (max ${MAX_CONTENT_LENGTH.toLocaleString()} characters)`,
+							},
 						]}
 						response="{ entry: Entry }"
 					/>

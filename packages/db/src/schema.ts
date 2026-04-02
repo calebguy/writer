@@ -20,7 +20,6 @@ export const writer = pgTable("writer", {
 	title: text().notNull(),
 	admin: text().notNull(),
 	managers: text().array().notNull(),
-	isPrivate: boolean().notNull().default(false),
 	createdAtHash: text(),
 	createdAtBlock: bigint({ mode: "bigint" }),
 	createdAtBlockDatetime: timestamp({

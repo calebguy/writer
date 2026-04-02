@@ -242,9 +242,8 @@ class Db {
 	}
 
 	async getPublicWriters() {
-		// Get all non-private writers
 		const publicWriters = await this.pg.query.writer.findMany({
-			where: and(eq(writer.isPrivate, false), isNull(writer.deletedAt)),
+			where: isNull(writer.deletedAt),
 			orderBy: (writer, { desc }) => [desc(writer.createdAt)],
 		});
 

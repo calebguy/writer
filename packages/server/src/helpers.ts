@@ -749,7 +749,6 @@ export async function reconcileWriterByAddress(
 		title: decoded.title,
 		admin: decoded.admin,
 		managers: decoded.managers.map((manager: Hex) => manager.toString()),
-		isPrivate: writer.isPrivate,
 		createdAtHash: receipt.transactionHash,
 		createdAtBlock,
 		createdAtBlockDatetime,

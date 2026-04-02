@@ -60,6 +60,7 @@
     "rehype-highlight": "^7.0.2",
     "server": "workspace:server",
     "tiptap-markdown": "^0.8.10",
+    "utils": "workspace:*",
     "vaul": "^1.1.2",
     "viem": "^2.33.0"
   },
