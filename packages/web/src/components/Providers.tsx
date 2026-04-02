@@ -22,7 +22,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 import { optimism } from "viem/chains";
 
-const PRIVY_APP_ID = "clzekejfs079912zv96ahfm5a";
+import { env } from "@/utils/env";
 
 export const queryClient = new QueryClient({
 	defaultOptions: {
@@ -89,12 +89,12 @@ export function Providers({
 	return (
 		<QueryClientProvider client={queryClient}>
 			<PrivyProvider
-				appId={PRIVY_APP_ID}
+				appId={env.NEXT_PUBLIC_PRIVY_APP_ID}
 				config={{
 					loginMethods: ["sms", "email", "wallet", "passkey"],
 					defaultChain: optimism,
 					supportedChains: [optimism],
-					walletConnectCloudProjectId: "d178d559d87d6933a4950314767bf38d",
+					walletConnectCloudProjectId: env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID,
 					appearance: {
 						theme: "dark",
 						accentColor: RGBToHex(primaryColor),

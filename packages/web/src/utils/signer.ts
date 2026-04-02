@@ -1,17 +1,9 @@
 import type { ConnectedWallet } from "@privy-io/react-auth";
 import { type Hex, getAddress, keccak256 } from "viem";
+import { env } from "./env";
 
-if (!process.env.NEXT_PUBLIC_COLOR_REGISTRY_ADDRESS) {
-	throw new Error("NEXT_PUBLIC_COLOR_REGISTRY_ADDRESS is not set");
-}
-
-if (!process.env.NEXT_PUBLIC_TARGET_CHAIN_ID) {
-	throw new Error("NEXT_PUBLIC_TARGET_CHAIN_ID is not set");
-}
-
-const COLOR_REGISTRY_ADDRESS = process.env
-	.NEXT_PUBLIC_COLOR_REGISTRY_ADDRESS as Hex;
-const TARGET_CHAIN_ID = process.env.NEXT_PUBLIC_TARGET_CHAIN_ID;
+const COLOR_REGISTRY_ADDRESS = env.NEXT_PUBLIC_COLOR_REGISTRY_ADDRESS as Hex;
+const TARGET_CHAIN_ID = env.NEXT_PUBLIC_TARGET_CHAIN_ID;
 
 export async function signSetColor(
 	wallet: ConnectedWallet,

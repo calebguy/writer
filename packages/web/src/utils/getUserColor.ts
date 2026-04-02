@@ -1,19 +1,11 @@
 "use server";
 
 import type { Hex } from "viem";
+import { env } from "./env";
 
 export async function getUserColor(address: Hex): Promise<string | null> {
 	try {
-		const baseUrl =
-			process.env.NEXT_PUBLIC_BASE_URL || process.env.API_BASE_URL;
-		if (!baseUrl) {
-			console.warn(
-				"NEXT_PUBLIC_BASE_URL not configured for server-side color fetch",
-			);
-			return null;
-		}
-
-		const response = await fetch(`${baseUrl}/me/${address}`, {
+		const response = await fetch(`${env.NEXT_PUBLIC_BASE_URL}/me/${address}`, {
 			method: "GET",
 			headers: {
 				"Content-Type": "application/json",

@@ -3,11 +3,9 @@ import { hc } from "hono/client";
 import type { Api } from "server/src/server";
 import { type Hex, getAddress } from "viem";
 
-if (!process.env.NEXT_PUBLIC_BASE_URL) {
-	throw new Error("NEXT_PUBLIC_BASE_URL is not set");
-}
+import { env } from "./env";
 
-const client = hc<Api>(process.env.NEXT_PUBLIC_BASE_URL);
+const client = hc<Api>(env.NEXT_PUBLIC_BASE_URL);
 
 export async function hideWriter({
 	address,

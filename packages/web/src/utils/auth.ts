@@ -1,14 +1,12 @@
 import { PrivyClient } from "@privy-io/server-auth";
 import { cookies } from "next/headers";
+import { env } from "./env";
 
-if (!process.env.PRIVY_APP_ID || !process.env.PRIVY_SECRET) {
-	throw new Error("PRIVY_APP_ID and PRIVY_SECRET must be set");
+if (!env.PRIVY_SECRET) {
+	throw new Error("PRIVY_SECRET must be set");
 }
 
-const privy = new PrivyClient(
-	process.env.PRIVY_APP_ID,
-	process.env.PRIVY_SECRET,
-);
+const privy = new PrivyClient(env.NEXT_PUBLIC_PRIVY_APP_ID, env.PRIVY_SECRET);
 
 export async function getAuthenticatedUser() {
 	const cookieStore = await cookies();

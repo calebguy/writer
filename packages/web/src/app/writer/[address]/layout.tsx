@@ -3,6 +3,7 @@ import { WriterHeader } from "@/components/header/WriterHeader";
 import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
 import { CreateEntryDrawerProvider } from "@/components/writer/CreateEntryDrawerContext";
 import { EntryLoadingProvider } from "@/utils/EntryLoadingContext";
+import { env } from "@/utils/env";
 import type { Metadata } from "next";
 import { use } from "react";
 
@@ -19,14 +20,9 @@ function sanitizeWriterTitle(input: string): string {
 }
 
 async function getWriterTitle(address: string): Promise<string | null> {
-	const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-	if (!baseUrl) {
-		return null;
-	}
-
 	try {
 		const response = await fetch(
-			`${baseUrl}/writer/${encodeURIComponent(address)}`,
+			`${env.NEXT_PUBLIC_BASE_URL}/writer/${encodeURIComponent(address)}`,
 			{
 				next: { revalidate: 60 },
 			},
