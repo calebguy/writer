@@ -8,6 +8,8 @@ const app = new Hono();
 
 app.use("*", cors());
 
+app.get("/", (c) => c.text("write today, forever"));
+
 const api = app.basePath("/").route("/", adminRoutes).route("/", savedRoutes).route("/", writerRoutes);
 
 export type Api = typeof api;
