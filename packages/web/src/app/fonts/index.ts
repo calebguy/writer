@@ -36,42 +36,11 @@ export const ltRemark = localFont({
 	],
 });
 
-export const basicallyAMono = localFont({
-	variable: "--font-basically-a-mono",
+export const diatypeRoundedMono = localFont({
+	variable: "--font-diatype-rounded-mono",
 	src: [
 		{
-			path: "./basically-a-mono/BasicallyAMono-Thin.woff2",
-			weight: "100",
-			style: "normal",
-		},
-		{
-			path: "./basically-a-mono/BasicallyAMono-ExtraLight.woff2",
-			weight: "200",
-			style: "normal",
-		},
-		{
-			path: "./basically-a-mono/BasicallyAMono-Light.woff2",
-			weight: "300",
-			style: "normal",
-		},
-		{
-			path: "./basically-a-mono/BasicallyAMono-Regular.woff2",
-			weight: "400",
-			style: "normal",
-		},
-		{
-			path: "./basically-a-mono/BasicallyAMono-Medium.woff2",
-			weight: "500",
-			style: "normal",
-		},
-		{
-			path: "./basically-a-mono/BasicallyAMono-SemiBold.woff2",
-			weight: "600",
-			style: "normal",
-		},
-		{
-			path: "./basically-a-mono/BasicallyAMono-Bold.woff2",
-			weight: "700",
+			path: "./diatype-rounded-mono/ABCDiatypeRoundedMonoVariable.woff2",
 			style: "normal",
 		},
 	],

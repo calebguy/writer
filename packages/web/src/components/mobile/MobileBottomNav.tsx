@@ -12,7 +12,6 @@ import { usePrivy } from "@privy-io/react-auth";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { IoExit } from "react-icons/io5";
 import { ColorDrawer } from "../ColorDrawer";
 import { queryClient } from "../Providers";
 
@@ -179,7 +178,14 @@ export function MobileBottomNav() {
 									})
 								}
 							>
-								<IoExit className="h-4.5 w-4.5" />
+								<Image
+									src="/images/relics/exit-1.png"
+									alt="Leave"
+									width={100}
+									height={100}
+									className="w-5 h-5 min-w-5 shrink-0 dark:invert"
+									priority
+								/>
 							</button>
 						</div>
 					)}

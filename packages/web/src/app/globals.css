@@ -41,7 +41,7 @@
   --color-primary: rgb(var(--color-primary));
   --color-secondary: rgb(var(--color-secondary));
   --font-serif: var(--font-lt-remark);
-  --font-mono: var(--font-basically-a-mono);
+  --font-mono: var(--font-diatype-rounded-mono);
 }
 
 @layer base {
@@ -370,6 +370,7 @@ body,
 #root {
   min-height: 100dvh;
   margin: 0;
+  font-family: var(--font-lt-remark);
 }
 
 .header {

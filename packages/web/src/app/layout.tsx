@@ -6,7 +6,7 @@ import { bytes32ToHexColor, hexToRGB } from "@/utils/utils";
 import type { Metadata } from "next";
 import type { CSSProperties } from "react";
 import type { Hex } from "viem";
-import { basicallyAMono, ltRemark } from "./fonts";
+import { diatypeRoundedMono, ltRemark } from "./fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -75,7 +75,7 @@ export default async function RootLayout({
 					className={cn(
 						"antialiased w-full grow flex flex-col px-4 md:px-8 pt-4 md:pt-8 pb-2 font-serif max-w-7xl",
 						ltRemark.variable,
-						basicallyAMono.variable,
+						diatypeRoundedMono.variable,
 					)}
 				>
 					<Providers initialColor={initialColor || undefined}>
