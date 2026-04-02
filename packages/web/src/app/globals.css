@@ -192,10 +192,6 @@
   background-color: rgb(var(--create-input-surface));
 }
 
-:root[data-theme="light"] .color-modal-surface {
-  background-color: rgb(var(--color-neutral-50));
-}
-
 :root[data-theme="light"] .skeleton-bar {
   background-color: rgb(var(--skeleton-surface));
 }
@@ -342,11 +338,13 @@
 }
 
 :root[data-theme="light"] .modal-overlay {
-  background-color: rgb(0 0 0 / 0.62) !important;
+  background-color: rgb(0 0 0 / 0.2) !important;
+  backdrop-filter: blur(2px) !important;
 }
 
 :root:not([data-theme="light"]) .modal-overlay {
-  background-color: rgb(0 0 0 / 0.52) !important;
+  background-color: rgb(0 0 0 / 0.2) !important;
+  backdrop-filter: blur(2px) !important;
 }
 
 .index-title {
@@ -386,13 +384,15 @@ body,
 }
 
 .react-colorful__saturation {
-  border-top-left-radius: 0 !important;
-  border-top-right-radius: 0 !important;
+  border-top-left-radius: 10px !important;
+  border-top-right-radius: 10px !important;
+  border-bottom: 0px !important;
+  box-shadow: none !important;
 }
 
 .react-colorful__hue {
-  border-bottom-left-radius: 0 !important;
-  border-bottom-right-radius: 0 !important;
+  border-bottom-left-radius: 10px !important;
+  border-bottom-right-radius: 10px !important;
 }
 
 .rotating {

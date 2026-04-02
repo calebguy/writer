@@ -52,7 +52,7 @@ export function ColorModal({ open, onClose }: ModalProps) {
 	return (
 		<Modal
 			open={open}
-			className="color-modal-surface"
+			className="bg-primary!"
 			onClose={() => {
 				setRgbColor({
 					r: primaryColor[0],
@@ -67,7 +67,7 @@ export function ColorModal({ open, onClose }: ModalProps) {
 				<ModalTitle>Set Color</ModalTitle>
 				<ModalDescription>Set the color</ModalDescription>
 			</VisuallyHidden.Root>
-			<div className="flex items-center justify-center py-4">
+			<div className="flex items-center justify-center">
 				<RgbColorPicker
 					color={rgbColor}
 					onChange={(c) => {
@@ -75,14 +75,11 @@ export function ColorModal({ open, onClose }: ModalProps) {
 						setPrimaryAndSecondaryCSSVariables([c.r, c.g, c.b]);
 					}}
 				/>
-				<div className="flex flex-col items-center justify-center ml-6">
-					<Logo className="w-44 h-44 text-primary" />
-				</div>
 			</div>
-			<div className="flex items-center justify-center gap-2">
+			<div className="flex items-center justify-center gap-2 mt-4">
 				<button
 					type="button"
-					className="border border-transparent hover:border-primary border-dashed text-primary p-2 w-full bold text-xl disabled:hover:border-transparent disabled:opacity-30 disabled:cursor-not-allowed flex justify-center items-center cursor-pointer"
+					className="border border-transparent hover:border-secondary border-dashed text-secondary p-2 w-full bold text-xl disabled:hover:border-transparent disabled:opacity-30 disabled:cursor-not-allowed flex justify-center items-center cursor-pointer"
 					onClick={() => {
 						setRgbColor({
 							r: primaryColor[0],
@@ -101,7 +98,7 @@ export function ColorModal({ open, onClose }: ModalProps) {
 				</button>
 				<button
 					type="button"
-					className="border border-transparent hover:border-primary border-dashed text-primary p-2 w-full bold text-xl disabled:hover:border-transparent disabled:opacity-30 disabled:cursor-not-allowed flex justify-center items-center cursor-pointer"
+					className="border border-transparent hover:border-secondary border-dashed text-secondary p-2 w-full bold text-xl disabled:hover:border-transparent disabled:opacity-30 disabled:cursor-not-allowed flex justify-center items-center cursor-pointer"
 					disabled={
 						rgbColor.r === primaryColor[0] &&
 						rgbColor.g === primaryColor[1] &&
