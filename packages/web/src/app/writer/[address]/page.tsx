@@ -148,7 +148,7 @@ export default function WriterPage() {
 				{canCreateEntries && (
 					<div className="relative">
 						<CreateInput onSubmit={() => {}} isLoading={false} />
-						<div className="absolute inset-0 bg-neutral-200/90 dark:bg-neutral-900/90 flex flex-col items-center justify-center" />
+						<div className="absolute inset-0 bg-surface-overlay/90 flex flex-col items-center justify-center" />
 					</div>
 				)}
 				{LOADING_SKELETON_KEYS.map((key) => (

@@ -71,7 +71,7 @@ export const LinkEdit: React.FC<LinkEditProps> = ({
 	};
 
 	return (
-		<div className="w-64 max-w-md p-2 bg-neutral-100 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-800 relative flex flex-col gap-2">
+		<div className="w-64 max-w-md p-2 bg-surface border border-neutral-300 dark:border-neutral-800 relative flex flex-col gap-2">
 			<div className="bg-neutral-200 dark:bg-neutral-800 py-1.5 px-2 overflow-x-auto flex items-center gap-1 scrollbar-none">
 				<input
 					type="text"

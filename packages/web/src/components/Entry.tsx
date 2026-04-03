@@ -335,19 +335,19 @@ export default function Entry({
 		return (
 			<div className="grow flex flex-col">
 				<div className="grow flex flex-col p-2 space-y-3">
-					<div className="h-6 bg-neutral-200 dark:bg-neutral-700animate-pulse rounded w-3/4" />
-					<div className="h-4 bg-neutral-200 dark:bg-neutral-700animate-pulse rounded w-full" />
-					<div className="h-4 bg-neutral-200 dark:bg-neutral-700animate-pulse rounded w-full" />
-					<div className="h-4 bg-neutral-200 dark:bg-neutral-700animate-pulse rounded w-5/6" />
-					<div className="h-4 bg-neutral-200 dark:bg-neutral-700animate-pulse rounded w-full" />
-					<div className="h-4 bg-neutral-200 dark:bg-neutral-700animate-pulse rounded w-2/3" />
-					<div className="h-4 bg-neutral-200 dark:bg-neutral-700animate-pulse rounded w-full" />
-					<div className="h-4 bg-neutral-200 dark:bg-neutral-700animate-pulse rounded w-4/5" />
+					<div className="h-6 bg-surface-raised animate-pulse rounded w-3/4" />
+					<div className="h-4 bg-surface-raised animate-pulse rounded w-full" />
+					<div className="h-4 bg-surface-raised animate-pulse rounded w-full" />
+					<div className="h-4 bg-surface-raised animate-pulse rounded w-5/6" />
+					<div className="h-4 bg-surface-raised animate-pulse rounded w-full" />
+					<div className="h-4 bg-surface-raised animate-pulse rounded w-2/3" />
+					<div className="h-4 bg-surface-raised animate-pulse rounded w-full" />
+					<div className="h-4 bg-surface-raised animate-pulse rounded w-4/5" />
 				</div>
 				<div className="flex items-end mt-3">
 					<div className="space-y-1">
-						<div className="h-4 bg-neutral-200 dark:bg-neutral-700animate-pulse rounded w-32" />
-						<div className="h-4 bg-neutral-200 dark:bg-neutral-700animate-pulse rounded w-28" />
+						<div className="h-4 bg-surface-raised animate-pulse rounded w-32" />
+						<div className="h-4 bg-surface-raised animate-pulse rounded w-28" />
 					</div>
 				</div>
 			</div>
@@ -401,7 +401,7 @@ export default function Entry({
 				<MDX
 					markdown={editedContent}
 					onChange={setEditedContent}
-					className="border border-primary border-dashed bg-neutral-100 dark:bg-neutral-900 text-black! dark:text-white! flex-col grow flex w-full aspect-auto!"
+					className="border border-primary border-dashed bg-surface text-black! dark:text-white! flex-col grow flex w-full aspect-auto!"
 					autoFocus={isEditing}
 				/>
 				<button

@@ -37,7 +37,7 @@ export default function PublicWriterList({ writers }: PublicWriterListProps) {
 				<Link
 					href={`/writer/${writer.address}`}
 					key={writer.address}
-					className="aspect-square bg-neutral-100 dark:bg-neutral-900 flex flex-col overflow-hidden px-2 pt-2 pb-1.5 hover:cursor-zoom-in"
+					className="aspect-square bg-surface flex flex-col overflow-hidden px-2 pt-2 pb-1.5 hover:cursor-zoom-in"
 					onMouseEnter={() => prefetchWriter(writer.address)}
 				>
 					<div className="grow min-h-0 min-w-0 overflow-y-auto">

@@ -92,7 +92,7 @@ export function CreateEntryDrawer({
 								onClick={() => void handleSubmit()}
 								disabled={!markdown.trim()}
 								className={cn(
-									"w-full h-10 rounded-md bg-neutral-100 dark:bg-neutral-900 text-black dark:text-white disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer",
+									"w-full h-10 rounded-md bg-surface text-black dark:text-white disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer",
 								)}
 							>
 								Create

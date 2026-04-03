@@ -36,7 +36,7 @@ function DynamicDrawerContent({
 			<DynamicDrawerOverlay />
 			<Drawer.Content
 				className={cn(
-					"fixed bottom-4 left-4 right-4 z-50 rounded-2xl bg-white dark:bg-neutral-800 p-3 max-h-[85vh] outline-none after:hidden",
+					"fixed bottom-4 left-4 right-4 z-50 rounded-2xl bg-background p-3 max-h-[85vh] outline-none after:hidden",
 					className,
 				)}
 				{...props}

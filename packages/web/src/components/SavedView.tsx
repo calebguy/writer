@@ -213,7 +213,7 @@ function MixedSavedGrid({
 							href={isPendingWriter ? "#" : `/writer/${item.writer.address}`}
 							key={item.key}
 							className={cn(
-								"aspect-square bg-neutral-100 dark:bg-neutral-900 flex flex-col overflow-hidden px-2 pt-2 pb-1.5",
+								"aspect-square bg-surface flex flex-col overflow-hidden px-2 pt-2 pb-1.5",
 								isPendingWriter ? "cursor-loading" : "hover:cursor-zoom-in",
 							)}
 							onClick={isPendingWriter ? (e) => e.preventDefault() : undefined}
@@ -261,7 +261,7 @@ function MixedSavedGrid({
 						href={href}
 						key={item.key}
 						className={cn(
-							"group relative aspect-square bg-neutral-100 dark:bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 overflow-hidden",
+							"group relative aspect-square bg-surface flex flex-col px-2 pt-2 pb-0.5 overflow-hidden",
 							showLockedState && "private-entry-card",
 							showLockedState
 								? canUnlock

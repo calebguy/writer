@@ -206,7 +206,7 @@ export function MobileBottomNav() {
 			>
 				<div className="relative flex items-center justify-center">
 					{showSubMenu && (
-						<div className="absolute bottom-[calc(100%+10px)] flex items-center gap-1.5 rounded-full bg-white/85 dark:bg-neutral-900/85 backdrop-blur-[2px] px-3 py-1.5">
+						<div className="absolute bottom-[calc(100%+10px)] flex items-center gap-1.5 rounded-full bg-background/85 backdrop-blur-[2px] px-3 py-1.5">
 							{isLoggedIn && (
 								<button
 									type="button"
@@ -296,7 +296,7 @@ export function MobileBottomNav() {
 						</div>
 					)}
 
-					<div className="flex items-center gap-2.5 rounded-full bg-white/85 dark:bg-neutral-900/85 backdrop-blur-[2px] px-3 py-1.5">
+					<div className="flex items-center gap-2.5 rounded-full bg-background/85 backdrop-blur-[2px] px-3 py-1.5">
 						<button
 							type="button"
 							title="Home"

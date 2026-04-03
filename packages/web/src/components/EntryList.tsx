@@ -72,7 +72,7 @@ export default function EntryList({
 							onClick={isClickable ? onUnlock : undefined}
 							disabled={isClickable ? isUnlocking : undefined}
 							className={cn(
-								"group relative aspect-square bg-neutral-100 dark:bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 overflow-hidden transition-colors private-entry-card",
+								"group relative aspect-square bg-surface flex flex-col px-2 pt-2 pb-0.5 overflow-hidden transition-colors private-entry-card",
 								isClickable && "cursor-pointer hover:text-primary",
 							)}
 						>
@@ -122,7 +122,7 @@ export default function EntryList({
 						}
 						key={entry.id}
 						className={cn(
-							"relative aspect-square bg-neutral-100 dark:bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 overflow-hidden",
+							"relative aspect-square bg-surface flex flex-col px-2 pt-2 pb-0.5 overflow-hidden",
 							isPending ? "cursor-loading" : "hover:cursor-zoom-in",
 						)}
 						onClick={isPending ? (e) => e.preventDefault() : undefined}

@@ -172,7 +172,7 @@ export function WriterList({
 						<Link
 							href={isPendingWriter ? "#" : `/writer/${writer.address}`}
 							key={writer.address}
-							className={`home-writer-card aspect-square bg-neutral-100 dark:bg-neutral-900 flex flex-col overflow-hidden px-2 pt-2 pb-1.5 relative ${
+							className={`home-writer-card aspect-square bg-surface flex flex-col overflow-hidden px-2 pt-2 pb-1.5 relative ${
 								isPendingWriter ? "cursor-loading" : "hover:cursor-zoom-in"
 							}`}
 							onClick={isPendingWriter ? (e) => e.preventDefault() : undefined}
@@ -217,7 +217,7 @@ export function WriterList({
 											>
 												<ClosedEye className="w-4 h-4" />
 											</button>
-											<div className="absolute left-0 top-0 w-full h-full bg-neutral-200/90 dark:bg-neutral-900/90 hidden group-hover:flex items-center justify-center pointer-events-none">
+											<div className="absolute left-0 top-0 w-full h-full bg-surface-overlay/90 hidden group-hover:flex items-center justify-center pointer-events-none">
 												<span className="text-primary italic">Hide?</span>
 											</div>
 										</>

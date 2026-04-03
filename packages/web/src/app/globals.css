@@ -5,14 +5,28 @@
 :root {
   --color-primary: 0 255 0;
   --color-secondary: 125 125 125;
+  --color-surface: var(--color-stone-200);
+  --color-surface-raised: var(--color-stone-300);
+  --color-surface-overlay: var(--color-stone-200);
+  --color-background: var(--color-stone-100);
 
   --screen-space: 0px!important;
-  }
+}
+
+:root[data-theme="dark"] {
+  --color-surface: var(--color-stone-900);
+  --color-surface-raised: var(--color-stone-700);
+  --color-surface-overlay: var(--color-stone-900);
+  --color-background: var(--color-stone-800);
+}
 
 /* biome-ignore lint/suspicious/noUnknownAtRules: Tailwind CSS @theme directive */
 @theme inline {
   --color-primary: rgb(var(--color-primary));
   --color-secondary: rgb(var(--color-secondary));
+  --color-surface: var(--color-surface);
+  --color-surface-raised: var(--color-surface-raised);
+  --color-surface-overlay: var(--color-surface-overlay);
   --font-serif: var(--font-lt-remark);
   --font-mono: var(--font-diatype-rounded-mono);
 }
@@ -21,12 +35,12 @@
   :root {
     font-family: var(--font-serif);
     color: var(--color-black);
-    background-color: #ffffff;
+    background-color: var(--color-background);
   }
 
   :root[data-theme="dark"] {
     color: var(--color-white);
-    background-color: var(--color-neutral-800);
+    background-color: var(--color-background);
   }
 }
 

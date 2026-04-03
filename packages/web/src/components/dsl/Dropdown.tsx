@@ -12,11 +12,11 @@ interface DropdownProps {
 }
 
 const dropdownMenuItemClasses = cn(
-	"text-black dark:text-white flex relative user-select-none outline-none text-base py-1 px-1.5 hover:bg-neutral-200 hover:dark:bg-neutral-800 cursor-pointer",
+	"text-black dark:text-white flex relative user-select-none outline-none text-base py-1 px-1.5 hover:bg-surface-raised cursor-pointer",
 );
 
 const dropdownMenuContentClasses = cn(
-	"shadow-none min-w-24 bg-neutral-100 dark:bg-neutral-900 p-1.5 border border-neutral-300 dark:border-neutral-800 z-[200]",
+	"shadow-none min-w-24 bg-surface p-1.5 border border-neutral-300 dark:border-neutral-800 z-[200]",
 );
 
 export function Dropdown({

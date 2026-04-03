@@ -254,7 +254,7 @@ export function LandingPage({
 	return (
 		<div
 			data-landing-root
-			className="fixed inset-0 bg-white dark:bg-neutral-900 text-black dark:text-white overflow-x-hidden overflow-y-auto"
+			className="fixed inset-0 bg-background text-black dark:text-white overflow-x-hidden overflow-y-auto"
 		>
 			<div className="max-w-7xl mx-auto w-full">
 				{/* Hero grid — full star frame, exactly 100dvh */}
