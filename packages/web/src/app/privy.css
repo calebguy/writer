@@ -177,3 +177,8 @@ body {
 .bDmsky {
   margin-bottom: 0px!important;
 }
+
+.fMTGBf {
+  --country-code-dropdown-width: calc(50px + calc(12 * 1px))!important;
+  --phone-input-extra-padding-left: calc(18px + calc(3 * 1px))!important;
+}
