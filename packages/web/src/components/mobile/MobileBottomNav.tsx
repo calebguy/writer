@@ -11,7 +11,7 @@ import {
 import { usePrivy } from "@privy-io/react-auth";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ColorDrawer } from "../ColorDrawer";
 import { queryClient } from "../Providers";
 
@@ -30,7 +30,8 @@ function navIconClass(active: boolean) {
 export function MobileBottomNav() {
 	const pathname = usePathname();
 	const router = useRouter();
-	const { logout } = usePrivy();
+	const { logout, authenticated, ready } = usePrivy();
+	const isLoggedIn = ready && authenticated;
 	const [showSubMenu, setShowSubMenu] = useState(false);
 	const [showColorDrawer, setShowColorDrawer] = useState(false);
 	const [themeMode, setThemeMode] = useState<ThemeMode>("system");
@@ -85,7 +86,26 @@ export function MobileBottomNav() {
 		return null;
 	}
 
+	const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const didLongPress = useRef(false);
+
+	const onHomePressStart = useCallback(() => {
+		didLongPress.current = false;
+		longPressTimer.current = setTimeout(() => {
+			didLongPress.current = true;
+			setShowSubMenu(true);
+		}, 500);
+	}, []);
+
+	const onHomePressEnd = useCallback(() => {
+		if (longPressTimer.current) {
+			clearTimeout(longPressTimer.current);
+			longPressTimer.current = null;
+		}
+	}, []);
+
 	const onHomeTap = () => {
+		if (didLongPress.current) return;
 		if (isRouteActive(pathname, "/home")) {
 			setShowSubMenu((prev) => !prev);
 			return;
@@ -104,17 +124,19 @@ export function MobileBottomNav() {
 				<div className="relative flex items-center justify-center">
 					{showSubMenu && (
 						<div className="absolute bottom-[calc(100%+10px)] flex items-center gap-1.5 rounded-full bg-white/85 dark:bg-neutral-900/85 backdrop-blur-[2px] px-3 py-1.5">
-							<button
-								type="button"
-								title="Color"
-								className="p-2.5 rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
-								onClick={() => {
-									setShowSubMenu(false);
-									setShowColorDrawer(true);
-								}}
-							>
-								<span className="block w-3.5 h-3.5 bg-primary rounded-sm" />
-							</button>
+							{isLoggedIn && (
+								<button
+									type="button"
+									title="Color"
+									className="p-2.5 rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
+									onClick={() => {
+										setShowSubMenu(false);
+										setShowColorDrawer(true);
+									}}
+								>
+									<span className="block w-3.5 h-3.5 bg-primary rounded-sm" />
+								</button>
+							)}
 							<button
 								type="button"
 								title="Light"
@@ -166,27 +188,29 @@ export function MobileBottomNav() {
 									priority
 								/>
 							</button>
-							<button
-								type="button"
-								title="Leave"
-								className="p-2.5 rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
-								onClick={() =>
-									logout().then(() => {
-										clearAllCachedKeys();
-										queryClient.clear();
-										window.location.href = "/";
-									})
-								}
-							>
-								<Image
-									src="/images/relics/exit-1.png"
-									alt="Leave"
-									width={100}
-									height={100}
-									className="w-5 h-5 min-w-5 shrink-0 dark:invert"
-									priority
-								/>
-							</button>
+							{isLoggedIn && (
+								<button
+									type="button"
+									title="Leave"
+									className="p-2.5 rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
+									onClick={() =>
+										logout().then(() => {
+											clearAllCachedKeys();
+											queryClient.clear();
+											window.location.href = "/";
+										})
+									}
+								>
+									<Image
+										src="/images/relics/exit-1.png"
+										alt="Leave"
+										width={100}
+										height={100}
+										className="w-5 h-5 min-w-5 shrink-0 dark:invert"
+										priority
+									/>
+								</button>
+							)}
 						</div>
 					)}
 
@@ -198,6 +222,12 @@ export function MobileBottomNav() {
 								isRouteActive(pathname, "/home"),
 							)}`}
 							onClick={onHomeTap}
+							onTouchStart={onHomePressStart}
+							onTouchEnd={onHomePressEnd}
+							onTouchCancel={onHomePressEnd}
+							onMouseDown={onHomePressStart}
+							onMouseUp={onHomePressEnd}
+							onMouseLeave={onHomePressEnd}
 						>
 							<Image
 								src="/images/relics/relic-5.png"
@@ -230,26 +260,28 @@ export function MobileBottomNav() {
 								priority
 							/>
 						</button>
-						<button
-							type="button"
-							title="Saved"
-							className={`p-2 rounded-full transition-colors ${navIconClass(
-								isRouteActive(pathname, "/saved"),
-							)}`}
-							onClick={() => {
-								setShowSubMenu(false);
-								router.push("/saved");
-							}}
-						>
-							<Image
-								src="/images/relics/splat-1.png"
-								alt="Saved"
-								width={100}
-								height={100}
-								className="w-6 h-6 dark:invert"
-								priority
-							/>
-						</button>
+						{isLoggedIn && (
+							<button
+								type="button"
+								title="Saved"
+								className={`p-2 rounded-full transition-colors ${navIconClass(
+									isRouteActive(pathname, "/saved"),
+								)}`}
+								onClick={() => {
+									setShowSubMenu(false);
+									router.push("/saved");
+								}}
+							>
+								<Image
+									src="/images/relics/splat-1.png"
+									alt="Saved"
+									width={100}
+									height={100}
+									className="w-6 h-6 dark:invert"
+									priority
+								/>
+							</button>
+						)}
 					</div>
 				</div>
 			</div>
