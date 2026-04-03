@@ -3,6 +3,7 @@ import { env } from "../utils/env";
 import { getSynIdFromRawInput, syndicate } from "../utils/syndicate";
 import { db } from "./index";
 
+
 async function upsertConfirmedTxFromSyndicate(
 	transactionId: string | null,
 	event: {
