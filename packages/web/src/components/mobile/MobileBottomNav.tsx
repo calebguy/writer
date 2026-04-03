@@ -83,14 +83,29 @@ export function MobileBottomNav() {
 	useEffect(() => {
 		const threshold = 44;
 
+		let scrollDirection: "down" | "up" | null = null;
+		let prevScrollY = window.scrollY;
+
 		// Desktop / Android: window scroll
 		const handleScroll = () => {
 			const currentY = window.scrollY;
-			const delta = currentY - lastScrollY.current;
-			if (delta > threshold && currentY > 50) {
+			const dir = currentY > prevScrollY ? "down" : "up";
+			prevScrollY = currentY;
+
+			// Direction changed — reset anchor point
+			if (dir !== scrollDirection) {
+				scrollDirection = dir;
+				lastScrollY.current = currentY;
+				return;
+			}
+
+			const distance = Math.abs(currentY - lastScrollY.current);
+			if (distance < threshold) return;
+
+			if (dir === "down" && currentY > 50) {
 				setHidden(true);
 				setShowSubMenu(false);
-			} else if (delta < -threshold) {
+			} else if (dir === "up") {
 				const atBottom =
 					window.innerHeight + window.scrollY >=
 					document.documentElement.scrollHeight - 10;
@@ -98,7 +113,6 @@ export function MobileBottomNav() {
 					setHidden(false);
 				}
 			}
-			lastScrollY.current = currentY;
 		};
 
 		// Touch devices (including iOS Safari): respond during move, not just at end
