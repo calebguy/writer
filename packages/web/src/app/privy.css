@@ -1,14 +1,19 @@
-/* Privy modal overrides — dark mode */
+
+
 :root[data-theme="dark"] body {
-    --privy-color-background: var(--color-neutral-900);
-    --privy-color-background-2: var(--color-neutral-800);
+    --privy-color-background: var(--color-surface);
+    --privy-color-border-focus: var(--color-surface-raised);
+    --privy-color-background-2: var(--color-background);
+    --privy-color-foreground-4: var(--color-surface-raised);
+    --privy-color-accent: rgb(var(--color-primary));
+
+
+
     --privy-color-background-3: #e5e5e5;
     --privy-color-foreground: #F8F8F8;
     --privy-color-foreground-2: #a3a3a3;
     --privy-color-foreground-3: #737373;
-    --privy-color-foreground-4: var(--color-neutral-800);
     --privy-color-foreground-accent: #0a0a0a;
-    --privy-color-accent: hsl(0, 0%, 100%);
     --privy-color-accent-light: hsl(0, 0%, 100%);
     --privy-color-accent-hover: hsl(0, 0%, 94%);
     --privy-color-accent-dark: hsl(0, 0%, 88%);
@@ -30,7 +35,6 @@
     --privy-color-info-bg-hover: var(--privy-color-background-2);
     --privy-color-border-default: #262626;
     --privy-color-border-hover: #404040;
-    --privy-color-border-focus: #F8F8F8;
     --privy-color-border-error: #F87171;
     --privy-color-border-success: #317056;
     --privy-color-border-warning: #FBBF24;
@@ -56,7 +60,7 @@
     --privy-color-icon-muted: #a3a3a3;
     --privy-color-icon-subtle: #737373;
     --privy-color-icon-inverse: #0a0a0a;
-    --privy-color-icon-success: #88E3B5;
+    --privy-color-icon-success: rgb(var(--color-primary));
     --privy-color-icon-warning: #FDF27B;
     --privy-color-icon-error: #EF4444;
     --privy-color-icon-interactive: #d4d4d4;
@@ -85,17 +89,20 @@
     --privy-height-modal-compact: 480px;
 }
 
-/* Privy modal overrides — light mode */
 :root[data-theme="light"] body {
-    --privy-color-background: #f8f8f5;
-    --privy-color-background-2: #efefea;
+    --privy-color-background: var(--color-neutral-100);
+    --privy-color-border-focus: var(--color-surface-raised);
+    --privy-color-background-2: var(--color-surface);
+    --privy-color-foreground-4: var(--color-surface-raised);
+    --privy-color-accent: rgb(var(--color-primary));
+
+
+
     --privy-color-background-3: #e7e7e1;
     --privy-color-foreground: #171717;
     --privy-color-foreground-2: #525252;
     --privy-color-foreground-3: #737373;
-    --privy-color-foreground-4: #d4d4ce;
     --privy-color-foreground-accent: #ffffff;
-    --privy-color-accent: #171717;
     --privy-color-accent-light: #262626;
     --privy-color-accent-hover: #262626;
     --privy-color-accent-dark: #111111;
@@ -106,7 +113,6 @@
     --privy-color-success-bg: #e7f5ef;
     --privy-color-border-default: #c9c9c2;
     --privy-color-border-hover: #b5b5ae;
-    --privy-color-border-focus: #171717;
     --privy-color-border-interactive: #171717;
     --privy-color-border-interactive-hover: #171717;
     --privy-color-background-hover: #e7e7e1;
@@ -148,7 +154,6 @@
 }
 
 #privy-modal-content h3 {
-  font-size: 38px;
   font-family: "ltRemark", "ltRemark Fallback" !important;
 }
 

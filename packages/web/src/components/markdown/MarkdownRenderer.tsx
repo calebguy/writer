@@ -35,7 +35,9 @@ export function MarkdownRenderer({
 							li: ({ children }) => <li>{children}</li>,
 							a: ({ children, href }) =>
 								links ? (
-									<a href={href}>{children}</a>
+									<a href={href} target="_blank" rel="noreferrer noopener">
+										{children}
+									</a>
 								) : (
 									<span className="underline text-primary">{children}</span>
 								),

@@ -3,17 +3,18 @@
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
 :root {
-  --color-primary: 0 255 0;
+  --color-primary: 99 53 27;
   --color-secondary: 125 125 125;
   --color-surface: var(--color-neutral-200);
   --color-surface-raised: var(--color-neutral-300);
   --color-surface-overlay: var(--color-neutral-200);
-  --color-background: var(--color-neutral-100);
+  --color-background: var(--color-white);
 
   --screen-space: 0px!important;
 }
 
 :root[data-theme="dark"] {
+  --color-primary: 0 255 0;
   --color-surface: var(--color-neutral-900);
   --color-surface-raised: var(--color-neutral-700);
   --color-surface-overlay: var(--color-neutral-900);

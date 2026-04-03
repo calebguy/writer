@@ -30,8 +30,8 @@ const SKELETON_KEYS = Array.from(
 
 export function WriterList({
 	initialLoggedIn = false,
-	loginLogos,
-}: { initialLoggedIn?: boolean; loginLogos: [number, number] }) {
+	loginLogo,
+}: { initialLoggedIn?: boolean; loginLogo: number }) {
 	const { ready, authenticated, user, getAccessToken } = usePrivy();
 	const isLoggedIn = ready ? authenticated : initialLoggedIn;
 	const [isPolling, setIsPolling] = useState(false);
@@ -138,7 +138,7 @@ export function WriterList({
 	}, [isPolling, writers]);
 
 	if (!isLoggedIn) {
-		return <LoginPrompt toWhat="write" logos={loginLogos} />;
+		return <LoginPrompt toWhat="write" logo={loginLogo} />;
 	}
 
 	if (!ready || isLoading) {

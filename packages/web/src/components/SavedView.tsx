@@ -49,8 +49,8 @@ type MixedSavedItem =
 
 export default function SavedView({
 	initialLoggedIn = false,
-	loginLogos,
-}: { initialLoggedIn?: boolean; loginLogos: [number, number] }) {
+	loginLogo,
+}: { initialLoggedIn?: boolean; loginLogo: number }) {
 	const { ready, authenticated, user } = usePrivy();
 	const isLoggedIn = ready ? authenticated : initialLoggedIn;
 	const userAddress = user?.wallet?.address as Hex | undefined;
@@ -84,7 +84,7 @@ export default function SavedView({
 	}, [savedWriters, savedEntries]);
 
 	if (!isLoggedIn) {
-		return <LoginPrompt toWhat="save" logos={loginLogos} />;
+		return <LoginPrompt toWhat="save" logo={loginLogo} />;
 	}
 
 	if (!ready || isLoading) {
