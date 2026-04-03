@@ -31,7 +31,7 @@ export function MobileBottomNav() {
 	const pathname = usePathname();
 	const router = useRouter();
 	const { logout, authenticated, ready } = usePrivy();
-	const isLoggedIn = ready && authenticated;
+	const isLoggedIn = !ready || authenticated;
 	const [showSubMenu, setShowSubMenu] = useState(false);
 	const [showColorDrawer, setShowColorDrawer] = useState(false);
 	const [themeMode, setThemeMode] = useState<ThemeMode>("system");
@@ -119,7 +119,7 @@ export function MobileBottomNav() {
 			<div
 				ref={containerRef}
 				className="md:hidden fixed left-1/2 -translate-x-1/2 z-40"
-				style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 40px)" }}
+				style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 30px)" }}
 			>
 				<div className="relative flex items-center justify-center">
 					{showSubMenu && (
@@ -192,7 +192,7 @@ export function MobileBottomNav() {
 								<button
 									type="button"
 									title="Leave"
-									className="p-2.5 rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
+									className="p-1.5 rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
 									onClick={() =>
 										logout().then(() => {
 											clearAllCachedKeys();
@@ -214,11 +214,11 @@ export function MobileBottomNav() {
 						</div>
 					)}
 
-					<div className="flex items-center gap-2.5 rounded-full bg-white/85 dark:bg-neutral-900/85 backdrop-blur-[2px] px-4 py-2">
+					<div className="flex items-center gap-2.5 rounded-full bg-white/85 dark:bg-neutral-900/85 backdrop-blur-[2px] px-3 py-1.5">
 						<button
 							type="button"
 							title="Home"
-							className={`p-2 rounded-full transition-colors ${navIconClass(
+							className={`p-1.5 rounded-full transition-colors ${navIconClass(
 								isRouteActive(pathname, "/home"),
 							)}`}
 							onClick={onHomeTap}
@@ -234,7 +234,7 @@ export function MobileBottomNav() {
 								alt="Home"
 								width={100}
 								height={100}
-								className={`w-6 h-6 dark:invert transition-transform duration-300 ${
+								className={`w-8 h-8 dark:invert transition-transform duration-300 ${
 									showSubMenu ? "rotate-24" : ""
 								}`}
 								priority
@@ -243,7 +243,7 @@ export function MobileBottomNav() {
 						<button
 							type="button"
 							title="Explore"
-							className={`p-2 rounded-full transition-colors ${navIconClass(
+							className={`p-1.5 rounded-full transition-colors ${navIconClass(
 								isRouteActive(pathname, "/explore"),
 							)}`}
 							onClick={() => {
@@ -256,7 +256,7 @@ export function MobileBottomNav() {
 								alt="Explore"
 								width={100}
 								height={100}
-								className="w-6 h-6 dark:invert"
+								className="w-8 h-8 dark:invert"
 								priority
 							/>
 						</button>
@@ -264,7 +264,7 @@ export function MobileBottomNav() {
 							<button
 								type="button"
 								title="Saved"
-								className={`p-2 rounded-full transition-colors ${navIconClass(
+								className={`p-1.5 rounded-full transition-colors ${navIconClass(
 									isRouteActive(pathname, "/saved"),
 								)}`}
 								onClick={() => {
@@ -277,7 +277,7 @@ export function MobileBottomNav() {
 									alt="Saved"
 									width={100}
 									height={100}
-									className="w-6 h-6 dark:invert"
+									className="w-8 h-8 dark:invert"
 									priority
 								/>
 							</button>
