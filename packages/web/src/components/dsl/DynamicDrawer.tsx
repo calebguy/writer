@@ -3,7 +3,9 @@
 import { cn } from "@/utils/cn";
 import { Drawer } from "vaul";
 
-function DynamicDrawerRoot(props: React.ComponentPropsWithoutRef<typeof Drawer.Root>) {
+function DynamicDrawerRoot(
+	props: React.ComponentPropsWithoutRef<typeof Drawer.Root>,
+) {
 	return <Drawer.Root repositionInputs={false} {...props} />;
 }
 const DynamicDrawerTrigger = Drawer.Trigger;
@@ -18,10 +20,7 @@ function DynamicDrawerOverlay({
 }: React.ComponentPropsWithoutRef<typeof Drawer.Overlay>) {
 	return (
 		<Drawer.Overlay
-			className={cn(
-				"fixed inset-0 z-50 bg-black/45 backdrop-blur-[4px]",
-				className,
-			)}
+			className={cn("fixed inset-0 z-50 backdrop-blur-xs", className)}
 			{...props}
 		/>
 	);
@@ -49,12 +48,12 @@ function DynamicDrawerContent({
 }
 
 export {
-	DynamicDrawerRoot,
-	DynamicDrawerTrigger,
 	DynamicDrawerClose,
-	DynamicDrawerHandle,
-	DynamicDrawerTitle,
-	DynamicDrawerDescription,
-	DynamicDrawerOverlay,
 	DynamicDrawerContent,
+	DynamicDrawerDescription,
+	DynamicDrawerHandle,
+	DynamicDrawerOverlay,
+	DynamicDrawerRoot,
+	DynamicDrawerTitle,
+	DynamicDrawerTrigger,
 };
