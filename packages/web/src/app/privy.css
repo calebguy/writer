@@ -1,5 +1,5 @@
-/* Privy modal overrides — dark mode (default) */
-body {
+/* Privy modal overrides — dark mode */
+:root[data-theme="dark"] body {
     --privy-color-background: var(--color-neutral-900);
     --privy-color-background-2: var(--color-neutral-800);
     --privy-color-background-3: #e5e5e5;

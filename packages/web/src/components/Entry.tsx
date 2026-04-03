@@ -374,7 +374,9 @@ export default function Entry({
 							<div className="text-sm text-neutral-400 dark:text-neutral-600">
 								<Logo className="w-8 h-8" />
 							</div>
-							<div className="text-lg text-neutral-400 dark:text-neutral-600">Private</div>
+							<div className="text-lg text-neutral-400 dark:text-neutral-600">
+								Private
+							</div>
 						</div>
 					)}
 					{isEntryPrivate(processedEntry) && (
@@ -391,7 +393,7 @@ export default function Entry({
 				</div>
 			)}
 			<div
-				className={cn("flex-grow flex-col relative", {
+				className={cn("grow flex-col relative", {
 					flex: isEditing,
 					hidden: !isEditing,
 				})}
@@ -399,7 +401,7 @@ export default function Entry({
 				<MDX
 					markdown={editedContent}
 					onChange={setEditedContent}
-					className="border border-primary border-dashed bg-neutral-100 dark:bg-neutral-900 text-secondary! flex-col grow flex w-full aspect-auto!"
+					className="border border-primary border-dashed bg-neutral-100 dark:bg-neutral-900 text-black! dark:text-white! flex-col grow flex w-full aspect-auto!"
 					autoFocus={isEditing}
 				/>
 				<button
@@ -450,7 +452,9 @@ export default function Entry({
 				})}
 			>
 				<div>
-					<span className="text-neutral-400 dark:text-neutral-600 bold">{createdAt}</span>
+					<span className="text-neutral-400 dark:text-neutral-600 bold">
+						{createdAt}
+					</span>
 					{isLoggedIn && walletAddress && (
 						<div>
 							<button
