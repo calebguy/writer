@@ -86,11 +86,17 @@ export function MobileBottomNav() {
 		// Desktop / Android: window scroll
 		const handleScroll = () => {
 			const currentY = window.scrollY;
-			if (currentY > lastScrollY.current && currentY > 50) {
+			const delta = currentY - lastScrollY.current;
+			if (delta > 5 && currentY > 50) {
 				setHidden(true);
 				setShowSubMenu(false);
-			} else if (currentY < lastScrollY.current) {
-				setHidden(false);
+			} else if (delta < -5) {
+				const atBottom =
+					window.innerHeight + window.scrollY >=
+					document.documentElement.scrollHeight - 10;
+				if (!atBottom) {
+					setHidden(false);
+				}
 			}
 			lastScrollY.current = currentY;
 		};
@@ -106,7 +112,13 @@ export function MobileBottomNav() {
 				setHidden(true);
 				setShowSubMenu(false);
 			} else if (delta < -threshold) {
-				setHidden(false);
+				// Don't show on overscroll bounce at the bottom
+				const atBottom =
+					window.innerHeight + window.scrollY >=
+					document.documentElement.scrollHeight - 10;
+				if (!atBottom) {
+					setHidden(false);
+				}
 			}
 		};
 
