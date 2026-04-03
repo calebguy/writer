@@ -134,7 +134,7 @@ const BAR_MOBILE_2_ITEMS = [
 
 function ArtifactBar({ items }: { items: typeof BAR_1_ITEMS }) {
 	return (
-		<div className="flex items-center justify-center gap-3 md:gap-7 bg-primary p-6 md:py-[30px] md:px-10 rounded-2xl">
+		<div className="flex items-center justify-center gap-3 md:gap-7 p-6 md:py-[30px] md:px-10 rounded-2xl">
 			{items.map((item, i) => (
 				<Image
 					key={`${item.src}-${String(i)}`}
@@ -296,7 +296,7 @@ export function LandingPage({
 						</div>
 
 						<div className="flex flex-col items-center justify-center gap-6 md:gap-8 md:flex-1 mb-8">
-							<div className="font-serif text-[4.5rem] md:text-[7rem] leading-none text-center">
+							<div className="font-serif text-[4.5rem] md:text-[7rem] leading-none text-center bg-secondary text-primary">
 								Writer
 							</div>
 							<div className="flex flex-col sm:flex-row items-center sm:gap-1">
