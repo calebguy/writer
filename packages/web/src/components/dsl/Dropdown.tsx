@@ -12,11 +12,11 @@ interface DropdownProps {
 }
 
 const dropdownMenuItemClasses = cn(
-	"logo-dropdown-item text-white flex relative user-select-none outline-none text-sm py-1 px-1.5 hover:bg-neutral-800 cursor-pointer",
+	"logo-dropdown-item text-black dark:text-white flex relative user-select-none outline-none text-sm py-1 px-1.5 hover:bg-neutral-200 hover:dark:bg-neutral-800 cursor-pointer",
 );
 
 const dropdownMenuContentClasses = cn(
-	"logo-dropdown-content min-w-24 bg-neutral-900 p-1.5 shadow-sm border border-neutral-800 z-[200]",
+	"logo-dropdown-content min-w-24 bg-neutral-100 dark:bg-neutral-900 p-1.5 shadow-sm border border-neutral-300 dark:border-neutral-800 z-[200]",
 );
 
 export function Dropdown({

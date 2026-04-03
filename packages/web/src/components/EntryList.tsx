@@ -72,17 +72,17 @@ export default function EntryList({
 							onClick={isClickable ? onUnlock : undefined}
 							disabled={isClickable ? isUnlocking : undefined}
 							className={cn(
-								"group relative aspect-square bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 overflow-hidden transition-colors private-entry-card",
+								"group relative aspect-square bg-neutral-100 dark:bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 overflow-hidden transition-colors private-entry-card",
 								isClickable && "cursor-pointer hover:text-primary",
 							)}
 						>
-							<div className="flex flex-col items-center justify-center grow text-neutral-600 gap-2 private-entry-content">
+							<div className="flex flex-col items-center justify-center grow text-neutral-400 dark:text-neutral-600 gap-2 private-entry-content">
 								{isUnlocking ? (
 									<Unlock className="h-4 w-4 text-primary" />
 								) : (
 									<>
 										<span className="block group-hover:hidden">
-											<Lock className="h-4 w-4 text-neutral-600 private-entry-icon" />
+											<Lock className="h-4 w-4 text-neutral-400 dark:text-neutral-600 private-entry-icon" />
 										</span>
 										<span className="hidden group-hover:block">
 											<Unlock className="h-4 w-4 text-primary" />
@@ -99,7 +99,7 @@ export default function EntryList({
 									</span>
 								)}
 							</div>
-							<div className="writer-card-meta private-entry-meta text-neutral-600 flex items-end text-sm leading-3 pt-2 shrink-0 pb-2 justify-end">
+							<div className="writer-card-meta private-entry-meta text-neutral-400 dark:text-neutral-600 flex items-end text-sm leading-3 pt-2 shrink-0 pb-2 justify-end">
 								<span>{createdAt}</span>
 							</div>
 						</Wrapper>
@@ -122,7 +122,7 @@ export default function EntryList({
 						}
 						key={entry.id}
 						className={cn(
-							"relative aspect-square bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 overflow-hidden",
+							"relative aspect-square bg-neutral-100 dark:bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 overflow-hidden",
 							isPending ? "cursor-loading" : "hover:cursor-zoom-in",
 						)}
 						onClick={isPending ? (e) => e.preventDefault() : undefined}
@@ -131,13 +131,13 @@ export default function EntryList({
 						<div className="overflow-y-auto grow min-h-0">
 							<MarkdownRenderer
 								markdown={entry.decompressed ?? entry.raw}
-								className="text-white"
+								className="text-black dark:text-white"
 								links={false}
 							/>
 						</div>
 						<div
 							className={cn(
-								"writer-card-meta text-neutral-600 flex items-end text-sm leading-3 pt-2 shrink-0 pb-2",
+								"writer-card-meta text-neutral-400 dark:text-neutral-600 flex items-end text-sm leading-3 pt-2 shrink-0 pb-2",
 								{
 									"justify-between": isEntryPrivate(entry),
 									"justify-end": !isEntryPrivate(entry),
@@ -146,7 +146,7 @@ export default function EntryList({
 						>
 							{isEntryPrivate(entry) && (
 								<span>
-									<Lock className="h-3.5 w-3.5 text-neutral-600" />
+									<Lock className="h-3.5 w-3.5 text-neutral-400 dark:text-neutral-600" />
 								</span>
 							)}
 							{isPending ? (

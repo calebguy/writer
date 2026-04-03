@@ -103,7 +103,7 @@ export function LogoDropdown() {
 				) : (
 					<DropdownItem onClick={() => login()}>Login</DropdownItem>
 				)}
-				<div className="logo-theme-switcher mt-1 pt-1 border-t border-neutral-800/60">
+				<div className="logo-theme-switcher mt-1 pt-1 border-t border-neutral-300 dark:border-neutral-800/60">
 					<button
 						type="button"
 						aria-label="Use light theme"

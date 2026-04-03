@@ -196,7 +196,7 @@ export default function CreateInput({
 								markdown={markdown}
 								autoFocus
 								className={cn(
-									"bg-neutral-900 text-white light:text-black flex-col placeholder:text-green-300 h-full flex w-full p-2 create-input-editor create-input-mdx",
+									"bg-neutral-100 dark:bg-neutral-900 text-black dark:text-white flex-col placeholder:text-green-300 h-full flex w-full p-2 create-input-editor create-input-mdx",
 								)}
 								placeholder={placeholder}
 								onChange={setMarkdown}
@@ -212,7 +212,7 @@ export default function CreateInput({
 									<button
 										type="button"
 										onClick={() => setEncrypted?.(!encrypted)}
-										className="create-input-control hover:text-primary text-neutral-600 cursor-pointer"
+										className="create-input-control hover:text-primary text-neutral-400 dark:text-neutral-600 cursor-pointer"
 									>
 										{encrypted ? (
 											<Lock className="h-3.5 w-3.5" />

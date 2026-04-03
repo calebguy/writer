@@ -335,19 +335,19 @@ export default function Entry({
 		return (
 			<div className="flex-grow flex flex-col">
 				<div className="flex-grow flex flex-col p-2 space-y-3">
-					<div className="h-6 bg-neutral-700 skeleton-bar animate-pulse rounded w-3/4" />
-					<div className="h-4 bg-neutral-700 skeleton-bar animate-pulse rounded w-full" />
-					<div className="h-4 bg-neutral-700 skeleton-bar animate-pulse rounded w-full" />
-					<div className="h-4 bg-neutral-700 skeleton-bar animate-pulse rounded w-5/6" />
-					<div className="h-4 bg-neutral-700 skeleton-bar animate-pulse rounded w-full" />
-					<div className="h-4 bg-neutral-700 skeleton-bar animate-pulse rounded w-2/3" />
-					<div className="h-4 bg-neutral-700 skeleton-bar animate-pulse rounded w-full" />
-					<div className="h-4 bg-neutral-700 skeleton-bar animate-pulse rounded w-4/5" />
+					<div className="h-6 bg-neutral-200 dark:bg-neutral-700 skeleton-bar animate-pulse rounded w-3/4" />
+					<div className="h-4 bg-neutral-200 dark:bg-neutral-700 skeleton-bar animate-pulse rounded w-full" />
+					<div className="h-4 bg-neutral-200 dark:bg-neutral-700 skeleton-bar animate-pulse rounded w-full" />
+					<div className="h-4 bg-neutral-200 dark:bg-neutral-700 skeleton-bar animate-pulse rounded w-5/6" />
+					<div className="h-4 bg-neutral-200 dark:bg-neutral-700 skeleton-bar animate-pulse rounded w-full" />
+					<div className="h-4 bg-neutral-200 dark:bg-neutral-700 skeleton-bar animate-pulse rounded w-2/3" />
+					<div className="h-4 bg-neutral-200 dark:bg-neutral-700 skeleton-bar animate-pulse rounded w-full" />
+					<div className="h-4 bg-neutral-200 dark:bg-neutral-700 skeleton-bar animate-pulse rounded w-4/5" />
 				</div>
 				<div className="flex items-end mt-3">
 					<div className="space-y-1">
-						<div className="h-4 bg-neutral-700 skeleton-bar animate-pulse rounded w-32" />
-						<div className="h-4 bg-neutral-700 skeleton-bar animate-pulse rounded w-28" />
+						<div className="h-4 bg-neutral-200 dark:bg-neutral-700 skeleton-bar animate-pulse rounded w-32" />
+						<div className="h-4 bg-neutral-200 dark:bg-neutral-700 skeleton-bar animate-pulse rounded w-28" />
 					</div>
 				</div>
 			</div>
@@ -371,19 +371,19 @@ export default function Entry({
 					)}
 					{!canView && (
 						<div className="flex flex-col gap-2 justify-center items-center grow">
-							<div className="text-sm text-neutral-600">
+							<div className="text-sm text-neutral-400 dark:text-neutral-600">
 								<Logo className="w-8 h-8" />
 							</div>
-							<div className="text-lg text-neutral-600">Private</div>
+							<div className="text-lg text-neutral-400 dark:text-neutral-600">Private</div>
 						</div>
 					)}
 					{isEntryPrivate(processedEntry) && (
 						<div className="absolute bottom-0 left-0">
-							<Lock className="w-3.5 h-3.5 text-neutral-600" />
+							<Lock className="w-3.5 h-3.5 text-neutral-400 dark:text-neutral-600" />
 						</div>
 					)}
 					{isPending && (
-						<div className="absolute bottom-0 right-0 flex items-center gap-1.5 text-neutral-600">
+						<div className="absolute bottom-0 right-0 flex items-center gap-1.5 text-neutral-400 dark:text-neutral-600">
 							<span className="text-xs">confirming</span>
 							<Logo className="w-3.5 h-3.5 rotating" />
 						</div>
@@ -399,13 +399,13 @@ export default function Entry({
 				<MDX
 					markdown={editedContent}
 					onChange={setEditedContent}
-					className="border border-primary border-dashed bg-neutral-900 text-secondary! flex-col grow flex w-full aspect-auto!"
+					className="border border-primary border-dashed bg-neutral-100 dark:bg-neutral-900 text-secondary! flex-col grow flex w-full aspect-auto!"
 					autoFocus={isEditing}
 				/>
 				<button
 					type="button"
 					onClick={() => setEncrypted?.(!encrypted)}
-					className="hover:text-primary text-neutral-600 absolute bottom-3 left-2 z-20"
+					className="hover:text-primary text-neutral-400 dark:text-neutral-600 absolute bottom-3 left-2 z-20"
 				>
 					{encrypted ? (
 						<Lock className="h-3.5 w-3.5" />
@@ -450,12 +450,12 @@ export default function Entry({
 				})}
 			>
 				<div>
-					<span className="text-neutral-600 bold">{createdAt}</span>
+					<span className="text-neutral-400 dark:text-neutral-600 bold">{createdAt}</span>
 					{isLoggedIn && walletAddress && (
 						<div>
 							<button
 								type="button"
-								className="text-neutral-600 hover:text-secondary cursor-pointer"
+								className="text-neutral-400 dark:text-neutral-600 hover:text-secondary cursor-pointer"
 								disabled={isTogglingSaveEntry}
 								onClick={() => toggleSaveEntry()}
 							>
@@ -471,7 +471,7 @@ export default function Entry({
 								<button
 									type="button"
 									className={cn(
-										"text-neutral-600 hover:text-secondary cursor-pointer",
+										"text-neutral-400 dark:text-neutral-600 hover:text-secondary cursor-pointer",
 									)}
 									onClick={() => {
 										if (isEditing) {
@@ -491,7 +491,7 @@ export default function Entry({
 										disabled={!isContentChanged}
 										onClick={handleSave}
 										className={cn(
-											"text-green-400 hover:text-green-600 disabled:text-neutral-600",
+											"text-green-400 hover:text-green-600 disabled:text-neutral-400 dark:disabled:text-neutral-600",
 											{ "cursor-pointer": isContentChanged },
 										)}
 									>
@@ -505,7 +505,7 @@ export default function Entry({
 								{!isDeleting && (
 									<button
 										type="button"
-										className="text-neutral-600 hover:text-red-700 cursor-pointer"
+										className="text-neutral-400 dark:text-neutral-600 hover:text-red-700 cursor-pointer"
 										onClick={() => setIsDeleting(true)}
 									>
 										delete

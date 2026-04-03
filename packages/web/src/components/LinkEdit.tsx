@@ -71,8 +71,8 @@ export const LinkEdit: React.FC<LinkEditProps> = ({
 	};
 
 	return (
-		<div className="w-64 max-w-md p-2 bg-neutral-900 border border-neutral-800 relative flex flex-col gap-2">
-			<div className="bg-neutral-800 py-1.5 px-2 overflow-x-auto flex items-center gap-1 scrollbar-none">
+		<div className="w-64 max-w-md p-2 bg-neutral-100 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-800 relative flex flex-col gap-2">
+			<div className="bg-neutral-200 dark:bg-neutral-800 py-1.5 px-2 overflow-x-auto flex items-center gap-1 scrollbar-none">
 				<input
 					type="text"
 					value={linkText}
@@ -82,7 +82,7 @@ export const LinkEdit: React.FC<LinkEditProps> = ({
 					placeholder="Link text"
 				/>
 			</div>
-			<div className="bg-neutral-800 py-1.5 px-2 overflow-x-auto flex items-center gap-1 scrollbar-none">
+			<div className="bg-neutral-200 dark:bg-neutral-800 py-1.5 px-2 overflow-x-auto flex items-center gap-1 scrollbar-none">
 				<input
 					autoFocus
 					ref={inputRef}
@@ -99,14 +99,14 @@ export const LinkEdit: React.FC<LinkEditProps> = ({
 				<div className="flex items-center gap-1">
 					<LinkButton
 						onClick={handleCancel}
-						className="disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-neutral-900! disabled:hover:text-neutral-300!"
+						className="disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-neutral-100! dark:disabled:hover:bg-neutral-900! disabled:hover:text-neutral-400! dark:disabled:hover:text-neutral-300!"
 					>
 						<RiArrowGoBackLine className="w-3 h-3" />
 					</LinkButton>
 					<LinkButton
 						onClick={handleSave}
 						disabled={!canSave}
-						className="hover:bg-green-900! hover:text-green-300! disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-neutral-900! disabled:hover:text-neutral-300!"
+						className="hover:bg-green-900! hover:text-green-300! disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-neutral-100! dark:disabled:hover:bg-neutral-900! disabled:hover:text-neutral-400! dark:disabled:hover:text-neutral-300!"
 					>
 						<MdSave className="w-3 h-3" />
 					</LinkButton>

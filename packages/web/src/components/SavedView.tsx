@@ -213,7 +213,7 @@ function MixedSavedGrid({
 							href={isPendingWriter ? "#" : `/writer/${item.writer.address}`}
 							key={item.key}
 							className={cn(
-								"aspect-square bg-neutral-900 flex flex-col overflow-hidden px-2 pt-2 pb-1.5",
+								"aspect-square bg-neutral-100 dark:bg-neutral-900 flex flex-col overflow-hidden px-2 pt-2 pb-1.5",
 								isPendingWriter ? "cursor-loading" : "hover:cursor-zoom-in",
 							)}
 							onClick={isPendingWriter ? (e) => e.preventDefault() : undefined}
@@ -221,10 +221,10 @@ function MixedSavedGrid({
 							<div className="grow min-h-0 min-w-0 overflow-y-auto">
 								<MarkdownRenderer
 									markdown={item.writer.title}
-									className="text-white writer-title"
+									className="text-black dark:text-white writer-title"
 								/>
 							</div>
-							<div className="writer-card-meta text-neutral-600 flex items-end justify-between text-sm leading-3 pt-2 shrink-0 pb-2">
+							<div className="writer-card-meta text-neutral-400 dark:text-neutral-600 flex items-end justify-between text-sm leading-3 pt-2 shrink-0 pb-2">
 								<span>Writer</span>
 								{isPendingWriter ? (
 									<span className="pending-entry-spinner">
@@ -261,7 +261,7 @@ function MixedSavedGrid({
 						href={href}
 						key={item.key}
 						className={cn(
-							"group relative aspect-square bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 overflow-hidden",
+							"group relative aspect-square bg-neutral-100 dark:bg-neutral-900 flex flex-col px-2 pt-2 pb-0.5 overflow-hidden",
 							showLockedState && "private-entry-card",
 							showLockedState
 								? canUnlock
@@ -286,10 +286,10 @@ function MixedSavedGrid({
 						}}
 					>
 						{showLockedState ? (
-							<div className="flex flex-col items-center justify-center grow text-neutral-600 gap-2 private-entry-content">
+							<div className="flex flex-col items-center justify-center grow text-neutral-400 dark:text-neutral-600 gap-2 private-entry-content">
 								<>
 									<span className="block group-hover:hidden">
-										<Lock className="h-4 w-4 text-neutral-600 private-entry-icon" />
+										<Lock className="h-4 w-4 text-neutral-400 dark:text-neutral-600 private-entry-icon" />
 									</span>
 									<span className="hidden group-hover:block">
 										<Unlock className="h-4 w-4 text-primary" />
@@ -309,14 +309,14 @@ function MixedSavedGrid({
 							<div className="overflow-y-auto grow min-h-0">
 								<MarkdownRenderer
 									markdown={entry.decompressed ?? entry.raw}
-									className="text-white"
+									className="text-black dark:text-white"
 									links={false}
 								/>
 							</div>
 						)}
 						<div
 							className={cn(
-								"writer-card-meta text-neutral-600 flex items-end text-sm leading-3 pt-2 shrink-0 pb-2",
+								"writer-card-meta text-neutral-400 dark:text-neutral-600 flex items-end text-sm leading-3 pt-2 shrink-0 pb-2",
 								isPending ? "justify-between" : "justify-start",
 							)}
 						>

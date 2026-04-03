@@ -37,16 +37,16 @@ export default function PublicWriterList({ writers }: PublicWriterListProps) {
 				<Link
 					href={`/writer/${writer.address}`}
 					key={writer.address}
-					className="aspect-square bg-neutral-900 flex flex-col overflow-hidden px-2 pt-2 pb-1.5 hover:cursor-zoom-in"
+					className="aspect-square bg-neutral-100 dark:bg-neutral-900 flex flex-col overflow-hidden px-2 pt-2 pb-1.5 hover:cursor-zoom-in"
 					onMouseEnter={() => prefetchWriter(writer.address)}
 				>
 					<div className="grow min-h-0 min-w-0 overflow-y-auto">
 						<MarkdownRenderer
 							markdown={writer.title}
-							className="text-white writer-title"
+							className="text-black dark:text-white writer-title"
 						/>
 					</div>
-					<div className="writer-card-meta shrink-0 flex items-center justify-end gap-3 text-sm text-neutral-600 leading-3 pt-2">
+					<div className="writer-card-meta shrink-0 flex items-center justify-end gap-3 text-sm text-neutral-400 dark:text-neutral-600 leading-3 pt-2">
 						{writer.privateCount > 0 &&
 							viewerAddress === writer.admin.toLowerCase() && (
 								<span className="flex items-end gap-1">

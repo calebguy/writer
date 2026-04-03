@@ -90,13 +90,23 @@
   }
 
   [data-radix-collection-item][data-state="checked"] {
+    background-color: var(--color-neutral-100)!important;
+    color: var(--color-black)!important;
+    border: 1px dashed green!important;
+  }
+
+  :root[data-theme="dark"] [data-radix-collection-item][data-state="checked"] {
     background-color: var(--color-neutral-900)!important;
     color: var(--color-white)!important;
-    border: 1px dashed green!important;
   }
 
   [data-radix-collection-item][data-highlighted] {
     border: 1px dashed green!important;
+    background-color: var(--color-neutral-100)!important;
+    color: var(--color-black)!important;
+  }
+
+  :root[data-theme="dark"] [data-radix-collection-item][data-highlighted] {
     background-color: var(--color-neutral-900)!important;
     color: var(--color-white)!important;
   }
@@ -104,11 +114,17 @@
   .mdxeditor-select-content {
     border-radius: 0!important;
     font-family: "LTRemark"!important;
-    background-color: var(--color-neutral-900)!important;
-    color: var(--color-white)!important;
-    border: 1px solid var(--color-neutral-700)!important;
+    background-color: var(--color-neutral-100)!important;
+    color: var(--color-black)!important;
+    border: 1px solid var(--color-neutral-300)!important;
     margin-top: 0.5rem!important;
     margin-right: 2rem!important;
+  }
+
+  :root[data-theme="dark"] .mdxeditor-select-content {
+    background-color: var(--color-neutral-900)!important;
+    color: var(--color-white)!important;
+    border-color: var(--color-neutral-700)!important;
   }
 
   .mdxeditor {
@@ -139,9 +155,15 @@
 
     /* code editor autocomplete */
     .cm-tooltip-autocomplete {
+      background-color: var(--color-neutral-100)!important;
+      color: var(--color-neutral-600)!important;
+      border: 1px solid var(--color-neutral-300)!important;
+    }
+
+    :root[data-theme="dark"] & .cm-tooltip-autocomplete {
       background-color: var(--color-neutral-900)!important;
       color: var(--color-neutral-700)!important;
-      border: 1px solid var(--color-neutral-700)!important;
+      border-color: var(--color-neutral-700)!important;
     }
 
     .cm-completionIcon {
@@ -149,6 +171,11 @@
     }
 
     .cm-tooltip-autocomplete > ul > li[aria-selected="true"] {
+      background-color: var(--color-neutral-200)!important;
+      color: var(--color-black)!important;
+    }
+
+    :root[data-theme="dark"] & .cm-tooltip-autocomplete > ul > li[aria-selected="true"] {
       background-color: var(--color-neutral-900)!important;
       color: var(--color-white)!important;
     }
@@ -159,7 +186,10 @@
     }
 
     .cm-tooltip-autocomplete > ul > li:hover {
-      /* border: 1px dashed green!important; */
+      color: var(--color-black)!important;
+    }
+
+    :root[data-theme="dark"] & .cm-tooltip-autocomplete > ul > li:hover {
       color: var(--color-white)!important;
     }
 
@@ -404,13 +434,18 @@
       }
 
       blockquote {
-        border-left: 4px solid var(--color-neutral-700);
+        border-left: 4px solid var(--color-neutral-300);
         margin: 1rem 0;
         padding: 0.5rem;
         font-style: italic;
         color: var(--color-secondary);
-        background-color: var(--color-neutral-900);
+        background-color: var(--color-neutral-100);
         border-radius: 0 0 0 0;
+      }
+
+      :root[data-theme="dark"] & blockquote {
+        border-left-color: var(--color-neutral-700);
+        background-color: var(--color-neutral-900);
       }
 
       blockquote p {
@@ -426,11 +461,16 @@
       }
 
       .cm-editor {
-        background-color: var(--color-neutral-900) !important;
-        border: 1px solid var(--color-neutral-700) !important;
+        background-color: var(--color-neutral-100) !important;
+        border: 1px solid var(--color-neutral-300) !important;
         border-radius: 0!important;
         font-family: "BasicallyAMono", "Monaco", "Menlo", "Ubuntu Mono", monospace !important;
         border-width: 0!important;
+      }
+
+      :root[data-theme="dark"] & .cm-editor {
+        background-color: var(--color-neutral-900) !important;
+        border-color: var(--color-neutral-700) !important;
       }
 
       .cm-editor .cm-scroller {
@@ -442,26 +482,46 @@
       }
 
       .cm-editor .cm-line {
+        color: var(--color-neutral-700) !important;
+      }
+
+      :root[data-theme="dark"] & .cm-editor .cm-line {
         color: var(--color-neutral-200) !important;
       }
 
       .cm-editor .cm-activeLine {
+        background-color: var(--color-neutral-200) !important;
+      }
+
+      :root[data-theme="dark"] & .cm-editor .cm-activeLine {
         background-color: var(--color-neutral-800) !important;
       }
 
       .cm-editor .cm-selectionBackground {
+        background-color: var(--color-neutral-300) !important;
+      }
+
+      :root[data-theme="dark"] & .cm-editor .cm-selectionBackground {
         background-color: var(--color-neutral-700) !important;
       }
 
       .cm-editor .cm-activeLineGutter {
+        background-color: var(--color-neutral-100)!important;
+      }
+
+      :root[data-theme="dark"] & .cm-editor .cm-activeLineGutter {
         background-color: var(--color-neutral-900)!important;
       }
 
       .cm-editor .cm-gutter {
+        background-color: var(--color-neutral-100)!important;
+      }
+
+      :root[data-theme="dark"] & .cm-editor .cm-gutter {
         background-color: var(--color-neutral-900)!important;
       }
 
-      .cm-editor .cm-gutterElement { 
+      .cm-editor .cm-gutterElement {
         color: rgb(var(--color-secondary))!important;
       }
 
@@ -470,6 +530,10 @@
       }
 
       .cm-editor .cm-matchingBracket {
+        background-color: var(--color-neutral-200)!important;
+      }
+
+      :root[data-theme="dark"] & .cm-editor .cm-matchingBracket {
         background-color: var(--color-neutral-800)!important;
       }
 
@@ -482,12 +546,21 @@
       }
 
       ._codeMirrorToolbar_sects_409 {
-        background-color: var(--color-neutral-900)!important;
-        border: 1px solid var(--color-neutral-700)!important;
+        background-color: var(--color-neutral-100)!important;
+        border: 1px solid var(--color-neutral-300)!important;
         border-bottom-left-radius: 0!important;
       }
 
+      :root[data-theme="dark"] & ._codeMirrorToolbar_sects_409 {
+        background-color: var(--color-neutral-900)!important;
+        border-color: var(--color-neutral-700)!important;
+      }
+
       .cm-selectionMatch span {
+        background-color: var(--color-neutral-200)!important;
+      }
+
+      :root[data-theme="dark"] & .cm-selectionMatch span {
         background-color: var(--color-neutral-800)!important;
       }
 
@@ -515,13 +588,17 @@
       }
 
       ._code_1tncs_52 {
-        background-color: var(--color-neutral-900)!important;
+        background-color: var(--color-neutral-100)!important;
         color: var(--color-primary)!important;
         padding: 0.125rem 0.25rem!important;
         border-radius: 0!important;
         font-family: "BasicallyAMono", "Monaco", "Menlo", "Ubuntu Mono", monospace!important;
         font-size: 0.875rem!important;
         line-height: 1.5!important;
+      }
+
+      :root[data-theme="dark"] & ._code_1tncs_52 {
+        background-color: var(--color-neutral-900)!important;
       }
     }
     ._placeholder_1e2ox_1106 p {

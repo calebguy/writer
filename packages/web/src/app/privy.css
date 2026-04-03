@@ -160,7 +160,7 @@ body {
 
 :root[data-theme="light"] #privy-modal-content {
   box-shadow: none !important;
-  background-color: rgb(var(--color-neutral-50)) !important;
+  background-color: #ffffff !important;
 }
 
 #privy-dialog {

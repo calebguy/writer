@@ -39,7 +39,7 @@ function AnchorHeading({
 			onClick={() => copyAnchor(id)}
 		>
 			{children}
-			<span className="opacity-0 group-hover:opacity-100 transition-opacity font-normal ml-2 text-sm text-neutral-400 dark:text-neutral-500">
+			<span className="opacity-0 group-hover:opacity-100 transition-opacity font-normal ml-2 text-sm text-neutral-500 dark:text-neutral-400">
 				&sect;
 			</span>
 		</Tag>
@@ -96,7 +96,7 @@ function Endpoint({
 			>
 				<span className={`font-mono  font-bold ${methodColor}`}>{method}</span>
 				<code className="font-mono ">{path}</code>
-				<span className="opacity-0 group-hover:opacity-100 transition-opacity font-normal ml-2 text-sm text-neutral-400 dark:text-neutral-500">
+				<span className="opacity-0 group-hover:opacity-100 transition-opacity font-normal ml-2 text-sm text-neutral-500 dark:text-neutral-400">
 					&sect;
 				</span>
 			</div>

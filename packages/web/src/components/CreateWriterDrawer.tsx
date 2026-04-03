@@ -52,7 +52,7 @@ export function CreateWriterDrawer({
 								type="button"
 								onClick={onCreate}
 								disabled={isDisabled}
-								className="w-full h-10 rounded-md bg-neutral-900 text-black dark:text-white disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+								className="w-full h-10 rounded-md bg-neutral-100 dark:bg-neutral-900 text-black dark:text-white disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
 							>
 								Create
 							</button>

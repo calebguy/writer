@@ -73,8 +73,8 @@ const LinkPreview: React.FC<{ url: string }> = ({ url }) => {
 	};
 
 	return (
-		<div className="w-64 max-w-md p-2 bg-neutral-900 border border-neutral-800 relative flex flex-col gap-2">
-			<div className="bg-neutral-800 p-2 overflow-x-auto flex items-center gap-1 scrollbar-none">
+		<div className="w-64 max-w-md p-2 bg-neutral-100 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-800 relative flex flex-col gap-2">
+			<div className="bg-neutral-200 dark:bg-neutral-800 p-2 overflow-x-auto flex items-center gap-1 scrollbar-none">
 				<a
 					href={url}
 					target="_blank"

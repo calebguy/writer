@@ -148,7 +148,7 @@ export default function WriterPage() {
 				{canCreateEntries && (
 					<div className="relative">
 						<CreateInput onSubmit={() => {}} isLoading={false} />
-						<div className="absolute inset-0 bg-neutral-900/90 flex flex-col items-center justify-center" />
+						<div className="absolute inset-0 bg-neutral-200/90 dark:bg-neutral-900/90 flex flex-col items-center justify-center" />
 					</div>
 				)}
 				{LOADING_SKELETON_KEYS.map((key) => (
@@ -178,7 +178,7 @@ export default function WriterPage() {
 				<div className="sticky bottom-0 left-0 pt-2">
 					<button
 						type="button"
-						className="text-neutral-600 hover:text-secondary cursor-pointer"
+						className="text-neutral-400 dark:text-neutral-600 hover:text-secondary cursor-pointer"
 						disabled={isTogglingSaveWriter}
 						onClick={() => toggleSaveWriter()}
 					>
