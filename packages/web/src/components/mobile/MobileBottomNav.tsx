@@ -128,19 +128,19 @@ export function MobileBottomNav() {
 								<button
 									type="button"
 									title="Color"
-									className="p-2.5 rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
+									className="p-1.5 rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
 									onClick={() => {
 										setShowSubMenu(false);
 										setShowColorDrawer(true);
 									}}
 								>
-									<span className="block w-3.5 h-3.5 bg-primary rounded-sm" />
+									<span className="block w-5 h-5 bg-primary rounded-sm" />
 								</button>
 							)}
 							<button
 								type="button"
 								title="Light"
-								className={`p-2.5 rounded-full transition-colors ${navIconClass(
+								className={`p-1.5 rounded-full transition-colors ${navIconClass(
 									themeMode === "light",
 								)}`}
 								onClick={() => setTheme("light")}
@@ -150,14 +150,14 @@ export function MobileBottomNav() {
 									alt="Light"
 									width={100}
 									height={100}
-									className="w-5 h-5 min-w-5 shrink-0 dark:invert"
+									className="w-7 h-7 min-w-7 shrink-0 dark:invert"
 									priority
 								/>
 							</button>
 							<button
 								type="button"
 								title="Dark"
-								className={`p-2.5 rounded-full transition-colors ${navIconClass(
+								className={`p-1.5 rounded-full transition-colors ${navIconClass(
 									themeMode === "dark",
 								)}`}
 								onClick={() => setTheme("dark")}
@@ -167,14 +167,14 @@ export function MobileBottomNav() {
 									alt="Dark"
 									width={96.4}
 									height={100}
-									className="h-5 w-full min-w-5 shrink-0 dark:invert"
+									className="h-7 w-full min-w-7 shrink-0 dark:invert"
 									priority
 								/>
 							</button>
 							<button
 								type="button"
 								title="System"
-								className={`p-2.5 rounded-full transition-colors ${navIconClass(
+								className={`p-1.5 rounded-full transition-colors ${navIconClass(
 									themeMode === "system",
 								)}`}
 								onClick={() => setTheme("system")}
@@ -184,7 +184,7 @@ export function MobileBottomNav() {
 									alt="System"
 									width={100}
 									height={100}
-									className="w-5 h-5 min-w-5 shrink-0 dark:invert"
+									className="w-7 h-7 min-w-7 shrink-0 dark:invert"
 									priority
 								/>
 							</button>
@@ -206,7 +206,7 @@ export function MobileBottomNav() {
 										alt="Leave"
 										width={100}
 										height={100}
-										className="w-5 h-5 min-w-5 shrink-0 dark:invert"
+										className="w-7 h-7 min-w-7 shrink-0 dark:invert"
 										priority
 									/>
 								</button>
