@@ -247,7 +247,7 @@ export default function DocsPage() {
 	}, []);
 
 	return (
-		<div className="max-w-3xl mx-auto py-8">
+		<div className="max-w-3xl py-8">
 			<p className={`${secondaryGray} mb-16 `}>
 				Writer is an onchain writing platform. Content is permanently stored on
 				Optimism through smart contracts, with all writes authenticated via

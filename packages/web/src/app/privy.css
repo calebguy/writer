@@ -179,6 +179,6 @@ body {
 }
 
 .fMTGBf {
-  --country-code-dropdown-width: calc(48px + calc(12 * 1px))!important;
+  --country-code-dropdown-width: calc(54px + calc(12 * 1px))!important;
   --phone-input-extra-padding-left: calc(18px + calc(3 * 1px))!important;
 }

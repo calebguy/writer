@@ -35,6 +35,8 @@ export function MobileBottomNav() {
 	const [showSubMenu, setShowSubMenu] = useState(false);
 	const [showColorDrawer, setShowColorDrawer] = useState(false);
 	const [themeMode, setThemeMode] = useState<ThemeMode>("system");
+	const [hidden, setHidden] = useState(false);
+	const lastScrollY = useRef(0);
 	const containerRef = useRef<HTMLDivElement>(null);
 
 	const shouldShow = useMemo(() => {
@@ -75,6 +77,49 @@ export function MobileBottomNav() {
 		document.addEventListener("mousedown", handleClickOutside);
 		return () => document.removeEventListener("mousedown", handleClickOutside);
 	}, [showSubMenu]);
+
+	const touchStartY = useRef(0);
+
+	useEffect(() => {
+		const threshold = 20;
+
+		// Desktop / Android: window scroll
+		const handleScroll = () => {
+			const currentY = window.scrollY;
+			if (currentY > lastScrollY.current && currentY > 50) {
+				setHidden(true);
+				setShowSubMenu(false);
+			} else if (currentY < lastScrollY.current) {
+				setHidden(false);
+			}
+			lastScrollY.current = currentY;
+		};
+
+		// Touch devices (including iOS Safari): respond during move, not just at end
+		const handleTouchStart = (e: TouchEvent) => {
+			touchStartY.current = e.touches[0].clientY;
+		};
+
+		const handleTouchMove = (e: TouchEvent) => {
+			const delta = touchStartY.current - e.touches[0].clientY;
+			if (delta > threshold) {
+				setHidden(true);
+				setShowSubMenu(false);
+			} else if (delta < -threshold) {
+				setHidden(false);
+			}
+		};
+
+		window.addEventListener("scroll", handleScroll, { passive: true });
+		// Use capture phase to ensure we see events before any container stops propagation
+		document.addEventListener("touchstart", handleTouchStart, { capture: true, passive: true });
+		document.addEventListener("touchmove", handleTouchMove, { capture: true, passive: true });
+		return () => {
+			window.removeEventListener("scroll", handleScroll);
+			document.removeEventListener("touchstart", handleTouchStart, { capture: true });
+			document.removeEventListener("touchmove", handleTouchMove, { capture: true });
+		};
+	}, []);
 
 	const setTheme = (mode: ThemeMode) => {
 		setThemeMode(mode);
@@ -118,7 +163,9 @@ export function MobileBottomNav() {
 		<>
 			<div
 				ref={containerRef}
-				className="md:hidden fixed left-1/2 -translate-x-1/2 z-40"
+				className={`md:hidden fixed left-1/2 -translate-x-1/2 z-40 transition-transform duration-300 ease-in-out ${
+					hidden ? "translate-y-[calc(100%+60px)]" : ""
+				}`}
 				style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 30px)" }}
 			>
 				<div className="relative flex items-center justify-center">
@@ -197,12 +244,11 @@ export function MobileBottomNav() {
 										logout().then(() => {
 											clearAllCachedKeys();
 											queryClient.clear();
-											window.location.href = "/";
 										})
 									}
 								>
 									<Image
-										src="/images/relics/exit-1.png"
+										src="/images/relics/arrow-1.png"
 										alt="Leave"
 										width={100}
 										height={100}

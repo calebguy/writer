@@ -61,7 +61,7 @@ export default async function RootLayout({
 		<html
 			lang="en"
 			style={colorStyle}
-			className="h-full"
+			className="min-h-dvh"
 			suppressHydrationWarning
 		>
 			<body className="flex justify-center">
