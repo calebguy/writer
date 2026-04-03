@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { FiPlus } from "react-icons/fi";
 import type { Hex } from "viem";
 import { CreateWriterDrawer } from "../CreateWriterDrawer";
-import { LogoDropdown } from "../LogoDropdown";
+import { NavDropdown } from "../NavDropdown";
 
 export function HomeHeader() {
 	const queryClient = useQueryClient();
@@ -98,7 +98,7 @@ export function HomeHeader() {
 						<FiPlus className="h-6 w-6" />
 					</button>
 					<div className="hidden md:block">
-						<LogoDropdown />
+						<NavDropdown />
 					</div>
 				</div>
 			</div>

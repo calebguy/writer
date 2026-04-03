@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { LogoDropdown } from "../LogoDropdown";
+import { NavDropdown } from "../NavDropdown";
 
 export function DocsHeader() {
 	return (
@@ -16,7 +16,7 @@ export function DocsHeader() {
 				<span className="text-primary">Docs</span>
 			</div>
 			<div className="hidden md:block">
-				<LogoDropdown />
+				<NavDropdown />
 			</div>
 		</div>
 	);

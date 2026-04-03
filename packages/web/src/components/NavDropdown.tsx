@@ -16,7 +16,7 @@ import { ColorModal } from "./ColorModal";
 import { queryClient } from "./Providers";
 import { Dropdown, DropdownItem } from "./dsl/Dropdown";
 
-export function LogoDropdown() {
+export function NavDropdown() {
 	const { logout, authenticated, login } = usePrivy();
 	const router = useRouter();
 	const pathname = usePathname();

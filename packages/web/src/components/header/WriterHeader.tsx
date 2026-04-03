@@ -5,7 +5,7 @@ import { type Writer, getWriter } from "@/utils/api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { FiPlus } from "react-icons/fi";
 import type { Hex } from "viem";
-import { LogoDropdown } from "../LogoDropdown";
+import { NavDropdown } from "../NavDropdown";
 import { MarkdownRenderer } from "../markdown/MarkdownRenderer";
 import { useCreateEntryDrawer } from "../writer/CreateEntryDrawerContext";
 import { BackButton } from "./BackButton";
@@ -60,7 +60,7 @@ export function WriterHeader({
 				<FiPlus className="h-6 w-6" />
 			</button>
 			<div className="hidden md:block">
-				<LogoDropdown />
+				<NavDropdown />
 			</div>
 		</div>
 	);

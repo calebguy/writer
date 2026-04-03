@@ -131,16 +131,6 @@
   background-color: rgb(var(--skeleton-surface));
 }
 
-:root[data-theme="light"] .header-title-skeleton {
-  background-color: rgb(229 229 224);
-}
-
-:root[data-theme="light"] .logo-dropdown-content {
-  background-color: rgb(229 229 224);
-  border-color: rgb(var(--dropdown-border));
-  box-shadow: none;
-  backdrop-filter: none;
-}
 
 :root[data-theme="light"] .logo-dropdown-item {
   color: rgb(var(--dropdown-text));
