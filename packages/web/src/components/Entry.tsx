@@ -333,21 +333,21 @@ export default function Entry({
 
 	if (!processedEntry) {
 		return (
-			<div className="flex-grow flex flex-col">
-				<div className="flex-grow flex flex-col p-2 space-y-3">
-					<div className="h-6 bg-neutral-200 dark:bg-neutral-700 skeleton-bar animate-pulse rounded w-3/4" />
-					<div className="h-4 bg-neutral-200 dark:bg-neutral-700 skeleton-bar animate-pulse rounded w-full" />
-					<div className="h-4 bg-neutral-200 dark:bg-neutral-700 skeleton-bar animate-pulse rounded w-full" />
-					<div className="h-4 bg-neutral-200 dark:bg-neutral-700 skeleton-bar animate-pulse rounded w-5/6" />
-					<div className="h-4 bg-neutral-200 dark:bg-neutral-700 skeleton-bar animate-pulse rounded w-full" />
-					<div className="h-4 bg-neutral-200 dark:bg-neutral-700 skeleton-bar animate-pulse rounded w-2/3" />
-					<div className="h-4 bg-neutral-200 dark:bg-neutral-700 skeleton-bar animate-pulse rounded w-full" />
-					<div className="h-4 bg-neutral-200 dark:bg-neutral-700 skeleton-bar animate-pulse rounded w-4/5" />
+			<div className="grow flex flex-col">
+				<div className="grow flex flex-col p-2 space-y-3">
+					<div className="h-6 bg-neutral-200 dark:bg-neutral-700animate-pulse rounded w-3/4" />
+					<div className="h-4 bg-neutral-200 dark:bg-neutral-700animate-pulse rounded w-full" />
+					<div className="h-4 bg-neutral-200 dark:bg-neutral-700animate-pulse rounded w-full" />
+					<div className="h-4 bg-neutral-200 dark:bg-neutral-700animate-pulse rounded w-5/6" />
+					<div className="h-4 bg-neutral-200 dark:bg-neutral-700animate-pulse rounded w-full" />
+					<div className="h-4 bg-neutral-200 dark:bg-neutral-700animate-pulse rounded w-2/3" />
+					<div className="h-4 bg-neutral-200 dark:bg-neutral-700animate-pulse rounded w-full" />
+					<div className="h-4 bg-neutral-200 dark:bg-neutral-700animate-pulse rounded w-4/5" />
 				</div>
 				<div className="flex items-end mt-3">
 					<div className="space-y-1">
-						<div className="h-4 bg-neutral-200 dark:bg-neutral-700 skeleton-bar animate-pulse rounded w-32" />
-						<div className="h-4 bg-neutral-200 dark:bg-neutral-700 skeleton-bar animate-pulse rounded w-28" />
+						<div className="h-4 bg-neutral-200 dark:bg-neutral-700animate-pulse rounded w-32" />
+						<div className="h-4 bg-neutral-200 dark:bg-neutral-700animate-pulse rounded w-28" />
 					</div>
 				</div>
 			</div>
@@ -360,13 +360,13 @@ export default function Entry({
 		: format(new Date(processedEntry.createdAt), dateFmt);
 
 	return (
-		<div className="flex-grow flex flex-col">
+		<div className="grow flex flex-col">
 			{!isEditing && (
-				<div className="flex-grow flex flex-col relative">
+				<div className="grow flex flex-col relative">
 					{canView && (
 						<MarkdownRenderer
 							markdown={processedEntry.decompressed ?? ""}
-							className="border-[1px] border-transparent p-2"
+							className="border border-transparent p-2"
 						/>
 					)}
 					{!canView && (
@@ -425,7 +425,7 @@ export default function Entry({
 					>
 						<div
 							className={cn(
-								"w-full text-left break-words p-2 overflow-hidden",
+								"w-full text-left wrap-break-word p-2 overflow-hidden",
 								{ "text-red-900": deleteSubmitted },
 								{ "text-primary": !deleteSubmitted },
 							)}

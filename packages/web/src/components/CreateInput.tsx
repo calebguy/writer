@@ -169,7 +169,7 @@ export default function CreateInput({
 					<>
 						<div
 							className={cn(
-								"border border-neutral-900 h-full flex justify-center items-center text-primary text-2xl bg-transparent hover:bg-neutral-900 hover:cursor-text create-input-border create-input-idle",
+								"border border-neutral-300 dark:border-neutral-900 h-full flex justify-center items-center text-primary text-2xl bg-white dark:bg-transparent hover:bg-neutral-200 dark:hover:bg-neutral-900 hover:cursor-text",
 								{
 									hidden: hasFocus || isExpanded,
 								},
@@ -196,7 +196,7 @@ export default function CreateInput({
 								markdown={markdown}
 								autoFocus
 								className={cn(
-									"bg-neutral-100 dark:bg-neutral-900 text-black dark:text-white flex-col placeholder:text-green-300 h-full flex w-full p-2 create-input-editor create-input-mdx",
+									"bg-neutral-200 dark:bg-neutral-900 text-black dark:text-white flex-col placeholder:text-green-300 h-full flex w-full p-2 create-input-mdx",
 								)}
 								placeholder={placeholder}
 								onChange={setMarkdown}

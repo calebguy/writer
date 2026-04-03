@@ -103,12 +103,12 @@ export function NavDropdown() {
 				) : (
 					<DropdownItem onClick={() => login()}>Login</DropdownItem>
 				)}
-				<div className="logo-theme-switcher mt-1 pt-1 border-t border-neutral-300 dark:border-neutral-800/60">
+				<div className="flex items-center justify-between gap-1 mt-1 pt-1 border-t border-neutral-300 dark:border-neutral-800/60">
 					<button
 						type="button"
 						aria-label="Use light theme"
 						title="Light"
-						className="logo-theme-icon cursor-pointer"
+						className="w-[1.6rem] h-[1.6rem] inline-flex items-center justify-center cursor-pointer border border-transparent text-neutral-500 dark:text-secondary transition-colors duration-120 hover:text-neutral-900 dark:hover:text-primary hover:bg-neutral-100 dark:hover:bg-transparent data-[active=true]:text-neutral-900 dark:data-[active=true]:text-primary data-[active=true]:border-neutral-300 dark:data-[active=true]:border-primary"
 						data-active={themeMode === "light"}
 						onClick={() => setTheme("light")}
 					>
@@ -125,7 +125,7 @@ export function NavDropdown() {
 						type="button"
 						aria-label="Use dark theme"
 						title="Dark"
-						className="logo-theme-icon cursor-pointer"
+						className="w-[1.6rem] h-[1.6rem] inline-flex items-center justify-center cursor-pointer border border-transparent text-neutral-500 dark:text-secondary transition-colors duration-120 hover:text-neutral-900 dark:hover:text-primary hover:bg-neutral-100 dark:hover:bg-transparent data-[active=true]:text-neutral-900 dark:data-[active=true]:text-primary data-[active=true]:border-neutral-300 dark:data-[active=true]:border-primary"
 						data-active={themeMode === "dark"}
 						onClick={() => setTheme("dark")}
 					>
@@ -142,7 +142,7 @@ export function NavDropdown() {
 						type="button"
 						aria-label="Use system theme"
 						title="System"
-						className="logo-theme-icon cursor-pointer"
+						className="w-[1.6rem] h-[1.6rem] inline-flex items-center justify-center cursor-pointer border border-transparent text-neutral-500 dark:text-secondary transition-colors duration-120 hover:text-neutral-900 dark:hover:text-primary hover:bg-neutral-100 dark:hover:bg-transparent data-[active=true]:text-neutral-900 dark:data-[active=true]:text-primary data-[active=true]:border-neutral-300 dark:data-[active=true]:border-primary"
 						data-active={themeMode === "system"}
 						onClick={() => setTheme("system")}
 					>
