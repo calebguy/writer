@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { Footer } from "./Footer";
 
 const STAR_IMAGE = "/images/relics/relic-5.png";
 const STAR_SIZE = 44;
@@ -397,24 +398,9 @@ export function LandingPage({
 				</div>
 
 				{/* Footer — below the border */}
-				<footer className="flex justify-between items-end w-full px-4 pb-3 pt-2 font-serif text-[0.9rem] md:text-[1.15rem] text-black/40 dark:text-white/40 mt-[18px]">
-					<span className="flex-1 text-left">writer.place</span>
-					<span className="flex-1 text-center">write today, forever</span>
-					<span className="flex-1 text-right flex justify-end gap-3">
-						<a
-							href="/about"
-							className="text-black/40 dark:text-white/40 no-underline hover:text-primary"
-						>
-							about
-						</a>
-						<a
-							href="/docs"
-							className="text-black/40 dark:text-white/40 no-underline hover:text-primary"
-						>
-							docs
-						</a>
-					</span>
-				</footer>
+				<div className="px-4 pb-3 pt-2">
+					<Footer />
+				</div>
 			</div>
 		</div>
 	);

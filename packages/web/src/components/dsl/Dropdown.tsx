@@ -11,14 +11,6 @@ interface DropdownProps {
 	onOpenChange?: (open: boolean) => void;
 }
 
-const dropdownMenuItemClasses = cn(
-	"text-black dark:text-white flex relative user-select-none outline-none text-base py-1 px-1.5 hover:bg-surface-raised cursor-pointer",
-);
-
-const dropdownMenuContentClasses = cn(
-	"shadow-none min-w-24 bg-surface p-1.5 border border-neutral-300 dark:border-neutral-800 z-[200]",
-);
-
 export function Dropdown({
 	children,
 	trigger,
@@ -62,7 +54,9 @@ export function Dropdown({
 					<DropdownMenu.Content
 						side={side}
 						align="start"
-						className={cn(dropdownMenuContentClasses)}
+						className={cn(
+							"shadow-none min-w-24 bg-background dark:bg-surface p-1.5 border border-surface-raised z-200",
+						)}
 						sideOffset={10}
 						collisionPadding={28}
 						onCloseAutoFocus={(e) => e.preventDefault()}
@@ -77,6 +71,11 @@ export function Dropdown({
 
 export function DropdownItem(props: DropdownMenu.DropdownMenuItemProps) {
 	return (
-		<DropdownMenu.Item {...props} className={cn(dropdownMenuItemClasses)} />
+		<DropdownMenu.Item
+			{...props}
+			className={cn(
+				"text-black dark:text-white flex relative user-select-none outline-none text-base py-1 px-1.5 hover:bg-surface dark:hover:bg-surface-raised cursor-pointer",
+			)}
+		/>
 	);
 }

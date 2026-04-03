@@ -16,6 +16,38 @@ import { ColorModal } from "./ColorModal";
 import { queryClient } from "./Providers";
 import { Dropdown, DropdownItem } from "./dsl/Dropdown";
 
+function ThemeButton({
+	src,
+	label,
+	active,
+	onClick,
+}: {
+	src: string;
+	label: string;
+	active: boolean;
+	onClick: () => void;
+}) {
+	return (
+		<button
+			type="button"
+			aria-label={`Use ${label.toLowerCase()} theme`}
+			title={label}
+			className="p-1 inline-flex items-center justify-center cursor-pointer border border-transparent dark:text-secondary transition-colors duration-120 hover:bg-surface dark:hover:bg-surface-raised data-[active=true]:bg-surface-raised"
+			data-active={active}
+			onClick={onClick}
+		>
+			<Image
+				src={src}
+				alt={label}
+				width={100}
+				height={100}
+				className="h-4.5 w-4.5 min-w-4.5 shrink-0 dark:invert"
+				priority
+			/>
+		</button>
+	);
+}
+
 export function NavDropdown() {
 	const { logout, authenticated, login } = usePrivy();
 	const router = useRouter();
@@ -104,57 +136,24 @@ export function NavDropdown() {
 					<DropdownItem onClick={() => login()}>Login</DropdownItem>
 				)}
 				<div className="flex items-center justify-between gap-1 mt-1 pt-1 border-t border-neutral-300 dark:border-neutral-800/60">
-					<button
-						type="button"
-						aria-label="Use light theme"
-						title="Light"
-						className="w-[1.6rem] h-[1.6rem] inline-flex items-center justify-center cursor-pointer border border-transparent text-neutral-500 dark:text-secondary transition-colors duration-120 hover:text-neutral-900 dark:hover:text-primary hover:bg-neutral-100 dark:hover:bg-transparent data-[active=true]:text-neutral-900 dark:data-[active=true]:text-primary data-[active=true]:border-neutral-300 dark:data-[active=true]:border-primary"
-						data-active={themeMode === "light"}
+					<ThemeButton
+						src="/images/relics/relic-10.png"
+						label="Light"
+						active={themeMode === "light"}
 						onClick={() => setTheme("light")}
-					>
-						<Image
-							src="/images/relics/relic-10.png"
-							alt="Light"
-							width={100}
-							height={100}
-							className="h-4.5 w-4.5 min-w-4.5 shrink-0 dark:invert"
-							priority
-						/>
-					</button>
-					<button
-						type="button"
-						aria-label="Use dark theme"
-						title="Dark"
-						className="w-[1.6rem] h-[1.6rem] inline-flex items-center justify-center cursor-pointer border border-transparent text-neutral-500 dark:text-secondary transition-colors duration-120 hover:text-neutral-900 dark:hover:text-primary hover:bg-neutral-100 dark:hover:bg-transparent data-[active=true]:text-neutral-900 dark:data-[active=true]:text-primary data-[active=true]:border-neutral-300 dark:data-[active=true]:border-primary"
-						data-active={themeMode === "dark"}
+					/>
+					<ThemeButton
+						src="/images/relics/moon-3.png"
+						label="Dark"
+						active={themeMode === "dark"}
 						onClick={() => setTheme("dark")}
-					>
-						<Image
-							src="/images/relics/moon-3.png"
-							alt="Dark"
-							width={100}
-							height={100}
-							className="h-4.5 w-4.5 min-w-4.5 shrink-0 dark:invert"
-							priority
-						/>
-					</button>
-					<button
-						type="button"
-						aria-label="Use system theme"
-						title="System"
-						className="w-[1.6rem] h-[1.6rem] inline-flex items-center justify-center cursor-pointer border border-transparent text-neutral-500 dark:text-secondary transition-colors duration-120 hover:text-neutral-900 dark:hover:text-primary hover:bg-neutral-100 dark:hover:bg-transparent data-[active=true]:text-neutral-900 dark:data-[active=true]:text-primary data-[active=true]:border-neutral-300 dark:data-[active=true]:border-primary"
-						data-active={themeMode === "system"}
+					/>
+					<ThemeButton
+						src="/images/relics/computer-1.png"
+						label="System"
+						active={themeMode === "system"}
 						onClick={() => setTheme("system")}
-					>
-						<Image
-							src="/images/relics/computer-1.png"
-							alt="System"
-							width={100}
-							height={100}
-							className="h-4.5 w-4.5 min-w-4.5 shrink-0 dark:invert"
-							priority
-						/>
-					</button>
+					/>
 				</div>
 			</Dropdown>
 			<ColorModal open={open} onClose={() => setOpen(false)} />
