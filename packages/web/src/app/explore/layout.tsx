@@ -12,7 +12,7 @@ export default function Layout({
 			<div className="mb-4">
 				<ExploreHeader />
 			</div>
-			<div className="grow flex flex-col pb-20 md:pb-0">{children}</div>
+			<div className="grow flex flex-col">{children}</div>
 			<Footer />
 			<MobileBottomNav />
 		</div>

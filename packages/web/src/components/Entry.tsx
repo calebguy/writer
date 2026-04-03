@@ -25,7 +25,6 @@ import {
 	isEntryPrivate,
 	isWalletAuthor,
 	processPrivateEntry,
-	shortenAddress,
 	sleep,
 } from "@/utils/utils";
 import { usePrivy } from "@privy-io/react-auth";
@@ -56,7 +55,8 @@ export default function Entry({
 	onEntryUpdate: () => void;
 }) {
 	const [wallet] = useOPWallet();
-	const { getAccessToken } = usePrivy();
+	const { getAccessToken, authenticated, ready } = usePrivy();
+	const isLoggedIn = ready && authenticated;
 	const router = useRouter();
 	const queryClient = useQueryClient();
 	const { setEntryLoading } = useEntryLoading();
@@ -354,6 +354,11 @@ export default function Entry({
 		);
 	}
 
+	const dateFmt = "MMM do, yyyy";
+	const createdAt = processedEntry.createdAtBlockDatetime
+		? format(new Date(processedEntry.createdAtBlockDatetime), dateFmt)
+		: format(new Date(processedEntry.createdAt), dateFmt);
+
 	return (
 		<div className="flex-grow flex flex-col">
 			{!isEditing && (
@@ -445,18 +450,8 @@ export default function Entry({
 				})}
 			>
 				<div>
-					<div className="flex gap-1">
-						<span className="text-neutral-600">
-							by:{" "}
-							<span className="text-neutral-600">
-								{shortenAddress(processedEntry.author as Hex)}
-							</span>
-						</span>
-					</div>
-					<span className="text-neutral-600 bold">
-						on: {format(new Date(processedEntry.createdAt), "MM/dd/yyyy")}
-					</span>
-					{walletAddress && (
+					<span className="text-neutral-600 bold">{createdAt}</span>
+					{isLoggedIn && walletAddress && (
 						<div>
 							<button
 								type="button"

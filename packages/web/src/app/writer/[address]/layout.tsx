@@ -12,11 +12,13 @@ const OG_IMAGE_URL =
 	"https://res.cloudinary.com/dm9gwanrg/image/upload/v1741159374/Artboard_1_1_3p_ztojhs.png";
 
 function sanitizeWriterTitle(input: string): string {
-	return input
-		// Remove common markdown punctuation.
-		.replace(/[#*_`~>\[\]\(\)!|\\]/g, " ")
-		.replace(/\s+/g, " ")
-		.trim();
+	return (
+		input
+			// Remove common markdown punctuation.
+			.replace(/[#*_`~>\[\]\(\)!|\\]/g, " ")
+			.replace(/\s+/g, " ")
+			.trim()
+	);
 }
 
 async function getWriterTitle(address: string): Promise<string | null> {
@@ -32,7 +34,7 @@ async function getWriterTitle(address: string): Promise<string | null> {
 		}
 		const data = (await response.json()) as {
 			writer?: { title?: string };
-	};
+		};
 		return data.writer?.title ?? null;
 	} catch {
 		return null;
@@ -46,7 +48,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
 	const { address } = await params;
 	const rawWriterTitle = await getWriterTitle(address);
-	const writerTitle = rawWriterTitle ? sanitizeWriterTitle(rawWriterTitle) : null;
+	const writerTitle = rawWriterTitle
+		? sanitizeWriterTitle(rawWriterTitle)
+		: null;
 	if (!writerTitle) {
 		return {};
 	}
@@ -85,7 +89,7 @@ export default function Layout({
 					<div className="mb-4 shrink-0">
 						<WriterHeader address={address} />
 					</div>
-					<div className="grow flex flex-col relative min-h-0 overflow-auto pb-20 md:pb-0">
+					<div className="grow flex flex-col relative min-h-0 overflow-auto">
 						{children}
 					</div>
 				</div>

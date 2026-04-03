@@ -29,7 +29,8 @@ export default function WriterPage() {
 	const { address } = useParams<{ address: string }>();
 	const queryClient = useQueryClient();
 	const [wallet] = useOPWallet();
-	const { getAccessToken } = usePrivy();
+	const { getAccessToken, authenticated, ready } = usePrivy();
+	const isLoggedIn = ready && authenticated;
 	const [shouldPoll, setShouldPoll] = useState(false);
 	const [allowDecryption, setAllowDecryption] = useState(false);
 	const [unlockError, setUnlockError] = useState<string | null>(null);
@@ -173,7 +174,7 @@ export default function WriterPage() {
 					setAllowDecryption(true);
 				}}
 			/>
-			{walletAddress && (
+			{isLoggedIn && walletAddress && (
 				<div className="sticky bottom-0 left-0 pt-2">
 					<button
 						type="button"

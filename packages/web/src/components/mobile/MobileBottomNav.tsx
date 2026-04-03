@@ -81,16 +81,16 @@ export function MobileBottomNav() {
 	const touchStartY = useRef(0);
 
 	useEffect(() => {
-		const threshold = 20;
+		const threshold = 44;
 
 		// Desktop / Android: window scroll
 		const handleScroll = () => {
 			const currentY = window.scrollY;
 			const delta = currentY - lastScrollY.current;
-			if (delta > 5 && currentY > 50) {
+			if (delta > threshold && currentY > 50) {
 				setHidden(true);
 				setShowSubMenu(false);
-			} else if (delta < -5) {
+			} else if (delta < -threshold) {
 				const atBottom =
 					window.innerHeight + window.scrollY >=
 					document.documentElement.scrollHeight - 10;
@@ -124,12 +124,22 @@ export function MobileBottomNav() {
 
 		window.addEventListener("scroll", handleScroll, { passive: true });
 		// Use capture phase to ensure we see events before any container stops propagation
-		document.addEventListener("touchstart", handleTouchStart, { capture: true, passive: true });
-		document.addEventListener("touchmove", handleTouchMove, { capture: true, passive: true });
+		document.addEventListener("touchstart", handleTouchStart, {
+			capture: true,
+			passive: true,
+		});
+		document.addEventListener("touchmove", handleTouchMove, {
+			capture: true,
+			passive: true,
+		});
 		return () => {
 			window.removeEventListener("scroll", handleScroll);
-			document.removeEventListener("touchstart", handleTouchStart, { capture: true });
-			document.removeEventListener("touchmove", handleTouchMove, { capture: true });
+			document.removeEventListener("touchstart", handleTouchStart, {
+				capture: true,
+			});
+			document.removeEventListener("touchmove", handleTouchMove, {
+				capture: true,
+			});
 		};
 	}, []);
 
@@ -178,7 +188,7 @@ export function MobileBottomNav() {
 				className={`md:hidden fixed left-1/2 -translate-x-1/2 z-40 transition-transform duration-300 ease-in-out ${
 					hidden ? "translate-y-[calc(100%+60px)]" : ""
 				}`}
-				style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 30px)" }}
+				style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 14px)" }}
 			>
 				<div className="relative flex items-center justify-center">
 					{showSubMenu && (
