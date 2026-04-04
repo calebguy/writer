@@ -23,12 +23,9 @@ async function pollPendingTransactions() {
 						hash: status.hash ?? tx.hash,
 						status: status.status === "confirmed"
 							? "CONFIRMED"
-							: status.status === "error"
-								? "ERROR"
-								: status.status === "submitted"
-									? "SUBMITTED"
-									: "PENDING",
-						error: status.error,
+							: status.status === "submitted"
+								? "SUBMITTED"
+								: "PENDING",
 					});
 				}
 			} catch (error) {
