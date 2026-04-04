@@ -1,11 +1,16 @@
 import { ponder } from "ponder:registry";
 import { db } from ".";
 
-async function confirmRelayTxByHash(event: {
+function makeRelayTxId(wallet: string, nonce: number): string {
+	return `dw:${wallet.toLowerCase()}:${nonce}`;
+}
+
+async function confirmRelayTx(event: {
 	block: { number: bigint };
-	transaction: { hash: string };
+	transaction: { hash: string; from: string; nonce: number };
 }): Promise<string | null> {
-	const tx = await db.getTxByHash(event.transaction.hash);
+	const relayTxId = makeRelayTxId(event.transaction.from, event.transaction.nonce);
+	const tx = await db.getTxById(relayTxId);
 	if (!tx) return null;
 
 	await db.upsertTx({
@@ -24,7 +29,7 @@ async function confirmRelayTxByHash(event: {
 }
 
 ponder.on("WriterStorage:ChunkReceived", async ({ event }) => {
-	const transactionId = await confirmRelayTxByHash(event);
+	const transactionId = await confirmRelayTx(event);
 
 	console.log(
 		"Chunk received",
@@ -48,7 +53,7 @@ ponder.on("WriterStorage:ChunkReceived", async ({ event }) => {
 });
 
 ponder.on("WriterStorage:EntryCreated", async ({ event }) => {
-	const transactionId = await confirmRelayTxByHash(event);
+	const transactionId = await confirmRelayTx(event);
 	await db.upsertEntry({
 		storageAddress: event.log.address,
 		exists: true,
@@ -62,7 +67,7 @@ ponder.on("WriterStorage:EntryCreated", async ({ event }) => {
 });
 
 ponder.on("WriterStorage:EntryRemoved", async ({ event }) => {
-	const transactionId = await confirmRelayTxByHash(event);
+	const transactionId = await confirmRelayTx(event);
 
 	const deletedAt = new Date(Number(event.block.timestamp) * 1000);
 	await db.upsertEntry({
@@ -79,7 +84,7 @@ ponder.on("WriterStorage:EntryRemoved", async ({ event }) => {
 });
 
 ponder.on("WriterStorage:EntryUpdated", async ({ event }) => {
-	const transactionId = await confirmRelayTxByHash(event);
+	const transactionId = await confirmRelayTx(event);
 
 	await db.upsertEntry({
 		storageAddress: event.log.address,

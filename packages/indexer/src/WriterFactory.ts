@@ -1,11 +1,16 @@
 import { ponder } from "ponder:registry";
 import { db } from "./index";
 
-async function confirmRelayTxByHash(event: {
+function makeRelayTxId(wallet: string, nonce: number): string {
+	return `dw:${wallet.toLowerCase()}:${nonce}`;
+}
+
+async function confirmRelayTx(event: {
 	block: { number: bigint };
-	transaction: { hash: string };
+	transaction: { hash: string; from: string; nonce: number };
 }): Promise<string | null> {
-	const tx = await db.getTxByHash(event.transaction.hash);
+	const relayTxId = makeRelayTxId(event.transaction.from, event.transaction.nonce);
+	const tx = await db.getTxById(relayTxId);
 	if (!tx) return null;
 
 	await db.upsertTx({
@@ -32,7 +37,7 @@ ponder.on("WriterFactory:WriterCreated", async ({ event, context }) => {
 		managers,
 		title,
 	});
-	const transactionId = await confirmRelayTxByHash(event);
+	const transactionId = await confirmRelayTx(event);
 
 	await db.upsertWriter({
 		address: writerAddress,
