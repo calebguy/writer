@@ -1,42 +1,26 @@
 import { ponder } from "ponder:registry";
-import { env } from "../utils/env";
-import { getSynIdFromRawInput, syndicate } from "../utils/syndicate";
 import { db } from "./index";
 
+async function confirmRelayTxByHash(event: {
+	block: { number: bigint };
+	transaction: { hash: string };
+}): Promise<string | null> {
+	const tx = await db.getTxByHash(event.transaction.hash);
+	if (!tx) return null;
 
-async function upsertConfirmedTxFromSyndicate(
-	transactionId: string | null,
-	event: {
-		block: { number: bigint };
-		transaction: { hash: string };
-	},
-) {
-	if (!transactionId) {
-		return;
-	}
+	await db.upsertTx({
+		id: tx.id,
+		wallet: tx.wallet,
+		nonce: tx.nonce,
+		chainId: tx.chainId,
+		functionSignature: tx.functionSignature,
+		args: tx.args,
+		blockNumber: event.block.number,
+		hash: event.transaction.hash,
+		status: "CONFIRMED",
+	});
 
-	try {
-		const tx = await syndicate.wallet.getTransactionRequest(
-			env.SYNDICATE_PROJECT_ID,
-			transactionId,
-		);
-		await db.upsertTx({
-			id: transactionId,
-			chainId: BigInt(env.TARGET_CHAIN_ID),
-			functionSignature: tx.functionSignature,
-			args: tx.decodedData,
-			blockNumber: event.block.number,
-			hash: event.transaction.hash,
-			// syndicate's internal status may not be "CONFIRMED" but we can assume it
-			// is confirmed since we are only listening to onchain events
-			status: "CONFIRMED",
-		});
-	} catch (error) {
-		console.error(
-			"Failed to sync syndicate transaction metadata; continuing with onchain event reconciliation",
-			{ transactionId, error },
-		);
-	}
+	return tx.id;
 }
 
 ponder.on("WriterFactory:WriterCreated", async ({ event, context }) => {
@@ -48,8 +32,7 @@ ponder.on("WriterFactory:WriterCreated", async ({ event, context }) => {
 		managers,
 		title,
 	});
-	const transactionId = getSynIdFromRawInput(event.transaction.input);
-	await upsertConfirmedTxFromSyndicate(transactionId, event);
+	const transactionId = await confirmRelayTxByHash(event);
 
 	await db.upsertWriter({
 		address: writerAddress,

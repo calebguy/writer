@@ -1,46 +1,30 @@
 import { ponder } from "ponder:registry";
 import { db } from ".";
-import { env } from "../utils/env";
-import { getSynIdFromRawInput, syndicate } from "../utils/syndicate";
 
-async function upsertConfirmedTxFromSyndicate(
-	transactionId: string | null,
-	event: {
-		block: { number: bigint };
-		transaction: { hash: string };
-	},
-) {
-	if (!transactionId) {
-		return;
-	}
+async function confirmRelayTxByHash(event: {
+	block: { number: bigint };
+	transaction: { hash: string };
+}): Promise<string | null> {
+	const tx = await db.getTxByHash(event.transaction.hash);
+	if (!tx) return null;
 
-	try {
-		const tx = await syndicate.wallet.getTransactionRequest(
-			env.SYNDICATE_PROJECT_ID,
-			transactionId,
-		);
-		await db.upsertTx({
-			id: transactionId,
-			chainId: BigInt(env.TARGET_CHAIN_ID),
-			functionSignature: tx.functionSignature,
-			args: tx.decodedData,
-			blockNumber: event.block.number,
-			hash: event.transaction.hash,
-			// syndicate's internal status may not be "CONFIRMED" but we can assume it
-			// is confirmed since we are only listening to onchain events
-			status: "CONFIRMED",
-		});
-	} catch (error) {
-		console.error(
-			"Failed to sync syndicate transaction metadata; continuing with onchain event reconciliation",
-			{ transactionId, error },
-		);
-	}
+	await db.upsertTx({
+		id: tx.id,
+		wallet: tx.wallet,
+		nonce: tx.nonce,
+		chainId: tx.chainId,
+		functionSignature: tx.functionSignature,
+		args: tx.args,
+		blockNumber: event.block.number,
+		hash: event.transaction.hash,
+		status: "CONFIRMED",
+	});
+
+	return tx.id;
 }
 
 ponder.on("WriterStorage:ChunkReceived", async ({ event }) => {
-	const transactionId = getSynIdFromRawInput(event.transaction.input);
-	await upsertConfirmedTxFromSyndicate(transactionId, event);
+	const transactionId = await confirmRelayTxByHash(event);
 
 	console.log(
 		"Chunk received",
@@ -64,8 +48,7 @@ ponder.on("WriterStorage:ChunkReceived", async ({ event }) => {
 });
 
 ponder.on("WriterStorage:EntryCreated", async ({ event }) => {
-	const transactionId = getSynIdFromRawInput(event.transaction.input);
-	await upsertConfirmedTxFromSyndicate(transactionId, event);
+	const transactionId = await confirmRelayTxByHash(event);
 	await db.upsertEntry({
 		storageAddress: event.log.address,
 		exists: true,
@@ -79,8 +62,7 @@ ponder.on("WriterStorage:EntryCreated", async ({ event }) => {
 });
 
 ponder.on("WriterStorage:EntryRemoved", async ({ event }) => {
-	const transactionId = getSynIdFromRawInput(event.transaction.input);
-	await upsertConfirmedTxFromSyndicate(transactionId, event);
+	const transactionId = await confirmRelayTxByHash(event);
 
 	const deletedAt = new Date(Number(event.block.timestamp) * 1000);
 	await db.upsertEntry({
@@ -97,8 +79,7 @@ ponder.on("WriterStorage:EntryRemoved", async ({ event }) => {
 });
 
 ponder.on("WriterStorage:EntryUpdated", async ({ event }) => {
-	const transactionId = getSynIdFromRawInput(event.transaction.input);
-	await upsertConfirmedTxFromSyndicate(transactionId, event);
+	const transactionId = await confirmRelayTxByHash(event);
 
 	await db.upsertEntry({
 		storageAddress: event.log.address,

@@ -27,7 +27,7 @@ import {
 	updateEntryJsonValidator,
 } from "../middleware";
 import { requireWriterAdminAuth } from "../privy";
-import { syndicate } from "../syndicate";
+import { makeRelayTxId, relay } from "../relay";
 import { Hono } from "hono";
 
 const writerRoutes = new Hono()
@@ -76,15 +76,16 @@ const writerRoutes = new Hono()
 			nonce: Number(nonce),
 			hexColor,
 		};
-		const { transactionId } = await syndicate.transact.sendTransaction({
-			projectId: env.SYNDICATE_PROJECT_ID,
-			contractAddress: env.COLOR_REGISTRY_ADDRESS,
-			chainId: env.TARGET_CHAIN_ID,
-			functionSignature: SET_HEX_FUNCTION_SIGNATURE,
-			args,
+		const { wallet, nonce: relayNonce } = await relay.sendTransaction({
+			to: env.COLOR_REGISTRY_ADDRESS,
+			abi: SET_HEX_FUNCTION_SIGNATURE,
+			args: [signature, Number(nonce), hexColor],
 		});
+		const transactionId = makeRelayTxId(wallet, relayNonce);
 		await db.createTx({
 			id: transactionId,
+			wallet,
+			nonce: relayNonce,
 			chainId: BigInt(env.TARGET_CHAIN_ID),
 			functionSignature: SET_HEX_FUNCTION_SIGNATURE,
 			args,
@@ -113,15 +114,16 @@ const writerRoutes = new Hono()
 				salt,
 			}),
 		]);
-		const { transactionId } = await syndicate.transact.sendTransaction({
-			projectId: env.SYNDICATE_PROJECT_ID,
-			contractAddress: env.FACTORY_ADDRESS,
-			chainId: env.TARGET_CHAIN_ID,
-			functionSignature: CREATE_FUNCTION_SIGNATURE,
-			args,
+		const { wallet, nonce: relayNonce } = await relay.sendTransaction({
+			to: env.FACTORY_ADDRESS,
+			abi: CREATE_FUNCTION_SIGNATURE,
+			args: [title, admin, managers, salt],
 		});
+		const transactionId = makeRelayTxId(wallet, relayNonce);
 		await db.createTx({
 			id: transactionId,
+			wallet,
+			nonce: relayNonce,
 			chainId: BigInt(env.TARGET_CHAIN_ID),
 			functionSignature: CREATE_FUNCTION_SIGNATURE,
 			args,
@@ -183,15 +185,16 @@ const writerRoutes = new Hono()
 				chunkCount: Number(chunkCount),
 				chunkContent,
 			};
-			const { transactionId } = await syndicate.transact.sendTransaction({
-				projectId: env.SYNDICATE_PROJECT_ID,
-				contractAddress,
-				chainId: env.TARGET_CHAIN_ID,
-				functionSignature: CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
-				args,
+			const { wallet, nonce: relayNonce } = await relay.sendTransaction({
+				to: contractAddress,
+				abi: CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
+				args: [signature, Number(nonce), Number(chunkCount), chunkContent],
 			});
+			const transactionId = makeRelayTxId(wallet, relayNonce);
 			await db.createTx({
 				id: transactionId,
+				wallet,
+				nonce: relayNonce,
 				chainId: BigInt(env.TARGET_CHAIN_ID),
 				functionSignature: CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
 				args,
@@ -298,15 +301,16 @@ const writerRoutes = new Hono()
 				content,
 				id: Number(id),
 			};
-			const { transactionId } = await syndicate.transact.sendTransaction({
-				projectId: env.SYNDICATE_PROJECT_ID,
-				contractAddress,
-				chainId: env.TARGET_CHAIN_ID,
-				functionSignature: UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE,
-				args,
+			const { wallet, nonce: relayNonce } = await relay.sendTransaction({
+				to: contractAddress,
+				abi: UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE,
+				args: [signature, Number(nonce), Number(id), Number(totalChunks), content],
 			});
+			const transactionId = makeRelayTxId(wallet, relayNonce);
 			await db.createTx({
 				id: transactionId,
+				wallet,
+				nonce: relayNonce,
 				chainId: BigInt(env.TARGET_CHAIN_ID),
 				functionSignature: UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE,
 				args,
@@ -367,15 +371,16 @@ const writerRoutes = new Hono()
 			}
 
 			const args = { signature, nonce: Number(nonce), id: Number(id) };
-			const { transactionId } = await syndicate.transact.sendTransaction({
-				projectId: env.SYNDICATE_PROJECT_ID,
-				contractAddress: address,
-				chainId: env.TARGET_CHAIN_ID,
-				functionSignature: DELETE_ENTRY_FUNCTION_SIGNATURE,
-				args,
+			const { wallet, nonce: relayNonce } = await relay.sendTransaction({
+				to: address,
+				abi: DELETE_ENTRY_FUNCTION_SIGNATURE,
+				args: [signature, Number(nonce), Number(id)],
 			});
+			const transactionId = makeRelayTxId(wallet, relayNonce);
 			await db.createTx({
 				id: transactionId,
+				wallet,
+				nonce: relayNonce,
 				chainId: BigInt(env.TARGET_CHAIN_ID),
 				functionSignature: DELETE_ENTRY_FUNCTION_SIGNATURE,
 				args,

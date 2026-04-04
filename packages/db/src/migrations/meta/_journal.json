@@ -29,6 +29,13 @@
       "when": 1775144756906,
       "tag": "0003_sour_iron_man",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1775325123264,
+      "tag": "0004_daily_switch",
+      "breakpoints": true
     }
   ]
 }

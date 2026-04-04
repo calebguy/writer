@@ -24,8 +24,6 @@ const schema = z.object({
 	RPC_URL: minString(),
 	WS_RPC_URL: minString(),
 	TARGET_CHAIN_ID: minString().transform((val) => Number(val)),
-	SYNDICATE_API_KEY: minString(),
-	SYNDICATE_PROJECT_ID: minString(),
 	FACTORY_ADDRESS: minString(),
 	COLOR_REGISTRY_ADDRESS: minString(),
 	START_BLOCK: minString().transform((val) => Number(val)),

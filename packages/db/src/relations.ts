@@ -4,42 +4,42 @@ import {
 	entry,
 	savedEntry,
 	savedWriter,
-	syndicateTx,
+	relayTx,
 	writer,
 } from "./schema";
 
 export const writerRelations = relations(writer, ({ one }) => ({
-	syndicateTransaction: one(syndicateTx, {
+	relayTransaction: one(relayTx, {
 		fields: [writer.transactionId],
-		references: [syndicateTx.id],
+		references: [relayTx.id],
 	}),
 }));
 
-export const syndicateTxRelations = relations(syndicateTx, ({ many }) => ({
+export const relayTxRelations = relations(relayTx, ({ many }) => ({
 	writers: many(writer),
 	entries: many(entry),
 }));
 
 export const entryRelations = relations(entry, ({ one, many }) => ({
-	createdAtTransaction: one(syndicateTx, {
+	createdAtTransaction: one(relayTx, {
 		fields: [entry.createdAtTransactionId],
-		references: [syndicateTx.id],
+		references: [relayTx.id],
 	}),
-	deletedAtTransaction: one(syndicateTx, {
+	deletedAtTransaction: one(relayTx, {
 		fields: [entry.deletedAtTransactionId],
-		references: [syndicateTx.id],
+		references: [relayTx.id],
 	}),
-	updatedAtTransaction: one(syndicateTx, {
+	updatedAtTransaction: one(relayTx, {
 		fields: [entry.updatedAtTransactionId],
-		references: [syndicateTx.id],
+		references: [relayTx.id],
 	}),
 	chunks: many(chunk),
 }));
 
 export const chunkRelations = relations(chunk, ({ one }) => ({
-	createdAtTransaction: one(syndicateTx, {
+	createdAtTransaction: one(relayTx, {
 		fields: [chunk.createdAtTransactionId],
-		references: [syndicateTx.id],
+		references: [relayTx.id],
 	}),
 	entry: one(entry, {
 		fields: [chunk.entryId],

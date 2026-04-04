@@ -1,5 +1,5 @@
 import { db, publicClient } from "./constants";
-import { syndicate } from "./syndicate";
+import { parseRelayTxId, relay } from "./relay";
 import {
 	decodeEventLog,
 	type Hex,
@@ -245,29 +245,6 @@ async function getReceiptByHash(
 	}
 }
 
-function selectAttemptHash(request: unknown): string | null {
-	if (!request || typeof request !== "object") {
-		return null;
-	}
-	const typed = request as {
-		hash?: string;
-		transactionAttempts?: Array<{
-			hash?: string;
-		}>;
-	};
-	if (typed.hash) {
-		return typed.hash;
-	}
-	const attempts = typed.transactionAttempts ?? [];
-	for (let i = attempts.length - 1; i >= 0; i--) {
-		const hash = attempts[i]?.hash;
-		if (hash) {
-			return hash;
-		}
-	}
-	return null;
-}
-
 function getAddressFromData(data: string): Hex | null {
 	if (!data || !data.startsWith("0x")) {
 		return null;
@@ -418,21 +395,27 @@ export async function reconcileEntryByDbId(
 		};
 	}
 
-	let transactionRequest: unknown = null;
-	try {
-		transactionRequest = await syndicate.wallet.getTransactionRequest(
-			env.SYNDICATE_PROJECT_ID,
-			entry.createdAtTransactionId,
-		);
-	} catch (error) {
-		warnings.push(
-			`failed to fetch syndicate request: ${
-				error instanceof Error ? error.message : String(error)
-			}`,
-		);
+	let txHash: string | null = null;
+	const relayId = parseRelayTxId(entry.createdAtTransactionId);
+	if (relayId) {
+		try {
+			const txStatus = await relay.getTransaction(relayId.wallet, relayId.nonce);
+			txHash = txStatus.hash ?? null;
+		} catch (error) {
+			warnings.push(
+				`failed to fetch relay transaction: ${
+					error instanceof Error ? error.message : String(error)
+				}`,
+			);
+		}
+	} else {
+		// Legacy Syndicate UUID — try to use hash from DB record
+		const dbTx = await db.getTxById(entry.createdAtTransactionId);
+		txHash = dbTx?.hash ?? null;
+		if (!txHash) {
+			warnings.push("legacy Syndicate transaction — relay unavailable");
+		}
 	}
-
-	const txHash = selectAttemptHash(transactionRequest);
 	if (!txHash) {
 		return {
 			entryId,
@@ -605,21 +588,27 @@ export async function reconcileWriterByAddress(
 		};
 	}
 
-	let transactionRequest: unknown = null;
-	try {
-		transactionRequest = await syndicate.wallet.getTransactionRequest(
-			env.SYNDICATE_PROJECT_ID,
-			writer.transactionId,
-		);
-	} catch (error) {
-		warnings.push(
-			`failed to fetch syndicate request: ${
-				error instanceof Error ? error.message : String(error)
-			}`,
-		);
+	let txHash: string | null = null;
+	const relayId = parseRelayTxId(writer.transactionId);
+	if (relayId) {
+		try {
+			const txStatus = await relay.getTransaction(relayId.wallet, relayId.nonce);
+			txHash = txStatus.hash ?? null;
+		} catch (error) {
+			warnings.push(
+				`failed to fetch relay transaction: ${
+					error instanceof Error ? error.message : String(error)
+				}`,
+			);
+		}
+	} else {
+		// Legacy Syndicate UUID — try to use hash from DB record
+		const dbTx = await db.getTxById(writer.transactionId);
+		txHash = dbTx?.hash ?? null;
+		if (!txHash) {
+			warnings.push("legacy Syndicate transaction — relay unavailable");
+		}
 	}
-
-	const txHash = selectAttemptHash(transactionRequest);
 	if (!txHash) {
 		return {
 			address: normalizedAddress,
