@@ -17,7 +17,7 @@ import {
 	entryRelations,
 	savedEntryRelations,
 	savedWriterRelations,
-	syndicateTxRelations,
+	relayTxRelations,
 	writerRelations,
 } from "./src/relations";
 import {
@@ -25,7 +25,7 @@ import {
 	entry,
 	savedEntry,
 	savedWriter,
-	syndicateTx,
+	relayTx,
 	user,
 	writer,
 } from "./src/schema";
@@ -40,7 +40,7 @@ class Db {
 			schema: {
 				writer,
 				entry,
-				syndicateTx,
+				relayTx,
 				user,
 				chunk,
 				savedWriter,
@@ -50,7 +50,7 @@ class Db {
 				chunkRelations,
 				savedWriterRelations,
 				savedEntryRelations,
-				syndicateTransactionRelations: syndicateTxRelations,
+				relayTxRelations,
 			},
 		});
 	}
@@ -171,11 +171,11 @@ class Db {
 				id: entry.id,
 			})
 			.from(entry)
-			.innerJoin(syndicateTx, eq(entry.createdAtTransactionId, syndicateTx.id))
+			.innerJoin(relayTx, eq(entry.createdAtTransactionId, relayTx.id))
 			.where(
 				and(
 					eq(entry.storageAddress, normalizedStorageAddress),
-					eq(syndicateTx.hash, hash),
+					eq(relayTx.hash, hash),
 				),
 			)
 			.limit(1);
@@ -302,9 +302,9 @@ class Db {
 			.filter((w) => w.publicCount > 0);
 	}
 
-	createTx(tx: Omit<InsertSyndicateTransaction, "updatedAt" | "createdAt">) {
+	createTx(tx: Omit<InsertRelayTransaction, "updatedAt" | "createdAt">) {
 		return this.pg
-			.insert(syndicateTx)
+			.insert(relayTx)
 			.values({
 				...tx,
 				updatedAt: new Date(),
@@ -313,18 +313,41 @@ class Db {
 			.returning();
 	}
 
-	upsertTx(item: InsertSyndicateTransaction) {
+	upsertTx(item: InsertRelayTransaction) {
 		return this.pg
-			.insert(syndicateTx)
+			.insert(relayTx)
 			.values({
 				...item,
 				updatedAt: new Date(),
 			})
 			.onConflictDoUpdate({
-				target: [syndicateTx.id],
+				target: [relayTx.id],
 				set: { ...item, updatedAt: new Date() },
 			})
 			.returning();
+	}
+
+	async getTxById(id: string) {
+		return this.pg.query.relayTx.findFirst({
+			where: eq(relayTx.id, id),
+		});
+	}
+
+	async getTxByHash(hash: string) {
+		return this.pg.query.relayTx.findFirst({
+			where: eq(relayTx.hash, hash),
+		});
+	}
+
+	async getPendingTxs(limit = 50) {
+		return this.pg.query.relayTx.findMany({
+			where: and(
+				eq(relayTx.status, "PENDING"),
+				isNull(relayTx.hash),
+			),
+			orderBy: (tx, { asc }) => [asc(tx.createdAt)],
+			limit,
+		});
 	}
 
 	upsertWriter(item: InsertWriter) {
@@ -655,8 +678,8 @@ type SelectChunk = typeof chunk.$inferSelect;
 type SelectSavedWriter = typeof savedWriter.$inferSelect;
 type SelectSavedEntry = typeof savedEntry.$inferSelect;
 type InsertWriter = Omit<typeof writer.$inferInsert, "createdAt" | "updatedAt">;
-type InsertSyndicateTransaction = Omit<
-	typeof syndicateTx.$inferInsert,
+type InsertRelayTransaction = Omit<
+	typeof relayTx.$inferInsert,
 	"updatedAt" | "createdAt"
 >;
 type InsertEntry = Omit<typeof entry.$inferInsert, "createdAt" | "updatedAt">;

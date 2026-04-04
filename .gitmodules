@@ -7,3 +7,6 @@
 [submodule "packages/web/mdx-editor"]
 	path = packages/web/mdx-editor
 	url = https://github.com/mdx-editor/editor.git
+[submodule "packages/relay"]
+	path = packages/relay
+	url = https://github.com/ibremseth/durable-wallets

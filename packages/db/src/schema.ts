@@ -30,7 +30,7 @@ export const writer = pgTable("writer", {
 	deletedAt: timestamp({ withTimezone: true }),
 	transactionId: varchar({ length: 255 })
 		.unique()
-		.references(() => syndicateTx.id),
+		.references(() => relayTx.id),
 });
 
 export const entry = pgTable(
@@ -64,13 +64,13 @@ export const entry = pgTable(
 		storageAddress: varchar({ length: 42 }).notNull(),
 		createdAtTransactionId: varchar({ length: 255 })
 			.unique()
-			.references(() => syndicateTx.id),
+			.references(() => relayTx.id),
 		deletedAtTransactionId: varchar({ length: 255 })
 			.unique()
-			.references(() => syndicateTx.id),
+			.references(() => relayTx.id),
 		updatedAtTransactionId: varchar({ length: 255 })
 			.unique()
-			.references(() => syndicateTx.id),
+			.references(() => relayTx.id),
 	},
 	(entries) => ({
 		onChainStorageAddressIndex: uniqueIndex(
@@ -92,7 +92,7 @@ export const chunk = pgTable(
 		createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
 		createdAtTransactionId: varchar({ length: 255 })
 			.unique()
-			.references(() => syndicateTx.id),
+			.references(() => relayTx.id),
 	},
 	(chunks) => ({
 		entryIdIndex: uniqueIndex("entry_index_idx").on(
@@ -104,21 +104,22 @@ export const chunk = pgTable(
 
 export const requestStatus = pgEnum("request_status", [
 	"PENDING",
-	"PROCESSED",
 	"SUBMITTED",
 	"CONFIRMED",
-	"PAUSED",
-	"ABANDONED",
+	"ERROR",
 ]);
 
-export const syndicateTx = pgTable("syndicate_tx", {
+export const relayTx = pgTable("relay_tx", {
 	id: varchar("id", { length: 255 }).primaryKey(),
+	wallet: varchar({ length: 42 }),
+	nonce: integer(),
 	chainId: bigint({ mode: "bigint" }).notNull(),
 	blockNumber: bigint({ mode: "bigint" }),
 	hash: text(),
 	status: requestStatus().default("PENDING").notNull(),
 	functionSignature: text().notNull(),
 	args: jsonb().notNull(),
+	error: text(),
 	createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
 	updatedAt: timestamp({ withTimezone: true }).notNull(),
 });
