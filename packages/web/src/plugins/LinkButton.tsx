@@ -12,7 +12,7 @@ export const LinkButton: React.FC<{
 			onClick={onClick}
 			disabled={disabled}
 			className={cn(
-				"bg-surface p-1 text-xs font-medium hover:bg-neutral-200 hover:dark:bg-neutral-800 focus:outline-none cursor-pointer",
+				"bg-surface-raised p-1 text-xs font-medium hover:bg-neutral-200 hover:dark:bg-neutral-800 focus:outline-none cursor-pointer",
 				className,
 			)}
 		>

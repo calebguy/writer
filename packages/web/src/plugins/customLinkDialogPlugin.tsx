@@ -1,5 +1,6 @@
 import {
 	Action,
+	activeEditor$,
 	addComposerChild$,
 	cancelLinkEdit$,
 	editorRootElementRef$,
@@ -11,10 +12,9 @@ import {
 	usePublisher,
 	withLatestFrom,
 } from "@mdxeditor/editor";
+import { $getNodeByKey } from "lexical";
 import * as Popover from "@radix-ui/react-popover";
-import { BsTrash3Fill } from "react-icons/bs";
-import { FaCheck } from "react-icons/fa6";
-import { MdEdit } from "react-icons/md";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { LinkEdit } from "../components/LinkEdit";
 
 const closeLinkDialog$ = Action((r) => {
@@ -30,81 +30,83 @@ const closeLinkDialog$ = Action((r) => {
 	);
 });
 
-const LinkEditForm: React.FC<{
-	initialUrl: string | undefined;
-	initialText: string | undefined;
-}> = ({ initialUrl, initialText }) => {
+const CombinedLinkDialog: React.FC<{
+	url: string | undefined;
+	text: string | undefined;
+	linkNodeKey: string | undefined;
+	type: "edit" | "preview";
+}> = ({ url, text: textProp, linkNodeKey, type }) => {
 	const updateLink = usePublisher(updateLink$);
 	const cancelLinkEdit = usePublisher(cancelLinkEdit$);
+	const closeLinkDialog = usePublisher(closeLinkDialog$);
+	const removeLink = usePublisher(removeLink$);
+	const switchFromPreviewToLinkEdit = usePublisher(
+		switchFromPreviewToLinkEdit$,
+	);
+	const [activeEditor] = useCellValues(activeEditor$);
+	const [resolvedText, setResolvedText] = useState<string | null>(
+		textProp || null,
+	);
 
-	const handleSave = (url: string, text: string) => {
+	useEffect(() => {
+		if (textProp) {
+			setResolvedText(textProp);
+		} else if (activeEditor && linkNodeKey) {
+			activeEditor.getEditorState().read(() => {
+				const node = $getNodeByKey(linkNodeKey);
+				if (node) {
+					setResolvedText(node.getTextContent());
+				}
+			});
+		}
+	}, [activeEditor, linkNodeKey, textProp]);
+
+	const handleSave = (newUrl: string, newText: string) => {
 		updateLink({
-			url: url,
+			url: newUrl,
 			title: undefined,
-			text: text,
+			text: newText,
 		});
 	};
 
 	const handleCancel = () => {
-		cancelLinkEdit();
+		if (type === "edit") {
+			cancelLinkEdit();
+		} else {
+			closeLinkDialog();
+		}
 	};
 
-	return (
-		<LinkEdit
-			url={initialUrl || ""}
-			text={initialText || ""}
-			title=""
-			onSave={handleSave}
-			onCancel={handleCancel}
-		/>
-	);
-};
-
-const LinkPreview: React.FC<{ url: string }> = ({ url }) => {
-	const switchFromPreviewToLinkEdit = usePublisher(
-		switchFromPreviewToLinkEdit$,
-	);
-	const closeLinkDialog = usePublisher(closeLinkDialog$);
-	const removeLink = usePublisher(removeLink$);
-
-	const handleRemoveLink = () => {
+	const handleDelete = () => {
 		removeLink();
 		closeLinkDialog();
 	};
 
-	return (
-		<div className="w-64 max-w-md p-2 bg-surface border border-neutral-300 dark:border-neutral-800 relative flex flex-col gap-2">
-			<div className="bg-neutral-200 dark:bg-neutral-800 p-2 overflow-x-auto flex items-center gap-1 scrollbar-none">
-				<a
-					href={url}
-					target="_blank"
-					rel="noopener noreferrer"
-					className="break-keep text-secondary hover:underline whitespace-nowrap text-sm leading-3 flex-1"
-				>
-					{url}
-				</a>
-			</div>
+	// For preview mode, switch to edit so changes can be saved
+	const handleSaveFromPreview = (newUrl: string, newText: string) => {
+		switchFromPreviewToLinkEdit();
+		setTimeout(() => {
+			updateLink({
+				url: newUrl,
+				title: undefined,
+				text: newText,
+			});
+		}, 0);
+	};
 
-			<div className="flex justify-between items-center">
-				<div className="flex items-center gap-1">
-					<LinkButton
-						onClick={closeLinkDialog}
-						className="hover:bg-green-900! hover:text-green-300!"
-					>
-						<FaCheck className="w-3 h-3" />
-					</LinkButton>
-					<LinkButton onClick={switchFromPreviewToLinkEdit}>
-						<MdEdit className="w-3 h-3" />
-					</LinkButton>
-				</div>
-				<LinkButton
-					onClick={handleRemoveLink}
-					className="hover:bg-red-900! hover:text-red-300!"
-				>
-					<BsTrash3Fill className="w-3 h-3" />
-				</LinkButton>
-			</div>
-		</div>
+	if (resolvedText === null) {
+		return null;
+	}
+
+	return (
+		<LinkEdit
+			url={url || ""}
+			text={resolvedText}
+			title=""
+			onSave={type === "edit" ? handleSave : handleSaveFromPreview}
+			onCancel={handleCancel}
+			onDelete={handleDelete}
+		/>
 	);
 };
 
@@ -113,8 +115,35 @@ const CustomLinkDialogComponent: React.FC = () => {
 		linkDialogState$,
 		editorRootElementRef$,
 	);
+	const [visible, setVisible] = useState(false);
+	const prevStateType = useRef(linkDialogState.type);
+	const delayTimer = useRef<ReturnType<typeof setTimeout>>();
 
-	if (linkDialogState.type === "inactive") {
+	useEffect(() => {
+		const wasInactive = prevStateType.current === "inactive";
+		prevStateType.current = linkDialogState.type;
+
+		if (linkDialogState.type === "inactive") {
+			setVisible(false);
+			clearTimeout(delayTimer.current);
+			return;
+		}
+
+		if (wasInactive) {
+			// Dialog just appeared — delay to distinguish click from paste
+			// On paste, mdxeditor will quickly cycle through states
+			// On click, the state persists
+			setVisible(false);
+			clearTimeout(delayTimer.current);
+			delayTimer.current = setTimeout(() => {
+				setVisible(true);
+			}, 300);
+		}
+
+		return () => clearTimeout(delayTimer.current);
+	}, [linkDialogState]);
+
+	if (linkDialogState.type === "inactive" || !visible) {
 		return null;
 	}
 
@@ -136,15 +165,16 @@ const CustomLinkDialogComponent: React.FC = () => {
 						left: `${linkDialogState.rectangle.left}px`,
 					}}
 				>
-					{linkDialogState.type === "edit" && (
-						<LinkEditForm
-							initialUrl={linkDialogState.url}
-							initialText={linkDialogState.text}
-						/>
-					)}
-					{linkDialogState.type === "preview" && (
-						<LinkPreview url={linkDialogState.url} />
-					)}
+					<CombinedLinkDialog
+						url={linkDialogState.url}
+						text={
+							linkDialogState.type === "edit"
+								? linkDialogState.text
+								: undefined
+						}
+						linkNodeKey={linkDialogState.linkNodeKey}
+						type={linkDialogState.type}
+					/>
 					<Popover.Arrow className="fill-white dark:fill-gray-800" />
 				</Popover.Content>
 			</Popover.Portal>
@@ -153,7 +183,6 @@ const CustomLinkDialogComponent: React.FC = () => {
 };
 
 import { realmPlugin } from "@mdxeditor/editor";
-import { LinkButton } from "./LinkButton";
 
 export const customLinkDialogPlugin = realmPlugin({
 	init(realm) {
