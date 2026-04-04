@@ -1,4 +1,16 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+
+const links = [
+	{ href: "/about", label: "about" },
+	{ href: "/docs", label: "docs" },
+	{ href: "/fund", label: "fund" },
+];
+
 export function Footer() {
+	const pathname = usePathname();
+
 	return (
 		<footer className="flex justify-between items-end w-full font-serif text-base text-surface-raised pt-4">
 			<span className="flex-1 text-left hidden md:block">writer.place</span>
@@ -6,15 +18,17 @@ export function Footer() {
 				write today, forever
 			</span>
 			<span className="flex-1 text-right flex justify-end gap-3">
-				<a href="/about" className="no-underline hover:text-primary">
-					about
-				</a>
-				<a href="/docs" className="no-underline hover:text-primary">
-					docs
-				</a>
-				<a href="/fund" className="no-underline hover:text-primary">
-					fund
-				</a>
+				{links
+					.filter((link) => !pathname.startsWith(link.href))
+					.map((link) => (
+						<a
+							key={link.href}
+							href={link.href}
+							className="no-underline hover:text-primary"
+						>
+							{link.label}
+						</a>
+					))}
 			</span>
 		</footer>
 	);

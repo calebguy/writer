@@ -2,7 +2,7 @@ import { Providers } from "@/components/Providers";
 import { getAuthenticatedUser } from "@/utils/auth";
 import { cn } from "@/utils/cn";
 import { getUserColor } from "@/utils/getUserColor";
-import { bytes32ToHexColor, hexToRGB } from "@/utils/utils";
+import { bytes32ToHexColor, getSecondaryColor, hexToRGB } from "@/utils/utils";
 import type { Metadata } from "next";
 import type { CSSProperties } from "react";
 import type { Hex } from "viem";
@@ -49,7 +49,7 @@ export default async function RootLayout({
 	const colorStyle: React.CSSProperties = {};
 	if (initialColor) {
 		const rgb = hexToRGB(bytes32ToHexColor(initialColor));
-		const secondaryColor = rgb.map((c) => c - 100);
+		const secondaryColor = getSecondaryColor(rgb);
 		//@ts-ignore
 		colorStyle["--color-primary" as keyof CSSProperties] = rgb.join(" ");
 		//@ts-ignore

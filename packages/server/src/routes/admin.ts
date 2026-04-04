@@ -81,8 +81,9 @@ const adminRoutes = new Hono()
 			Math.max(Number.parseInt(limitRaw ?? "100", 10) || 100, 1),
 			500,
 		);
+		const parsedMinAge = Number.parseInt(minAgeMinutesRaw ?? "3", 10);
 		const minAgeMinutes = Math.min(
-			Math.max(Number.parseInt(minAgeMinutesRaw ?? "3", 10) || 3, 0),
+			Math.max(Number.isNaN(parsedMinAge) ? 3 : parsedMinAge, 0),
 			24 * 60,
 		);
 		const olderThan =

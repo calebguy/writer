@@ -10,18 +10,14 @@ function truncateAddress(address: string) {
 function WalletRow({ wallet }: { wallet: RelayWallet }) {
 	const balanceNum = Number.parseFloat(wallet.balance);
 	const displayBalance =
-		balanceNum < 0.0001 && balanceNum > 0
-			? "< 0.0001"
-			: balanceNum.toFixed(4);
+		balanceNum < 0.0001 && balanceNum > 0 ? "< 0.0001" : balanceNum.toFixed(4);
 
 	return (
-		<div className="flex items-center justify-between p-4 border border-neutral-300 dark:border-neutral-800">
+		<div className="flex items-center justify-between p-3 bg-surface">
 			<div className="flex items-center gap-2">
 				<code className="text-sm font-mono">
 					<span className="hidden sm:inline">{wallet.address}</span>
-					<span className="sm:hidden">
-						{truncateAddress(wallet.address)}
-					</span>
+					<span className="sm:hidden">{truncateAddress(wallet.address)}</span>
 				</code>
 				<button
 					type="button"

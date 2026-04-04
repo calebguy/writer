@@ -139,10 +139,15 @@ export function setCSSVariableFromRGB(variable: string, rgb: RGB) {
 	);
 }
 
+export function getSecondaryColor(rgb: RGB): RGB {
+	const luminance = 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2];
+	const offset = luminance > 128 ? -125 : 75;
+	return rgb.map((c) => Math.min(255, Math.max(0, c + offset))) as RGB;
+}
+
 export function setPrimaryAndSecondaryCSSVariables(rgb: RGB) {
 	setCSSVariableFromRGB("--color-primary", rgb);
-	const secondaryColor = rgb.map((c) => c - 100);
-	setCSSVariableFromRGB("--color-secondary", secondaryColor as RGB);
+	setCSSVariableFromRGB("--color-secondary", getSecondaryColor(rgb));
 }
 
 export async function compress(input: string) {
