@@ -137,6 +137,14 @@ export async function getWritersByManager(address: Hex | string) {
 	return (await res.json()).writers;
 }
 
+export async function getRelayWallets() {
+	const res = await client.relay.wallets.$get();
+	if (!res.ok) {
+		throw new Error(res.statusText);
+	}
+	return (await res.json()).wallets;
+}
+
 export async function getPublicWriters() {
 	const res = await client.writer.public.$get();
 	if (!res.ok) {

@@ -362,21 +362,6 @@ class Db {
 			managers: normalizedManagers,
 		} satisfies InsertWriter;
 
-		if (item.transactionId) {
-			return this.pg
-				.insert(writer)
-				.values({
-					...normalizedWriter,
-					updatedAt: new Date(),
-					createdAt: new Date(),
-				})
-				.onConflictDoUpdate({
-					target: [writer.transactionId],
-					set: { ...normalizedWriter, updatedAt: new Date() },
-				})
-				.returning();
-		}
-
 		return this.pg
 			.insert(writer)
 			.values({

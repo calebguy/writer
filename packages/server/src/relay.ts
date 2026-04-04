@@ -55,6 +55,17 @@ class DurableWalletRelay {
 		return res.json() as Promise<SendTransactionResponse>;
 	}
 
+	async getWallets(): Promise<{ wallets: string[] }> {
+		const res = await fetch(`${this.baseUrl}/pool/wallets`, {
+			headers: this.headers(),
+		});
+		if (!res.ok) {
+			const text = await res.text();
+			throw new Error(`Relay getWallets failed (${res.status}): ${text}`);
+		}
+		return res.json() as Promise<{ wallets: string[] }>;
+	}
+
 	async getTransaction(
 		wallet: string,
 		nonce: number,

@@ -12,6 +12,9 @@ export function Footer() {
 				<a href="/docs" className="no-underline hover:text-primary">
 					docs
 				</a>
+				<a href="/fund" className="no-underline hover:text-primary">
+					fund
+				</a>
 			</span>
 		</footer>
 	);
