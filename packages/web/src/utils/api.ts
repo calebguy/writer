@@ -145,6 +145,8 @@ export async function getRelayWallets() {
 	return (await res.json()).wallets;
 }
 
+export type RelayWallet = Awaited<ReturnType<typeof getRelayWallets>>[number];
+
 export async function getPublicWriters() {
 	const res = await client.writer.public.$get();
 	if (!res.ok) {
