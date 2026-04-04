@@ -104,9 +104,11 @@ export const chunk = pgTable(
 
 export const requestStatus = pgEnum("request_status", [
 	"PENDING",
+	"PROCESSED",
 	"SUBMITTED",
 	"CONFIRMED",
-	"ERROR",
+	"PAUSED",
+	"ABANDONED",
 ]);
 
 export const relayTx = pgTable("relay_tx", {
