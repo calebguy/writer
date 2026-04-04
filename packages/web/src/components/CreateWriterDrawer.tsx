@@ -30,7 +30,9 @@ export function CreateWriterDrawer({
 	return (
 		<DynamicDrawerRoot open={open} onOpenChange={onOpenChange}>
 			<DynamicDrawerContent>
-				<DynamicDrawerTitle className="sr-only">Create Writer</DynamicDrawerTitle>
+				<DynamicDrawerTitle className="sr-only">
+					Create Writer
+				</DynamicDrawerTitle>
 				{isPending ? (
 					<div className="h-56 flex justify-center items-center">
 						<Logo className="w-6 h-6 rotating" />
@@ -52,7 +54,7 @@ export function CreateWriterDrawer({
 								type="button"
 								onClick={onCreate}
 								disabled={isDisabled}
-								className="w-full h-10 rounded-md bg-surface text-black dark:text-white disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+								className="w-full h-10 rounded-md bg-surface dark:bg-surface-raised text-black dark:text-white disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
 							>
 								Create
 							</button>

@@ -1,8 +1,8 @@
 "use client";
 
+import type { CreateInputData } from "@/components/CreateInput";
 import { Lock } from "@/components/icons/Lock";
 import { Unlock } from "@/components/icons/Unlock";
-import type { CreateInputData } from "@/components/CreateInput";
 import { useCreateEntryDrawer } from "@/components/writer/CreateEntryDrawerContext";
 import { cn } from "@/utils/cn";
 import dynamic from "next/dynamic";
@@ -56,7 +56,9 @@ export function CreateEntryDrawer({
 			}}
 		>
 			<DynamicDrawerContent>
-				<DynamicDrawerTitle className="sr-only">Create Entry</DynamicDrawerTitle>
+				<DynamicDrawerTitle className="sr-only">
+					Create Entry
+				</DynamicDrawerTitle>
 				{isLoading || isSubmitting ? (
 					<div className="h-56 flex justify-center items-center">
 						<Logo className="w-6 h-6 rotating" />
@@ -92,7 +94,7 @@ export function CreateEntryDrawer({
 								onClick={() => void handleSubmit()}
 								disabled={!markdown.trim()}
 								className={cn(
-									"w-full h-10 rounded-md bg-surface text-black dark:text-white disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer",
+									"w-full h-10 rounded-md bg-surface dark:bg-surface-raised text-black dark:text-white disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer",
 								)}
 							>
 								Create
