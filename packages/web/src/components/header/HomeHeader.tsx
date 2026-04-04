@@ -3,6 +3,8 @@
 import { type Writer, factoryCreate } from "@/utils/api";
 import { useOPWallet } from "@/utils/hooks";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { usePrivy } from "@privy-io/react-auth";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { FiPlus } from "react-icons/fi";
 import type { Hex } from "viem";
@@ -10,6 +12,7 @@ import { CreateWriterDrawer } from "../CreateWriterDrawer";
 import { NavDropdown } from "../NavDropdown";
 
 export function HomeHeader() {
+	const { authenticated } = usePrivy();
 	const queryClient = useQueryClient();
 	const [wallet] = useOPWallet();
 	const [isCreateSheetOpen, setIsCreateSheetOpen] = useState(false);
@@ -85,9 +88,15 @@ export function HomeHeader() {
 	return (
 		<>
 			<div className="flex items-center justify-between">
-				<div className="text-3xl transition-colors pr-0.5 text-primary">
-					Writer
-				</div>
+				{authenticated ? (
+					<div className="text-3xl transition-colors pr-0.5 text-primary">
+						Writer
+					</div>
+				) : (
+					<Link href="/" className="text-3xl transition-colors pr-0.5 text-primary">
+						Writer
+					</Link>
+				)}
 				<div className="flex items-center gap-2">
 					<button
 						type="button"

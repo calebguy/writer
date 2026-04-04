@@ -3,7 +3,7 @@
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
 :root {
-  --color-primary: 99 53 27;
+  --color-primary: 124 65 32;
   --color-secondary: 125 125 125;
   --color-surface: var(--color-neutral-200);
   --color-surface-raised: var(--color-neutral-300);

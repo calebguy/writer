@@ -39,7 +39,7 @@ function AnchorHeading({
 			onClick={() => copyAnchor(id)}
 		>
 			{children}
-			<span className="opacity-0 group-hover:opacity-100 transition-opacity font-normal ml-2 text-sm text-neutral-500 dark:text-neutral-400">
+			<span className="opacity-0 group-hover:opacity-100 transition-opacity font-normal ml-2 text-sm text-primary">
 				&sect;
 			</span>
 		</Tag>
@@ -93,6 +93,15 @@ function Endpoint({
 			<div
 				className="flex items-baseline gap-3 mb-2 cursor-pointer group"
 				onClick={() => copyAnchor(id)}
+				onKeyDown={(e) => {
+					if (e.key === "Enter" || e.key === " ") {
+						e.preventDefault();
+						copyAnchor(id);
+					}
+				}}
+				role="button"
+				tabIndex={0}
+				aria-label="Copy anchor"
 			>
 				<span className={`font-mono  font-bold ${methodColor}`}>{method}</span>
 				<code className="font-mono ">{path}</code>
