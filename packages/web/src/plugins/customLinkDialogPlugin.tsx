@@ -48,17 +48,25 @@ const CombinedLinkDialog: React.FC<{
 		textProp || null,
 	);
 
+	// Read text from editor node and keep it in sync
 	useEffect(() => {
 		if (textProp) {
 			setResolvedText(textProp);
-		} else if (activeEditor && linkNodeKey) {
+			return;
+		}
+		if (!activeEditor || !linkNodeKey) return;
+
+		const readText = () => {
 			activeEditor.getEditorState().read(() => {
 				const node = $getNodeByKey(linkNodeKey);
 				if (node) {
 					setResolvedText(node.getTextContent());
 				}
 			});
-		}
+		};
+
+		readText();
+		return activeEditor.registerUpdateListener(() => readText());
 	}, [activeEditor, linkNodeKey, textProp]);
 
 	const handleSave = (newUrl: string, newText: string) => {
@@ -137,7 +145,7 @@ const CustomLinkDialogComponent: React.FC = () => {
 			clearTimeout(delayTimer.current);
 			delayTimer.current = setTimeout(() => {
 				setVisible(true);
-			}, 300);
+			}, 100);
 		}
 
 		return () => clearTimeout(delayTimer.current);
