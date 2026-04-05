@@ -134,18 +134,36 @@ const BAR_MOBILE_2_ITEMS = [
 
 function ArtifactBar({ items }: { items: typeof BAR_1_ITEMS }) {
 	return (
-		<div className="flex items-center justify-center gap-3 md:gap-7 p-6 md:py-[30px] md:px-10 rounded-2xl dark:invert">
+		<div className="flex items-center justify-center gap-3 md:gap-7 p-6 md:py-[30px] md:px-10 rounded-2xl bg-primary dark:bg-secondary">
 			{items.map((item, i) => (
-				<Image
+				<div
 					key={`${item.src}-${String(i)}`}
-					src={item.src}
-					alt={item.alt}
-					width={500}
-					height={500}
-					className={`w-[72px] h-[72px] md:w-[110px] md:h-[110px] object-contain ${
+					className={`relative w-[72px] h-[72px] md:w-[110px] md:h-[110px] ${
 						i === 1 ? "hidden min-[480px]:block" : ""
 					}`}
-				/>
+				>
+					<Image
+						src={item.src}
+						alt={item.alt}
+						width={500}
+						height={500}
+						className="w-full h-full object-contain dark:invert"
+					/>
+					<div
+						aria-hidden
+						className="absolute inset-0 bg-primary dark:bg-primary opacity-60 mix-blend-color"
+						style={{
+							WebkitMaskImage: `url(${item.src})`,
+							maskImage: `url(${item.src})`,
+							WebkitMaskRepeat: "no-repeat",
+							maskRepeat: "no-repeat",
+							WebkitMaskPosition: "center",
+							maskPosition: "center",
+							WebkitMaskSize: "contain",
+							maskSize: "contain",
+						}}
+					/>
+				</div>
 			))}
 		</div>
 	);
@@ -293,7 +311,7 @@ export function LandingPage({
 						</div>
 
 						<div className="flex flex-col items-center justify-center gap-6 md:gap-8 md:flex-1 mb-8">
-							<div className="font-serif text-[4.5rem] md:text-[7rem] leading-none text-center bg-secondary text-primary px-0.5">
+							<div className="font-serif text-[4.5rem] md:text-[7rem] leading-none text-center px-0.5">
 								Writer
 							</div>
 							<div className="flex flex-col sm:flex-row items-center sm:gap-1">
