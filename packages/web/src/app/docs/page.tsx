@@ -1,9 +1,63 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { MAX_CONTENT_LENGTH, MAX_TITLE_LENGTH } from "utils/constants";
 
 const secondaryGray = "dark:text-neutral-200 text-neutral-800";
+
+function CopyButton({ value }: { value: string }) {
+	const [copied, setCopied] = useState(false);
+
+	const handleCopy = async () => {
+		await navigator.clipboard.writeText(value);
+		setCopied(true);
+		setTimeout(() => setCopied(false), 1500);
+	};
+
+	return (
+		<button
+			type="button"
+			onClick={handleCopy}
+			aria-label="Copy"
+			className="text-neutral-500 hover:text-primary transition-colors align-middle"
+		>
+			{copied ? (
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					width="14"
+					height="14"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					strokeWidth="2"
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					aria-hidden="true"
+					className="text-primary"
+				>
+					<polyline points="20 6 9 17 4 12" />
+				</svg>
+			) : (
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					width="14"
+					height="14"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					strokeWidth="2"
+					strokeLinecap="round"
+					strokeLinejoin="round"
+					aria-hidden="true"
+					className="cursor-pointer"
+				>
+					<rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+					<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+				</svg>
+			)}
+		</button>
+	);
+}
 
 function slugify(text: string) {
 	return text
@@ -52,7 +106,7 @@ function Section({
 }: { title: string; children: React.ReactNode }) {
 	const id = slugify(title);
 	return (
-		<section className="mb-16">
+		<section className="mb-8 bg-surface p-2 md:p-5">
 			<AnchorHeading id={id} className="text-3xl font-serif mb-8 text-primary">
 				{title}
 			</AnchorHeading>
@@ -88,7 +142,7 @@ function Endpoint({
 	return (
 		<div
 			id={id}
-			className="mb-8 border-b border-neutral-200 dark:border-neutral-700 pb-8 last:border-b-0 scroll-mt-24"
+			className="mb-8 border-b border-neutral-300 dark:border-neutral-700 pb-8 last:border-b-0 scroll-mt-24"
 		>
 			<div
 				className="flex items-baseline gap-3 mb-2 cursor-pointer group"
@@ -186,7 +240,7 @@ function ContractFunction({
 	return (
 		<div
 			id={id}
-			className="mb-8 border-b border-neutral-200 dark:border-neutral-700 pb-8 last:border-b-0 scroll-mt-24"
+			className="mb-8 border-b border-neutral-300 dark:border-neutral-700 pb-8 last:border-b-0 scroll-mt-24"
 		>
 			<AnchorHeading id={id} as="code" className="font-mono font-bold">
 				{name}
@@ -256,8 +310,8 @@ export default function DocsPage() {
 	}, []);
 
 	return (
-		<div className="max-w-3xl py-8">
-			<p className={`${secondaryGray} mb-16 `}>
+		<div className="max-w-3xl">
+			<p className={`${secondaryGray} mb-8 `}>
 				Writer is an onchain writing platform. Content is permanently stored on
 				Optimism through smart contracts, with all writes authenticated via
 				EIP-712 signatures.
@@ -267,12 +321,18 @@ export default function DocsPage() {
 			<div className="mb-24">
 				<AnchorHeading
 					id="smart-contracts"
-					className="text-xl font-serif italic text-primary mb-12"
+					className="text-3xl font-serif italic text-primary mb-4"
 				>
 					Smart Contracts
 				</AnchorHeading>
 
 				<Section title="WriterFactory">
+					<p className={`${secondaryGray} mb-4`}>
+						Optimism:{" "}
+						<code className="font-mono text-primary break-all">
+							0x28c7721ECff2246a9277CAd46ab2124f69Efd88E
+						</code>
+					</p>
 					<p className={`${secondaryGray}  mb-8`}>
 						Factory contract that deploys Writer + WriterStorage pairs using
 						CREATE2 for deterministic addresses.
@@ -729,18 +789,29 @@ export default function DocsPage() {
 			</div>
 
 			{/* API */}
-			<div className="mb-24">
+			<div>
 				<AnchorHeading
 					id="api"
-					className="text-xl font-serif italic text-primary mb-12"
+					className="text-3xl font-serif italic text-primary mb-4"
 				>
 					API
 				</AnchorHeading>
-				<p className={`${secondaryGray}  mb-12`}>
+				<p className={`${secondaryGray} mb-4`}>
 					All write operations are authenticated via EIP-712 signatures — the
 					server recovers the signer address from the signature and validates
 					permissions. Transactions are relayed to Optimism via Syndicate.
 				</p>
+				<div>
+					<span className={`${secondaryGray}`}>Base URL: </span>
+					<div className="mb-4 bg-surface p-2 md:p-5">
+						<p className={`${secondaryGray} flex items-center gap-2`}>
+							<code className="font-mono text-primary">
+								https://api.writer.place
+							</code>
+							<CopyButton value="https://api.writer.place" />
+						</p>
+					</div>
+				</div>
 
 				<Section title="Writers">
 					<Endpoint
