@@ -3,8 +3,11 @@
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
 :root {
-  --color-primary: 124 65 32;
-  --color-secondary: 125 125 125;
+  --color-brand: 0 255 0;
+  --color-primary-default: 124 65 32;
+  --color-secondary-default: 199 140 107;
+  --color-primary: var(--color-primary-default);
+  --color-secondary: var(--color-secondary-default);
   --color-surface: var(--color-neutral-200);
   --color-surface-raised: var(--color-neutral-300);
   --color-surface-overlay: var(--color-neutral-200);
@@ -14,7 +17,8 @@
 }
 
 :root[data-theme="dark"] {
-  --color-primary: 0 255 0;
+  --color-primary-default: 0 255 0;
+  --color-secondary-default: 0 130 0;
   --color-surface: var(--color-neutral-900);
   --color-surface-raised: var(--color-neutral-700);
   --color-surface-overlay: var(--color-neutral-900);
@@ -23,6 +27,7 @@
 
 /* biome-ignore lint/suspicious/noUnknownAtRules: Tailwind CSS @theme directive */
 @theme inline {
+  --color-brand: rgb(var(--color-brand));
   --color-primary: rgb(var(--color-primary));
   --color-secondary: rgb(var(--color-secondary));
   --color-surface: var(--color-surface);

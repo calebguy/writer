@@ -150,6 +150,23 @@ export function setPrimaryAndSecondaryCSSVariables(rgb: RGB) {
 	setCSSVariableFromRGB("--color-secondary", getSecondaryColor(rgb));
 }
 
+export function clearInlinePrimaryAndSecondary() {
+	if (typeof document === "undefined") return;
+	document.documentElement.style.removeProperty("--color-primary");
+	document.documentElement.style.removeProperty("--color-secondary");
+}
+
+export function readCSSRgbVariable(name: string): RGB | null {
+	if (typeof document === "undefined") return null;
+	const raw = getComputedStyle(document.documentElement)
+		.getPropertyValue(name)
+		.trim();
+	if (!raw) return null;
+	const parts = raw.split(/\s+/).map(Number);
+	if (parts.length !== 3 || parts.some((n) => Number.isNaN(n))) return null;
+	return parts as RGB;
+}
+
 export async function compress(input: string) {
 	const encode = new TextEncoder();
 	const compressed = await compressBrotli(encode.encode(input), {

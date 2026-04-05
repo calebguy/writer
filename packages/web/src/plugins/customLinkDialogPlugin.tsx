@@ -125,7 +125,7 @@ const CustomLinkDialogComponent: React.FC = () => {
 	);
 	const [visible, setVisible] = useState(false);
 	const prevStateType = useRef(linkDialogState.type);
-	const delayTimer = useRef<ReturnType<typeof setTimeout>>();
+	const delayTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	useEffect(() => {
 		const wasInactive = prevStateType.current === "inactive";
@@ -133,7 +133,7 @@ const CustomLinkDialogComponent: React.FC = () => {
 
 		if (linkDialogState.type === "inactive") {
 			setVisible(false);
-			clearTimeout(delayTimer.current);
+			clearTimeout(delayTimer.current as ReturnType<typeof setTimeout>);
 			return;
 		}
 
@@ -142,13 +142,13 @@ const CustomLinkDialogComponent: React.FC = () => {
 			// On paste, mdxeditor will quickly cycle through states
 			// On click, the state persists
 			setVisible(false);
-			clearTimeout(delayTimer.current);
+			clearTimeout(delayTimer.current as ReturnType<typeof setTimeout>);
 			delayTimer.current = setTimeout(() => {
 				setVisible(true);
 			}, 100);
 		}
 
-		return () => clearTimeout(delayTimer.current);
+		return () => clearTimeout(delayTimer.current as ReturnType<typeof setTimeout>);
 	}, [linkDialogState]);
 
 	if (linkDialogState.type === "inactive" || !visible) {

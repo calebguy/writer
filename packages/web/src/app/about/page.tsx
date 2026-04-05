@@ -6,7 +6,7 @@ export default function AboutPage() {
 			<div className="flex flex-col gap-8 text-3xl leading-relaxed bg-secondary text-primary">
 				Writer is for writing and reading, for me and for you
 			</div>
-			<div className="flex items-center justify-center gap-4 dark:invert">
+			<div className="flex items-center justify-center gap-4">
 				<Image
 					src="/images/human/logo-1.png"
 					alt="Writer"

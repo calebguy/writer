@@ -9,12 +9,15 @@ import {
 import {
 	applyThemeMode,
 	getStoredThemeMode,
+	onThemeChange,
 	subscribeSystemThemeChange,
 } from "@/utils/theme";
 import {
 	RGBToHex,
 	bytes32ToHexColor,
+	clearInlinePrimaryAndSecondary,
 	hexToRGB,
+	readCSSRgbVariable,
 	setPrimaryAndSecondaryCSSVariables,
 } from "@/utils/utils";
 import { PrivyProvider } from "@privy-io/react-auth";
@@ -57,23 +60,43 @@ export function Providers({
 	const [primaryColor, setPrimaryColor] = useState<
 		WriterContextType["primaryColor"]
 	>(getInitialColor());
+	const [hasUserColor, setHasUserColor] = useState<boolean>(!!initialColor);
 
+	// Apply inline CSS variables only when the user has explicitly chosen a color.
+	// When no color is chosen, the stylesheet's --color-*-default values drive
+	// --color-primary/--color-secondary and track data-theme automatically.
 	useEffect(() => {
-		setPrimaryAndSecondaryCSSVariables(primaryColor);
-	}, [primaryColor]);
+		if (hasUserColor) {
+			setPrimaryAndSecondaryCSSVariables(primaryColor);
+		}
+	}, [primaryColor, hasUserColor]);
 
 	useEffect(() => {
 		if (typeof window === "undefined") return;
 		const mode = getStoredThemeMode();
 		applyThemeMode(mode);
 		if (mode !== "system") return;
-		return subscribeSystemThemeChange((resolvedTheme) => {
-			document.documentElement.dataset.theme = resolvedTheme;
+		return subscribeSystemThemeChange(() => {
+			applyThemeMode("system");
 		});
 	}, []);
 
+	// When the user has no explicit color, keep React state in sync with the
+	// themed default so consumers (Privy accentColor, swatches, etc.) react to
+	// light/dark toggles.
+	useEffect(() => {
+		if (hasUserColor) return;
+		const sync = () => {
+			const rgb = readCSSRgbVariable("--color-primary-default");
+			if (rgb) setPrimaryColor(rgb);
+		};
+		sync();
+		return onThemeChange(sync);
+	}, [hasUserColor]);
+
 	const handleSetPrimaryColor = useCallback(
 		(rgb: WriterContextType["primaryColor"]) => {
+			setHasUserColor(true);
 			setPrimaryColor(rgb);
 			setPrimaryAndSecondaryCSSVariables(rgb);
 		},
@@ -82,8 +105,16 @@ export function Providers({
 
 	const handleSetPrimaryFromLongHex = useCallback((hex: string) => {
 		const rgb = hexToRGB(bytes32ToHexColor(hex));
+		setHasUserColor(true);
 		setPrimaryColor(rgb);
 		setPrimaryAndSecondaryCSSVariables(rgb);
+	}, []);
+
+	const handleResetPrimaryColor = useCallback(() => {
+		setHasUserColor(false);
+		clearInlinePrimaryAndSecondary();
+		const rgb = readCSSRgbVariable("--color-primary-default");
+		if (rgb) setPrimaryColor(rgb);
 	}, []);
 
 	return (
@@ -125,6 +156,7 @@ export function Providers({
 						primaryColor,
 						setPrimaryColor: handleSetPrimaryColor,
 						setPrimaryFromLongHex: handleSetPrimaryFromLongHex,
+						resetPrimaryColor: handleResetPrimaryColor,
 					}}
 				>
 					<AuthColorSync />

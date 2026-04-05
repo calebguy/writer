@@ -1,5 +1,5 @@
 import { getMe } from "@/utils/api";
-import { WriterContext, defaultColor } from "@/utils/context";
+import { WriterContext } from "@/utils/context";
 import { useOPWallet } from "@/utils/hooks";
 import { usePrivy } from "@privy-io/react-auth";
 import { useQuery } from "@tanstack/react-query";
@@ -8,7 +8,8 @@ import type { Hex } from "viem";
 
 export function useAuthColor() {
 	const { ready, authenticated } = usePrivy();
-	const { setPrimaryFromLongHex, setPrimaryColor } = useContext(WriterContext);
+	const { setPrimaryFromLongHex, resetPrimaryColor } =
+		useContext(WriterContext);
 
 	const isLoggedIn = useMemo(
 		() => ready && authenticated,
@@ -32,7 +33,7 @@ export function useAuthColor() {
 		if (isLoggedIn && data?.user?.color) {
 			setPrimaryFromLongHex(data.user.color);
 		} else if (!isLoggedIn) {
-			setPrimaryColor(defaultColor);
+			resetPrimaryColor();
 		}
-	}, [data?.user?.color, isLoggedIn, setPrimaryFromLongHex, setPrimaryColor]);
+	}, [data?.user?.color, isLoggedIn, setPrimaryFromLongHex, resetPrimaryColor]);
 }

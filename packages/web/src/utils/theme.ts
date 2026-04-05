@@ -3,6 +3,7 @@ export type ResolvedTheme = "light" | "dark";
 
 const THEME_STORAGE_KEY = "writer-theme";
 const DARK_MEDIA_QUERY = "(prefers-color-scheme: dark)";
+const THEME_CHANGE_EVENT = "writer:theme-changed";
 
 function isThemeMode(value: string | null): value is ThemeMode {
 	return value === "light" || value === "dark" || value === "system";
@@ -29,8 +30,24 @@ export function applyThemeMode(mode: ThemeMode): ResolvedTheme {
 	const resolved = resolveThemeMode(mode);
 	if (typeof document !== "undefined") {
 		document.documentElement.dataset.theme = resolved;
+		if (typeof window !== "undefined") {
+			window.dispatchEvent(
+				new CustomEvent(THEME_CHANGE_EVENT, { detail: resolved }),
+			);
+		}
 	}
 	return resolved;
+}
+
+export function onThemeChange(
+	listener: (resolvedTheme: ResolvedTheme) => void,
+) {
+	if (typeof window === "undefined") return () => {};
+	const handler = (event: Event) => {
+		listener((event as CustomEvent<ResolvedTheme>).detail);
+	};
+	window.addEventListener(THEME_CHANGE_EVENT, handler);
+	return () => window.removeEventListener(THEME_CHANGE_EVENT, handler);
 }
 
 export function subscribeSystemThemeChange(

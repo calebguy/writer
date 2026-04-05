@@ -134,7 +134,7 @@ const BAR_MOBILE_2_ITEMS = [
 
 function ArtifactBar({ items }: { items: typeof BAR_1_ITEMS }) {
 	return (
-		<div className="flex items-center justify-center gap-3 md:gap-7 p-6 md:py-[30px] md:px-10 rounded-2xl bg-primary dark:bg-secondary">
+		<div className="flex items-center justify-center gap-3 md:gap-7 p-6 md:py-[30px] md:px-10 rounded-xl bg-brand">
 			{items.map((item, i) => (
 				<div
 					key={`${item.src}-${String(i)}`}
@@ -147,21 +147,7 @@ function ArtifactBar({ items }: { items: typeof BAR_1_ITEMS }) {
 						alt={item.alt}
 						width={500}
 						height={500}
-						className="w-full h-full object-contain dark:invert"
-					/>
-					<div
-						aria-hidden
-						className="absolute inset-0 bg-primary dark:bg-primary opacity-60 mix-blend-color"
-						style={{
-							WebkitMaskImage: `url(${item.src})`,
-							maskImage: `url(${item.src})`,
-							WebkitMaskRepeat: "no-repeat",
-							maskRepeat: "no-repeat",
-							WebkitMaskPosition: "center",
-							maskPosition: "center",
-							WebkitMaskSize: "contain",
-							maskSize: "contain",
-						}}
+						className="w-full h-full object-contain"
 					/>
 				</div>
 			))}
@@ -318,14 +304,14 @@ export function LandingPage({
 								{isLoggedIn ? (
 									<Link
 										href="/home"
-										className="font-serif italic text-xl md:text-2xl bg-transparent border-none cursor-pointer transition-opacity duration-200 hover:text-primary"
+										className="font-serif italic text-xl md:text-2xl bg-transparent border-none cursor-pointer transition-opacity duration-200 hover:text-brand"
 									>
 										write,
 									</Link>
 								) : (
 									<button
 										type="button"
-										className="font-serif italic text-xl md:text-2xl bg-transparent border-none cursor-pointer transition-opacity duration-200 hover:text-primary"
+										className="font-serif italic text-xl md:text-2xl bg-transparent border-none cursor-pointer transition-opacity duration-200 hover:text-brand"
 										onClick={() => login()}
 									>
 										login,
@@ -333,7 +319,7 @@ export function LandingPage({
 								)}
 								<Link
 									href="/explore"
-									className="font-serif italic text-xl md:text-2xl bg-transparent border-none cursor-pointer transition-opacity duration-200 hover:text-primary"
+									className="font-serif italic text-xl md:text-2xl bg-transparent border-none cursor-pointer transition-opacity duration-200 hover:text-brand"
 								>
 									explore
 								</Link>

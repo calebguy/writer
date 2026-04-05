@@ -19,13 +19,6 @@ function WalletRow({ wallet }: { wallet: RelayWallet }) {
 					<span className="hidden sm:inline">{wallet.address}</span>
 					<span className="sm:hidden">{truncateAddress(wallet.address)}</span>
 				</code>
-				<button
-					type="button"
-					className="text-xs text-secondary hover:text-primary transition-colors cursor-pointer"
-					onClick={() => navigator.clipboard.writeText(wallet.address)}
-				>
-					copy
-				</button>
 			</div>
 			<span className="text-sm font-mono">{displayBalance} ETH</span>
 		</div>
@@ -50,7 +43,7 @@ export default function FundPage() {
 			<div className="flex flex-col gap-2">
 				{isLoading ? (
 					<div className="flex flex-col gap-2">
-						{Array.from({ length: 2 }).map((_, i) => (
+						{Array.from({ length: 3 }).map((_, i) => (
 							<div
 								key={`skeleton-${i}`}
 								className="h-14 border border-neutral-300 dark:border-neutral-800 animate-pulse bg-surface"
