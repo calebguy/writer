@@ -103,7 +103,7 @@ export default function FundPage() {
 					to any relayer address below.
 				</p>
 			</div>
-			<div className="flex flex-col gap-2 sm:w-full">
+			<div className="flex flex-col gap-2 w-full">
 				{isLoading ? (
 					<div className="flex flex-col gap-2">
 						{Array.from({ length: 3 }).map((_, i) => (
