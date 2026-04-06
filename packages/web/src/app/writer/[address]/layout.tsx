@@ -6,10 +6,9 @@ import { EntryLoadingProvider } from "@/utils/EntryLoadingContext";
 import { env } from "@/utils/env";
 import type { Metadata } from "next";
 import { use } from "react";
+import { OG_IMAGE_URL } from "utils/constants";
 
 type WriterRouteParams = Promise<{ address: string }>;
-const OG_IMAGE_URL =
-	"https://res.cloudinary.com/dm9gwanrg/image/upload/v1741159374/Artboard_1_1_3p_ztojhs.png";
 
 function sanitizeWriterTitle(input: string): string {
 	return (

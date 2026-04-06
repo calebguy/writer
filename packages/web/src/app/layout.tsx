@@ -5,6 +5,7 @@ import { getUserColor } from "@/utils/getUserColor";
 import { bytes32ToHexColor, getSecondaryColor, hexToRGB } from "@/utils/utils";
 import type { Metadata } from "next";
 import type { CSSProperties } from "react";
+import { OG_IMAGE_URL } from "utils/constants";
 import type { Hex } from "viem";
 import { diatypeRoundedMono, ltRemark } from "./fonts";
 import "./globals.css";
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
 		description: "Write for now, forever",
 		images: [
 			{
-				url: "https://res.cloudinary.com/dm9gwanrg/image/upload/v1741159374/Artboard_1_1_3p_ztojhs.png",
+				url: OG_IMAGE_URL,
 			},
 		],
 	},
@@ -26,7 +27,9 @@ export const metadata: Metadata = {
 		title: "Writer",
 		description: "Write for now, forever",
 		images: [
-			"https://res.cloudinary.com/dm9gwanrg/image/upload/v1741159374/Artboard_1_1_3p_ztojhs.png",
+			{
+				url: OG_IMAGE_URL,
+			},
 		],
 	},
 };
