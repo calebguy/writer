@@ -325,13 +325,24 @@ export default function DocsPage() {
 					Smart Contracts
 				</AnchorHeading>
 
-				<Section title="WriterFactory">
-					<p className={`${secondaryGray} mb-4 text-lg`}>
-						Deployment:{" "}
+				<div className="mb-4 bg-surface p-2 md:p-5">
+					<p className={`${secondaryGray} flex items-center gap-2 flex-wrap mb-2`}>
+						<span>WriterFactory:</span>
 						<code className="font-mono text-primary break-all">
 							0x28c7721ECff2246a9277CAd46ab2124f69Efd88E
 						</code>
+						<CopyButton value="0x28c7721ECff2246a9277CAd46ab2124f69Efd88E" />
 					</p>
+					<p className={`${secondaryGray} flex items-center gap-2 flex-wrap`}>
+						<span>ColorRegistry:</span>
+						<code className="font-mono text-primary break-all">
+							0x7Bf5B616f5431725bCE61E397173cd6FbFaAC6F1
+						</code>
+						<CopyButton value="0x7Bf5B616f5431725bCE61E397173cd6FbFaAC6F1" />
+					</p>
+				</div>
+
+				<Section title="WriterFactory">
 					<p className={`${secondaryGray}  mb-8`}>
 						Factory contract that deploys Writer + WriterStorage pairs using
 						CREATE2 for deterministic addresses.
@@ -798,7 +809,7 @@ export default function DocsPage() {
 				<p className={`${secondaryGray} mb-4`}>
 					All write operations are authenticated via EIP-712 signatures — the
 					server recovers the signer address from the signature and validates
-					permissions. Transactions are relayed to Optimism via Syndicate.
+					permissions.
 				</p>
 				<div>
 					<span className={`${secondaryGray}`}>Base URL: </span>

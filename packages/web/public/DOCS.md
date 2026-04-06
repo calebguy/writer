@@ -285,7 +285,7 @@ Get a user's hex color.
 
 ## API
 
-All write operations are authenticated via EIP-712 signatures — the server recovers the signer address from the signature and validates permissions. Transactions are relayed to Optimism via Syndicate.
+All write operations are authenticated via EIP-712 signatures.
 
 ### Writers
 
