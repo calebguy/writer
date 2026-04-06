@@ -313,8 +313,7 @@ export default function DocsPage() {
 		<div className="max-w-3xl">
 			<p className={`${secondaryGray} mb-8 `}>
 				Writer is an onchain writing platform. Content is permanently stored on
-				Optimism through smart contracts, with all writes authenticated via
-				EIP-712 signatures.
+				Optimism through smart contracts.
 			</p>
 
 			{/* SMART CONTRACTS */}
@@ -327,8 +326,8 @@ export default function DocsPage() {
 				</AnchorHeading>
 
 				<Section title="WriterFactory">
-					<p className={`${secondaryGray} mb-4`}>
-						Optimism:{" "}
+					<p className={`${secondaryGray} mb-4 text-lg`}>
+						Deployment:{" "}
 						<code className="font-mono text-primary break-all">
 							0x28c7721ECff2246a9277CAd46ab2124f69Efd88E
 						</code>

@@ -55,7 +55,7 @@ export async function generateMetadata({
 		return {};
 	}
 
-	const title = `${writerTitle} | Writer`;
+	const title = writerTitle;
 	const description = `Read ${writerTitle} on Writer`;
 	return {
 		title,
