@@ -326,18 +326,30 @@ export default function DocsPage() {
 				</AnchorHeading>
 
 				<div className="mb-4 bg-surface p-2 md:p-5">
-					<p className={`${secondaryGray} flex items-center gap-2 flex-wrap mb-2`}>
+					<p
+						className={`${secondaryGray} flex items-center gap-2 flex-wrap mb-2`}
+					>
 						<span>WriterFactory:</span>
-						<code className="font-mono text-primary break-all">
+						<a
+							href="https://optimistic.etherscan.io/address/0x28c7721ECff2246a9277CAd46ab2124f69Efd88E"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="font-mono text-primary break-all hover:underline"
+						>
 							0x28c7721ECff2246a9277CAd46ab2124f69Efd88E
-						</code>
+						</a>
 						<CopyButton value="0x28c7721ECff2246a9277CAd46ab2124f69Efd88E" />
 					</p>
 					<p className={`${secondaryGray} flex items-center gap-2 flex-wrap`}>
 						<span>ColorRegistry:</span>
-						<code className="font-mono text-primary break-all">
+						<a
+							href="https://optimistic.etherscan.io/address/0x7Bf5B616f5431725bCE61E397173cd6FbFaAC6F1"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="font-mono text-primary break-all hover:underline"
+						>
 							0x7Bf5B616f5431725bCE61E397173cd6FbFaAC6F1
-						</code>
+						</a>
 						<CopyButton value="0x7Bf5B616f5431725bCE61E397173cd6FbFaAC6F1" />
 					</p>
 				</div>
@@ -410,8 +422,7 @@ export default function DocsPage() {
 				<Section title="Writer">
 					<p className={`${secondaryGray}  mb-8`}>
 						Main logic contract for managing entries with role-based access
-						control. All write operations have signature variants (*WithSig)
-						that accept EIP-712 typed data signatures for gasless transactions.
+						control.
 					</p>
 
 					<AnchorHeading
@@ -747,7 +758,6 @@ export default function DocsPage() {
 				<Section title="ColorRegistry">
 					<p className={`${secondaryGray}  mb-8`}>
 						Simple registry mapping user addresses to their chosen hex color.
-						Supports both direct calls and EIP-712 signature-based updates.
 					</p>
 
 					<ContractFunction

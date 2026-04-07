@@ -253,7 +253,7 @@ struct Entry {
 
 ### ColorRegistry
 
-Simple registry mapping user addresses to their chosen hex color. Supports both direct calls and EIP-712 signature-based updates.
+Simple registry mapping user addresses to their chosen hex color.
 
 #### `setHex(hexColor)`
 
