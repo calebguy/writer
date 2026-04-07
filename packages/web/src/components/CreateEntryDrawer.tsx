@@ -55,50 +55,53 @@ export function CreateEntryDrawer({
 				}
 			}}
 		>
-			<DynamicDrawerContent>
+			<DynamicDrawerContent loading={isLoading || isSubmitting}>
 				<DynamicDrawerTitle className="sr-only">
 					Create Entry
 				</DynamicDrawerTitle>
-				<div className="h-56 flex flex-col">
-						<MDX
-							markdown={markdown}
-							autoFocus
-							aspectSquare={false}
-							placeholder={placeholder}
-							onChange={setMarkdown}
-							className="bg-transparent text-black dark:text-white h-full flex w-full p-2 create-input-mdx"
-						/>
+				{isLoading || isSubmitting ? (
+					<div className="h-56 flex items-center justify-center">
+						<LoadingRelic size={32} className="bg-secondary!" />
 					</div>
-					<div className="mt-2 flex justify-end">
-						<button
-							type="button"
-							onClick={() => setEncrypted(!encrypted)}
-							className="p-1 text-neutral-500 dark:text-neutral-400 hover:text-primary cursor-pointer"
-						>
-							{encrypted ? (
-								<Lock className="h-4 w-4" />
-							) : (
-								<Unlock className="h-4 w-4" />
-							)}
-						</button>
-					</div>
-					<div className="mt-1">
-						<button
-							type="button"
-							onClick={() => void handleSubmit()}
-							disabled={!markdown.trim()}
-							className={cn(
-								"w-full h-10 rounded-md bg-surface dark:bg-surface-raised text-black dark:text-white disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer",
-							)}
-						>
-							Create
-						</button>
-					</div>
-					{(isLoading || isSubmitting) && (
-						<div className="absolute inset-0 bg-primary flex items-center justify-center rounded-2xl z-10 border border-primary">
-							<LoadingRelic size={32} className="bg-secondary!" />
+				) : (
+					<>
+						<div className="h-56 flex flex-col">
+							<MDX
+								markdown={markdown}
+								autoFocus
+								aspectSquare={false}
+								placeholder={placeholder}
+								onChange={setMarkdown}
+								className="bg-transparent text-black dark:text-white h-full flex w-full p-2 create-input-mdx"
+							/>
 						</div>
-					)}
+						<div className="mt-2 flex justify-end">
+							<button
+								type="button"
+								onClick={() => setEncrypted(!encrypted)}
+								className="p-1 text-neutral-500 dark:text-neutral-400 hover:text-primary cursor-pointer"
+							>
+								{encrypted ? (
+									<Lock className="h-4 w-4" />
+								) : (
+									<Unlock className="h-4 w-4" />
+								)}
+							</button>
+						</div>
+						<div className="mt-1">
+							<button
+								type="button"
+								onClick={() => void handleSubmit()}
+								disabled={!markdown.trim()}
+								className={cn(
+									"w-full h-10 rounded-md bg-surface dark:bg-surface-raised text-black dark:text-white disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer",
+								)}
+							>
+								Create
+							</button>
+						</div>
+					</>
+				)}
 			</DynamicDrawerContent>
 		</DynamicDrawerRoot>
 	);

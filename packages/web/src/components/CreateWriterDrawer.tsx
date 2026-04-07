@@ -29,35 +29,38 @@ export function CreateWriterDrawer({
 }) {
 	return (
 		<DynamicDrawerRoot open={open} onOpenChange={onOpenChange}>
-			<DynamicDrawerContent>
+			<DynamicDrawerContent loading={isPending}>
 				<DynamicDrawerTitle className="sr-only">
 					Create Writer
 				</DynamicDrawerTitle>
-				<div className="h-56 md:h-64 flex flex-col">
-						<MDX
-							markdown={markdown}
-							autoFocus
-							aspectSquare={false}
-							placeholder="Create a Place"
-							onChange={onMarkdownChange}
-							className="bg-transparent text-black dark:text-white h-full flex w-full p-2 create-input-mdx"
-						/>
+				{isPending ? (
+					<div className="h-56 md:h-64 flex items-center justify-center">
+						<LoadingRelic size={32} className="bg-secondary!" />
 					</div>
-					<div className="mt-3 flex gap-2">
-						<button
-							type="button"
-							onClick={onCreate}
-							disabled={isDisabled}
-							className="w-full h-10 rounded-md bg-surface dark:bg-surface-raised text-black dark:text-white disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
-						>
-							Create
-						</button>
-					</div>
-					{isPending && (
-						<div className="absolute inset-0 bg-primary flex items-center justify-center rounded-2xl z-10 border border-primary">
-							<LoadingRelic size={32} className="bg-secondary!" />
+				) : (
+					<>
+						<div className="h-56 md:h-64 flex flex-col">
+							<MDX
+								markdown={markdown}
+								autoFocus
+								aspectSquare={false}
+								placeholder="Create a Place"
+								onChange={onMarkdownChange}
+								className="bg-transparent text-black dark:text-white h-full flex w-full p-2 create-input-mdx"
+							/>
 						</div>
-					)}
+						<div className="mt-3 flex gap-2">
+							<button
+								type="button"
+								onClick={onCreate}
+								disabled={isDisabled}
+								className="w-full h-10 rounded-md bg-surface dark:bg-surface-raised text-black dark:text-white disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+							>
+								Create
+							</button>
+						</div>
+					</>
+				)}
 			</DynamicDrawerContent>
 		</DynamicDrawerRoot>
 	);

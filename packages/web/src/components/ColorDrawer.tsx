@@ -72,63 +72,64 @@ export function ColorDrawer({ open, onOpenChange }: ColorDrawerProps) {
 			if (!o) handleClose();
 			else onOpenChange(o);
 		}}>
-			<DynamicDrawerContent className="bg-primary!">
+			<DynamicDrawerContent className="bg-primary!" loading={isSaving}>
 				<DynamicDrawerTitle className="sr-only">Set Color</DynamicDrawerTitle>
-				<div className="flex flex-col items-center gap-6 py-4">
-					<RgbColorPicker
-						color={rgbColor}
-						onChange={(c) => {
-							setRgbColor(c);
-							setPrimaryAndSecondaryCSSVariables([c.r, c.g, c.b]);
-						}}
-						style={{ width: "100%", maxWidth: "320px" }}
-					/>
-					<div className="flex items-center justify-center gap-2 w-full max-w-[320px]">
-						<button
-							type="button"
-							className="border border-transparent hover:border-secondary border-dashed text-secondary p-2 w-full bold text-xl disabled:hover:border-transparent disabled:opacity-30 disabled:cursor-not-allowed flex justify-center items-center cursor-pointer"
-							onClick={() => {
-								setRgbColor({
-									r: primaryColor[0],
-									g: primaryColor[1],
-									b: primaryColor[2],
-								});
-								setPrimaryAndSecondaryCSSVariables(primaryColor);
-							}}
-							disabled={!hasChanges}
-						>
-							<Undo className="w-5 h-5" />
-						</button>
-						<button
-							type="button"
-							className="border border-transparent hover:border-secondary border-dashed text-secondary p-2 w-full bold text-xl disabled:hover:border-transparent disabled:opacity-30 disabled:cursor-not-allowed flex justify-center items-center cursor-pointer"
-							disabled={!hasChanges}
-							onClick={async () => {
-								setSaveClicked(true);
-								if (!wallet) {
-									console.error("No ethereum wallet available for signing");
-									setSaveClicked(false);
-									return;
-								}
-								setPrimaryColor([rgbColor.r, rgbColor.g, rgbColor.b]);
-								const hexColor = hexColorToBytes32(
-									RGBToHex([rgbColor.r, rgbColor.g, rgbColor.b]),
-								);
-								const { signature, nonce } = await signSetColor(wallet, {
-									hexColor,
-								});
-								await mutateAsync({ signature, nonce, hexColor });
-								setSaveClicked(false);
-								onOpenChange(false);
-							}}
-						>
-							<Save className="w-5 h-5" />
-						</button>
-					</div>
-				</div>
-			{isSaving && (
-					<div className="absolute inset-0 bg-primary flex items-center justify-center rounded-2xl z-10 border border-primary">
+				{isSaving ? (
+					<div className="flex items-center justify-center py-20">
 						<LoadingRelic size={32} className="bg-secondary!" />
+					</div>
+				) : (
+					<div className="flex flex-col items-center gap-6 py-4">
+						<RgbColorPicker
+							color={rgbColor}
+							onChange={(c) => {
+								setRgbColor(c);
+								setPrimaryAndSecondaryCSSVariables([c.r, c.g, c.b]);
+							}}
+							style={{ width: "100%", maxWidth: "320px" }}
+						/>
+						<div className="flex items-center justify-center gap-2 w-full max-w-[320px]">
+							<button
+								type="button"
+								className="border border-transparent hover:border-secondary border-dashed text-secondary p-2 w-full bold text-xl disabled:hover:border-transparent disabled:opacity-30 disabled:cursor-not-allowed flex justify-center items-center cursor-pointer"
+								onClick={() => {
+									setRgbColor({
+										r: primaryColor[0],
+										g: primaryColor[1],
+										b: primaryColor[2],
+									});
+									setPrimaryAndSecondaryCSSVariables(primaryColor);
+								}}
+								disabled={!hasChanges}
+							>
+								<Undo className="w-5 h-5" />
+							</button>
+							<button
+								type="button"
+								className="border border-transparent hover:border-secondary border-dashed text-secondary p-2 w-full bold text-xl disabled:hover:border-transparent disabled:opacity-30 disabled:cursor-not-allowed flex justify-center items-center cursor-pointer"
+								disabled={!hasChanges}
+								onClick={async () => {
+									setSaveClicked(true);
+									if (!wallet) {
+										console.error("No ethereum wallet available for signing");
+										setSaveClicked(false);
+										return;
+									}
+									setPrimaryColor([rgbColor.r, rgbColor.g, rgbColor.b]);
+									const hexColor = hexColorToBytes32(
+										RGBToHex([rgbColor.r, rgbColor.g, rgbColor.b]),
+									);
+									const { signature, nonce } = await signSetColor(wallet, {
+										hexColor,
+									});
+									await mutateAsync({ signature, nonce, hexColor });
+									setSaveClicked(false);
+									onOpenChange(false);
+								}}
+							>
+								<Save className="w-5 h-5" />
+							</button>
+						</div>
 					</div>
 				)}
 			</DynamicDrawerContent>
