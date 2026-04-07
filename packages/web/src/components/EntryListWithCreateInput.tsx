@@ -24,6 +24,7 @@ export default function EntryListWithCreateInput({
 	unlockError,
 	onUnlock,
 	showLockedEntries = false,
+	emptyMessage = "no entries yet",
 }: {
 	writerTitle: string;
 	writerAddress: string;
@@ -34,6 +35,7 @@ export default function EntryListWithCreateInput({
 	unlockError?: string | null;
 	onUnlock?: () => void;
 	showLockedEntries?: boolean;
+	emptyMessage?: string;
 }) {
 	const [isExpanded, setIsExpanded] = useState(false);
 	const [wallet] = useOPWallet();
@@ -64,9 +66,9 @@ export default function EntryListWithCreateInput({
 		const compressedContent = await compress(markdown);
 		let versionedCompressedContent = `br:${compressedContent}`;
 		if (encrypted) {
-			const key = await getCachedDerivedKey(wallet, "v2");
+			const key = await getCachedDerivedKey(wallet, "v3");
 			const encryptedContent = await encrypt(key, compressedContent);
-			versionedCompressedContent = `enc:v2:br:${encryptedContent}`;
+			versionedCompressedContent = `enc:v3:br:${encryptedContent}`;
 		}
 
 		const { signature, nonce, chunkCount, chunkContent } =
@@ -116,7 +118,7 @@ export default function EntryListWithCreateInput({
 				)}
 				{!isExpanded && processedEntries.length === 0 && (
 					<div className="col-span-full flex items-center justify-center min-h-[60vh] text-neutral-500">
-						no entries yet
+						{emptyMessage}
 					</div>
 				)}
 			</div>

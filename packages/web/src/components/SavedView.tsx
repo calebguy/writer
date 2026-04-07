@@ -162,10 +162,16 @@ function MixedSavedGrid({
 					);
 				if (needs.length === 0) return;
 
+				const needsV3 = needs.some((entry) =>
+					entry.raw?.startsWith("enc:v3:br:"),
+				);
 				const needsV2 = needs.some((entry) =>
 					entry.raw?.startsWith("enc:v2:br:"),
 				);
 				const needsV1 = needs.some((entry) => entry.raw?.startsWith("enc:br:"));
+				const keyV3 = needsV3
+					? await getCachedDerivedKey(activeWallet, "v3")
+					: undefined;
 				const keyV2 = needsV2
 					? await getCachedDerivedKey(activeWallet, "v2")
 					: undefined;
@@ -177,7 +183,7 @@ function MixedSavedGrid({
 						async (entry) =>
 							[
 								entry.id,
-								await processPrivateEntry(keyV2, entry, keyV1),
+								await processPrivateEntry(keyV2, entry, keyV1, keyV3),
 							] as const,
 					),
 				);
@@ -299,11 +305,11 @@ function MixedSavedGrid({
 								<span className="text-xs">
 									{canUnlock ? "Unlock to view" : "Private"}
 								</span>
-								{unlockError && canUnlock && (
+								{/* {unlockError && canUnlock && (
 									<span className="text-[10px] text-red-500">
 										Signature rejected
 									</span>
-								)}
+								)} */}
 							</div>
 						) : (
 							<div className="overflow-y-auto grow min-h-0">

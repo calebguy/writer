@@ -79,6 +79,7 @@ export function useProcessedEntries(
 ) {
 	const [wallet, walletReady] = useOPWallet();
 	const [processedEntries, setProcessedEntries] = useState<Entry[]>([]);
+	const [processedOnce, setProcessedOnce] = useState(false);
 	const allowDecryption = options?.allowDecryption ?? false;
 	const onDecryptError = options?.onDecryptError;
 
@@ -96,6 +97,7 @@ export function useProcessedEntries(
 			return true;
 		});
 		setProcessedEntries(visibleEntries);
+		setProcessedOnce(true);
 
 		// Process private entries in background (non-blocking)
 		async function processPrivateEntriesInBackground() {
@@ -117,12 +119,18 @@ export function useProcessedEntries(
 
 			try {
 				// Get derived keys (cached to avoid multiple signature requests)
+				const needsV3 = privateEntriesToProcess.some((entry) =>
+					entry.raw?.startsWith("enc:v3:br:"),
+				);
 				const needsV2 = privateEntriesToProcess.some((entry) =>
 					entry.raw?.startsWith("enc:v2:br:"),
 				);
 				const needsV1 = privateEntriesToProcess.some((entry) =>
 					entry.raw?.startsWith("enc:br:"),
 				);
+				const derivedKeyV3 = needsV3
+					? await getCachedDerivedKey(wallet!, "v3")
+					: undefined;
 				const derivedKeyV2 = needsV2
 					? await getCachedDerivedKey(wallet!, "v2")
 					: undefined;
@@ -151,6 +159,7 @@ export function useProcessedEntries(
 						derivedKeyV2,
 						entry,
 						derivedKeyV1,
+						derivedKeyV3,
 					);
 					await setCachedEntry(writerAddress, entryId, processed, {
 						walletAddress,
@@ -185,5 +194,5 @@ export function useProcessedEntries(
 		(entry) => isEntryPrivate(entry) && !entry.decompressed,
 	);
 
-	return { processedEntries, hasLockedPrivateEntries };
+	return { processedEntries, hasLockedPrivateEntries, processedOnce };
 }

@@ -339,6 +339,11 @@ const tocItems = [
 	{ id: "entries", label: "Entries", depth: 1 },
 	{ id: "color", label: "Color", depth: 1 },
 	{ id: "user", label: "User", depth: 1 },
+	{ id: "content-encoding", label: "Content Encoding", depth: 0 },
+	{ id: "format-prefixes", label: "Format Prefixes", depth: 1 },
+	{ id: "compression", label: "Compression", depth: 1 },
+	{ id: "encryption", label: "Encryption", depth: 1 },
+	{ id: "decoding", label: "Decoding", depth: 1 },
 ];
 
 function TableOfContents() {
@@ -1190,6 +1195,190 @@ export default function DocsPage() {
 							]}
 							response="{ user: User }"
 						/>
+					</Section>
+				</div>
+
+				{/* CONTENT ENCODING */}
+				<div className="mt-24">
+					<AnchorHeading
+						id="content-encoding"
+						className="text-3xl font-serif italic text-primary mb-4"
+					>
+						Content Encoding
+					</AnchorHeading>
+					<p className={`${secondaryGray} mb-4`}>
+						Entry content goes through a multi-step encoding pipeline before
+						being stored onchain. The <code>content</code> /{" "}
+						<code>chunkContent</code> fields in API requests contain the final
+						encoded string, not raw markdown.
+					</p>
+
+					<div className="mb-4 bg-surface p-2 md:p-5">
+						<p className={`font-mono ${secondaryGray} text-center`}>
+							Markdown &rarr; Compress &rarr; Encrypt (optional) &rarr; Prefix
+							&rarr; Store
+						</p>
+					</div>
+
+					<Section title="Format Prefixes">
+						<p className={`${secondaryGray} mb-6`}>
+							The version prefix at the start of the stored content string
+							indicates how to decode it.
+						</p>
+
+						<div className="space-y-6">
+							<div className="border-b border-neutral-300 dark:border-neutral-700 pb-6">
+								<code className="font-mono font-bold text-primary">br:</code>
+								<p className={`${secondaryGray} mt-1`}>
+									Public entry. Brotli compressed, Base64 encoded. No encryption.
+								</p>
+								<p className={`${secondaryGray} mt-1 font-mono text-sm`}>
+									br:GxoAAI2pVgqN...
+								</p>
+							</div>
+
+							<div className="border-b border-neutral-300 dark:border-neutral-700 pb-6">
+								<code className="font-mono font-bold text-primary">
+									enc:v3:br:
+								</code>
+								<p className={`${secondaryGray} mt-1`}>
+									Private entry, current format. AES-GCM encrypted with v3 key,
+									Brotli compressed.
+								</p>
+								<p className={`${secondaryGray} mt-1 font-mono text-sm`}>
+									enc:v3:br:A7f3kQ9x...
+								</p>
+							</div>
+
+							<div className="border-b border-neutral-300 dark:border-neutral-700 pb-6">
+								<code className="font-mono font-bold text-primary">
+									enc:v2:br:
+								</code>
+								<p className={`${secondaryGray} mt-1`}>
+									Private entry, legacy format. AES-GCM encrypted with v2 key,
+									Brotli compressed.
+								</p>
+							</div>
+
+							<div className="pb-6">
+								<code className="font-mono font-bold text-primary">
+									enc:br:
+								</code>
+								<p className={`${secondaryGray} mt-1`}>
+									Private entry, legacy format. AES-GCM encrypted with v1 key,
+									Brotli compressed.
+								</p>
+							</div>
+						</div>
+					</Section>
+					<RelicDivider seed="prefixes-compression" />
+					<Section title="Compression">
+						<p className={`${secondaryGray} mb-6`}>
+							All content is compressed with Brotli at quality level 11
+							(maximum), then Base64 encoded. This reduces onchain storage
+							costs.
+						</p>
+
+						<div className="bg-surface p-2 md:p-5 mb-6">
+							<p className={`font-mono ${secondaryGray} text-sm`}>
+								markdown &rarr; TextEncoder &rarr; Brotli compress (quality 11)
+								&rarr; Base64 encode
+							</p>
+						</div>
+					</Section>
+					<RelicDivider seed="compression-encryption" />
+					<Section title="Encryption">
+						<p className={`${secondaryGray} mb-6`}>
+							Private entries are encrypted after compression using AES-GCM with
+							a 128-bit key and 12-byte random IV.
+						</p>
+
+						<div className="bg-surface p-2 md:p-5 mb-6">
+							<p className={`font-mono ${secondaryGray} text-sm`}>
+								compressed content &rarr; AES-GCM encrypt &rarr; prepend IV
+								&rarr; Base64 encode
+							</p>
+						</div>
+
+						<p className={`${secondaryGray} mb-4`}>
+							The encryption key is deterministically derived from a wallet
+							signature:
+						</p>
+
+						<ol className={`${secondaryGray} list-decimal list-inside space-y-2 mb-6`}>
+							<li>
+								User signs a fixed message with{" "}
+								<code className="font-mono text-primary">personal_sign</code>
+							</li>
+							<li>Signature is hashed with Keccak-256</li>
+							<li>First 16 bytes of the hash become the AES key</li>
+						</ol>
+
+						<p className={`${secondaryGray} mb-4`}>
+							The key never leaves the client. Only the entry author can decrypt
+							their private entries &mdash; the server and contract store opaque
+							ciphertext.
+						</p>
+
+						<p className={`${secondaryGray}`}>
+							V1, V2, and V3 keys differ only in the message signed during key
+							derivation. V3 is the current default and includes a security
+							warning to only sign on writer.place. V1 and V2 are supported for
+							backward compatibility with older entries. A migration tool is
+							available in the app to re-encrypt legacy entries with the V3 key.
+						</p>
+					</Section>
+					<RelicDivider seed="encryption-decoding" />
+					<Section title="Decoding">
+						<p className={`${secondaryGray} mb-6`}>
+							To read an entry, reverse the pipeline based on the prefix.
+						</p>
+
+						<div className="space-y-6">
+							<div className="border-b border-neutral-300 dark:border-neutral-700 pb-6">
+								<code className="font-mono font-bold text-primary">br:</code>
+								<p className={`${secondaryGray} mt-1`}>
+									Strip prefix &rarr; Base64 decode &rarr; Brotli decompress
+								</p>
+							</div>
+
+							<div className="border-b border-neutral-300 dark:border-neutral-700 pb-6">
+								<code className="font-mono font-bold text-primary">
+									enc:v3:br:
+								</code>
+								<p className={`${secondaryGray} mt-1`}>
+									Strip prefix &rarr; Base64 decode &rarr; AES-GCM decrypt (v3
+									key) &rarr; Brotli decompress
+								</p>
+							</div>
+
+							<div className="border-b border-neutral-300 dark:border-neutral-700 pb-6">
+								<code className="font-mono font-bold text-primary">
+									enc:v2:br:
+								</code>
+								<p className={`${secondaryGray} mt-1`}>
+									Strip prefix &rarr; Base64 decode &rarr; AES-GCM decrypt (v2
+									key) &rarr; Brotli decompress
+								</p>
+							</div>
+
+							<div className="pb-6">
+								<code className="font-mono font-bold text-primary">
+									enc:br:
+								</code>
+								<p className={`${secondaryGray} mt-1`}>
+									Strip prefix &rarr; Base64 decode &rarr; AES-GCM decrypt (v1
+									key) &rarr; Brotli decompress
+								</p>
+							</div>
+						</div>
+
+						<p className={`${secondaryGray}`}>
+							Public entries are decoded server-side and returned as plaintext in
+							the <code className="font-mono text-primary">decompressed</code>{" "}
+							field. Private entries are returned as the raw encoded string and
+							decrypted client-side using the author&apos;s wallet.
+						</p>
 					</Section>
 				</div>
 			</div>

@@ -427,3 +427,75 @@ Get user data for an address.
 | `address` | `address` | User wallet address |
 
 **Response:** `{ user: User }`
+
+---
+
+## Content Encoding
+
+Entry content stored onchain goes through a multi-step encoding pipeline before being passed to the API. The `content` / `chunkContent` fields in create and update requests contain the final encoded string — not raw markdown.
+
+### Pipeline
+
+```
+Markdown → Compress (Brotli) → Encrypt (optional) → Prefix → Store
+```
+
+1. **Write** — Author composes content in markdown
+2. **Compress** — Content is Brotli-compressed (quality 11) and Base64-encoded
+3. **Encrypt** (private entries only) — Compressed content is encrypted with AES-GCM and Base64-encoded
+4. **Prefix** — A version prefix is prepended to indicate the encoding format
+5. **Store** — The prefixed string is signed (EIP-712) and stored onchain as the entry content
+
+### Format Prefixes
+
+The version prefix at the start of the stored content string indicates how to decode it:
+
+| Prefix | Encryption | Compression | Description |
+|--------|------------|-------------|-------------|
+| `br:` | None | Brotli | Public entry, compressed only |
+| `enc:v3:br:` | AES-GCM (v3 key) | Brotli | Private entry, current format |
+| `enc:v2:br:` | AES-GCM (v2 key) | Brotli | Private entry, legacy format |
+| `enc:br:` | AES-GCM (v1 key) | Brotli | Private entry, legacy format |
+
+**Examples:**
+- Public: `br:GxoAAI2pVgqN...` (Brotli-compressed, Base64-encoded markdown)
+- Private: `enc:v3:br:A7f3kQ9x...` (encrypted + compressed)
+
+### Compression
+
+All content is compressed with [Brotli](https://github.com/nicolo-ribaudo/brotli-wasm) at quality level 11 (maximum), then Base64-encoded. This reduces onchain storage costs.
+
+```
+markdown → TextEncoder → Brotli compress → Base64 encode
+```
+
+### Encryption
+
+Private entries are encrypted **after** compression using [AES-GCM](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/encrypt#aes-gcm) (128-bit key, 12-byte random IV).
+
+```
+compressed content → AES-GCM encrypt → prepend IV → Base64 encode
+```
+
+The encryption key is deterministically derived from a wallet signature:
+
+1. User signs a fixed message with `personal_sign`
+2. Signature is hashed with Keccak-256
+3. First 16 bytes of the hash become the AES key
+
+The key never leaves the client. Only the entry author can decrypt their private entries — the server and contract store opaque ciphertext.
+
+**V1, V2, and V3 keys** differ only in the message signed during key derivation. V3 is the current default and includes a security warning to only sign on writer.place. V1 and V2 are supported for backward compatibility with older entries. A migration tool is available in the app to re-encrypt legacy entries with the V3 key.
+
+### Decoding
+
+To read an entry, reverse the pipeline based on the prefix:
+
+| Prefix | Steps |
+|--------|-------|
+| `br:` | Strip prefix → Base64 decode → Brotli decompress |
+| `enc:v3:br:` | Strip prefix → Base64 decode → AES-GCM decrypt (v3 key) → Brotli decompress |
+| `enc:v2:br:` | Strip prefix → Base64 decode → AES-GCM decrypt (v2 key) → Brotli decompress |
+| `enc:br:` | Strip prefix → Base64 decode → AES-GCM decrypt (v1 key) → Brotli decompress |
+
+Public entries are decoded server-side and returned as plaintext in the `decompressed` field. Private entries are returned as the raw encoded string and decrypted client-side using the author's wallet.
