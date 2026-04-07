@@ -114,14 +114,19 @@ export default function CreateInput({
 		if (markdown.trim() === "") return;
 		setLoadingContent(markdown);
 		setIsSubmitting(true);
-		await onSubmit({ markdown, encrypted });
-		editorRef.current?.setMarkdown("");
-		setMarkdown("");
-		setIsSubmitting(false);
-		setHasFocus(false);
-		setIsExpanded(false);
-		setEncrypted(false);
-		onExpand?.(false);
+		try {
+			await onSubmit({ markdown, encrypted });
+			editorRef.current?.setMarkdown("");
+			setMarkdown("");
+			setHasFocus(false);
+			setIsExpanded(false);
+			setEncrypted(false);
+			onExpand?.(false);
+		} catch (error) {
+			console.error("Submit failed:", error);
+		} finally {
+			setIsSubmitting(false);
+		}
 	};
 
 	const isLoadingOrSubmitting = isLoading || isSubmitting;

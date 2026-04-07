@@ -260,7 +260,7 @@ export async function getDerivedSigningKeyV3(
 	wallet: ConnectedWallet,
 ): Promise<Uint8Array> {
 	const message =
-		"Writer: write (privately) today, forever.  NOTE\uFE0F: Only sign this message on https://writer.place. Signing elsewhere may expose your private entries";
+		"Writer: write (privately) today, forever.\n\nNOTE: Only sign this message on https://writer.place.";
 	const encodedMessage = `0x${Buffer.from(message, "utf8").toString("hex")}`;
 	const provider = await wallet.getEthereumProvider();
 	const method = "personal_sign";
