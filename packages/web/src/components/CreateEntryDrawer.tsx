@@ -12,7 +12,7 @@ import {
 	DynamicDrawerRoot,
 	DynamicDrawerTitle,
 } from "./dsl/DynamicDrawer";
-import { Logo } from "./icons/Logo";
+import { LoadingRelic } from "./LoadingRelic";
 
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 
@@ -61,7 +61,7 @@ export function CreateEntryDrawer({
 				</DynamicDrawerTitle>
 				{isLoading || isSubmitting ? (
 					<div className="h-56 flex justify-center items-center">
-						<Logo className="w-6 h-6 rotating" />
+						<LoadingRelic size={24} />
 					</div>
 				) : (
 					<>

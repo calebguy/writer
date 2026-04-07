@@ -14,7 +14,7 @@ import {
 	setPrimaryAndSecondaryCSSVariables,
 } from "../utils/utils";
 import { Modal, ModalDescription, ModalTitle } from "./dsl/Modal";
-import { Logo } from "./icons/Logo";
+import { LoadingRelic } from "./LoadingRelic";
 import { Save } from "./icons/Save";
 import { Undo } from "./icons/Undo";
 interface ModalProps {
@@ -124,7 +124,7 @@ export function ColorModal({ open, onClose }: ModalProps) {
 					}}
 				>
 					{isSaving ? (
-						<Logo className="w-5 h-5 rotating" />
+						<LoadingRelic size={20} />
 					) : (
 						<Save className="w-5 h-5" />
 					)}

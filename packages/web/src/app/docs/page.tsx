@@ -1,9 +1,20 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { MAX_CONTENT_LENGTH, MAX_TITLE_LENGTH } from "utils/constants";
 
 const secondaryGray = "dark:text-neutral-200 text-neutral-800";
+
+const humanLogos = Array.from({ length: 32 }, (_, i) => `logo-${i + 1}.png`);
+
+function getLogoForSection(title: string) {
+	let hash = 0;
+	for (let i = 0; i < title.length; i++) {
+		hash = (hash * 31 + title.charCodeAt(i)) | 0;
+	}
+	return humanLogos[Math.abs(hash) % humanLogos.length];
+}
 
 function CopyButton({ value }: { value: string }) {
 	const [copied, setCopied] = useState(false);
@@ -100,13 +111,28 @@ function AnchorHeading({
 	);
 }
 
+function RelicDivider({ seed }: { seed: string }) {
+	const logo = getLogoForSection(seed);
+	return (
+		<div className="flex justify-center my-4">
+			<Image
+				src={`/images/human/${logo}`}
+				alt=""
+				width={40}
+				height={40}
+				className="object-contain dark:invert"
+			/>
+		</div>
+	);
+}
+
 function Section({
 	title,
 	children,
 }: { title: string; children: React.ReactNode }) {
 	const id = slugify(title);
 	return (
-		<section className="mb-8 bg-surface p-2 md:p-5">
+		<section className="bg-surface p-2 md:p-5">
 			<AnchorHeading id={id} className="text-3xl font-serif mb-8 text-primary">
 				{title}
 			</AnchorHeading>
@@ -432,6 +458,7 @@ export default function DocsPage() {
 							<CopyButton value="0x7Bf5B616f5431725bCE61E397173cd6FbFaAC6F1" />
 						</p>
 					</div>
+					<RelicDivider seed="smart-contracts" />
 
 					<Section title="WriterFactory">
 						<p className={`${secondaryGray}  mb-8`}>
@@ -509,7 +536,7 @@ export default function DocsPage() {
 							access="View"
 						/>
 					</Section>
-
+					<RelicDivider seed="factory-writer" />
 					<Section title="Writer">
 						<p className={`${secondaryGray}  mb-8`}>
 							Main logic contract for managing entries with role-based access
@@ -815,7 +842,7 @@ export default function DocsPage() {
 							access="DEFAULT_ADMIN_ROLE"
 						/>
 					</Section>
-
+					<RelicDivider seed="writer-storage" />
 					<Section title="WriterStorage">
 						<p className={`${secondaryGray}  mb-8`}>
 							Storage contract that holds all entry data. Only the Writer logic
@@ -859,7 +886,7 @@ export default function DocsPage() {
 							]}
 						/>
 					</Section>
-
+					<RelicDivider seed="storage-color" />
 					<Section title="ColorRegistry">
 						<p className={`${secondaryGray}  mb-8`}>
 							Simple registry mapping user addresses to their chosen hex color.
@@ -996,7 +1023,7 @@ export default function DocsPage() {
 							response="{ writer: Writer }"
 						/>
 					</Section>
-
+					<RelicDivider seed="writers-entries" />
 					<Section title="Entries">
 						<Endpoint
 							method="GET"
@@ -1123,7 +1150,7 @@ export default function DocsPage() {
 							response="{ writer: Writer }"
 						/>
 					</Section>
-
+					<RelicDivider seed="entries-color" />
 					<Section title="Color">
 						<Endpoint
 							method="POST"
@@ -1147,7 +1174,7 @@ export default function DocsPage() {
 							response="{ user: User }"
 						/>
 					</Section>
-
+					<RelicDivider seed="color-user" />
 					<Section title="User">
 						<Endpoint
 							method="GET"

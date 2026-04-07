@@ -17,7 +17,7 @@ import {
 	DynamicDrawerRoot,
 	DynamicDrawerTitle,
 } from "./dsl/DynamicDrawer";
-import { Logo } from "./icons/Logo";
+import { LoadingRelic } from "./LoadingRelic";
 import { Save } from "./icons/Save";
 import { Undo } from "./icons/Undo";
 
@@ -123,7 +123,7 @@ export function ColorDrawer({ open, onOpenChange }: ColorDrawerProps) {
 							}}
 						>
 							{isSaving ? (
-								<Logo className="w-5 h-5 rotating" />
+								<LoadingRelic size={20} />
 							) : (
 								<Save className="w-5 h-5" />
 							)}

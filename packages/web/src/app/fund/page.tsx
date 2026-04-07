@@ -28,7 +28,7 @@ function WalletRow({ wallet }: { wallet: RelayWallet }) {
 					href={`https://optimistic.etherscan.io/address/${wallet.address}`}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="text-sm font-mono hover:text-primary transition-colors"
+					className="text-sm font-mono hover:text-primary hover:underline"
 				>
 					<span className="hidden sm:inline">{wallet.address}</span>
 					<span className="sm:hidden">{truncateAddress(wallet.address)}</span>
@@ -37,7 +37,7 @@ function WalletRow({ wallet }: { wallet: RelayWallet }) {
 					type="button"
 					onClick={handleCopy}
 					aria-label="Copy address"
-					className="text-neutral-500 hover:text-primary transition-colors cursor-pointer"
+					className="text-neutral-500 hover:text-primary cursor-pointer"
 				>
 					{copied ? (
 						<svg
@@ -89,12 +89,11 @@ export default function FundPage() {
 		<div className="max-w-2xl mx-auto w-full font-serif flex-1 flex flex-col justify-center items-center gap-6">
 			<div className="flex flex-col gap-2">
 				<p className="text-lg leading-relaxed text-center">
-					Writer is self funded & pays to store user data in permanent
-					datastructures that will outlive us all. If you'd like to support the
-					project, send ETH on{" "}
+					Writer pays to store user data in permanent datastructures that will
+					outlive us all. If you'd like to support the project, send ETH on{" "}
 					<Link
 						href="https://optimism.io/"
-						className="hover:text-primary transition-colors"
+						className="hover:text-primary transition-colors hover:underline"
 						target="_blank"
 						rel="noopener noreferrer"
 					>

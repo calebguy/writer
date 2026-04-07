@@ -8,7 +8,7 @@ import { useIsMac } from "@/utils/hooks";
 import type { MDXEditorMethods } from "@mdxeditor/editor";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
-import { Logo } from "./icons/Logo";
+import { LoadingRelic } from "./LoadingRelic";
 import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
 
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
@@ -156,12 +156,7 @@ export default function CreateInput({
 							</span>
 						</div>
 						<div className="text-sm absolute inset-0 flex justify-center items-center text-primary">
-							<Logo
-								className={cn("rotating", {
-									"w-6 h-6": !isExpanded,
-									"w-8 h-8": isExpanded,
-								})}
-							/>
+							<LoadingRelic size={isExpanded ? 32 : 24} />
 						</div>
 					</div>
 				)}

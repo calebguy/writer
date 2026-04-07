@@ -35,6 +35,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Hex } from "viem";
 import { Lock } from "./icons/Lock";
+import { LoadingRelic } from "./LoadingRelic";
 import { Logo } from "./icons/Logo";
 import { Unlock } from "./icons/Unlock";
 import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
@@ -387,7 +388,7 @@ export default function Entry({
 					{isPending && (
 						<div className="absolute bottom-0 right-0 flex items-center gap-1.5 text-neutral-400 dark:text-neutral-600">
 							<span className="text-xs">confirming</span>
-							<Logo className="w-3.5 h-3.5 rotating" />
+							<LoadingRelic size={14} />
 						</div>
 					)}
 				</div>
@@ -433,12 +434,7 @@ export default function Entry({
 							<MarkdownRenderer markdown={editedContent} />
 						</div>
 						<div className="absolute inset-0 flex justify-center items-center">
-							<Logo
-								className={cn("w-8 h-8 rotating", {
-									"text-red-900": deleteSubmitted,
-									"text-primary": !deleteSubmitted,
-								})}
-							/>
+							<LoadingRelic size={32} />
 						</div>
 					</div>
 				)}
