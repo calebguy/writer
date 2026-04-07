@@ -122,14 +122,15 @@ export function ColorDrawer({ open, onOpenChange }: ColorDrawerProps) {
 								onOpenChange(false);
 							}}
 						>
-							{isSaving ? (
-								<LoadingRelic size={20} />
-							) : (
-								<Save className="w-5 h-5" />
-							)}
+							<Save className="w-5 h-5" />
 						</button>
 					</div>
 				</div>
+			{isSaving && (
+					<div className="absolute inset-0 bg-primary flex items-center justify-center rounded-t-lg z-10">
+						<LoadingRelic size={32} className="bg-secondary!" />
+					</div>
+				)}
 			</DynamicDrawerContent>
 		</DynamicDrawerRoot>
 	);
