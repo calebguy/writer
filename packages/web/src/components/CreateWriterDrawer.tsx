@@ -1,6 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useCallback, useState } from "react";
+import { createPortal } from "react-dom";
 import {
 	DynamicDrawerContent,
 	DynamicDrawerRoot,
@@ -27,41 +29,57 @@ export function CreateWriterDrawer({
 	isPending: boolean;
 	isDisabled: boolean;
 }) {
+	const [drawerTarget, setDrawerTarget] = useState<HTMLDivElement | null>(null);
+	const drawerTargetRef = useCallback((node: HTMLDivElement | null) => {
+		setDrawerTarget(node);
+	}, []);
+
+	const editorContent = (
+		<>
+			<div className="h-56 md:h-64 flex flex-col">
+				<MDX
+					markdown={markdown}
+					autoFocus={open}
+					aspectSquare={false}
+					placeholder="Create a Place"
+					onChange={onMarkdownChange}
+					className="bg-transparent text-black dark:text-white h-full flex w-full p-2 create-input-mdx"
+				/>
+			</div>
+			<div className="mt-3 flex gap-2">
+				<button
+					type="button"
+					onClick={onCreate}
+					disabled={isDisabled}
+					className="w-full h-10 rounded-md bg-surface dark:bg-surface-raised text-black dark:text-white disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+				>
+					Create
+				</button>
+			</div>
+		</>
+	);
+
 	return (
-		<DynamicDrawerRoot open={open} onOpenChange={onOpenChange}>
-			<DynamicDrawerContent loading={isPending}>
-				<DynamicDrawerTitle className="sr-only">
-					Create Writer
-				</DynamicDrawerTitle>
-				{isPending ? (
-					<div className="h-56 md:h-64 flex items-center justify-center">
-						<LoadingRelic size={32} className="bg-secondary!" />
-					</div>
-				) : (
-					<>
-						<div className="h-56 md:h-64 flex flex-col">
-							<MDX
-								markdown={markdown}
-								autoFocus
-								aspectSquare={false}
-								placeholder="Create a Place"
-								onChange={onMarkdownChange}
-								className="bg-transparent text-black dark:text-white h-full flex w-full p-2 create-input-mdx"
-							/>
+		<>
+			{drawerTarget ? (
+				createPortal(editorContent, drawerTarget)
+			) : (
+				<div className="hidden">{editorContent}</div>
+			)}
+			<DynamicDrawerRoot open={open} onOpenChange={onOpenChange}>
+				<DynamicDrawerContent loading={isPending}>
+					<DynamicDrawerTitle className="sr-only">
+						Create Writer
+					</DynamicDrawerTitle>
+					{isPending ? (
+						<div className="h-56 md:h-64 flex items-center justify-center">
+							<LoadingRelic size={32} className="bg-secondary!" />
 						</div>
-						<div className="mt-3 flex gap-2">
-							<button
-								type="button"
-								onClick={onCreate}
-								disabled={isDisabled}
-								className="w-full h-10 rounded-md bg-surface dark:bg-surface-raised text-black dark:text-white disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
-							>
-								Create
-							</button>
-						</div>
-					</>
-				)}
-			</DynamicDrawerContent>
-		</DynamicDrawerRoot>
+					) : (
+						<div ref={drawerTargetRef} />
+					)}
+				</DynamicDrawerContent>
+			</DynamicDrawerRoot>
+		</>
 	);
 }
