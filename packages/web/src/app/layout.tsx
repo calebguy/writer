@@ -16,6 +16,8 @@ export const metadata: Metadata = {
 	openGraph: {
 		title: "Writer",
 		description: "Write for now, forever",
+		url: "https://writer.place",
+		type: "website",
 		images: [
 			{
 				url: OG_IMAGE_URL,
