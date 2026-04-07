@@ -123,13 +123,14 @@ export function ColorModal({ open, onClose }: ModalProps) {
 						onClose();
 					}}
 				>
-					{isSaving ? (
-						<LoadingRelic size={20} />
-					) : (
-						<Save className="w-5 h-5" />
-					)}
+					<Save className="w-5 h-5" />
 				</button>
 			</div>
+			{isSaving && (
+				<div className="absolute inset-0 bg-primary flex items-center justify-center rounded-lg z-10">
+					<LoadingRelic size={32} className="bg-secondary!" />
+				</div>
+			)}
 		</Modal>
 	);
 }

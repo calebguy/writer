@@ -118,8 +118,8 @@ function RelicDivider({ seed }: { seed: string }) {
 			<Image
 				src={`/images/human/${logo}`}
 				alt=""
-				width={40}
-				height={40}
+				width={50}
+				height={50}
 				className="object-contain dark:invert"
 			/>
 		</div>
