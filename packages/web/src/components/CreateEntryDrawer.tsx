@@ -54,7 +54,7 @@ export function CreateEntryDrawer({
 			<div className="h-56 flex flex-col">
 				<MDX
 					markdown={markdown}
-					autoFocus={isOpen}
+					autoFocus={false}
 					aspectSquare={false}
 					placeholder={placeholder}
 					onChange={setMarkdown}

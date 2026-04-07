@@ -39,7 +39,7 @@ export function CreateWriterDrawer({
 			<div className="h-56 md:h-64 flex flex-col">
 				<MDX
 					markdown={markdown}
-					autoFocus={open}
+					autoFocus={false}
 					aspectSquare={false}
 					placeholder="Create a Place"
 					onChange={onMarkdownChange}
