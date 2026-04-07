@@ -2,6 +2,7 @@
 
 import { type RelayWallet, getRelayWallets } from "@/utils/api";
 import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -86,7 +87,17 @@ export default function FundPage() {
 	});
 
 	return (
-		<div className="max-w-2xl mx-auto w-full font-serif flex-1 flex flex-col justify-center items-center gap-6">
+		<div className="max-w-2xl mx-auto w-full font-serif flex-1 flex flex-col justify-center items-center gap-8">
+			<div className="flex items-center justify-center gap-4">
+				<Image
+					src="/images/totem/totem-7.png"
+					alt=""
+					width={100}
+					height={100}
+					className="dark:invert"
+					priority
+				/>
+			</div>
 			<div className="flex flex-col gap-2">
 				<p className="text-lg leading-relaxed text-center">
 					Writer pays to store user data in permanent datastructures that will
