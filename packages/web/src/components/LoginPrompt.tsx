@@ -18,7 +18,7 @@ export function LoginPrompt({ toWhat, logo }: LoginPromptProps) {
 				className="font-serif italic text-xl text-primary cursor-pointer transition-opacity duration-200 hover:text-secondary"
 				onClick={() => login()}
 			>
-				login {toWhat ? `to ${toWhat}` : ""}
+				Sign in {toWhat ? `to ${toWhat}` : ""}
 			</button>
 			<Image
 				src={`/images/human/logo-${logo}.png`}

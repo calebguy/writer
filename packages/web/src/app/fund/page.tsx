@@ -90,8 +90,8 @@ export default function FundPage() {
 			<div className="flex flex-col gap-2">
 				<p className="text-lg leading-relaxed text-center">
 					Writer is self funded & pays to store user data in permanent
-					datastructures that should outlive us all on behalf of its users. If
-					you'd like to support the project, send ETH on{" "}
+					datastructures that will outlive us all. If you'd like to support the
+					project, send ETH on{" "}
 					<Link
 						href="https://optimism.io/"
 						className="hover:text-primary transition-colors"

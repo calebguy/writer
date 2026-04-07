@@ -130,10 +130,10 @@ export function NavDropdown() {
 							})
 						}
 					>
-						Leave
+						Sign out
 					</DropdownItem>
 				) : (
-					<DropdownItem onClick={() => login()}>Login</DropdownItem>
+					<DropdownItem onClick={() => login()}>Sign in</DropdownItem>
 				)}
 				<div className="flex items-center justify-between gap-1 mt-1 pt-1 border-t border-neutral-300 dark:border-neutral-800/60">
 					<ThemeButton

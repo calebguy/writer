@@ -314,7 +314,7 @@ export function LandingPage({
 										className="font-serif italic text-xl md:text-2xl bg-transparent border-none cursor-pointer transition-opacity duration-200 hover:text-brand"
 										onClick={() => login()}
 									>
-										login,
+										sign in,
 									</button>
 								)}
 								<Link
