@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import {
 	DynamicDrawerContent,
@@ -33,6 +33,14 @@ export function CreateWriterDrawer({
 	const drawerTargetRef = useCallback((node: HTMLDivElement | null) => {
 		setDrawerTarget(node);
 	}, []);
+
+	useEffect(() => {
+		if (!open) return;
+		const timer = setTimeout(() => {
+			drawerTarget?.querySelector<HTMLElement>("[contenteditable]")?.focus();
+		}, 350);
+		return () => clearTimeout(timer);
+	}, [open, drawerTarget]);
 
 	const editorContent = (
 		<>

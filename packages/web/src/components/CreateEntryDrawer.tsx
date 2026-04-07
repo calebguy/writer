@@ -6,7 +6,7 @@ import { Unlock } from "@/components/icons/Unlock";
 import { useCreateEntryDrawer } from "@/components/writer/CreateEntryDrawerContext";
 import { cn } from "@/utils/cn";
 import dynamic from "next/dynamic";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import {
 	DynamicDrawerContent,
@@ -34,6 +34,14 @@ export function CreateEntryDrawer({
 	const drawerTargetRef = useCallback((node: HTMLDivElement | null) => {
 		setDrawerTarget(node);
 	}, []);
+
+	useEffect(() => {
+		if (!isOpen) return;
+		const timer = setTimeout(() => {
+			drawerTarget?.querySelector<HTMLElement>("[contenteditable]")?.focus();
+		}, 350);
+		return () => clearTimeout(timer);
+	}, [isOpen, drawerTarget]);
 
 	const handleReset = () => {
 		setMarkdown("");
