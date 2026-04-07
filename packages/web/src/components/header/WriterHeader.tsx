@@ -2,7 +2,9 @@
 
 import { useEntryLoading } from "@/utils/EntryLoadingContext";
 import { type Writer, getWriter } from "@/utils/api";
+import { usePrivy } from "@privy-io/react-auth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { usePathname } from "next/navigation";
 import { FiPlus } from "react-icons/fi";
 import type { Hex } from "viem";
 import { NavDropdown } from "../NavDropdown";
@@ -15,9 +17,12 @@ export function WriterHeader({
 }: {
 	address: string;
 }) {
+	const { authenticated } = usePrivy();
 	const queryClient = useQueryClient();
 	const { isEntryLoading } = useEntryLoading();
 	const { open } = useCreateEntryDrawer();
+	const pathname = usePathname();
+	const isEntryPage = pathname.split("/").length > 3;
 
 	const { data: writer } = useQuery({
 		queryKey: ["writer", address],
@@ -51,14 +56,16 @@ export function WriterHeader({
 				)}
 			</div>
 
-			<button
-				type="button"
-				aria-label="Create entry"
-				onClick={open}
-				className="md:hidden text-primary hover:opacity-80 transition-opacity cursor-pointer"
-			>
-				<FiPlus className="h-6 w-6" />
-			</button>
+			{authenticated && !isEntryPage && (
+				<button
+					type="button"
+					aria-label="Create entry"
+					onClick={open}
+					className="md:hidden text-primary hover:opacity-80 transition-opacity cursor-pointer"
+				>
+					<FiPlus className="h-6 w-6" />
+				</button>
+			)}
 			<div className="hidden md:block">
 				<NavDropdown />
 			</div>

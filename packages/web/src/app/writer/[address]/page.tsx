@@ -174,7 +174,7 @@ export default function WriterPage() {
 					setAllowDecryption(true);
 				}}
 			/>
-			{isLoggedIn && walletAddress && (
+			{isLoggedIn && walletAddress && processedEntries.length > 0 && (
 				<div className="sticky bottom-0 left-0 pt-2">
 					<button
 						type="button"

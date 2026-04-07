@@ -127,7 +127,7 @@ export function ColorDrawer({ open, onOpenChange }: ColorDrawerProps) {
 					</div>
 				</div>
 			{isSaving && (
-					<div className="absolute inset-0 bg-primary flex items-center justify-center rounded-t-lg z-10">
+					<div className="absolute inset-0 bg-primary flex items-center justify-center rounded-2xl z-10 border border-primary">
 						<LoadingRelic size={32} className="bg-secondary!" />
 					</div>
 				)}

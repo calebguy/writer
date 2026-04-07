@@ -1,11 +1,13 @@
 "use client";
 
+import { usePrivy } from "@privy-io/react-auth";
 import { usePathname, useRouter } from "next/navigation";
 import { FiArrowLeft } from "react-icons/fi";
 
 export function BackButton({ writerAddress }: { writerAddress: string }) {
 	const pathname = usePathname();
 	const router = useRouter();
+	const { authenticated } = usePrivy();
 	const segments = pathname.split("/").filter(Boolean);
 
 	// Check if we're on an entry page:
@@ -21,7 +23,7 @@ export function BackButton({ writerAddress }: { writerAddress: string }) {
 			if (isEntryPage) {
 				router.push(`/writer/${writerAddress}`);
 			} else {
-				router.push("/home");
+				router.push(authenticated ? "/home" : "/explore");
 			}
 		} else {
 			router.back();

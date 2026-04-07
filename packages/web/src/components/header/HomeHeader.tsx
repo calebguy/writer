@@ -98,14 +98,16 @@ export function HomeHeader() {
 					</Link>
 				)}
 				<div className="flex items-center gap-2">
-					<button
-						type="button"
-						aria-label="Create writer"
-						onClick={() => setIsCreateSheetOpen(true)}
-						className="md:hidden text-primary hover:opacity-80 transition-opacity cursor-pointer"
-					>
-						<FiPlus className="h-6 w-6" />
-					</button>
+					{authenticated && (
+						<button
+							type="button"
+							aria-label="Create writer"
+							onClick={() => setIsCreateSheetOpen(true)}
+							className="md:hidden text-primary hover:opacity-80 transition-opacity cursor-pointer"
+						>
+							<FiPlus className="h-6 w-6" />
+						</button>
+					)}
 					<div className="hidden md:block">
 						<NavDropdown />
 					</div>
