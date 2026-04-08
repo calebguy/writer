@@ -4,7 +4,7 @@ import { type Entry, editEntry } from "@/utils/api";
 import { useOPWallet } from "@/utils/hooks";
 import { getCachedDerivedKey } from "@/utils/keyCache";
 import { signUpdate } from "@/utils/signer";
-import { compress, decrypt, decompress, encrypt } from "@/utils/utils";
+import { compress, decompress, decrypt, encrypt } from "@/utils/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { VisuallyHidden } from "radix-ui";
 import { useCallback, useState } from "react";
@@ -150,7 +150,7 @@ export function MigrateModal({
 										return (
 											<div
 												key={entry.id}
-												className={`flex items-center justify-between text-xs font-mono px-2 py-1 ${
+												className={`flex items-center justify-between text-xs font-mono ${
 													isMigrated
 														? "text-green-600 dark:text-green-400 line-through"
 														: "text-neutral-600 dark:text-neutral-400"
@@ -193,8 +193,8 @@ export function MigrateModal({
 
 				{status === "done" && (
 					<p className="text-sm text-green-600 dark:text-green-400 text-center py-4">
-						Migrated {migratedCount}{" "}
-						{migratedCount === 1 ? "entry" : "entries"} successfully.
+						Migrated {migratedCount} {migratedCount === 1 ? "entry" : "entries"}{" "}
+						successfully.
 					</p>
 				)}
 
