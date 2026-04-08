@@ -454,8 +454,8 @@ The version prefix at the start of the stored content string indicates how to de
 |--------|------------|-------------|-------------|
 | `br:` | None | Brotli | Public entry, compressed only |
 | `enc:v3:br:` | AES-GCM (v3 key) | Brotli | Private entry, current format |
-| `enc:v2:br:` | AES-GCM (v2 key) | Brotli | Private entry, legacy format |
-| `enc:br:` | AES-GCM (v1 key) | Brotli | Private entry, legacy format |
+| `enc:v2:br:` | AES-GCM (v2 key) | Brotli | Deprecated |
+| `enc:br:` | AES-GCM (v1 key) | Brotli | Deprecated |
 
 **Examples:**
 - Public: `br:GxoAAI2pVgqN...` (Brotli-compressed, Base64-encoded markdown)
@@ -486,6 +486,8 @@ The encryption key is deterministically derived from a wallet signature:
 The key never leaves the client. Only the entry author can decrypt their private entries — the server and contract store opaque ciphertext.
 
 **V1, V2, and V3 keys** differ only in the message signed during key derivation. V3 is the current default and includes a security warning to only sign on writer.place. V1 and V2 are supported for backward compatibility with older entries. A migration tool is available in the app to re-encrypt legacy entries with the V3 key.
+
+**Important:** Because the encryption key is derived from signing a specific message, anyone who tricks you into signing that same message on a different site could derive the same key and decrypt your private entries. The V3 message explicitly states to only sign on `https://writer.place`. Always verify the requesting site before signing.
 
 ### Decoding
 

@@ -49,6 +49,10 @@
     color: var(--color-white);
     background-color: var(--color-background);
   }
+
+  .font-mono {
+    font-size: 15px;
+  }
 }
 
 ::-webkit-scrollbar {

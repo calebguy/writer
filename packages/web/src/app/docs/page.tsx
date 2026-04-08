@@ -1,6 +1,9 @@
 "use client";
 
+import { Check } from "@/components/icons/Check";
+import { Copy } from "@/components/icons/Copy";
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { MAX_CONTENT_LENGTH, MAX_TITLE_LENGTH } from "utils/constants";
 
@@ -33,38 +36,9 @@ function CopyButton({ value }: { value: string }) {
 			className="text-neutral-500 hover:text-primary transition-colors align-middle"
 		>
 			{copied ? (
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="14"
-					height="14"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-					aria-hidden="true"
-					className="text-primary"
-				>
-					<polyline points="20 6 9 17 4 12" />
-				</svg>
+				<Check className="text-primary" />
 			) : (
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="14"
-					height="14"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-					aria-hidden="true"
-					className="cursor-pointer"
-				>
-					<rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-					<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-				</svg>
+				<Copy className="cursor-pointer" />
 			)}
 		</button>
 	);
@@ -114,7 +88,7 @@ function AnchorHeading({
 function RelicDivider({ seed }: { seed: string }) {
 	const logo = getLogoForSection(seed);
 	return (
-		<div className="flex justify-center my-4">
+		<div className="flex justify-center my-12">
 			<Image
 				src={`/images/human/${logo}`}
 				alt=""
@@ -130,14 +104,16 @@ function RelicDivider({ seed }: { seed: string }) {
 function Section({
 	title,
 	children,
-}: { title: string; children: React.ReactNode }) {
+	description,
+}: { title: string; children: React.ReactNode; description?: string }) {
 	const id = slugify(title);
 	return (
-		<section className="bg-surface p-2 md:p-5">
-			<AnchorHeading id={id} className="text-3xl font-serif mb-8 text-primary">
+		<section className="bg-surface p-2">
+			<AnchorHeading id={id} className="text-3xl font-serif text-primary">
 				{title}
 			</AnchorHeading>
-			{children}
+			{description && <p className={`${secondaryGray}`}>{description}</p>}
+			<div className="mt-4">{children}</div>
 		</section>
 	);
 }
@@ -169,7 +145,7 @@ function Endpoint({
 	return (
 		<div
 			id={id}
-			className="mb-8 border-b border-neutral-300 dark:border-neutral-700 pb-8 last:border-b-0 scroll-mt-24"
+			className="border-b border-neutral-300 dark:border-neutral-700 last:border-b-0 scroll-mt-24"
 		>
 			<div
 				className="flex items-baseline gap-3 mb-2 cursor-pointer group"
@@ -190,18 +166,18 @@ function Endpoint({
 					&sect;
 				</span>
 			</div>
-			<p className={`${secondaryGray} mb-3`}>{description}</p>
-			{auth && <p className={`${secondaryGray} mb-3`}>Auth: {auth}</p>}
+			<p className={`${secondaryGray}`}>{description}</p>
+			{auth && <p className={`${secondaryGray}`}>Auth: {auth}</p>}
 			{params && params.length > 0 && (
-				<div className="mb-3">
+				<div>
 					<p
-						className={`font-bold ${secondaryGray} uppercase tracking-wide mb-1 italic`}
+						className={`font-bold ${secondaryGray} uppercase tracking-wide italic`}
 					>
 						Parameters
 					</p>
-					<div className="space-y-1">
+					<div>
 						{params.map((p) => (
-							<div key={p.name} className=" font-mono">
+							<div key={p.name}>
 								<span className="text-primary">{p.name}</span>
 								<span className={`${secondaryGray}`}> : {p.type}</span>
 								<span className={`${secondaryGray} font-serif font-normal`}>
@@ -214,13 +190,13 @@ function Endpoint({
 				</div>
 			)}
 			{body && body.length > 0 && (
-				<div className="mb-3">
+				<div>
 					<p
-						className={`font-bold ${secondaryGray} uppercase tracking-wide mb-1 italic`}
+						className={`font-bold ${secondaryGray} uppercase tracking-wide italic`}
 					>
 						Request Body
 					</p>
-					<div className="space-y-1">
+					<div>
 						{body.map((b) => (
 							<div key={b.name} className=" font-mono">
 								<span className="text-primary">{b.name}</span>
@@ -236,9 +212,7 @@ function Endpoint({
 			)}
 			{response && (
 				<div>
-					<p
-						className={`font-bold ${secondaryGray} uppercase tracking-wide mb-1`}
-					>
+					<p className={`font-bold ${secondaryGray} uppercase tracking-wide`}>
 						Response
 					</p>
 					<code className={`font-mono ${secondaryGray}`}>{response}</code>
@@ -267,21 +241,23 @@ function ContractFunction({
 	return (
 		<div
 			id={id}
-			className="mb-8 border-b border-neutral-300 dark:border-neutral-700 pb-8 last:border-b-0 scroll-mt-24"
+			className="border-b last:mb-0 last:pb-0 mb-6 pb-6 border-neutral-300 dark:border-neutral-700 last:border-b-0 scroll-mt-24 flex flex-col gap-6"
 		>
-			<AnchorHeading id={id} as="code" className="font-mono font-bold">
-				{name}
-			</AnchorHeading>
-			<p className={`${secondaryGray}  mt-1 mb-3`}>{description}</p>
-			{access && <p className={`${secondaryGray} mb-3`}>Access: {access}</p>}
+			<div>
+				<AnchorHeading id={id} as="code" className="font-mono font-bold">
+					{name}
+				</AnchorHeading>
+				<p className={`${secondaryGray}`}>{description}</p>
+				{access && <p className={`${secondaryGray}`}>Access: {access}</p>}
+			</div>
 			{params && params.length > 0 && (
-				<div className="mb-3">
+				<div>
 					<p
-						className={`font-bold ${secondaryGray} uppercase tracking-wide mb-1 italic`}
+						className={`font-bold ${secondaryGray} uppercase tracking-wide italic`}
 					>
 						Parameters
 					</p>
-					<div className="space-y-1">
+					<div>
 						{params.map((p) => (
 							<div key={p.name} className=" font-mono">
 								<span className="text-primary">{p.name}</span>
@@ -296,9 +272,9 @@ function ContractFunction({
 				</div>
 			)}
 			{returns && (
-				<div className="mb-3">
+				<div>
 					<p
-						className={`font-bold ${secondaryGray} uppercase tracking-wide mb-1 italic`}
+						className={`font-bold ${secondaryGray} uppercase tracking-wide italic`}
 					>
 						Returns
 					</p>
@@ -308,11 +284,11 @@ function ContractFunction({
 			{events && events.length > 0 && (
 				<div>
 					<p
-						className={`font-bold ${secondaryGray} uppercase tracking-wide mb-1 italic`}
+						className={`font-bold ${secondaryGray} uppercase tracking-wide italic`}
 					>
 						Events
 					</p>
-					<div className="space-y-1">
+					<div>
 						{events.map((e) => (
 							<code key={e} className={`block font-mono ${secondaryGray}`}>
 								{e}
@@ -422,7 +398,7 @@ export default function DocsPage() {
 	return (
 		<div className="flex gap-12">
 			<div className="max-w-3xl flex-1 min-w-0">
-				<p className={`${secondaryGray} mb-8 `}>
+				<p className={`${secondaryGray} mb-4`}>
 					Writer is an onchain writing platform. Content is permanently stored
 					on Optimism through smart contracts.
 				</p>
@@ -431,47 +407,45 @@ export default function DocsPage() {
 				<div className="mb-24">
 					<AnchorHeading
 						id="smart-contracts"
-						className="text-3xl font-serif italic text-primary mb-4"
+						className="text-3xl font-serif italic text-primary mb-1"
 					>
 						Smart Contracts
 					</AnchorHeading>
 
-					<div className="mb-4 bg-surface p-2 md:p-5">
+					<div className="bg-surface p-2">
 						<p
 							className={`${secondaryGray} flex items-center gap-2 flex-wrap mb-2`}
 						>
 							<span>WriterFactory:</span>
-							<a
+							<Link
 								href="https://optimistic.etherscan.io/address/0x28c7721ECff2246a9277CAd46ab2124f69Efd88E"
 								target="_blank"
 								rel="noopener noreferrer"
 								className="font-mono text-primary break-all hover:underline"
 							>
 								0x28c7721ECff2246a9277CAd46ab2124f69Efd88E
-							</a>
+							</Link>
 							<CopyButton value="0x28c7721ECff2246a9277CAd46ab2124f69Efd88E" />
 						</p>
 						<p className={`${secondaryGray} flex items-center gap-2 flex-wrap`}>
 							<span>ColorRegistry:</span>
-							<a
+							<Link
 								href="https://optimistic.etherscan.io/address/0x7Bf5B616f5431725bCE61E397173cd6FbFaAC6F1"
 								target="_blank"
 								rel="noopener noreferrer"
 								className="font-mono text-primary break-all hover:underline"
 							>
 								0x7Bf5B616f5431725bCE61E397173cd6FbFaAC6F1
-							</a>
+							</Link>
 							<CopyButton value="0x7Bf5B616f5431725bCE61E397173cd6FbFaAC6F1" />
 						</p>
 					</div>
 					<RelicDivider seed="smart-contracts" />
 
-					<Section title="WriterFactory">
-						<p className={`${secondaryGray}  mb-8`}>
-							Factory contract that deploys Writer + WriterStorage pairs using
-							CREATE2 for deterministic addresses.
-						</p>
-
+					<Section
+						title="WriterFactory"
+						description="Factory contract that deploys Writer + WriterStorage pairs using CREATE2 for deterministic addresses."
+					>
 						<ContractFunction
 							name="create(title, admin, managers, salt)"
 							description="Deploy a new Writer and WriterStorage contract pair."
@@ -543,16 +517,14 @@ export default function DocsPage() {
 						/>
 					</Section>
 					<RelicDivider seed="factory-writer" />
-					<Section title="Writer">
-						<p className={`${secondaryGray}  mb-8`}>
-							Main logic contract for managing entries with role-based access
-							control.
-						</p>
-
+					<Section
+						title="Writer"
+						description="Main logic contract for managing entries with role-based access control."
+					>
 						<AnchorHeading
 							id="reading"
 							as="h3"
-							className={`text-lg font-serif mb-6 ${secondaryGray}`}
+							className={`text-lg font-serif ${secondaryGray}`}
 						>
 							Reading
 						</AnchorHeading>
@@ -605,7 +577,7 @@ export default function DocsPage() {
 						<AnchorHeading
 							id="writing"
 							as="h3"
-							className={`text-lg font-serif mb-6 mt-12 ${secondaryGray}`}
+							className={`text-lg font-serif ${secondaryGray}`}
 						>
 							Writing
 						</AnchorHeading>
@@ -800,7 +772,7 @@ export default function DocsPage() {
 						<AnchorHeading
 							id="administration"
 							as="h3"
-							className={`text-lg font-serif mb-6 mt-12 ${secondaryGray}`}
+							className={`text-lg font-serif ${secondaryGray}`}
 						>
 							Administration
 						</AnchorHeading>
@@ -849,12 +821,10 @@ export default function DocsPage() {
 						/>
 					</Section>
 					<RelicDivider seed="writer-storage" />
-					<Section title="WriterStorage">
-						<p className={`${secondaryGray}  mb-8`}>
-							Storage contract that holds all entry data. Only the Writer logic
-							contract can modify state, enforced by the onlyLogic modifier.
-						</p>
-
+					<Section
+						title="WriterStorage"
+						description="Storage contract that holds all entry data. Only the Writer logic contract can modify state, enforced by the onlyLogic modifier."
+					>
 						<ContractFunction
 							name="Entry struct"
 							description="The data structure for each entry stored onchain."
@@ -893,11 +863,10 @@ export default function DocsPage() {
 						/>
 					</Section>
 					<RelicDivider seed="storage-color" />
-					<Section title="ColorRegistry">
-						<p className={`${secondaryGray}  mb-8`}>
-							Simple registry mapping user addresses to their chosen hex color.
-						</p>
-
+					<Section
+						title="ColorRegistry"
+						description="Simple registry mapping user addresses to their chosen hex color."
+					>
 						<ContractFunction
 							name="setHex(hexColor)"
 							description="Set your color directly."
@@ -959,7 +928,7 @@ export default function DocsPage() {
 					</p>
 					<div>
 						<span className={`${secondaryGray}`}>Base URL: </span>
-						<div className="mb-4 bg-surface p-2 md:p-5">
+						<div className="mb-4 bg-surface p-2">
 							<p className={`${secondaryGray} flex items-center gap-2`}>
 								<code className="font-mono text-primary">
 									https://api.writer.place
@@ -1213,24 +1182,23 @@ export default function DocsPage() {
 						encoded string, not raw markdown.
 					</p>
 
-					<div className="mb-4 bg-surface p-2 md:p-5">
+					<div className="mb-4 bg-surface p-2">
 						<p className={`font-mono ${secondaryGray} text-center`}>
 							Markdown &rarr; Compress &rarr; Encrypt (optional) &rarr; Prefix
 							&rarr; Store
 						</p>
 					</div>
 
-					<Section title="Format Prefixes">
-						<p className={`${secondaryGray} mb-6`}>
-							The version prefix at the start of the stored content string
-							indicates how to decode it.
-						</p>
-
+					<Section
+						title="Format Prefixes"
+						description="The version prefix at the start of the stored content string indicates how to decode it."
+					>
 						<div className="space-y-6">
 							<div className="border-b border-neutral-300 dark:border-neutral-700 pb-6">
 								<code className="font-mono font-bold text-primary">br:</code>
 								<p className={`${secondaryGray} mt-1`}>
-									Public entry. Brotli compressed, Base64 encoded. No encryption.
+									Public entry. Brotli compressed, Base64 encoded. No
+									encryption.
 								</p>
 								<p className={`${secondaryGray} mt-1 font-mono text-sm`}>
 									br:GxoAAI2pVgqN...
@@ -1250,36 +1218,23 @@ export default function DocsPage() {
 								</p>
 							</div>
 
-							<div className="border-b border-neutral-300 dark:border-neutral-700 pb-6">
-								<code className="font-mono font-bold text-primary">
-									enc:v2:br:
-								</code>
-								<p className={`${secondaryGray} mt-1`}>
-									Private entry, legacy format. AES-GCM encrypted with v2 key,
-									Brotli compressed.
-								</p>
+							<div className="border-b border-neutral-300 dark:border-neutral-700 pb-6 opacity-50">
+								<code className="font-mono font-bold">enc:v2:br:</code>
+								<p className={`${secondaryGray} mt-1`}>Deprecated</p>
 							</div>
 
-							<div className="pb-6">
-								<code className="font-mono font-bold text-primary">
-									enc:br:
-								</code>
-								<p className={`${secondaryGray} mt-1`}>
-									Private entry, legacy format. AES-GCM encrypted with v1 key,
-									Brotli compressed.
-								</p>
+							<div className="pb-6 opacity-50">
+								<code className="font-mono font-bold">enc:br:</code>
+								<p className={`${secondaryGray} mt-1`}>Deprecated</p>
 							</div>
 						</div>
 					</Section>
 					<RelicDivider seed="prefixes-compression" />
-					<Section title="Compression">
-						<p className={`${secondaryGray} mb-6`}>
-							All content is compressed with Brotli at quality level 11
-							(maximum), then Base64 encoded. This reduces onchain storage
-							costs.
-						</p>
-
-						<div className="bg-surface p-2 md:p-5 mb-6">
+					<Section
+						title="Compression"
+						description="All content is compressed with Brotli at quality level 11 (maximum), then Base64 encoded. This reduces onchain storage costs."
+					>
+						<div className="bg-surface p-2">
 							<p className={`font-mono ${secondaryGray} text-sm`}>
 								markdown &rarr; TextEncoder &rarr; Brotli compress (quality 11)
 								&rarr; Base64 encode
@@ -1287,13 +1242,11 @@ export default function DocsPage() {
 						</div>
 					</Section>
 					<RelicDivider seed="compression-encryption" />
-					<Section title="Encryption">
-						<p className={`${secondaryGray} mb-6`}>
-							Private entries are encrypted after compression using AES-GCM with
-							a 128-bit key and 12-byte random IV.
-						</p>
-
-						<div className="bg-surface p-2 md:p-5 mb-6">
+					<Section
+						title="Encryption"
+						description="Private entries are encrypted after compression using AES-GCM with a 128-bit key and 12-byte random IV."
+					>
+						<div className="bg-surface p-2">
 							<p className={`font-mono ${secondaryGray} text-sm`}>
 								compressed content &rarr; AES-GCM encrypt &rarr; prepend IV
 								&rarr; Base64 encode
@@ -1305,7 +1258,9 @@ export default function DocsPage() {
 							signature:
 						</p>
 
-						<ol className={`${secondaryGray} list-decimal list-inside space-y-2 mb-6`}>
+						<ol
+							className={`${secondaryGray} list-decimal list-inside space-y-2`}
+						>
 							<li>
 								User signs a fixed message with{" "}
 								<code className="font-mono text-primary">personal_sign</code>
@@ -1320,20 +1275,30 @@ export default function DocsPage() {
 							ciphertext.
 						</p>
 
-						<p className={`${secondaryGray}`}>
+						<p className={`${secondaryGray} mb-4`}>
 							V1, V2, and V3 keys differ only in the message signed during key
 							derivation. V3 is the current default and includes a security
 							warning to only sign on writer.place. V1 and V2 are supported for
 							backward compatibility with older entries. A migration tool is
 							available in the app to re-encrypt legacy entries with the V3 key.
 						</p>
+
+						<p className={`${secondaryGray} font-bold`}>
+							Because the encryption key is derived from signing a specific
+							message, anyone who tricks you into signing that same message on a
+							different site could derive the same key and decrypt your private
+							entries. The V3 message explicitly states to only sign on{" "}
+							<code className="font-mono text-primary">
+								https://writer.place
+							</code>
+							. Always verify the requesting site before signing.
+						</p>
 					</Section>
 					<RelicDivider seed="encryption-decoding" />
-					<Section title="Decoding">
-						<p className={`${secondaryGray} mb-6`}>
-							To read an entry, reverse the pipeline based on the prefix.
-						</p>
-
+					<Section
+						title="Decoding"
+						description="To read an entry, reverse the pipeline based on the prefix."
+					>
 						<div className="space-y-6">
 							<div className="border-b border-neutral-300 dark:border-neutral-700 pb-6">
 								<code className="font-mono font-bold text-primary">br:</code>
@@ -1352,30 +1317,21 @@ export default function DocsPage() {
 								</p>
 							</div>
 
-							<div className="border-b border-neutral-300 dark:border-neutral-700 pb-6">
-								<code className="font-mono font-bold text-primary">
-									enc:v2:br:
-								</code>
-								<p className={`${secondaryGray} mt-1`}>
-									Strip prefix &rarr; Base64 decode &rarr; AES-GCM decrypt (v2
-									key) &rarr; Brotli decompress
-								</p>
+							<div className="border-b border-neutral-300 dark:border-neutral-700 pb-6 opacity-50">
+								<code className="font-mono font-bold">enc:v2:br:</code>
+								<p className={`${secondaryGray} mt-1`}>Deprecated</p>
 							</div>
 
-							<div className="pb-6">
-								<code className="font-mono font-bold text-primary">
-									enc:br:
-								</code>
-								<p className={`${secondaryGray} mt-1`}>
-									Strip prefix &rarr; Base64 decode &rarr; AES-GCM decrypt (v1
-									key) &rarr; Brotli decompress
-								</p>
+							<div className="pb-6 opacity-50">
+								<code className="font-mono font-bold">enc:br:</code>
+								<p className={`${secondaryGray} mt-1`}>Deprecated</p>
 							</div>
 						</div>
 
 						<p className={`${secondaryGray}`}>
-							Public entries are decoded server-side and returned as plaintext in
-							the <code className="font-mono text-primary">decompressed</code>{" "}
+							Public entries are decoded server-side and returned as plaintext
+							in the{" "}
+							<code className="font-mono text-primary">decompressed</code>{" "}
 							field. Private entries are returned as the raw encoded string and
 							decrypted client-side using the author&apos;s wallet.
 						</p>
