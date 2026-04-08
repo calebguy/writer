@@ -386,6 +386,12 @@ class Db {
 			storageAddress: item.storageAddress.toLowerCase(),
 		} satisfies InsertEntry;
 
+		const conflictTarget = normalizedEntry.id
+			? [entry.id]
+			: normalizedEntry.createdAtTransactionId
+				? [entry.createdAtTransactionId]
+				: [entry.storageAddress, entry.onChainId];
+
 		const data = await this.pg
 			.insert(entry)
 			.values({
@@ -394,9 +400,7 @@ class Db {
 				createdAt: new Date(),
 			})
 			.onConflictDoUpdate({
-				target: normalizedEntry.createdAtTransactionId
-					? [entry.createdAtTransactionId]
-					: [entry.storageAddress, entry.onChainId],
+				target: conflictTarget,
 				set: {
 					...normalizedEntry,
 					updatedAt: new Date(),

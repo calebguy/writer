@@ -76,26 +76,32 @@ const writerRoutes = new Hono()
 			nonce: Number(nonce),
 			hexColor,
 		};
-		const { wallet, nonce: relayNonce } = await relay.sendTransaction({
-			to: env.COLOR_REGISTRY_ADDRESS,
-			abi: SET_HEX_FUNCTION_SIGNATURE,
-			args: [signature, Number(nonce), hexColor],
-		});
-		const transactionId = makeRelayTxId(wallet, relayNonce);
-		await db.createTx({
-			id: transactionId,
-			wallet,
-			nonce: relayNonce,
-			chainId: BigInt(env.TARGET_CHAIN_ID),
-			functionSignature: SET_HEX_FUNCTION_SIGNATURE,
-			args,
-			status: "PENDING",
-		});
-		const user = await db.upsertUser({
-			address: address,
-			color: hexColor,
-		});
-		return c.json({ user });
+		try {
+			const { wallet, nonce: relayNonce } = await relay.sendTransaction({
+				to: env.COLOR_REGISTRY_ADDRESS,
+				abi: SET_HEX_FUNCTION_SIGNATURE,
+				args: [signature, Number(nonce), hexColor],
+			});
+			const transactionId = makeRelayTxId(wallet, relayNonce);
+			await db.createTx({
+				id: transactionId,
+				wallet,
+				nonce: relayNonce,
+				chainId: BigInt(env.TARGET_CHAIN_ID),
+				functionSignature: SET_HEX_FUNCTION_SIGNATURE,
+				args,
+				status: "PENDING",
+			});
+			const user = await db.upsertUser({
+				address: address,
+				color: hexColor,
+			});
+			return c.json({ user });
+		} catch (err) {
+			console.error("color-registry/set db error:", err);
+			const message = err instanceof Error ? err.message : "unknown database error";
+			return c.json({ error: `database error during color set: ${message}` }, 500);
+		}
 	})
 	.post("/factory/create", factoryCreateJsonValidator, async (c) => {
 		const { admin, managers, title } = c.req.valid("json");
@@ -114,31 +120,37 @@ const writerRoutes = new Hono()
 				salt,
 			}),
 		]);
-		const { wallet, nonce: relayNonce } = await relay.sendTransaction({
-			to: env.FACTORY_ADDRESS,
-			abi: CREATE_FUNCTION_SIGNATURE,
-			args: [title, admin, managers, salt],
-		});
-		const transactionId = makeRelayTxId(wallet, relayNonce);
-		await db.createTx({
-			id: transactionId,
-			wallet,
-			nonce: relayNonce,
-			chainId: BigInt(env.TARGET_CHAIN_ID),
-			functionSignature: CREATE_FUNCTION_SIGNATURE,
-			args,
-			status: "PENDING",
-		});
-		const data = await db.upsertWriter({
-			title,
-			admin,
-			managers,
-			transactionId,
-			address,
-			storageAddress,
-		});
-		const writer = writerToJsonSafe(data[0]);
-		return c.json({ writer }, 201);
+		try {
+			const { wallet, nonce: relayNonce } = await relay.sendTransaction({
+				to: env.FACTORY_ADDRESS,
+				abi: CREATE_FUNCTION_SIGNATURE,
+				args: [title, admin, managers, salt],
+			});
+			const transactionId = makeRelayTxId(wallet, relayNonce);
+			await db.createTx({
+				id: transactionId,
+				wallet,
+				nonce: relayNonce,
+				chainId: BigInt(env.TARGET_CHAIN_ID),
+				functionSignature: CREATE_FUNCTION_SIGNATURE,
+				args,
+				status: "PENDING",
+			});
+			const data = await db.upsertWriter({
+				title,
+				admin,
+				managers,
+				transactionId,
+				address,
+				storageAddress,
+			});
+			const writer = writerToJsonSafe(data[0]);
+			return c.json({ writer }, 201);
+		} catch (err) {
+			console.error("factory/create db error:", err);
+			const message = err instanceof Error ? err.message : "unknown database error";
+			return c.json({ error: `database error during writer creation: ${message}` }, 500);
+		}
 	})
 	.post("/writer/:address/hide", addressParamSchema, requireWriterAdminAuth, async (c) => {
 		const { address } = c.req.valid("param");
@@ -146,16 +158,22 @@ const writerRoutes = new Hono()
 		if (!writer) {
 			return c.json({ error: "writer not found" }, 404);
 		}
-		await db.deleteWriter(address);
-		return c.json(
-			{
-				writer: {
-					...writerToJsonSafe(writer),
-					entries: writer.entries.map(entryToJsonSafe),
+		try {
+			await db.deleteWriter(address);
+			return c.json(
+				{
+					writer: {
+						...writerToJsonSafe(writer),
+						entries: writer.entries.map(entryToJsonSafe),
+					},
 				},
-			},
-			200,
-		);
+				200,
+			);
+		} catch (err) {
+			console.error("writer/hide db error:", err);
+			const message = err instanceof Error ? err.message : "unknown database error";
+			return c.json({ error: `database error during writer hide: ${message}` }, 500);
+		}
 	})
 	.post(
 		"/writer/:address/entry/createWithChunk",
@@ -185,46 +203,52 @@ const writerRoutes = new Hono()
 				chunkCount: Number(chunkCount),
 				chunkContent,
 			};
-			const { wallet, nonce: relayNonce } = await relay.sendTransaction({
-				to: contractAddress,
-				abi: CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
-				args: [signature, Number(nonce), Number(chunkCount), chunkContent],
-			});
-			const transactionId = makeRelayTxId(wallet, relayNonce);
-			await db.createTx({
-				id: transactionId,
-				wallet,
-				nonce: relayNonce,
-				chainId: BigInt(env.TARGET_CHAIN_ID),
-				functionSignature: CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
-				args,
-				status: "PENDING",
-			});
-			const raw = chunkContent;
-			const [data] = await db.upsertEntry({
-				exists: true,
-				storageAddress: writer.storageAddress,
-				createdAtTransactionId: transactionId,
-				author,
-			});
-			if (!data) {
-				return c.json({ error: "entry not found" }, 404);
+			try {
+				const { wallet, nonce: relayNonce } = await relay.sendTransaction({
+					to: contractAddress,
+					abi: CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
+					args: [signature, Number(nonce), Number(chunkCount), chunkContent],
+				});
+				const transactionId = makeRelayTxId(wallet, relayNonce);
+				await db.createTx({
+					id: transactionId,
+					wallet,
+					nonce: relayNonce,
+					chainId: BigInt(env.TARGET_CHAIN_ID),
+					functionSignature: CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
+					args,
+					status: "PENDING",
+				});
+				const raw = chunkContent;
+				const [data] = await db.upsertEntry({
+					exists: true,
+					storageAddress: writer.storageAddress,
+					createdAtTransactionId: transactionId,
+					author,
+				});
+				if (!data) {
+					return c.json({ error: "entry not found" }, 404);
+				}
+				await db.upsertChunk({
+					entryId: data.id,
+					content: raw,
+					createdAtTransactionId: transactionId,
+					index: 0,
+				});
+				const entryRefreshed = await db.getEntry(
+					writer.storageAddress as Hex,
+					data.id,
+				);
+				if (!entryRefreshed) {
+					return c.json({ error: "entry not found" }, 404);
+				}
+				const entry = entryToJsonSafe(entryRefreshed);
+				return c.json({ entry }, 201);
+			} catch (err) {
+				console.error("createWithChunk db error:", err);
+				const message = err instanceof Error ? err.message : "unknown database error";
+				return c.json({ error: `database error during entry creation: ${message}` }, 500);
 			}
-			await db.upsertChunk({
-				entryId: data.id,
-				content: raw,
-				createdAtTransactionId: transactionId,
-				index: 0,
-			});
-			const entryRefreshed = await db.getEntry(
-				writer.storageAddress as Hex,
-				data.id,
-			);
-			if (!entryRefreshed) {
-				return c.json({ error: "entry not found" }, 404);
-			}
-			const entry = entryToJsonSafe(entryRefreshed);
-			return c.json({ entry }, 201);
 		},
 	)
 	.get("/writer/:address/entry/:id", addressAndIDParamSchema, async (c) => {
@@ -317,27 +341,30 @@ const writerRoutes = new Hono()
 				status: "PENDING",
 			});
 
-			const [data] = await db.upsertEntry({
-				createdAtTransactionId: entry.createdAtTransactionId,
-				id: entry.id,
-				exists: true,
-				storageAddress: writer.storageAddress,
-				author,
-				updatedAtTransactionId: transactionId,
-			});
-			if (!data) {
-				return c.json({ error: "entry not found" }, 404);
+			try {
+				const [data] = await db.upsertEntry({
+					createdAtTransactionId: entry.createdAtTransactionId,
+					id: entry.id,
+					exists: true,
+					storageAddress: writer.storageAddress,
+					author,
+					updatedAtTransactionId: transactionId,
+				});
+				if (!data) {
+					return c.json({ error: "entry not found after update" }, 404);
+				}
+				await db.upsertChunk({
+					entryId: data.id,
+					content: content,
+					createdAtTransactionId: transactionId,
+					index: 0,
+				});
+				return c.json({ entry: entryToJsonSafe(data) }, 201);
+			} catch (err) {
+				console.error("update entry db error:", err);
+				const message = err instanceof Error ? err.message : "unknown database error";
+				return c.json({ error: `database error during entry update: ${message}` }, 500);
 			}
-			await db.upsertChunk({
-				entryId: data.id,
-				content: content,
-				createdAtTransactionId: transactionId,
-				index: 0,
-			});
-			if (!data) {
-				return c.json({ error: "entry not found" }, 404);
-			}
-			return c.json({ entry: entryToJsonSafe(data) }, 201);
 		},
 	)
 	.post(
@@ -371,32 +398,38 @@ const writerRoutes = new Hono()
 			}
 
 			const args = { signature, nonce: Number(nonce), id: Number(id) };
-			const { wallet, nonce: relayNonce } = await relay.sendTransaction({
-				to: address,
-				abi: DELETE_ENTRY_FUNCTION_SIGNATURE,
-				args: [signature, Number(nonce), Number(id)],
-			});
-			const transactionId = makeRelayTxId(wallet, relayNonce);
-			await db.createTx({
-				id: transactionId,
-				wallet,
-				nonce: relayNonce,
-				chainId: BigInt(env.TARGET_CHAIN_ID),
-				functionSignature: DELETE_ENTRY_FUNCTION_SIGNATURE,
-				args,
-				status: "PENDING",
-			});
-			await db.deleteEntry(writer.storageAddress as Hex, id, transactionId);
-			const newData = await db.getWriter(address);
-			if (!newData) {
-				return c.json({ error: "writer not found" }, 404);
+			try {
+				const { wallet, nonce: relayNonce } = await relay.sendTransaction({
+					to: address,
+					abi: DELETE_ENTRY_FUNCTION_SIGNATURE,
+					args: [signature, Number(nonce), Number(id)],
+				});
+				const transactionId = makeRelayTxId(wallet, relayNonce);
+				await db.createTx({
+					id: transactionId,
+					wallet,
+					nonce: relayNonce,
+					chainId: BigInt(env.TARGET_CHAIN_ID),
+					functionSignature: DELETE_ENTRY_FUNCTION_SIGNATURE,
+					args,
+					status: "PENDING",
+				});
+				await db.deleteEntry(writer.storageAddress as Hex, id, transactionId);
+				const newData = await db.getWriter(address);
+				if (!newData) {
+					return c.json({ error: "writer not found" }, 404);
+				}
+				return c.json({
+					writer: {
+						...writerToJsonSafe(newData),
+						entries: newData.entries.map(entryToJsonSafe),
+					},
+				});
+			} catch (err) {
+				console.error("delete entry db error:", err);
+				const message = err instanceof Error ? err.message : "unknown database error";
+				return c.json({ error: `database error during entry deletion: ${message}` }, 500);
 			}
-			return c.json({
-				writer: {
-					...writerToJsonSafe(newData),
-					entries: newData.entries.map(entryToJsonSafe),
-				},
-			});
 		},
 	);
 
