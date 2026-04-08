@@ -145,29 +145,33 @@ function Endpoint({
 	return (
 		<div
 			id={id}
-			className="border-b border-neutral-300 dark:border-neutral-700 last:border-b-0 scroll-mt-24"
+			className="border-b last:mb-0 last:pb-0 mb-6 pb-6 border-neutral-300 dark:border-neutral-700 last:border-b-0 scroll-mt-24 flex flex-col gap-6"
 		>
-			<div
-				className="flex items-baseline gap-3 mb-2 cursor-pointer group"
-				onClick={() => copyAnchor(id)}
-				onKeyDown={(e) => {
-					if (e.key === "Enter" || e.key === " ") {
-						e.preventDefault();
-						copyAnchor(id);
-					}
-				}}
-				role="button"
-				tabIndex={0}
-				aria-label="Copy anchor"
-			>
-				<span className={`font-mono  font-bold ${methodColor}`}>{method}</span>
-				<code className="font-mono ">{path}</code>
-				<span className="opacity-0 group-hover:opacity-100 transition-opacity font-normal ml-2 text-sm text-neutral-500 dark:text-neutral-400">
-					&sect;
-				</span>
+			<div>
+				<div
+					className="flex items-baseline gap-3 mb-2 cursor-pointer group"
+					onClick={() => copyAnchor(id)}
+					onKeyDown={(e) => {
+						if (e.key === "Enter" || e.key === " ") {
+							e.preventDefault();
+							copyAnchor(id);
+						}
+					}}
+					role="button"
+					tabIndex={0}
+					aria-label="Copy anchor"
+				>
+					<span className={`font-mono  font-bold ${methodColor}`}>
+						{method}
+					</span>
+					<code className="font-mono">{path}</code>
+					<span className="opacity-0 group-hover:opacity-100 transition-opacity font-normal ml-2 text-sm text-neutral-500 dark:text-neutral-400">
+						&sect;
+					</span>
+				</div>
+				<p className={`${secondaryGray}`}>{description}</p>
+				{auth && <p className={`${secondaryGray}`}>Auth: {auth}</p>}
 			</div>
-			<p className={`${secondaryGray}`}>{description}</p>
-			{auth && <p className={`${secondaryGray}`}>Auth: {auth}</p>}
 			{params && params.length > 0 && (
 				<div>
 					<p
@@ -916,10 +920,10 @@ export default function DocsPage() {
 				</div>
 
 				{/* API */}
-				<div>
+				<div className="mb-24">
 					<AnchorHeading
 						id="api"
-						className="text-3xl font-serif italic text-primary mb-4"
+						className="text-3xl font-serif italic text-primary mb-1"
 					>
 						API
 					</AnchorHeading>
@@ -1168,24 +1172,24 @@ export default function DocsPage() {
 				</div>
 
 				{/* CONTENT ENCODING */}
-				<div className="mt-24">
+				<div>
 					<AnchorHeading
 						id="content-encoding"
-						className="text-3xl font-serif italic text-primary mb-4"
+						className="text-3xl font-serif italic text-primary mb-1"
 					>
 						Content Encoding
 					</AnchorHeading>
 					<p className={`${secondaryGray} mb-4`}>
 						Entry content goes through a multi-step encoding pipeline before
-						being stored onchain. The <code>content</code> /{" "}
-						<code>chunkContent</code> fields in API requests contain the final
-						encoded string, not raw markdown.
+						being stored onchain. The <code className="font-mono">content</code>{" "}
+						& <code className="font-mono">chunkContent</code> fields in API
+						requests contain the final encoded string, not raw markdown.
 					</p>
 
 					<div className="mb-4 bg-surface p-2">
 						<p className={`font-mono ${secondaryGray} text-center`}>
-							Markdown &rarr; Compress &rarr; Encrypt (optional) &rarr; Prefix
-							&rarr; Store
+							markdown &rarr; compress &rarr; encrypt (optional) &rarr; prefix
+							&rarr; store
 						</p>
 					</div>
 
@@ -1234,8 +1238,8 @@ export default function DocsPage() {
 						title="Compression"
 						description="All content is compressed with Brotli at quality level 11 (maximum), then Base64 encoded. This reduces onchain storage costs."
 					>
-						<div className="bg-surface p-2">
-							<p className={`font-mono ${secondaryGray} text-sm`}>
+						<div className="bg-surface-raised p-2">
+							<p className={`font-mono ${secondaryGray} text-sm text-center`}>
 								markdown &rarr; TextEncoder &rarr; Brotli compress (quality 11)
 								&rarr; Base64 encode
 							</p>
@@ -1246,8 +1250,8 @@ export default function DocsPage() {
 						title="Encryption"
 						description="Private entries are encrypted after compression using AES-GCM with a 128-bit key and 12-byte random IV."
 					>
-						<div className="bg-surface p-2">
-							<p className={`font-mono ${secondaryGray} text-sm`}>
+						<div className="bg-surface-raised p-2 mb-4">
+							<p className={`font-mono ${secondaryGray} text-sm text-center`}>
 								compressed content &rarr; AES-GCM encrypt &rarr; prepend IV
 								&rarr; Base64 encode
 							</p>
@@ -1281,17 +1285,6 @@ export default function DocsPage() {
 							warning to only sign on writer.place. V1 and V2 are supported for
 							backward compatibility with older entries. A migration tool is
 							available in the app to re-encrypt legacy entries with the V3 key.
-						</p>
-
-						<p className={`${secondaryGray} font-bold`}>
-							Because the encryption key is derived from signing a specific
-							message, anyone who tricks you into signing that same message on a
-							different site could derive the same key and decrypt your private
-							entries. The V3 message explicitly states to only sign on{" "}
-							<code className="font-mono text-primary">
-								https://writer.place
-							</code>
-							. Always verify the requesting site before signing.
 						</p>
 					</Section>
 					<RelicDivider seed="encryption-decoding" />
