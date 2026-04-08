@@ -466,7 +466,7 @@ The version prefix at the start of the stored content string indicates how to de
 All content is compressed with [Brotli](https://github.com/nicolo-ribaudo/brotli-wasm) at quality level 11 (maximum), then Base64-encoded. This reduces onchain storage costs.
 
 ```
-markdown → TextEncoder → Brotli compress → Base64 encode
+markdown → UTF-8 encode → brotli compress → base64 encode
 ```
 
 ### Encryption

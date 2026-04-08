@@ -1240,8 +1240,8 @@ export default function DocsPage() {
 					>
 						<div className="bg-surface-raised p-2">
 							<p className={`font-mono ${secondaryGray} text-sm text-center`}>
-								markdown &rarr; TextEncoder &rarr; Brotli compress (quality 11)
-								&rarr; Base64 encode
+								markdown &rarr; UTF-8 encode &rarr; brotli compress (quality 11)
+								&rarr; base64 encode
 							</p>
 						</div>
 					</Section>
@@ -1253,7 +1253,7 @@ export default function DocsPage() {
 						<div className="bg-surface-raised p-2 mb-4">
 							<p className={`font-mono ${secondaryGray} text-sm text-center`}>
 								compressed content &rarr; AES-GCM encrypt &rarr; prepend IV
-								&rarr; Base64 encode
+								&rarr; base64 encode
 							</p>
 						</div>
 
@@ -1295,8 +1295,10 @@ export default function DocsPage() {
 						<div className="space-y-6">
 							<div className="border-b border-neutral-300 dark:border-neutral-700 pb-6">
 								<code className="font-mono font-bold text-primary">br:</code>
-								<p className={`${secondaryGray} mt-1`}>
-									Strip prefix &rarr; Base64 decode &rarr; Brotli decompress
+								<p
+									className={`${secondaryGray} mt-1 bg-surface-raised text-center p-2 font-mono`}
+								>
+									strip prefix &rarr; base64 decode &rarr; brotli decompress
 								</p>
 							</div>
 
@@ -1304,9 +1306,11 @@ export default function DocsPage() {
 								<code className="font-mono font-bold text-primary">
 									enc:v3:br:
 								</code>
-								<p className={`${secondaryGray} mt-1`}>
-									Strip prefix &rarr; Base64 decode &rarr; AES-GCM decrypt (v3
-									key) &rarr; Brotli decompress
+								<p
+									className={`${secondaryGray} mt-1 bg-surface-raised text-center p-2 font-mono`}
+								>
+									strip prefix &rarr; base64 decode &rarr; AES-GCM decrypt (v3
+									key) &rarr; brotli decompress
 								</p>
 							</div>
 
