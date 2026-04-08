@@ -27,8 +27,14 @@ const savedRoutes = new Hono()
 			if (!writer || writer.deletedAt) {
 				return c.json({ error: "writer not found" }, 404);
 			}
-			await db.saveWriter(userAddress, address);
-			return c.json({ ok: true }, 201);
+			try {
+				await db.saveWriter(userAddress, address);
+				return c.json({ ok: true }, 201);
+			} catch (err) {
+				console.error("save writer db error:", err);
+				const message = err instanceof Error ? err.message : "unknown database error";
+				return c.json({ error: `database error during save writer: ${message}` }, 500);
+			}
 		},
 	)
 	.delete(
@@ -37,8 +43,14 @@ const savedRoutes = new Hono()
 		userAddressAndAddressParamSchema,
 		async (c) => {
 			const { userAddress, address } = c.req.valid("param");
-			await db.unsaveWriter(userAddress, address);
-			return c.json({ ok: true }, 200);
+			try {
+				await db.unsaveWriter(userAddress, address);
+				return c.json({ ok: true }, 200);
+			} catch (err) {
+				console.error("unsave writer db error:", err);
+				const message = err instanceof Error ? err.message : "unknown database error";
+				return c.json({ error: `database error during unsave writer: ${message}` }, 500);
+			}
 		},
 	)
 	.post(
@@ -55,8 +67,14 @@ const savedRoutes = new Hono()
 			if (!data || data.deletedAt) {
 				return c.json({ error: "entry not found" }, 404);
 			}
-			await db.saveEntry(userAddress, entryId);
-			return c.json({ ok: true }, 201);
+			try {
+				await db.saveEntry(userAddress, entryId);
+				return c.json({ ok: true }, 201);
+			} catch (err) {
+				console.error("save entry db error:", err);
+				const message = err instanceof Error ? err.message : "unknown database error";
+				return c.json({ error: `database error during save entry: ${message}` }, 500);
+			}
 		},
 	)
 	.delete(
@@ -69,8 +87,14 @@ const savedRoutes = new Hono()
 			if (!Number.isSafeInteger(entryId) || entryId <= 0) {
 				return c.json({ error: "invalid entry id" }, 400);
 			}
-			await db.unsaveEntry(userAddress, entryId);
-			return c.json({ ok: true }, 200);
+			try {
+				await db.unsaveEntry(userAddress, entryId);
+				return c.json({ ok: true }, 200);
+			} catch (err) {
+				console.error("unsave entry db error:", err);
+				const message = err instanceof Error ? err.message : "unknown database error";
+				return c.json({ error: `database error during unsave entry: ${message}` }, 500);
+			}
 		},
 	);
 
