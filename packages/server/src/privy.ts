@@ -32,6 +32,13 @@ async function verifyPrivyToken(token: string) {
 /**
  * Verifies the Privy token and checks that the authenticated user's wallet
  * matches the :userAddress route param.
+ *
+ * Note: this middleware reads the URL param raw via `c.req.param`, BEFORE
+ * the zod validator (the validator is registered after the middleware in
+ * routes/saved.ts). A malformed param could throw inside `getAddress`,
+ * which previously bubbled up as a 500. The try/catch around the address
+ * normalization converts those into a clean 401, matching the behavior
+ * for invalid tokens.
  */
 export async function requireSavedAuth(c: Context, next: Next) {
 	const token = getAuthenticatedWallet(c);
@@ -47,11 +54,22 @@ export async function requireSavedAuth(c: Context, next: Next) {
 	}
 
 	const userAddress = c.req.param("userAddress");
-	if (
-		!userAddress ||
-		!walletAddress ||
-		getAddress(walletAddress) !== getAddress(userAddress)
-	) {
+	if (!userAddress || !walletAddress) {
+		return c.json({ error: "unauthorized" }, 401);
+	}
+
+	let normalizedWallet: string;
+	let normalizedUser: string;
+	try {
+		normalizedWallet = getAddress(walletAddress);
+		normalizedUser = getAddress(userAddress);
+	} catch {
+		// One of the addresses (almost always the URL param) is malformed.
+		// Return 401 instead of letting the error bubble to a 500.
+		return c.json({ error: "unauthorized" }, 401);
+	}
+
+	if (normalizedWallet !== normalizedUser) {
 		return c.json({ error: "forbidden" }, 403);
 	}
 
@@ -91,6 +109,10 @@ export async function requireWalletAuth(c: Context, next: Next) {
 /**
  * Verifies the Privy token and checks that the authenticated user's wallet
  * is the admin of the writer at :address.
+ *
+ * Same defensive note as requireSavedAuth: the URL param is read raw via
+ * `c.req.param` before any zod validator, so getAddress() is wrapped in
+ * try/catch to convert malformed inputs into a clean 401 instead of a 500.
  */
 export async function requireWriterAdminAuth(c: Context, next: Next) {
 	const token = getAuthenticatedWallet(c);
@@ -114,12 +136,29 @@ export async function requireWriterAdminAuth(c: Context, next: Next) {
 		return c.json({ error: "unauthorized" }, 401);
 	}
 
-	const writer = await db.getWriter(getAddress(address) as Hex);
+	let normalizedWriterAddress: Hex;
+	let normalizedWalletAddress: string;
+	try {
+		normalizedWriterAddress = getAddress(address) as Hex;
+		normalizedWalletAddress = getAddress(walletAddress);
+	} catch {
+		return c.json({ error: "unauthorized" }, 401);
+	}
+
+	const writer = await db.getWriter(normalizedWriterAddress);
 	if (!writer) {
 		return c.json({ error: "writer not found" }, 404);
 	}
 
-	if (getAddress(writer.admin) !== getAddress(walletAddress)) {
+	let normalizedDbAdmin: string;
+	try {
+		normalizedDbAdmin = getAddress(writer.admin);
+	} catch {
+		// DB row has a malformed admin somehow — treat as unauthorized.
+		return c.json({ error: "forbidden" }, 403);
+	}
+
+	if (normalizedDbAdmin !== normalizedWalletAddress) {
 		return c.json({ error: "forbidden" }, 403);
 	}
 

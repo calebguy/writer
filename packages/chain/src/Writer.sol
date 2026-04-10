@@ -16,6 +16,12 @@ contract Writer is AccessControl, VerifyTypedData {
     bytes32 public constant UPDATE_TYPEHASH =
         keccak256("Update(uint256 nonce,uint256 entryId,uint256 totalChunks,string content)");
     bytes32 public constant SET_TITLE_TYPEHASH = keccak256("SetTitle(uint256 nonce,string title)");
+    bytes32 public constant GRANT_WRITER_ROLE_TYPEHASH =
+        keccak256("GrantWriterRole(uint256 nonce,address account)");
+    bytes32 public constant REVOKE_WRITER_ROLE_TYPEHASH =
+        keccak256("RevokeWriterRole(uint256 nonce,address account)");
+    bytes32 public constant RENOUNCE_WRITER_ROLE_TYPEHASH =
+        keccak256("RenounceWriterRole(uint256 nonce)");
 
     string public constant DOMAIN_NAME = "Writer";
     string public constant DOMAIN_VERSION = "1";
@@ -164,6 +170,59 @@ contract Writer is AccessControl, VerifyTypedData {
         _verifyAndMark(signature, structHash, DEFAULT_ADMIN_ROLE);
         title = newTitle;
         emit TitleSet(newTitle);
+    }
+
+    // -------------------------------------------------------------------------
+    // Role management via signature (gasless admin operations)
+    //
+    // These three functions let the writer admin (and individual writers, in
+    // the case of renounce) manage WRITER_ROLE membership without needing a
+    // funded wallet. The signed payload is relayed via the same Privy/relay
+    // path as content writes.
+    //
+    // Scope is intentionally narrow: only WRITER_ROLE can be granted /
+    // revoked / renounced this way. DEFAULT_ADMIN_ROLE management is NOT
+    // exposed via signature — admin transfers must happen via the direct
+    // `replaceAdmin` call from a funded wallet, so they're slow and
+    // deliberate enough to not be typo'd.
+    //
+    // All three revert on `publicWritable == true` writers because every
+    // address implicitly holds WRITER_ROLE on a public writer (via the
+    // hasRole override). Granting / revoking the underlying storage slot
+    // would have no effect on the actual access check, which is exactly
+    // the kind of silent confusion that produces footguns.
+    // -------------------------------------------------------------------------
+
+    /// @notice Admin grants WRITER_ROLE to `account`. Signed by an account
+    ///         that holds DEFAULT_ADMIN_ROLE.
+    function grantWriterRoleWithSig(bytes memory signature, uint256 nonce, address account) external {
+        require(!publicWritable, "Writer: role grants are no-ops on public writers");
+        require(account != address(0), "Writer: cannot grant to zero address");
+        bytes32 structHash = keccak256(abi.encode(GRANT_WRITER_ROLE_TYPEHASH, nonce, account));
+        _verifyAndMark(signature, structHash, DEFAULT_ADMIN_ROLE);
+        _grantRole(WRITER_ROLE, account);
+    }
+
+    /// @notice Admin revokes WRITER_ROLE from `account`. Signed by an
+    ///         account that holds DEFAULT_ADMIN_ROLE.
+    function revokeWriterRoleWithSig(bytes memory signature, uint256 nonce, address account) external {
+        require(!publicWritable, "Writer: role revokes are no-ops on public writers");
+        bytes32 structHash = keccak256(abi.encode(REVOKE_WRITER_ROLE_TYPEHASH, nonce, account));
+        _verifyAndMark(signature, structHash, DEFAULT_ADMIN_ROLE);
+        _revokeRole(WRITER_ROLE, account);
+    }
+
+    /// @notice Voluntary self-revocation. Signer renounces their own
+    ///         WRITER_ROLE. Useful for "I'm done contributing to this
+    ///         shared writer, take me off the list" without needing the
+    ///         admin to revoke them.
+    function renounceWriterRoleWithSig(bytes memory signature, uint256 nonce) external {
+        require(!publicWritable, "Writer: role renounce is a no-op on public writers");
+        bytes32 structHash = keccak256(abi.encode(RENOUNCE_WRITER_ROLE_TYPEHASH, nonce));
+        // _verifyAndMark requires the signer to currently hold WRITER_ROLE.
+        // The recovered signer is the wallet that's leaving.
+        address signer = _verifyAndMark(signature, structHash, WRITER_ROLE);
+        _revokeRole(WRITER_ROLE, signer);
     }
 
     function getEntryCount() external view returns (uint256) {

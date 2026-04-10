@@ -691,6 +691,324 @@ contract WriterPublicTest is TestBase {
     }
 }
 
+// -----------------------------------------------------------------------------
+// WriterRoleSigTest — exercises the gasless role-management functions:
+//   grantWriterRoleWithSig
+//   revokeWriterRoleWithSig
+//   renounceWriterRoleWithSig
+//
+// Threat invariants:
+//   - only DEFAULT_ADMIN_ROLE holders can grant or revoke
+//   - only the existing WRITER_ROLE holder can renounce themselves (and
+//     they remove their own role, not someone else's)
+//   - all three revert on publicWritable=true writers (where the hasRole
+//     override would make the underlying _grantRole/_revokeRole a silent
+//     no-op)
+// -----------------------------------------------------------------------------
+contract WriterRoleSigTest is TestBase {
+    Vm.Wallet public admin;
+    uint256 internal adminPrivateKey;
+    Vm.Wallet public alice;
+    uint256 internal alicePrivateKey;
+    Vm.Wallet public bob;
+    uint256 internal bobPrivateKey;
+
+    Writer public writer;
+    Writer public publicWriter;
+    WriterStorage public store;
+    WriterStorage public publicStore;
+
+    function setUp() public {
+        adminPrivateKey = uint256(keccak256(abi.encodePacked("ROLE_ADMIN_KEY")));
+        admin = vm.createWallet(adminPrivateKey);
+        alicePrivateKey = uint256(keccak256(abi.encodePacked("ROLE_ALICE_KEY")));
+        alice = vm.createWallet(alicePrivateKey);
+        bobPrivateKey = uint256(keccak256(abi.encodePacked("ROLE_BOB_KEY")));
+        bob = vm.createWallet(bobPrivateKey);
+
+        // Private writer with admin as the only initial manager.
+        address[] memory managers = new address[](1);
+        managers[0] = admin.addr;
+        store = new WriterStorage();
+        writer = new Writer("Shared Notes", address(store), admin.addr, managers, false);
+        store.setLogic(address(writer));
+
+        // Public writer for the "no-op revert" tests.
+        address[] memory pubManagers = new address[](1);
+        pubManagers[0] = admin.addr;
+        publicStore = new WriterStorage();
+        publicWriter = new Writer("Town Square", address(publicStore), admin.addr, pubManagers, true);
+        publicStore.setLogic(address(publicWriter));
+    }
+
+    // -------------------------------------------------------------------------
+    // grantWriterRoleWithSig
+    // -------------------------------------------------------------------------
+
+    function test_GrantWriterRoleWithSig_AdminCanAddNewWriter() public {
+        // alice does not yet have WRITER_ROLE on the private writer
+        assertEq(writer.hasRole(writer.WRITER_ROLE(), alice.addr), false);
+
+        // admin signs a grant for alice
+        bytes memory sig = _signGrant(adminPrivateKey, address(writer), 0, alice.addr);
+        writer.grantWriterRoleWithSig(sig, 0, alice.addr);
+
+        // alice now has the role
+        assertEq(writer.hasRole(writer.WRITER_ROLE(), alice.addr), true);
+    }
+
+    function test_GrantWriterRoleWithSig_GrantedWriterCanThenCreate() public {
+        // admin grants alice
+        bytes memory sig = _signGrant(adminPrivateKey, address(writer), 0, alice.addr);
+        writer.grantWriterRoleWithSig(sig, 0, alice.addr);
+
+        // alice creates an entry directly (no sig path needed — she has the role)
+        vm.prank(alice.addr);
+        writer.createWithChunk(1, "alice's first post on the shared writer");
+        assertEq(writer.getEntryCount(), 1);
+        assertEq(writer.getEntry(0).author, alice.addr);
+    }
+
+    function test_GrantWriterRoleWithSig_NonAdminSignerRejected() public {
+        // alice (no role) tries to grant herself the role by signing
+        bytes memory sig = _signGrant(alicePrivateKey, address(writer), 0, alice.addr);
+        vm.expectRevert("Writer: Invalid signer role");
+        writer.grantWriterRoleWithSig(sig, 0, alice.addr);
+    }
+
+    function test_GrantWriterRoleWithSig_ZeroAddressRejected() public {
+        bytes memory sig = _signGrant(adminPrivateKey, address(writer), 0, address(0));
+        vm.expectRevert("Writer: cannot grant to zero address");
+        writer.grantWriterRoleWithSig(sig, 0, address(0));
+    }
+
+    function test_GrantWriterRoleWithSig_RevertsOnPublicWriter() public {
+        bytes memory sig = _signGrant(adminPrivateKey, address(publicWriter), 0, alice.addr);
+        vm.expectRevert("Writer: role grants are no-ops on public writers");
+        publicWriter.grantWriterRoleWithSig(sig, 0, alice.addr);
+    }
+
+    // -------------------------------------------------------------------------
+    // revokeWriterRoleWithSig
+    // -------------------------------------------------------------------------
+
+    function test_RevokeWriterRoleWithSig_AdminCanRemoveWriter() public {
+        // First, grant alice the role
+        bytes memory grantSig = _signGrant(adminPrivateKey, address(writer), 0, alice.addr);
+        writer.grantWriterRoleWithSig(grantSig, 0, alice.addr);
+        assertEq(writer.hasRole(writer.WRITER_ROLE(), alice.addr), true);
+
+        // Then revoke
+        bytes memory revokeSig = _signRevoke(adminPrivateKey, address(writer), 1, alice.addr);
+        writer.revokeWriterRoleWithSig(revokeSig, 1, alice.addr);
+        assertEq(writer.hasRole(writer.WRITER_ROLE(), alice.addr), false);
+    }
+
+    function test_RevokeWriterRoleWithSig_RevokedWriterCanNoLongerCreate() public {
+        // Grant + revoke
+        bytes memory grantSig = _signGrant(adminPrivateKey, address(writer), 0, alice.addr);
+        writer.grantWriterRoleWithSig(grantSig, 0, alice.addr);
+        bytes memory revokeSig = _signRevoke(adminPrivateKey, address(writer), 1, alice.addr);
+        writer.revokeWriterRoleWithSig(revokeSig, 1, alice.addr);
+
+        // alice tries to create — should revert because she no longer has the role
+        vm.prank(alice.addr);
+        vm.expectRevert();
+        writer.createWithChunk(1, "should fail");
+    }
+
+    function test_RevokeWriterRoleWithSig_NonAdminSignerRejected() public {
+        // grant alice first so she has a role to be revoked
+        bytes memory grantSig = _signGrant(adminPrivateKey, address(writer), 0, alice.addr);
+        writer.grantWriterRoleWithSig(grantSig, 0, alice.addr);
+
+        // bob (no admin role) tries to revoke alice
+        bytes memory sig = _signRevoke(bobPrivateKey, address(writer), 1, alice.addr);
+        vm.expectRevert("Writer: Invalid signer role");
+        writer.revokeWriterRoleWithSig(sig, 1, alice.addr);
+    }
+
+    function test_RevokeWriterRoleWithSig_RevertsOnPublicWriter() public {
+        bytes memory sig = _signRevoke(adminPrivateKey, address(publicWriter), 0, alice.addr);
+        vm.expectRevert("Writer: role revokes are no-ops on public writers");
+        publicWriter.revokeWriterRoleWithSig(sig, 0, alice.addr);
+    }
+
+    // -------------------------------------------------------------------------
+    // renounceWriterRoleWithSig
+    // -------------------------------------------------------------------------
+
+    function test_RenounceWriterRoleWithSig_WriterCanLeaveVoluntarily() public {
+        // Admin grants alice
+        bytes memory grantSig = _signGrant(adminPrivateKey, address(writer), 0, alice.addr);
+        writer.grantWriterRoleWithSig(grantSig, 0, alice.addr);
+        assertEq(writer.hasRole(writer.WRITER_ROLE(), alice.addr), true);
+
+        // alice signs her own renunciation
+        bytes memory renounceSig = _signRenounce(alicePrivateKey, address(writer), 1);
+        writer.renounceWriterRoleWithSig(renounceSig, 1);
+
+        // alice no longer has the role
+        assertEq(writer.hasRole(writer.WRITER_ROLE(), alice.addr), false);
+    }
+
+    function test_RenounceWriterRoleWithSig_NonWriterCannotRenounce() public {
+        // bob has no role; tries to "renounce" anyway
+        bytes memory sig = _signRenounce(bobPrivateKey, address(writer), 0);
+        vm.expectRevert("Writer: Invalid signer role");
+        writer.renounceWriterRoleWithSig(sig, 0);
+    }
+
+    function test_RenounceWriterRoleWithSig_OnlyRemovesSignersOwnRole() public {
+        // Grant alice and bob both
+        bytes memory grantAlice = _signGrant(adminPrivateKey, address(writer), 0, alice.addr);
+        writer.grantWriterRoleWithSig(grantAlice, 0, alice.addr);
+        bytes memory grantBob = _signGrant(adminPrivateKey, address(writer), 1, bob.addr);
+        writer.grantWriterRoleWithSig(grantBob, 1, bob.addr);
+
+        // alice renounces — only her role should be removed, bob's stays
+        bytes memory renounceSig = _signRenounce(alicePrivateKey, address(writer), 2);
+        writer.renounceWriterRoleWithSig(renounceSig, 2);
+
+        assertEq(writer.hasRole(writer.WRITER_ROLE(), alice.addr), false);
+        assertEq(writer.hasRole(writer.WRITER_ROLE(), bob.addr), true);
+    }
+
+    function test_RenounceWriterRoleWithSig_RevertsOnPublicWriter() public {
+        bytes memory sig = _signRenounce(alicePrivateKey, address(publicWriter), 0);
+        vm.expectRevert("Writer: role renounce is a no-op on public writers");
+        publicWriter.renounceWriterRoleWithSig(sig, 0);
+    }
+
+    // -------------------------------------------------------------------------
+    // Replay protection
+    //
+    // The C-2 fix is generic — _verifyAndMark uses digestWasExecuted for
+    // every *WithSig function in the contract. These tests pin the
+    // digest-keyed replay map specifically for the three role-management
+    // functions, so any future refactor that accidentally bypasses
+    // _verifyAndMark for one of them is caught immediately.
+    // -------------------------------------------------------------------------
+
+    function test_GrantWriterRoleWithSig_CannotBeReplayed() public {
+        bytes memory sig = _signGrant(adminPrivateKey, address(writer), 0, alice.addr);
+
+        // First call succeeds
+        writer.grantWriterRoleWithSig(sig, 0, alice.addr);
+        assertEq(writer.hasRole(writer.WRITER_ROLE(), alice.addr), true);
+
+        // Replaying the exact same signature must revert with the digest-mark
+        // error (NOT a "role" error — the digest is consumed before the role
+        // check fires on a re-execution path).
+        vm.expectRevert("Writer: Signature has already been executed");
+        writer.grantWriterRoleWithSig(sig, 0, alice.addr);
+    }
+
+    function test_RevokeWriterRoleWithSig_CannotBeReplayed() public {
+        // grant alice first so there's a role to revoke
+        bytes memory grantSig = _signGrant(adminPrivateKey, address(writer), 0, alice.addr);
+        writer.grantWriterRoleWithSig(grantSig, 0, alice.addr);
+
+        // Revoke alice
+        bytes memory revokeSig = _signRevoke(adminPrivateKey, address(writer), 1, alice.addr);
+        writer.revokeWriterRoleWithSig(revokeSig, 1, alice.addr);
+        assertEq(writer.hasRole(writer.WRITER_ROLE(), alice.addr), false);
+
+        // Replaying the same revoke signature must revert. (Even though it
+        // would be a no-op if it succeeded — alice already has no role —
+        // the digest map blocks the replay regardless of state effects.
+        // This is what makes the protection robust against semantic-no-op
+        // re-executions that could be combined with other state changes
+        // for griefing.)
+        vm.expectRevert("Writer: Signature has already been executed");
+        writer.revokeWriterRoleWithSig(revokeSig, 1, alice.addr);
+    }
+
+    function test_RenounceWriterRoleWithSig_CannotBeReplayed() public {
+        // grant alice
+        bytes memory grantSig = _signGrant(adminPrivateKey, address(writer), 0, alice.addr);
+        writer.grantWriterRoleWithSig(grantSig, 0, alice.addr);
+
+        // alice renounces
+        bytes memory renounceSig = _signRenounce(alicePrivateKey, address(writer), 1);
+        writer.renounceWriterRoleWithSig(renounceSig, 1);
+        assertEq(writer.hasRole(writer.WRITER_ROLE(), alice.addr), false);
+
+        // Re-grant alice (admin's choice). Note: a re-granted role is
+        // independent of the original — alice's previously-signed
+        // renunciation is permanently consumed via digestWasExecuted and
+        // cannot be used to remove the new grant. This is the desired
+        // behavior: each renunciation is a one-shot signed claim.
+        bytes memory regrantSig = _signGrant(adminPrivateKey, address(writer), 2, alice.addr);
+        writer.grantWriterRoleWithSig(regrantSig, 2, alice.addr);
+        assertEq(writer.hasRole(writer.WRITER_ROLE(), alice.addr), true);
+
+        // Replay the original renunciation signature — must revert.
+        // alice's role is preserved.
+        vm.expectRevert("Writer: Signature has already been executed");
+        writer.renounceWriterRoleWithSig(renounceSig, 1);
+        assertEq(writer.hasRole(writer.WRITER_ROLE(), alice.addr), true);
+    }
+
+    // -------------------------------------------------------------------------
+    // helpers — one per typed-data shape
+    // -------------------------------------------------------------------------
+
+    function _signGrant(uint256 pk, address verifyingContract, uint256 nonce, address account)
+        internal
+        view
+        returns (bytes memory)
+    {
+        Writer w = Writer(verifyingContract);
+        bytes32 structHash =
+            keccak256(abi.encode(w.GRANT_WRITER_ROLE_TYPEHASH(), nonce, account));
+        return _sign(pk, verifyingContract, structHash);
+    }
+
+    function _signRevoke(uint256 pk, address verifyingContract, uint256 nonce, address account)
+        internal
+        view
+        returns (bytes memory)
+    {
+        Writer w = Writer(verifyingContract);
+        bytes32 structHash =
+            keccak256(abi.encode(w.REVOKE_WRITER_ROLE_TYPEHASH(), nonce, account));
+        return _sign(pk, verifyingContract, structHash);
+    }
+
+    function _signRenounce(uint256 pk, address verifyingContract, uint256 nonce)
+        internal
+        view
+        returns (bytes memory)
+    {
+        Writer w = Writer(verifyingContract);
+        bytes32 structHash = keccak256(abi.encode(w.RENOUNCE_WRITER_ROLE_TYPEHASH(), nonce));
+        return _sign(pk, verifyingContract, structHash);
+    }
+
+    /// @dev Builds the EIP-712 digest using the verifyingContract's own
+    ///      DOMAIN_NAME / DOMAIN_VERSION (so this works for both the
+    ///      private and public writer instances).
+    function _sign(uint256 pk, address verifyingContract, bytes32 structHash)
+        internal
+        view
+        returns (bytes memory)
+    {
+        Writer w = Writer(verifyingContract);
+        bytes32 DOMAIN_SEPARATOR = keccak256(
+            abi.encode(
+                keccak256("EIP712Domain(string name,string version,address verifyingContract)"),
+                keccak256(abi.encodePacked(w.DOMAIN_NAME())),
+                keccak256(abi.encodePacked(w.DOMAIN_VERSION())),
+                verifyingContract
+            )
+        );
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk, digest);
+        return abi.encodePacked(r, s, v);
+    }
+}
+
 contract WriterForkTest is TestBase {
     uint256 opFork;
     string OP_RPC_URL = vm.envString("OP_RPC_URL");

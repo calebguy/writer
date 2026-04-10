@@ -149,6 +149,45 @@ export const WriterAbi = [
 	},
 	{
 		type: "function",
+		name: "GRANT_WRITER_ROLE_TYPEHASH",
+		inputs: [],
+		outputs: [
+			{
+				name: "",
+				type: "bytes32",
+				internalType: "bytes32",
+			},
+		],
+		stateMutability: "view",
+	},
+	{
+		type: "function",
+		name: "REVOKE_WRITER_ROLE_TYPEHASH",
+		inputs: [],
+		outputs: [
+			{
+				name: "",
+				type: "bytes32",
+				internalType: "bytes32",
+			},
+		],
+		stateMutability: "view",
+	},
+	{
+		type: "function",
+		name: "RENOUNCE_WRITER_ROLE_TYPEHASH",
+		inputs: [],
+		outputs: [
+			{
+				name: "",
+				type: "bytes32",
+				internalType: "bytes32",
+			},
+		],
+		stateMutability: "view",
+	},
+	{
+		type: "function",
 		name: "UPDATE_TYPEHASH",
 		inputs: [],
 		outputs: [
@@ -645,6 +684,70 @@ export const WriterAbi = [
 				name: "newTitle",
 				type: "string",
 				internalType: "string",
+			},
+		],
+		outputs: [],
+		stateMutability: "nonpayable",
+	},
+	{
+		type: "function",
+		name: "grantWriterRoleWithSig",
+		inputs: [
+			{
+				name: "signature",
+				type: "bytes",
+				internalType: "bytes",
+			},
+			{
+				name: "nonce",
+				type: "uint256",
+				internalType: "uint256",
+			},
+			{
+				name: "account",
+				type: "address",
+				internalType: "address",
+			},
+		],
+		outputs: [],
+		stateMutability: "nonpayable",
+	},
+	{
+		type: "function",
+		name: "revokeWriterRoleWithSig",
+		inputs: [
+			{
+				name: "signature",
+				type: "bytes",
+				internalType: "bytes",
+			},
+			{
+				name: "nonce",
+				type: "uint256",
+				internalType: "uint256",
+			},
+			{
+				name: "account",
+				type: "address",
+				internalType: "address",
+			},
+		],
+		outputs: [],
+		stateMutability: "nonpayable",
+	},
+	{
+		type: "function",
+		name: "renounceWriterRoleWithSig",
+		inputs: [
+			{
+				name: "signature",
+				type: "bytes",
+				internalType: "bytes",
+			},
+			{
+				name: "nonce",
+				type: "uint256",
+				internalType: "uint256",
 			},
 		],
 		outputs: [],

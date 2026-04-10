@@ -226,6 +226,79 @@ contract AuditTest is Test {
         vm.chainId(originalChainId);
     }
 
+    // -------------------------------------------------------------------------
+    // Cross-instance signature isolation
+    //
+    // The chain-portable signature design (chainId removed from the EIP-712
+    // domain) makes signatures portable ACROSS chains for the same Writer at
+    // the same address. This test pins the complementary property: signatures
+    // are NOT portable across DIFFERENT Writer addresses on the same chain.
+    //
+    // The verifyingContract field in the EIP-712 domain is the load-bearing
+    // binding. If a future change to VerifyTypedData.sol weakens or removes
+    // verifyingContract from the domain, this test fails immediately.
+    //
+    // Without this property, anyone who saw a signature for Writer A could
+    // submit it against Writer B and create an entry there with the original
+    // signer as author. That would be a serious cross-instance leak.
+    // -------------------------------------------------------------------------
+    function test_SignatureForOneWriterDoesNotWorkOnAnother() public {
+        // Deploy a second Writer with the same admin/managers but its own
+        // storage. The two writers will have DIFFERENT addresses because
+        // they're created via `new Writer(...)` with different storage args
+        // (and thus different constructor calldata bound into the
+        // contract's `verifyingContract` immutable).
+        address[] memory managers = new address[](1);
+        managers[0] = user.addr;
+        WriterStorage storeB = new WriterStorage();
+        Writer writerB = new Writer("Audit Writer B", address(storeB), user.addr, managers, false);
+        storeB.setLogic(address(writerB));
+
+        // Sanity: the two writers must have different addresses for the
+        // test to be meaningful.
+        assertTrue(
+            address(writer) != address(writerB),
+            "test setup error: writers must be at different addresses"
+        );
+
+        // Sign a createWithChunk specifically for `writer` (the AuditTest
+        // instance). The digest binds to address(writer) via the
+        // verifyingContract field in the domain separator.
+        uint256 nonce = 99;
+        uint256 chunkCount = 1;
+        string memory content = "for writer A only";
+        bytes32 structHash = keccak256(
+            abi.encode(
+                writer.CREATE_WITH_CHUNK_TYPEHASH(),
+                nonce,
+                chunkCount,
+                keccak256(abi.encodePacked(content))
+            )
+        );
+        // _eip712Digest uses address(writer) as verifyingContract.
+        bytes32 digest = _eip712Digest(structHash);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPrivateKey, digest);
+        bytes memory sig = abi.encodePacked(r, s, v);
+
+        // Submitting on writerA succeeds — the signer (user.addr) is the
+        // admin/manager and the digest matches.
+        writer.createWithChunkWithSig(sig, nonce, chunkCount, content);
+        assertEq(writer.getEntryCount(), 1);
+
+        // Submitting the EXACT SAME bytes on writerB must fail. Why:
+        // writerB's DOMAIN_SEPARATOR uses address(writerB) as the
+        // verifyingContract, so writerB computes a different digest than
+        // writerA. The signature, when verified against writerB's digest,
+        // either recovers to a wrong address or to address(0) — both fail
+        // the role check (`hasRole(WRITER_ROLE, recoveredSigner)`) which
+        // fires before any other validation.
+        vm.expectRevert("Writer: Invalid signer role");
+        writerB.createWithChunkWithSig(sig, nonce, chunkCount, content);
+
+        // writerB still has zero entries — the leak attempt did not write.
+        assertEq(writerB.getEntryCount(), 0);
+    }
+
     /// @dev Recompute the EIP-712 digest exactly the way VerifyTypedData does
     ///      internally. Mirrors the logic in VerifyTypedData.sol's constructor
     ///      + getSigner, so this test does not depend on any view function

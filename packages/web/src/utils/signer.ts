@@ -201,7 +201,26 @@ export async function signCreateWithChunk(
 }
 
 function getRandomNonce() {
-	return Number(crypto.getRandomValues(new Uint32Array(1))[0]);
+	// Generate 53 bits of entropy — the maximum that fits in a JavaScript
+	// `Number` without precision loss (Number.MAX_SAFE_INTEGER === 2^53 - 1).
+	//
+	// Birthday-collision threshold goes from ~2^16 (~65k entries per user,
+	// the previous 32-bit nonce) to ~2^26.5 (~95M entries per user). Way
+	// beyond any realistic per-user write volume.
+	//
+	// We stay inside Number rather than upgrading to bigint because the
+	// nonce flows through the JSON wire format (frontend → /writer/...
+	// endpoints → relay → calldata) and is currently typed as `number`
+	// throughout. Switching to bigint would force every layer to know
+	// about it. 53 bits is plenty given the actual threat model and avoids
+	// the type-plumbing churn.
+	const buf = new Uint32Array(2);
+	crypto.getRandomValues(buf);
+	// high21 (21 bits from buf[0]) × 2^32 + low32 (32 bits from buf[1])
+	// = 53 bits total.
+	const high21 = buf[0] & 0x1fffff;
+	const low32 = buf[1];
+	return high21 * 0x100000000 + low32;
 }
 
 // Keep old function for reading legacy entries

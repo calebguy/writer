@@ -113,8 +113,9 @@ const writerRoutes = new Hono()
 			return c.json({ user });
 		} catch (err) {
 			console.error("color-registry/set db error:", err);
-			const message = err instanceof Error ? err.message : "unknown database error";
-			return c.json({ error: `database error during color set: ${message}` }, 500);
+			// Audit fix L-14: don't leak the underlying DB error message in
+			// the response. Logs above retain the full error for debugging.
+			return c.json({ error: "database error during color set" }, 500);
 		}
 	})
 	.post(
@@ -188,8 +189,7 @@ const writerRoutes = new Hono()
 			return c.json({ writer }, 201);
 		} catch (err) {
 			console.error("factory/create db error:", err);
-			const message = err instanceof Error ? err.message : "unknown database error";
-			return c.json({ error: `database error during writer creation: ${message}` }, 500);
+			return c.json({ error: "database error during writer creation" }, 500);
 		}
 	})
 	.post("/writer/:address/hide", addressParamSchema, requireWriterAdminAuth, async (c) => {
@@ -211,8 +211,7 @@ const writerRoutes = new Hono()
 			);
 		} catch (err) {
 			console.error("writer/hide db error:", err);
-			const message = err instanceof Error ? err.message : "unknown database error";
-			return c.json({ error: `database error during writer hide: ${message}` }, 500);
+			return c.json({ error: "database error during writer hide" }, 500);
 		}
 	})
 	.post(
@@ -298,8 +297,7 @@ const writerRoutes = new Hono()
 				return c.json({ entry }, 201);
 			} catch (err) {
 				console.error("createWithChunk db error:", err);
-				const message = err instanceof Error ? err.message : "unknown database error";
-				return c.json({ error: `database error during entry creation: ${message}` }, 500);
+				return c.json({ error: "database error during entry creation" }, 500);
 			}
 		},
 	)
@@ -424,8 +422,7 @@ const writerRoutes = new Hono()
 				return c.json({ entry: entryToJsonSafe(data) }, 201);
 			} catch (err) {
 				console.error("update entry db error:", err);
-				const message = err instanceof Error ? err.message : "unknown database error";
-				return c.json({ error: `database error during entry update: ${message}` }, 500);
+				return c.json({ error: "database error during entry update" }, 500);
 			}
 		},
 	)
@@ -499,8 +496,7 @@ const writerRoutes = new Hono()
 				});
 			} catch (err) {
 				console.error("delete entry db error:", err);
-				const message = err instanceof Error ? err.message : "unknown database error";
-				return c.json({ error: `database error during entry deletion: ${message}` }, 500);
+				return c.json({ error: "database error during entry deletion" }, 500);
 			}
 		},
 	);

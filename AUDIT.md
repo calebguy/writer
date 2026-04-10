@@ -267,8 +267,47 @@ Writer Security Audit
   For new entries (where onChainId isn't yet known) bind to a content-derived id or wait until creation, then re-encrypt; alternatively
   bind to (storageAddress, nonce) from the signed payload. Note: requires another version bump (enc:v5:) and a migration story.
 
-  M-2. Compression-then-encryption (length side channel)                                                                                   
-                                                                                                                                           
+  ❌ M-2. Compression-then-encryption (length side channel)
+  ℹ️: Won't fix at launch. The CRIME-class attack this finding is concerned
+     with requires attacker-injected plaintext to be mixed into the victim's
+     encryption operation. Writer's current model precludes that:
+       - Each entry is encrypted by a single author. The author writes
+         100% of the bytes that get compressed + encrypted. No third-party
+         content is folded into a victim's blob.
+       - Public message board entries are stored as plaintext, so this
+         finding does not apply to them at all.
+       - There is no oracle to query repeatedly — each entry is a one-shot
+         encryption.
+
+     Residual leak (acknowledged, accepted): unpadded ciphertext means
+     anyone reading the chain can infer the approximate length of each
+     entry. This is metadata leakage in the same category as on-chain
+     timestamps and tx patterns — already public, not something the
+     encryption layer is trying to hide. Padding to fixed bucket sizes
+     would add gas cost on every entry, which is at odds with the
+     permanence-first design.
+
+     REVISIT if you ever add ANY of the following features, because they
+     change the threat model from "no attacker injection possible" to
+     "attacker can probe via injected content":
+       - Inline comments under entries (where the comment is appended to
+         the parent entry's content and re-encrypted as one blob)
+       - Shared writers where multiple authors contribute to a single
+         encrypted entry
+       - Quote-replies where one entry's plaintext is mixed into another's
+         at encrypt time
+       - Encrypted titles / tags / mentions where another user can
+         influence the input
+       - Drafts that auto-merge attacker-controlled metadata into the
+         user's plaintext
+
+     If you build any of these, the right fix is NOT padding. It's:
+     encrypt each contributor's content as a separate AES-GCM blob with
+     its own key derivation, so there's no shared compression context
+     between authors. The mitigation is structural — design the
+     multi-author feature so each author's plaintext is encrypted in
+     isolation.
+
   Files: packages/web/src/utils/utils.ts:170-189 and where it's used                                                                       
                                                                                                                                            
   Brotli compression happens before AES-GCM. An observer who can submit content adjacent to a victim's content (not really possible in a   
@@ -298,8 +337,20 @@ Writer Security Audit
   A typo in replaceAdmin(0xWRONG) immediately and irrecoverably hands admin to the wrong address. Use OpenZeppelin's Ownable2Step-style    
   accept pattern (grant, then require the new admin to call acceptAdmin).                                                                  
                                                                                                                                            
-  M-5. Random 32-bit nonce + birthday bound                                                                                                
-                                                                                                                                           
+  ✅ M-5. Random 32-bit nonce + birthday bound
+  ℹ️: Fixed by upgrading getRandomNonce() to 53 bits of entropy — the
+     maximum that fits in a JS Number safely (Number.MAX_SAFE_INTEGER ===
+     2^53 - 1). Birthday collision threshold goes from ~2^16 (~65k entries
+     per user) to ~2^26.5 (~95M entries per user), well beyond any
+     realistic write volume.
+
+     Stayed inside Number rather than upgrading to bigint because the
+     nonce flows through the JSON wire format (frontend → server → relay
+     → calldata) and is currently typed as `number` throughout. 53 bits
+     is plenty given the actual threat model and avoids cross-layer
+     type-plumbing churn. If a stronger nonce ever becomes necessary, the
+     follow-up is to migrate the entire pipeline to bigint.
+
   File: packages/web/src/utils/signer.ts:204-206                                                                                           
                                                                                                                                            
   function getRandomNonce() {                                                                                                              
@@ -336,8 +387,16 @@ Writer Security Audit
   destroyed. Lossy transformation of user content. If you keep multi-chunk support, join with the empty string and have the writer split   
   content carefully — or remove this helper and let the frontend reassemble (the frontend already does this).                              
                                                                                                                                            
-  M-9. _validateAndMarkSignature ordering inside modifiers                                                                                 
-                                                                                                                                           
+  ✅ M-9. _validateAndMarkSignature ordering inside modifiers
+  ℹ️: Fixed during the L-1/L-2/M-9 cleanup. Replaced the modifier-based
+     pattern (signedByWithRole / signedByAuthorWithRole) with two internal
+     helper functions (_verifyAndMark / _verifyAndMarkAuthor) that return
+     the recovered signer. All 6 *WithSig functions now compute the
+     structHash exactly once, recover the signer exactly once, and pass it
+     directly into store.* — no more double recovery, no more modifier-vs-
+     body drift surface. Gas savings ~13k per *WithSig call (verified via
+     forge test gas snapshots).
+
   File: packages/chain/src/Writer.sol:29-42                                                                                                
                                                                                                                                            
   In signedByAuthorWithRole, the role check (hasRole(role, signer)) happens before _validateAndMarkSignature. If the role check reverts,   
@@ -348,8 +407,13 @@ Writer Security Audit
   ---                                                                                                                                      
   LOW / INFORMATIONAL                                                                                                                      
                                                                                                                                            
-  L-1. DOMAIN_NAME/DOMAIN_VERSION are mutable storage variables                                                                            
-                                                                                                                                           
+  ✅ L-1. DOMAIN_NAME/DOMAIN_VERSION are mutable storage variables
+  ℹ️: Fixed during the L-1/L-2/M-9 cleanup. DOMAIN_NAME, DOMAIN_VERSION,
+     and WRITER_ROLE are now `string public constant` / `bytes32 public
+     constant` in both Writer.sol and ColorRegistry.sol. The fragile
+     "child state vars must initialize before the parent constructor reads
+     them" pattern is gone — constants are baked into bytecode.
+
   File: packages/chain/src/Writer.sol:20-22, packages/chain/src/ColorRegistry.sol:7-8                                                   
                               
   bytes public DOMAIN_NAME = "Writer";   
@@ -362,8 +426,12 @@ Writer Security Audit
   Also: bytes32 public WRITER_ROLE = keccak256("WRITER"); is a storage variable for what should be a constant. Use bytes32 public constant 
   WRITER_ROLE = keccak256("WRITER");.                                                                                                      
                                                                                                                                            
-  L-2. EIP-712 domain name is bytes not string                                                                                             
-                                                                                                                                           
+  ✅ L-2. EIP-712 domain name is bytes not string
+  ℹ️: Fixed during the L-1/L-2/M-9 cleanup. VerifyTypedData's constructor
+     now takes `string memory name, string memory version` (per EIP-712
+     spec) and uses `keccak256(bytes(name))` internally. ABIs in
+     packages/utils/abis were updated to reflect the string return type.
+
   File: packages/chain/src/Writer.sol:20, VerifyTypedData.sol:11-16                                                                        
                                                                                                                                            
   The EIP-712 spec says the name field is a string. You declare it as bytes and hash it. This works today because                          
@@ -376,8 +444,18 @@ Writer Security Audit
   If the new admin is also the current admin (or vice versa via misconfiguration during deployment), _revokeRole(DEFAULT_ADMIN_ROLE,       
   msg.sender) will revoke the only admin. Two-step pattern (M-4) fixes this implicitly.                                                    
                                                                                                                                            
-  L-4. WriterFactory doesn't validate inputs                                                                                               
-                                                                                                                                           
+  ❌ L-4. WriterFactory doesn't validate inputs
+  ℹ️: Won't fix. The "address(0) admin locks the contract" property is
+     deliberately preserved as a feature for "written in stone" writers
+     where no admin functions can ever be called (no setTitle, no
+     setStorage, no replaceAdmin). Combined with publicWritable=true and
+     a one-shot deploy, this lets you create a permanent, no-admin
+     message board where the contract config can never be mutated. The
+     contract-side input validation would foreclose this use case. The
+     managers length is implicitly capped by the server endpoint via
+     L-18 (and direct calls bypass the server but that's acceptable —
+     advanced users who deploy directly accept the consequences).
+
   File: packages/chain/src/WriterFactory.sol:17                                                                                            
                                                                                                                                            
   create() accepts arbitrary title (no length cap), arbitrary admin (could be address(0), which then locks the contract), and an unbounded 
@@ -391,8 +469,13 @@ Writer Security Audit
   If two callers pass the same salt the second create2 reverts. Server picks a random 32-byte salt so this is fine in practice, but if you 
   ever expose salt to user input you'd want to mix in msg.sender.                                                                          
                                                                                                                                         
-  L-6. requireSavedAuth middleware ordering                                                                                                
-                                                                                                                                           
+  ✅ L-6. requireSavedAuth middleware ordering
+  ℹ️: Fixed by wrapping the getAddress() normalization in try/catch inside
+     both requireSavedAuth and requireWriterAdminAuth. Malformed URL
+     params now return a clean 401 instead of bubbling up as a 500. The
+     middleware is still ordered before the zod validator (matching the
+     existing route registration), but it no longer crashes on bad input.
+
   File: packages/server/src/routes/saved.ts:21-23,42, packages/server/src/privy.ts:41-48                                                   
                                                                                                                                            
   requireSavedAuth runs before the zod param validator and reads c.req.param("userAddress") raw. If the user passes a non-address string in
@@ -400,15 +483,25 @@ Writer Security Audit
   validation first (note the schema is registered after the middleware in saved.ts) or wrap in a try/catch in privy.ts and return 401/403  
   explicitly.                                                                                                                              
                                                                                                                                            
-  L-7. requireWriterAdminAuth reads from the DB, not from the chain                                                                        
-                                                                                                                                           
+  ❌ L-7. requireWriterAdminAuth reads from the DB, not from the chain
+  ℹ️: Won't fix. Reading admin from chain on every /hide call would add
+     a synchronous RPC roundtrip to a hot path, which is too slow.
+     replaceAdmin is rare in practice (intended for emergency rotation,
+     not routine ops), and the worst case after a rotation is a brief
+     window (seconds, until the indexer catches up) where the old admin
+     can still hide a writer they no longer own. Acceptable.
+
   File: packages/server/src/privy.ts:79, packages/server/src/routes/writer.ts:218 (/writer/:address/hide)                                  
                                                                                                                                            
   If the on-chain admin is rotated via replaceAdmin, your DB still has the old admin until reindexing, so the old admin can still hide the 
   writer. For most flows this is acceptable, but worth knowing. Stronger version: read admin from the chain via a contract call.           
                                                                                                                                            
-  L-8. /writer/:address/hide is an off-chain soft-delete                                                                                   
-                                                                                                                                           
+  ❌ L-8. /writer/:address/hide is an off-chain soft-delete
+  ℹ️: Won't fix. The current behavior matches the project's mental model:
+     "hide" removes the writer from your dashboard view, the chain stays
+     forever. Users who care can verify on chain. Adding a tooltip is
+     deferred — the existing UX is acceptable.
+
   File: packages/server/src/routes/writer.ts:218-240                                                                                       
                                                                                                                                            
   The endpoint is named "hide" and only flips a DB flag. Document this clearly to users — there is no on-chain "hide", and anyone reading  
@@ -420,8 +513,12 @@ Writer Security Audit
   hard delete of the entry struct and removes it from entryIds. Only events preserve history. Either fix the docs or implement a deletedAt 
   flag in the struct.                                                                                                                      
                                                                                                                                            
-  L-10. ColorRegistry has the same malleability replay weakness as Writer                                                                  
-                                                                                                                                           
+  ✅ L-10. ColorRegistry has the same malleability replay weakness as Writer
+  ℹ️: Fixed alongside C-2. ColorRegistry.setHexWithSig now uses the
+     digest-keyed `digestWasExecuted` map and OZ ECDSA's low-S enforcement
+     via the shared VerifyTypedData._recover helper. Same fix, same
+     guarantees as Writer.
+
   Already covered by C-2; lower impact (only changes a user's color preference).                                                           
                                                                                                                                            
   ❌ L-11. getEntryContent is unbounded gas                                                                                                   
@@ -444,8 +541,13 @@ Writer Security Audit
   log from FACTORY_ADDRESS (not actually possible because only the factory itself can emit that topic from that address), you'd be safe.   
   Just confirming the check is correct here. ✓                                                                                             
                                                                                                                                            
-  L-14. delete entry db error paths log + leak DB error messages                                                                           
-                                                                                                                                           
+  ✅ L-14. delete entry db error paths log + leak DB error messages
+  ℹ️: Fixed across all 10 sites in routes/writer.ts (7) and routes/saved.ts
+     (3). Each handler now returns a generic operation-name string in the
+     response (e.g. "database error during entry creation") and keeps the
+     full error in the logs via console.error(err). No DB schema details,
+     constraint names, or connection info leak to clients on a 500.
+
   Files: all .post(...) handlers in routes/writer.ts                                                                                       
                                                                                                                                            
   Errors are concatenated into the response: database error during entry creation: ${message}. In production you should log the message but
@@ -463,14 +565,29 @@ Writer Security Audit
   Each successful sig call writes a permanent storage slot keyed off the signature (or, post-fix, the digest). Storage cost is on Optimism 
   and reasonable, but it does mean per-Writer state grows linearly with operations forever. Acceptable; just note it.                      
                                                                                                                                            
-  L-17. addChunk index check is signedByAuthorWithRole but author is checked via store.getEntry(id).author                                 
-                                                                                                                                           
+  ❌ L-17. addChunk index check is signedByAuthorWithRole but author is checked via store.getEntry(id).author
+  ℹ️: Won't fix. WriterStorage is intentionally NOT being modified in
+     this redeploy so existing entries / WriterStorage instances remain
+     binary-compatible (the C-2 migration via setLogic preserves storage
+     state, and any cleanup change to WriterStorage would break that
+     property). The implicit existence check via getEntry().author ==
+     signer is functionally safe — only cosmetic clarity is lost.
+
   If id doesn't exist, getEntry returns a default struct with author = address(0), and the modifier requires signer == address(0), which   
   ecrecover only returns on failure. So calling for a nonexistent id reverts safely. ✓ Worth adding an explicit                            
   require(_doesEntryExist(id)) for clarity.                                                                                                
                                                                                                                                            
-  L-18. No zod validation on the /factory/create managers array length or admin/manager equality                                           
-                                                                                                                                           
+  ✅ L-18. No zod validation on the /factory/create managers array length or admin/manager equality
+  ℹ️: Fixed by changing the factoryCreateJsonValidator zod schema to
+     require managers.length === 1. The UI flow always passes
+     [callerWallet] as the managers list (the caller is also the admin),
+     so requiring exactly 1 matches actual usage. Combined with the H-2
+     fix (admin === c.var.walletAddress), the only valid call shape via
+     the server is "create a writer where I am both admin and sole
+     manager." Direct contract callers (cast send to factory.create)
+     bypass this and can pass any managers list — accepted (they're out
+     of scope for the rate-limited / auth-gated server flow).
+
   managers is unbounded; an attacker (after H-2 is fixed) with a Privy account could still attempt to deploy a Writer with thousands of    
   managers, blowing past the block gas limit. Add a sane max (e.g., 50).                                                                   
                                                                                                                                            

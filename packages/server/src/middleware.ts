@@ -115,7 +115,17 @@ export const factoryCreateJsonValidator = zValidator(
 	z.object({
 		title: z.string().max(MAX_TITLE_LENGTH),
 		admin: ethAddress,
-		managers: z.array(ethAddress),
+		// Audit fix L-18: cap managers at exactly 1. The UI flow always
+		// passes [callerWallet] as the managers list (the caller is also
+		// the admin), so requiring length === 1 matches actual usage. The
+		// route handler additionally enforces that admin === c.var.walletAddress
+		// (audit fix H-2), so the only valid call shape is "create a writer
+		// where I am both the admin and the sole manager." Anyone wanting
+		// a different shape (multiple managers, no managers, etc.) can
+		// call the factory directly via cast — at which point they're
+		// outside the rate-limited / auth-gated server flow and accept
+		// the consequences.
+		managers: z.array(ethAddress).length(1),
 	}),
 );
 
