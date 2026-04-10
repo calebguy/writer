@@ -29,13 +29,15 @@ async function confirmRelayTx(event: {
 }
 
 ponder.on("WriterFactory:WriterCreated", async ({ event, context }) => {
-	const { writerAddress, storeAddress, admin, managers, title } = event.args;
+	const { writerAddress, storeAddress, admin, managers, title, publicWritable } =
+		event.args;
 	console.log("WriterFactory:WriterCreated", {
 		writerAddress,
 		storeAddress,
 		admin,
 		managers,
 		title,
+		publicWritable,
 	});
 	const transactionId = await confirmRelayTx(event);
 
@@ -48,6 +50,10 @@ ponder.on("WriterFactory:WriterCreated", async ({ event, context }) => {
 		// re-running the indexer or hitting a re-org cannot ever change
 		// this value once it's been set.
 		storageId: storeAddress,
+		// publicWritable is similarly frozen — the on-chain field is
+		// `immutable`, and the upsertWriter helper strips it out of the
+		// conflict update set so re-orgs / re-indexes cannot change it.
+		publicWritable,
 		title,
 		admin,
 		managers: managers.map((m) => m.toString()),

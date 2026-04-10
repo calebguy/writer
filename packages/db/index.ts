@@ -313,7 +313,13 @@ class Db {
 					privateCount: 0,
 				}),
 			}))
-			.filter((w) => w.publicCount > 0);
+			// Include a writer if either:
+			//   - it has at least one public (non-encrypted) entry, OR
+			//   - it is a public-writable message board (anyone can post),
+			//     even if it currently has zero entries — these need to
+			//     surface in the explore feed so people can find and write
+			//     into them.
+			.filter((w) => w.publicCount > 0 || w.publicWritable);
 	}
 
 	createTx(tx: Omit<InsertRelayTransaction, "updatedAt" | "createdAt">) {
@@ -386,7 +392,10 @@ class Db {
 		// `storageId` is intentionally OMITTED from the conflict update set:
 		// it's frozen at insert time and must never change after creation,
 		// even if a re-import or a re-org overwrites every other field.
-		const { storageId: _frozenStorageId, ...mutableFields } = normalizedWriter;
+		// `publicWritable` is similarly frozen — the on-chain field is
+		// `immutable`, so the DB copy should match.
+		const { storageId: _frozenStorageId, publicWritable: _frozenPublic, ...mutableFields } =
+			normalizedWriter;
 
 		return this.pg
 			.insert(writer)
@@ -733,6 +742,8 @@ type SelectSavedEntry = typeof savedEntry.$inferSelect;
 // `storageId` is omitted-and-redeclared as optional so callers can omit it
 // (the upsertWriter helper defaults it to storageAddress). The underlying
 // column is still NOT NULL — the default just happens at the Db boundary.
+// `publicWritable` is also optional at the boundary (defaults to false in
+// the column DDL); callers that know about it should still pass it.
 type InsertWriter = Omit<
 	typeof writer.$inferInsert,
 	"createdAt" | "updatedAt" | "storageId"
@@ -769,6 +780,7 @@ export function publicWriterToJsonSafe(data: PublicWriterWithCounts) {
 		admin: data.admin,
 		publicCount: data.publicCount,
 		privateCount: data.privateCount,
+		publicWritable: data.publicWritable,
 		createdAt: data.createdAt,
 		createdAtBlock: data.createdAtBlock?.toString(),
 	};

@@ -106,7 +106,14 @@ const writerRoutes = new Hono()
 	.post("/factory/create", factoryCreateJsonValidator, async (c) => {
 		const { admin, managers, title } = c.req.valid("json");
 		const salt = toHex(randomBytes(32));
-		const args = { title, admin, managers, salt };
+		// publicWritable is hardcoded to false here. The UI never creates
+		// public writers — the launch public writer is deployed once via
+		// the `script/CreatePublicWriter.s.sol` foundry script and picked
+		// up by the indexer. If you ever want to surface public-writer
+		// creation in the UI, add a `publicWritable` field to the zod
+		// schema in middleware.ts and gate it with an admin check.
+		const publicWritable = false;
+		const args = { title, admin, managers, publicWritable, salt };
 		const [address, storageAddress] = await Promise.all([
 			computeWriterAddress({
 				address: env.FACTORY_ADDRESS as Hex,
@@ -114,6 +121,7 @@ const writerRoutes = new Hono()
 				title,
 				admin: getAddress(admin),
 				managers: managers.map(getAddress),
+				publicWritable,
 			}),
 			computeWriterStorageAddress({
 				address: env.FACTORY_ADDRESS as Hex,
@@ -124,7 +132,7 @@ const writerRoutes = new Hono()
 			const { wallet, nonce: relayNonce } = await relay.sendTransaction({
 				to: env.FACTORY_ADDRESS,
 				abi: CREATE_FUNCTION_SIGNATURE,
-				args: [title, admin, managers, salt],
+				args: [title, admin, managers, publicWritable, salt],
 			});
 			const transactionId = makeRelayTxId(wallet, relayNonce);
 			await db.createTx({
@@ -140,6 +148,7 @@ const writerRoutes = new Hono()
 				title,
 				admin,
 				managers,
+				publicWritable,
 				transactionId,
 				address,
 				storageAddress,

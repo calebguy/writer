@@ -198,7 +198,7 @@ const WRITER_STORAGE_ENTRY_CREATED_EVENT = parseAbiItem(
 	"event EntryCreated(uint256 indexed id,address author)",
 );
 const WRITER_FACTORY_WRITER_CREATED = parseAbiItem(
-	"event WriterCreated(address indexed writerAddress,address indexed storeAddress,address indexed admin,string title,address[] managers)",
+	"event WriterCreated(address indexed writerAddress,address indexed storeAddress,address indexed admin,string title,address[] managers,bool publicWritable)",
 );
 
 type RpcReceiptLog = {
@@ -257,6 +257,7 @@ type DecodedWriterCreatedArgs = {
 	admin: Hex;
 	title: string;
 	managers: readonly Hex[];
+	publicWritable: boolean;
 };
 
 async function getReceiptByHash(
@@ -782,6 +783,7 @@ export async function reconcileWriterByAddress(
 		title: decoded.title,
 		admin: decoded.admin,
 		managers: decoded.managers.map((manager: Hex) => manager.toString()),
+		publicWritable: decoded.publicWritable,
 		createdAtHash: receipt.transactionHash,
 		createdAtBlock,
 		createdAtBlockDatetime,

@@ -4,8 +4,8 @@ pragma solidity ^0.8.13;
 import {VerifyTypedData} from "./VerifyTypedData.sol";
 
 contract ColorRegistry is VerifyTypedData {
-    bytes public DOMAIN_NAME = "ColorRegistry";
-    bytes public DOMAIN_VERSION = "1";
+    string public constant DOMAIN_NAME = "ColorRegistry";
+    string public constant DOMAIN_VERSION = "1";
     bytes32 public constant SET_PRIMARY_TYPEHASH = keccak256("SetHex(uint256 nonce,bytes32 hexColor)");
 
     mapping(address => bytes32) public userToHex;

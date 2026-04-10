@@ -63,6 +63,18 @@ contract MigrateWriterLogic is Script {
         WriterStorage store = WriterStorage(storageAddress);
 
         string memory title = oldWriter.title();
+        // Preserve the old writer's public/private flag across the migration.
+        // For pre-publicWritable Writers (deployed before the field existed),
+        // this call would revert at a low level. We use a try/catch and
+        // default to `false` so the migration still works against legacy
+        // bytecode that doesn't have the field.
+        bool publicWritable = false;
+        try oldWriter.publicWritable() returns (bool isPublic) {
+            publicWritable = isPublic;
+        } catch {
+            // legacy Writer without publicWritable; default to private
+            publicWritable = false;
+        }
         require(
             address(oldWriter.store()) == storageAddress,
             "MigrateWriterLogic: OLD_WRITER_ADDRESS does not point at STORAGE_ADDRESS"
@@ -77,6 +89,7 @@ contract MigrateWriterLogic is Script {
         console.log("Old Writer:     ", oldWriterAddress);
         console.log("Title:          ", title);
         console.log("Admin:          ", admin);
+        console.log("Public writable:", publicWritable);
         console.log("Manager count:  ", managers.length);
         for (uint256 i = 0; i < managers.length; i++) {
             console.log("  manager[i]:   ", managers[i]);
@@ -131,7 +144,7 @@ contract MigrateWriterLogic is Script {
             vm.startBroadcast();
         }
 
-        Writer writerV2 = new Writer(title, storageAddress, admin, managers);
+        Writer writerV2 = new Writer(title, storageAddress, admin, managers, publicWritable);
         console.log("");
         console.log("=== Deployed ===");
         console.log("WriterV2 logic: ", address(writerV2));

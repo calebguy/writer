@@ -57,6 +57,13 @@
       "when": 1775835669967,
       "tag": "0007_majestic_warlock",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1775847174036,
+      "tag": "0008_mighty_marvel_apes",
+      "breakpoints": true
     }
   ]
 }

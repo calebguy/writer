@@ -147,11 +147,16 @@ export default function WriterPage() {
 				queryClient.invalidateQueries({ queryKey: ["saved", walletAddress] });
 			},
 		});
+	// Anyone signed in can create entries on a public-writable Writer.
+	// Otherwise, only addresses in the writer's managers list can. Edit
+	// and delete are still restricted to the original author of each
+	// entry — see Entry.tsx's `canEdit` (which checks isWalletAuthor).
 	const canCreateEntries = Boolean(
 		walletAddress &&
-			writer?.managers?.some(
-				(manager) => manager.toLowerCase() === walletAddress,
-			),
+			(writer?.publicWritable ||
+				writer?.managers?.some(
+					(manager) => manager.toLowerCase() === walletAddress,
+				)),
 	);
 
 	if (!writer || isLoading || isEntriesProcessing) {

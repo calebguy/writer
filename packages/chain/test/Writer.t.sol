@@ -30,7 +30,7 @@ contract WriterDirectCallerTest is TestBase {
         writers[0] = user;
 
         store = new WriterStorage();
-        writer = new Writer("Notes for today", address(store), user, writers);
+        writer = new Writer("Notes for today", address(store), user, writers, false);
         store.setLogic(address(writer));
     }
 
@@ -244,7 +244,7 @@ contract WriterWithSigTest is TestBase {
         address[] memory managers = new address[](1);
         managers[0] = user.addr;
         store = new WriterStorage();
-        writer = new Writer("Notes for today", address(store), user.addr, managers);
+        writer = new Writer("Notes for today", address(store), user.addr, managers, false);
         store.setLogic(address(writer));
     }
 
@@ -443,6 +443,240 @@ contract WriterWithSigTest is TestBase {
     {
         // Domain intentionally omits chainId — see VerifyTypedData.sol for the
         // chain-portable signature design.
+        bytes32 DOMAIN_SEPARATOR = keccak256(
+            abi.encode(
+                keccak256("EIP712Domain(string name,string version,address verifyingContract)"),
+                keccak256(abi.encodePacked(writer.DOMAIN_NAME())),
+                keccak256(abi.encodePacked(writer.DOMAIN_VERSION())),
+                verifyingContract
+            )
+        );
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, hashStruct));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(signerPrivateKey, digest);
+        return abi.encodePacked(r, s, v);
+    }
+}
+
+// -----------------------------------------------------------------------------
+// WriterPublicTest — exercises the publicWritable=true path
+//
+// On a public writer:
+//   - any non-zero address can call create*/createWithChunk* directly
+//   - any non-zero address's signature is accepted by *WithSig paths
+//   - the per-entry author check is still enforced (only the original
+//     author can update or remove their entry)
+//   - admin operations remain locked to DEFAULT_ADMIN_ROLE
+// -----------------------------------------------------------------------------
+contract WriterPublicTest is TestBase {
+    Writer public writer;
+    WriterStorage public store;
+
+    Vm.Wallet public alice;
+    uint256 internal alicePrivateKey;
+    Vm.Wallet public bob;
+    uint256 internal bobPrivateKey;
+    address public admin = makeAddr("admin");
+    address public stranger = makeAddr("stranger");
+
+    function setUp() public {
+        alicePrivateKey = uint256(keccak256(abi.encodePacked("PUBLIC_ALICE_KEY")));
+        alice = vm.createWallet(alicePrivateKey);
+        bobPrivateKey = uint256(keccak256(abi.encodePacked("PUBLIC_BOB_KEY")));
+        bob = vm.createWallet(bobPrivateKey);
+
+        // Empty initial managers list — proves the public flag alone is
+        // sufficient to allow writes from anyone.
+        address[] memory managers = new address[](0);
+        store = new WriterStorage();
+        writer = new Writer("Town Square", address(store), admin, managers, true);
+        store.setLogic(address(writer));
+    }
+
+    // -------------------------------------------------------------------------
+    // Direct-caller paths
+    // -------------------------------------------------------------------------
+
+    function test_PublicWriter_StrangerCanCreateDirectly() public {
+        // `stranger` was never granted WRITER_ROLE, but the public flag
+        // means hasRole(WRITER_ROLE, anyAccount) returns true.
+        vm.prank(stranger);
+        vm.expectEmit();
+        emit WriterStorage.EntryCreated(0, stranger);
+        writer.createWithChunk(1, "hello world");
+
+        WriterStorage.Entry memory entry = writer.getEntry(0);
+        assertEq(entry.author, stranger);
+        assertEq(entry.chunks[0], "hello world");
+    }
+
+    function test_PublicWriter_NonAuthorCannotUpdate() public {
+        // alice creates an entry directly
+        vm.prank(alice.addr);
+        writer.createWithChunk(1, "alice's post");
+
+        // bob (also a non-manager but a valid public writer) tries to update
+        // alice's entry — should revert because of the author check
+        vm.prank(bob.addr);
+        vm.expectRevert("Writer: Only author can perform this action");
+        writer.update(0, 1, "bob's edit");
+    }
+
+    function test_PublicWriter_NonAuthorCannotRemove() public {
+        vm.prank(alice.addr);
+        writer.createWithChunk(1, "alice's post");
+
+        vm.prank(bob.addr);
+        vm.expectRevert("Writer: Only author can perform this action");
+        writer.remove(0);
+    }
+
+    function test_PublicWriter_AuthorCanUpdateOwnEntry() public {
+        vm.startPrank(alice.addr);
+        writer.createWithChunk(1, "alice's first draft");
+        writer.update(0, 1, "alice's revised draft");
+        vm.stopPrank();
+
+        WriterStorage.Entry memory entry = writer.getEntry(0);
+        assertEq(entry.chunks[0], "alice's revised draft");
+        assertEq(entry.author, alice.addr);
+    }
+
+    function test_PublicWriter_AuthorCanRemoveOwnEntry() public {
+        vm.startPrank(alice.addr);
+        writer.createWithChunk(1, "alice's post");
+        writer.remove(0);
+        vm.stopPrank();
+        assertEq(writer.getEntryCount(), 0);
+    }
+
+    // -------------------------------------------------------------------------
+    // Signature-relayed paths (the production / relay flow)
+    // -------------------------------------------------------------------------
+
+    function test_PublicWriter_SignatureFromStrangerAccepted() public {
+        uint256 nonce = 0;
+        uint256 chunkCount = 1;
+        string memory content = "stranger's first post";
+        bytes memory signature = _sign(
+            alicePrivateKey,
+            address(writer),
+            keccak256(
+                abi.encode(
+                    writer.CREATE_WITH_CHUNK_TYPEHASH(),
+                    nonce,
+                    chunkCount,
+                    keccak256(abi.encodePacked(content))
+                )
+            )
+        );
+
+        // Anyone can submit the signature (the relay), and the recovered
+        // signer (alice, who has no role grants) becomes the author.
+        writer.createWithChunkWithSig(signature, nonce, chunkCount, content);
+
+        WriterStorage.Entry memory entry = writer.getEntry(0);
+        assertEq(entry.author, alice.addr);
+        assertEq(entry.chunks[0], content);
+    }
+
+    function test_PublicWriter_SignatureFromBobCannotEditAlicesEntry() public {
+        // alice creates entry 0 via signature
+        {
+            uint256 nonce = 0;
+            uint256 chunkCount = 1;
+            string memory content = "alice's post";
+            bytes memory signature = _sign(
+                alicePrivateKey,
+                address(writer),
+                keccak256(
+                    abi.encode(
+                        writer.CREATE_WITH_CHUNK_TYPEHASH(),
+                        nonce,
+                        chunkCount,
+                        keccak256(abi.encodePacked(content))
+                    )
+                )
+            );
+            writer.createWithChunkWithSig(signature, nonce, chunkCount, content);
+        }
+
+        // bob tries to update entry 0 with a signature from his own wallet
+        {
+            uint256 nonce = 1;
+            uint256 totalChunks = 1;
+            string memory content = "bob trying to overwrite";
+            bytes memory signature = _sign(
+                bobPrivateKey,
+                address(writer),
+                keccak256(
+                    abi.encode(
+                        writer.UPDATE_TYPEHASH(),
+                        nonce,
+                        uint256(0), // entry id
+                        totalChunks,
+                        keccak256(abi.encodePacked(content))
+                    )
+                )
+            );
+            vm.expectRevert("Writer: Signer must be the author");
+            writer.updateWithSig(signature, nonce, 0, totalChunks, content);
+        }
+
+        // alice's entry is unchanged
+        WriterStorage.Entry memory entry = writer.getEntry(0);
+        assertEq(entry.chunks[0], "alice's post");
+        assertEq(entry.author, alice.addr);
+    }
+
+    // -------------------------------------------------------------------------
+    // Admin operations stay locked even on public writers
+    // -------------------------------------------------------------------------
+
+    function test_PublicWriter_StrangerCannotSetTitle() public {
+        vm.prank(stranger);
+        vm.expectRevert();
+        writer.setTitle("hijacked");
+        // Title unchanged
+        assertEq(writer.title(), "Town Square");
+    }
+
+    function test_PublicWriter_StrangerSetTitleWithSigRejected() public {
+        // A stranger signs setTitleWithSig — even though their signature is
+        // valid, the role check is for DEFAULT_ADMIN_ROLE, not WRITER_ROLE,
+        // so the public flag does not bypass it.
+        uint256 nonce = 0;
+        string memory newTitle = "hijacked";
+        bytes memory signature = _sign(
+            alicePrivateKey,
+            address(writer),
+            keccak256(abi.encode(writer.SET_TITLE_TYPEHASH(), nonce, keccak256(abi.encodePacked(newTitle))))
+        );
+        vm.expectRevert("Writer: Invalid signer role");
+        writer.setTitleWithSig(signature, nonce, newTitle);
+        assertEq(writer.title(), "Town Square");
+    }
+
+    // -------------------------------------------------------------------------
+    // Sanity check: a malformed signature recovers to address(0), which the
+    // hasRole override explicitly rejects even on public writers.
+    // -------------------------------------------------------------------------
+
+    function test_PublicWriter_ZeroAddressSignerRejected() public {
+        // Build a "signature" of the wrong length — OZ ECDSA returns
+        // address(0) on length errors. The role check should fail.
+        bytes memory garbage = hex"deadbeef";
+        vm.expectRevert("Writer: Invalid signer role");
+        writer.createWithChunkWithSig(garbage, 0, 1, "should not work");
+    }
+
+    // -------------------------------------------------------------------------
+    // helper (matches the one in WriterWithSigTest)
+    // -------------------------------------------------------------------------
+    function _sign(uint256 signerPrivateKey, address verifyingContract, bytes32 hashStruct)
+        internal
+        view
+        returns (bytes memory)
+    {
         bytes32 DOMAIN_SEPARATOR = keccak256(
             abi.encode(
                 keccak256("EIP712Domain(string name,string version,address verifyingContract)"),

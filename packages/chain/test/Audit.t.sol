@@ -25,7 +25,7 @@ contract AuditTest is Test {
         managers[0] = user.addr;
 
         store = new WriterStorage();
-        writer = new Writer("Audit Writer", address(store), user.addr, managers);
+        writer = new Writer("Audit Writer", address(store), user.addr, managers, false);
         store.setLogic(address(writer));
     }
 

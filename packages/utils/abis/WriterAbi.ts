@@ -22,8 +22,26 @@ export const WriterAbi = [
 				type: "address[]",
 				internalType: "address[]",
 			},
+			{
+				name: "_publicWritable",
+				type: "bool",
+				internalType: "bool",
+			},
 		],
 		stateMutability: "nonpayable",
+	},
+	{
+		type: "function",
+		name: "publicWritable",
+		inputs: [],
+		outputs: [
+			{
+				name: "",
+				type: "bool",
+				internalType: "bool",
+			},
+		],
+		stateMutability: "view",
 	},
 	{
 		type: "function",
@@ -84,8 +102,8 @@ export const WriterAbi = [
 		outputs: [
 			{
 				name: "",
-				type: "bytes",
-				internalType: "bytes",
+				type: "string",
+				internalType: "string",
 			},
 		],
 		stateMutability: "view",
@@ -97,8 +115,8 @@ export const WriterAbi = [
 		outputs: [
 			{
 				name: "",
-				type: "bytes",
-				internalType: "bytes",
+				type: "string",
+				internalType: "string",
 			},
 		],
 		stateMutability: "view",

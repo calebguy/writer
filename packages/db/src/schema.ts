@@ -25,6 +25,11 @@ export const writer = pgTable("writer", {
 	// same encryption key as long as `storage_id` is preserved across the
 	// migration. Treat this column as immutable: never UPDATE it after insert.
 	storageId: varchar({ length: 42 }).notNull(),
+	// If true, this writer is a public message board: anyone can author
+	// entries, only the original author can edit/remove their own.
+	// Set at writer creation, frozen on chain (Writer.publicWritable is
+	// `immutable`), and never updated after insert here.
+	publicWritable: boolean().notNull().default(false),
 	title: text().notNull(),
 	admin: text().notNull(),
 	managers: text().array().notNull(),

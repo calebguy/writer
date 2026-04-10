@@ -46,12 +46,12 @@ abstract contract VerifyTypedData {
     ///      If a future security analyzer flags this, the rationale is
     ///      this comment block. Do not "fix" by re-adding chainId without
     ///      understanding what you'd lose.
-    constructor(bytes memory name, bytes memory version) {
+    constructor(string memory name, string memory version) {
         DOMAIN_SEPARATOR = keccak256(
             abi.encode(
                 keccak256("EIP712Domain(string name,string version,address verifyingContract)"),
-                keccak256(name), // name
-                keccak256(version), // version
+                keccak256(bytes(name)), // name (per EIP-712 spec, hashed as bytes)
+                keccak256(bytes(version)), // version
                 address(this) // verifyingContract
             )
         );

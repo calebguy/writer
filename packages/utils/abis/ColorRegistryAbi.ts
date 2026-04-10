@@ -11,8 +11,8 @@ export const ColorRegistryAbi = [
 		outputs: [
 			{
 				name: "",
-				type: "bytes",
-				internalType: "bytes",
+				type: "string",
+				internalType: "string",
 			},
 		],
 		stateMutability: "view",
@@ -24,8 +24,8 @@ export const ColorRegistryAbi = [
 		outputs: [
 			{
 				name: "",
-				type: "bytes",
-				internalType: "bytes",
+				type: "string",
+				internalType: "string",
 			},
 		],
 		stateMutability: "view",
