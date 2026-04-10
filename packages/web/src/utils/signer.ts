@@ -255,5 +255,25 @@ export async function getDerivedSigningKeyV2(
 	return key.slice(0, 16); // Use the first 16 bytes for a 128-bit key
 }
 
-// Default export uses v2 for new encryptions
-export const getDerivedSigningKey = getDerivedSigningKeyV2;
+// V3 key with security warning message
+export async function getDerivedSigningKeyV3(
+	wallet: ConnectedWallet,
+): Promise<Uint8Array> {
+	const message =
+		"Writer: write (privately) today, forever.\n\nNOTE: Only sign this message on https://writer.place.";
+	const encodedMessage = `0x${Buffer.from(message, "utf8").toString("hex")}`;
+	const provider = await wallet.getEthereumProvider();
+	const method = "personal_sign";
+
+	const signature = await provider.request({
+		method,
+		params: [encodedMessage, wallet.address],
+	});
+
+	const hash = keccak256(signature);
+	const key = Uint8Array.from(Buffer.from(hash.slice(2), "hex"));
+	return key.slice(0, 16);
+}
+
+// Default export uses v3 for new encryptions
+export const getDerivedSigningKey = getDerivedSigningKeyV3;

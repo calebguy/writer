@@ -1,17 +1,23 @@
 import type { ConnectedWallet } from "@privy-io/react-auth";
-import { getDerivedSigningKeyV1, getDerivedSigningKeyV2 } from "./signer";
+import {
+	getDerivedSigningKeyV1,
+	getDerivedSigningKeyV2,
+	getDerivedSigningKeyV3,
+} from "./signer";
+
+export type KeyVersion = "v1" | "v2" | "v3";
 
 // In-memory cache for derived keys (session-scoped for security)
 // Key format: "walletAddress:version"
 const keyCache = new Map<string, Uint8Array>();
 
-function keyCacheKey(walletAddress: string, version: "v1" | "v2"): string {
+function keyCacheKey(walletAddress: string, version: KeyVersion): string {
 	return `${walletAddress.toLowerCase()}:${version}`;
 }
 
 export async function getCachedDerivedKey(
 	wallet: ConnectedWallet,
-	version: "v1" | "v2",
+	version: KeyVersion,
 ): Promise<Uint8Array> {
 	const cacheKey = keyCacheKey(wallet.address, version);
 
@@ -23,9 +29,11 @@ export async function getCachedDerivedKey(
 
 	// Derive key and cache it
 	const key =
-		version === "v2"
-			? await getDerivedSigningKeyV2(wallet)
-			: await getDerivedSigningKeyV1(wallet);
+		version === "v3"
+			? await getDerivedSigningKeyV3(wallet)
+			: version === "v2"
+				? await getDerivedSigningKeyV2(wallet)
+				: await getDerivedSigningKeyV1(wallet);
 
 	keyCache.set(cacheKey, key);
 	return key;
@@ -33,19 +41,21 @@ export async function getCachedDerivedKey(
 
 export function hasCachedDerivedKey(
 	wallet: ConnectedWallet,
-	version: "v1" | "v2",
+	version: KeyVersion,
 ): boolean {
 	const cacheKey = keyCacheKey(wallet.address, version);
 	return keyCache.has(cacheKey);
 }
 
 export async function getCachedDerivedKeys(wallet: ConnectedWallet): Promise<{
+	keyV3: Uint8Array;
 	keyV2: Uint8Array;
 	keyV1: Uint8Array;
 }> {
+	const keyV3 = await getCachedDerivedKey(wallet, "v3");
 	const keyV2 = await getCachedDerivedKey(wallet, "v2");
 	const keyV1 = await getCachedDerivedKey(wallet, "v1");
-	return { keyV2, keyV1 };
+	return { keyV3, keyV2, keyV1 };
 }
 
 export function clearCachedKeysForWallet(walletAddress: string): void {

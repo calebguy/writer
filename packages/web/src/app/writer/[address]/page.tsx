@@ -69,7 +69,7 @@ export default function WriterPage() {
 		setUnlockError("Signature request was rejected.");
 	}, []);
 
-	const { processedEntries, hasLockedPrivateEntries } = useProcessedEntries(
+	const { processedEntries, hasLockedPrivateEntries, processedOnce } = useProcessedEntries(
 		writer?.entries,
 		address,
 		{
@@ -80,20 +80,26 @@ export default function WriterPage() {
 
 	const hasPrivateEntries =
 		writer?.entries?.some((entry) => isEntryPrivate(entry)) ?? false;
+	const allEntriesPrivate =
+		(writer?.entries?.length ?? 0) > 0 &&
+		writer?.entries?.every((entry) => isEntryPrivate(entry));
 	const showUnlockBanner = hasPrivateEntries && hasLockedPrivateEntries;
 	const showLockedEntries = !allowDecryption || Boolean(unlockError);
 
 	useEffect(() => {
 		if (!wallet || !hasPrivateEntries) return;
 		// Auto-unlock only if the key is already cached (no signature prompt).
-		if (hasCachedDerivedKey(wallet, "v2")) {
+		if (
+			hasCachedDerivedKey(wallet, "v3") ||
+			hasCachedDerivedKey(wallet, "v2")
+		) {
 			setAllowDecryption(true);
 		}
 	}, [wallet, hasPrivateEntries]);
 
 	// Show loading state during the gap where entries exist but processedEntries hasn't been populated yet
 	const isEntriesProcessing =
-		writer?.entries?.length && processedEntries.length === 0;
+		writer?.entries?.length && processedEntries.length === 0 && !processedOnce;
 	const walletAddress = wallet?.address?.toLowerCase();
 	const { data: savedData } = useQuery({
 		queryKey: ["saved", walletAddress],
@@ -169,6 +175,7 @@ export default function WriterPage() {
 				isUnlocking={allowDecryption && !unlockError}
 				unlockError={unlockError}
 				showLockedEntries={showLockedEntries}
+				emptyMessage={allEntriesPrivate && !canCreateEntries ? "no public entries" : "no entries yet"}
 				onUnlock={() => {
 					setUnlockError(null);
 					setAllowDecryption(true);

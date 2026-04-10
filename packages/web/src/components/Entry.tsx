@@ -178,8 +178,12 @@ export default function Entry({
 			if (isEntryPrivate(initialEntry)) {
 				setEncrypted(true);
 				if (wallet && isWalletAuthor(wallet, initialEntry)) {
+					const needsV3 = initialEntry.raw?.startsWith("enc:v3:br:");
 					const needsV2 = initialEntry.raw?.startsWith("enc:v2:br:");
 					const needsV1 = initialEntry.raw?.startsWith("enc:br:");
+					const keyV3 = needsV3
+						? await getCachedDerivedKey(wallet, "v3")
+						: undefined;
 					const keyV2 = needsV2
 						? await getCachedDerivedKey(wallet, "v2")
 						: undefined;
@@ -190,6 +194,7 @@ export default function Entry({
 						keyV2,
 						initialEntry,
 						keyV1,
+						keyV3,
 					);
 					setProcessedEntry(processed);
 					setEditedContent(processed.decompressed ?? "");
@@ -286,9 +291,9 @@ export default function Entry({
 		const compressedContent = await compress(editedContent);
 		let versionedCompressedContent = `br:${compressedContent}`;
 		if (encrypted) {
-			const key = await getCachedDerivedKey(wallet, "v2");
+			const key = await getCachedDerivedKey(wallet, "v3");
 			const encryptedContent = await encrypt(key, compressedContent);
-			versionedCompressedContent = `enc:v2:br:${encryptedContent}`;
+			versionedCompressedContent = `enc:v3:br:${encryptedContent}`;
 		}
 		// Store expected raw content for polling comparison
 		expectedRawContentRef.current = versionedCompressedContent;

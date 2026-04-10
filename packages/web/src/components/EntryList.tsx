@@ -93,11 +93,11 @@ export default function EntryList({
 								<span className="text-xs">
 									{isUnlocking ? "Unlocking..." : "Unlock to view"}
 								</span>
-								{unlockError && (
+								{/* {unlockError && (
 									<span className="text-[10px] text-red-500">
 										Signature rejected
 									</span>
-								)}
+								)} */}
 							</div>
 							<div className="writer-card-meta private-entry-meta text-neutral-400 dark:text-neutral-600 flex items-end text-sm leading-3 pt-2 shrink-0 pb-2 justify-end">
 								<span>{createdAt}</span>

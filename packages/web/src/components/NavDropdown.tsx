@@ -1,5 +1,7 @@
 "use client";
 
+import type { Writer } from "@/utils/api";
+import { useOPWallet } from "@/utils/hooks";
 import { clearAllCachedKeys } from "@/utils/keyCache";
 import {
 	type ThemeMode,
@@ -8,12 +10,15 @@ import {
 	setStoredThemeMode,
 	subscribeSystemThemeChange,
 } from "@/utils/theme";
+import { isEntryPrivate, isWalletAuthor } from "@/utils/utils";
 import { usePrivy } from "@privy-io/react-auth";
+import { useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ColorModal } from "./ColorModal";
-import { queryClient } from "./Providers";
+import { type MigrateEntry, MigrateModal } from "./MigrateModal";
+import { queryClient as globalQueryClient } from "./Providers";
 import { Dropdown, DropdownItem } from "./dsl/Dropdown";
 
 function ThemeButton({
@@ -48,10 +53,17 @@ function ThemeButton({
 	);
 }
 
+function isLegacyEncrypted(raw: string | undefined | null): boolean {
+	if (!raw) return false;
+	return raw.startsWith("enc:v2:br:") || raw.startsWith("enc:br:");
+}
+
 export function NavDropdown() {
-	const { logout, authenticated, login } = usePrivy();
+	const { logout, authenticated, login, user } = usePrivy();
+	const [wallet] = useOPWallet();
 	const router = useRouter();
 	const pathname = usePathname();
+	const queryClient = useQueryClient();
 
 	const navItems = [
 		{ label: "Home", href: "/home" },
@@ -59,8 +71,40 @@ export function NavDropdown() {
 		...(authenticated ? [{ label: "Saved", href: "/saved" }] : []),
 	].filter((item) => item.href !== pathname);
 	const [open, setOpen] = useState(false);
+	const [migrateOpen, setMigrateOpen] = useState(false);
 	const [dropdownOpen, setDropdownOpen] = useState(false);
 	const [themeMode, setThemeMode] = useState<ThemeMode>("system");
+
+	// Derive legacy entries from the cached get-writers query
+	const address = user?.wallet?.address;
+	const writersData = queryClient.getQueryData<Writer[]>([
+		"get-writers",
+		address,
+	]);
+
+	const entriesToMigrate = useMemo<MigrateEntry[]>(() => {
+		if (!writersData || !wallet) return [];
+		const result: MigrateEntry[] = [];
+		for (const writer of writersData) {
+			for (const entry of writer.entries) {
+				if (
+					isEntryPrivate(entry) &&
+					isWalletAuthor(wallet, entry) &&
+					isLegacyEncrypted(entry.raw) &&
+					entry.onChainId
+				) {
+					result.push({
+						entry,
+						writerAddress: writer.address,
+						writerTitle: writer.title,
+					});
+				}
+			}
+		}
+		return result;
+	}, [writersData, wallet]);
+
+	const hasLegacyEntries = entriesToMigrate.length > 0;
 
 	useEffect(() => {
 		if (typeof window === "undefined") return;
@@ -121,12 +165,22 @@ export function NavDropdown() {
 						</div>
 					</DropdownItem>
 				)}
+				{authenticated && hasLegacyEntries && (
+					<DropdownItem onClick={() => setMigrateOpen(true)}>
+						<div className="flex items-center justify-between gap-2 w-full">
+							<span>Migrate</span>
+							<span className="text-xs text-neutral-400 dark:text-neutral-500">
+								{entriesToMigrate.length}
+							</span>
+						</div>
+					</DropdownItem>
+				)}
 				{authenticated ? (
 					<DropdownItem
 						onClick={() =>
 							logout().then(() => {
 								clearAllCachedKeys();
-								queryClient.clear();
+								globalQueryClient.clear();
 							})
 						}
 					>
@@ -157,6 +211,11 @@ export function NavDropdown() {
 				</div>
 			</Dropdown>
 			<ColorModal open={open} onClose={() => setOpen(false)} />
+			<MigrateModal
+				open={migrateOpen}
+				onClose={() => setMigrateOpen(false)}
+				entriesToMigrate={entriesToMigrate}
+			/>
 		</>
 	);
 }

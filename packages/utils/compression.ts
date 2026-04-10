@@ -18,6 +18,10 @@ export const processRawContent = (raw: string) => {
 	if (raw.startsWith("br:")) {
 		version = "br";
 		decompressed = decompressBrotli(raw.slice(3));
+	} else if (raw.startsWith("enc:v3:br:")) {
+		version = "enc:v3:br";
+	} else if (raw.startsWith("enc:v2:br:")) {
+		version = "enc:v2:br";
 	} else if (raw.startsWith("enc:br:")) {
 		version = "enc:br";
 	}
