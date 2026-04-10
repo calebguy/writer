@@ -176,10 +176,6 @@
   color: rgb(128 128 122);
 }
 
-:root[data-theme="light"] .create-input-control {
-  color: rgb(103 103 98);
-}
-
 :root[data-theme="light"] .create-input-control:hover {
   color: rgb(var(--color-primary));
 }

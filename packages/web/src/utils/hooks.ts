@@ -148,11 +148,20 @@ export function useProcessedEntries(
 				// Pre-derive any v4 keys we'll need. The keyCache dedupes by
 				// (wallet, storageId, version), so visiting the same storageId
 				// twice in this loop only triggers one signature.
+				//
+				// Only v4-prefixed entries are considered here, AND we
+				// defensively skip any entry that doesn't carry a storageId
+				// (legacy v1/v2/v3 entries from a DB row that hasn't been
+				// backfilled, or a cached API response from before the
+				// storage_id column existed).
 				const v4KeysByStorageId = new Map<string, Uint8Array>();
 				if (needsV4) {
 					const uniqueStorageIds = new Set(
 						privateEntriesToProcess
-							.filter((entry) => entry.raw?.startsWith("enc:v4:br:"))
+							.filter(
+								(entry) =>
+									entry.raw?.startsWith("enc:v4:br:") && entry.storageId,
+							)
 							.map((entry) => entry.storageId.toLowerCase()),
 					);
 					for (const storageId of uniqueStorageIds) {
@@ -178,9 +187,14 @@ export function useProcessedEntries(
 						continue;
 					}
 
-					const derivedKeyV4 = v4KeysByStorageId.get(
-						entry.storageId.toLowerCase(),
-					);
+					// v4 keys are per-storageId. Only look up a key if the entry
+					// is actually a v4 entry AND has a storageId on it. v1/v2/v3
+					// entries pass undefined and processPrivateEntry routes them
+					// by prefix to the right legacy key.
+					const derivedKeyV4 =
+						entry.raw?.startsWith("enc:v4:br:") && entry.storageId
+							? v4KeysByStorageId.get(entry.storageId.toLowerCase())
+							: undefined;
 					const processed = await processPrivateEntry(
 						derivedKeyV2,
 						entry,

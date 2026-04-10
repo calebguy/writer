@@ -5,6 +5,14 @@ import { getAddress } from "viem";
 import { db } from "./constants";
 import { env } from "./env";
 
+// Tell Hono about the variables our middlewares stash on the request
+// context, so route handlers get type-safe access to `c.var.walletAddress`.
+declare module "hono" {
+	interface ContextVariableMap {
+		walletAddress: Hex;
+	}
+}
+
 const privy = new PrivyClient(env.PRIVY_APP_ID, env.PRIVY_SECRET);
 
 function getAuthenticatedWallet(c: Context) {
@@ -47,6 +55,36 @@ export async function requireSavedAuth(c: Context, next: Next) {
 		return c.json({ error: "forbidden" }, 403);
 	}
 
+	await next();
+}
+
+/**
+ * Verifies the Privy token and stashes the authenticated wallet address on
+ * the Hono context as `c.var.walletAddress`. Used by every endpoint that
+ * fires a relayer transaction (audit fixes for H-2 / H-3): the route handler
+ * is then expected to assert that the EIP-712 recovered signer (or, for
+ * /factory/create, the request body's `admin` field) matches `walletAddress`.
+ *
+ * Centralizing the token verification here means individual route handlers
+ * only need to do the equality check, not the JWT parse.
+ */
+export async function requireWalletAuth(c: Context, next: Next) {
+	const token = getAuthenticatedWallet(c);
+	if (!token) {
+		return c.json({ error: "unauthorized" }, 401);
+	}
+
+	let walletAddress: string | undefined;
+	try {
+		walletAddress = await verifyPrivyToken(token);
+	} catch {
+		return c.json({ error: "unauthorized" }, 401);
+	}
+	if (!walletAddress) {
+		return c.json({ error: "unauthorized" }, 401);
+	}
+
+	c.set("walletAddress", getAddress(walletAddress) as Hex);
 	await next();
 }
 

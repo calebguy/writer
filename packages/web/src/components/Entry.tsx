@@ -178,7 +178,13 @@ export default function Entry({
 			if (isEntryPrivate(initialEntry)) {
 				setEncrypted(true);
 				if (wallet && isWalletAuthor(wallet, initialEntry)) {
-					const needsV4 = initialEntry.raw?.startsWith("enc:v4:br:");
+					// `needsV4` only triggers the v4 key fetch when the entry
+					// is actually a v4 entry. Also defensively guard against
+					// a v4 entry arriving without a storageId (which would
+					// indicate a corrupt API response or pre-migration cache).
+					const needsV4 =
+						initialEntry.raw?.startsWith("enc:v4:br:") &&
+						!!initialEntry.storageId;
 					const needsV3 = initialEntry.raw?.startsWith("enc:v3:br:");
 					const needsV2 = initialEntry.raw?.startsWith("enc:v2:br:");
 					const needsV1 = initialEntry.raw?.startsWith("enc:br:");
@@ -318,6 +324,11 @@ export default function Entry({
 				address: address as Hex,
 				content: versionedCompressedContent,
 			});
+		const authToken = await getAccessToken();
+		if (!authToken) {
+			console.error("No auth token found");
+			return;
+		}
 		await mutateAsyncEdit({
 			address: address as Hex,
 			id: entryId,
@@ -325,6 +336,7 @@ export default function Entry({
 			nonce,
 			totalChunks,
 			content,
+			authToken,
 		});
 	};
 
@@ -545,11 +557,18 @@ export default function Entry({
 												id: Number(id),
 												address: address as Hex,
 											});
+											const authToken = await getAccessToken();
+											if (!authToken) {
+												console.error("No auth token found");
+												setDeletedSubmitted(false);
+												return;
+											}
 											await mutateAsyncDelete({
 												address: address as Hex,
 												id: Number(id),
 												signature,
 												nonce,
+												authToken,
 											});
 											setDeletedSubmitted(false);
 										}}

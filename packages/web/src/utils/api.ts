@@ -42,14 +42,21 @@ export async function setColor({
 	signature,
 	nonce,
 	hexColor,
+	authToken,
 }: {
 	signature: string;
 	nonce: number;
 	hexColor: string;
+	authToken: string;
 }) {
-	const res = await client["color-registry"].set.$post({
-		json: { signature, nonce, hexColor },
-	});
+	const res = await client["color-registry"].set.$post(
+		{
+			json: { signature, nonce, hexColor },
+		},
+		{
+			headers: { Authorization: `Bearer ${authToken}` },
+		},
+	);
 	if (!res.ok) {
 		throw new Error(res.statusText);
 	}
@@ -93,6 +100,7 @@ export async function editEntry({
 	nonce,
 	totalChunks,
 	content,
+	authToken,
 }: {
 	address: string;
 	id: number;
@@ -100,11 +108,17 @@ export async function editEntry({
 	nonce: number;
 	totalChunks: number;
 	content: string;
+	authToken: string;
 }) {
-	const res = await client.writer[":address"].entry[":id"].update.$post({
-		param: { address, id: String(id) },
-		json: { signature, nonce, totalChunks, content },
-	});
+	const res = await client.writer[":address"].entry[":id"].update.$post(
+		{
+			param: { address, id: String(id) },
+			json: { signature, nonce, totalChunks, content },
+		},
+		{
+			headers: { Authorization: `Bearer ${authToken}` },
+		},
+	);
 	if (!res.ok) {
 		throw new Error(res.statusText);
 	}
@@ -116,11 +130,23 @@ export async function deleteEntry({
 	id,
 	signature,
 	nonce,
-}: { address: string; id: number; signature: string; nonce: number }) {
-	const res = await client.writer[":address"].entry[":id"].delete.$post({
-		param: { address, id: String(id) },
-		json: { signature, nonce },
-	});
+	authToken,
+}: {
+	address: string;
+	id: number;
+	signature: string;
+	nonce: number;
+	authToken: string;
+}) {
+	const res = await client.writer[":address"].entry[":id"].delete.$post(
+		{
+			param: { address, id: String(id) },
+			json: { signature, nonce },
+		},
+		{
+			headers: { Authorization: `Bearer ${authToken}` },
+		},
+	);
 	if (!res.ok) {
 		throw new Error(res.statusText);
 	}
@@ -269,18 +295,29 @@ export async function unsaveEntry({
 	return res.json();
 }
 
-export async function factoryCreate(json: {
+export async function factoryCreate({
+	admin,
+	managers,
+	title,
+	authToken,
+}: {
 	admin: string | Hex;
 	managers: string[] | Hex[];
 	title: string;
+	authToken: string;
 }) {
-	const res = await client.factory.create.$post({
-		json: {
-			admin: getAddress(json.admin),
-			managers: json.managers.map((manager) => getAddress(manager)),
-			title: json.title,
+	const res = await client.factory.create.$post(
+		{
+			json: {
+				admin: getAddress(admin),
+				managers: managers.map((manager) => getAddress(manager)),
+				title,
+			},
 		},
-	});
+		{
+			headers: { Authorization: `Bearer ${authToken}` },
+		},
+	);
 	if (!res.ok) {
 		throw new Error(res.statusText);
 	}
@@ -289,6 +326,7 @@ export async function factoryCreate(json: {
 
 export async function createWithChunk({
 	address,
+	authToken,
 	...json
 }: {
 	address: string;
@@ -296,11 +334,17 @@ export async function createWithChunk({
 	nonce: number;
 	chunkCount: number;
 	chunkContent: string;
+	authToken: string;
 }) {
-	const res = await client.writer[":address"].entry.createWithChunk.$post({
-		param: { address },
-		json,
-	});
+	const res = await client.writer[":address"].entry.createWithChunk.$post(
+		{
+			param: { address },
+			json,
+		},
+		{
+			headers: { Authorization: `Bearer ${authToken}` },
+		},
+	);
 	if (!res.ok) {
 		throw new Error(res.statusText);
 	}

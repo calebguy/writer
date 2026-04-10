@@ -26,7 +26,7 @@ import {
 	factoryCreateJsonValidator,
 	updateEntryJsonValidator,
 } from "../middleware";
-import { requireWriterAdminAuth } from "../privy";
+import { requireWalletAuth, requireWriterAdminAuth } from "../privy";
 import { makeRelayTxId, relay } from "../relay";
 import { Hono } from "hono";
 
@@ -61,7 +61,11 @@ const writerRoutes = new Hono()
 		};
 		return c.json({ writer });
 	})
-	.post("/color-registry/set", colorRegistrySetJsonValidator, async (c) => {
+	.post(
+		"/color-registry/set",
+		requireWalletAuth,
+		colorRegistrySetJsonValidator,
+		async (c) => {
 		const { signature, nonce, hexColor } = c.req.valid("json");
 
 		const address = await recoverSetColorSigner({
@@ -70,6 +74,16 @@ const writerRoutes = new Hono()
 			hexColor: hexColor as Hex,
 			address: env.COLOR_REGISTRY_ADDRESS as Hex,
 		});
+
+		// Audit fix for H-3: the EIP-712 signer must match the authenticated
+		// wallet. Prevents an attacker from replaying a captured signature
+		// against the relay (and prevents anonymous relay-drain entirely).
+		if (getAddress(address) !== c.var.walletAddress) {
+			return c.json(
+				{ error: "signer does not match authenticated wallet" },
+				403,
+			);
+		}
 
 		const args = {
 			signature,
@@ -103,8 +117,25 @@ const writerRoutes = new Hono()
 			return c.json({ error: `database error during color set: ${message}` }, 500);
 		}
 	})
-	.post("/factory/create", factoryCreateJsonValidator, async (c) => {
+	.post(
+		"/factory/create",
+		requireWalletAuth,
+		factoryCreateJsonValidator,
+		async (c) => {
 		const { admin, managers, title } = c.req.valid("json");
+
+		// Audit fix for H-2: the authenticated wallet must equal the `admin`
+		// field on the new writer. This prevents anonymous relay-drain (you
+		// must be logged in) AND prevents a confused-deputy attack where
+		// someone creates a writer with another wallet as admin. Per-user
+		// rate limiting is a separate follow-up.
+		if (getAddress(admin) !== c.var.walletAddress) {
+			return c.json(
+				{ error: "admin must equal authenticated wallet" },
+				403,
+			);
+		}
+
 		const salt = toHex(randomBytes(32));
 		// publicWritable is hardcoded to false here. The UI never creates
 		// public writers — the launch public writer is deployed once via
@@ -186,6 +217,7 @@ const writerRoutes = new Hono()
 	})
 	.post(
 		"/writer/:address/entry/createWithChunk",
+		requireWalletAuth,
 		addressParamSchema,
 		createWithChunkJsonValidator,
 		async (c) => {
@@ -205,6 +237,17 @@ const writerRoutes = new Hono()
 				chunkCount,
 				address: contractAddress,
 			});
+
+			// Audit fix for H-3: the EIP-712 recovered signer (which becomes
+			// the entry's author) must match the authenticated wallet. This
+			// prevents an attacker from replaying someone else's captured
+			// signature against the relay.
+			if (getAddress(author) !== c.var.walletAddress) {
+				return c.json(
+					{ error: "signer does not match authenticated wallet" },
+					403,
+				);
+			}
 
 			const args = {
 				signature,
@@ -293,6 +336,7 @@ const writerRoutes = new Hono()
 	)
 	.post(
 		"/writer/:address/entry/:id/update",
+		requireWalletAuth,
 		addressAndIDParamSchema,
 		updateEntryJsonValidator,
 		async (c) => {
@@ -323,6 +367,15 @@ const writerRoutes = new Hono()
 				entryId: id,
 				address: contractAddress,
 			});
+			// Audit fix for H-3: recovered signer must match the
+			// authenticated wallet (so an attacker can't replay a captured
+			// signature against the relay).
+			if (getAddress(author) !== c.var.walletAddress) {
+				return c.json(
+					{ error: "signer does not match authenticated wallet" },
+					403,
+				);
+			}
 			if (entry.author.toLowerCase() !== author.toLowerCase()) {
 				return c.json({ error: "previous author does not match" }, 400);
 			}
@@ -378,6 +431,7 @@ const writerRoutes = new Hono()
 	)
 	.post(
 		"/writer/:address/entry/:id/delete",
+		requireWalletAuth,
 		addressAndIDParamSchema,
 		deleteEntryJsonValidator,
 		async (c) => {
@@ -402,6 +456,15 @@ const writerRoutes = new Hono()
 				id,
 				address,
 			});
+			// Audit fix for H-3: recovered signer must match the
+			// authenticated wallet (so an attacker can't replay a captured
+			// signature against the relay).
+			if (getAddress(signer) !== c.var.walletAddress) {
+				return c.json(
+					{ error: "signer does not match authenticated wallet" },
+					403,
+				);
+			}
 			if (entry.author.toLowerCase() !== signer.toLowerCase()) {
 				return c.json({ error: "previous author does not match" }, 400);
 			}

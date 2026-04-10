@@ -47,15 +47,7 @@ export default function PublicWriterList({ writers }: PublicWriterListProps) {
 						/>
 					</div>
 					<div className="writer-card-meta shrink-0 flex items-center justify-end gap-3 text-sm text-neutral-400 dark:text-neutral-600 leading-3 pt-2">
-						{writer.privateCount > 0 &&
-							viewerAddress === writer.admin.toLowerCase() && (
-								<span className="flex items-end gap-1">
-									<Lock className="w-3 h-3 mb-[2px]" />
-									{writer.privateCount}
-								</span>
-							)}
 						<span className="flex items-end gap-1">
-							<Unlock className="w-3 h-3 mb-[2px]" />
 							{writer.publicCount}
 						</span>
 					</div>

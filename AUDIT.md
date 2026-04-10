@@ -103,29 +103,20 @@ Writer Security Audit
   ---                                                                                                                                      
   HIGH                                                                                                                                     
                                                                                                                                            
-  H-1. Encryption has no AAD — server can swap ciphertexts between entries                                                                 
-                                                                                                                                           
-  Files: packages/web/src/utils/utils.ts:191-245                                                                                           
-                                                                                                                                           
-  encrypt/decrypt use AES-GCM with a random 12-byte IV but no additional authenticated data (AAD). Because the same wallet uses one key    
-  across all of its private entries, the server (or anyone with write access to the DB / on-chain entries) can swap ciphertext between  
-  entries — even between different writers owned by the same user — and the client will happily decrypt them, attribute the decrypted text 
-  to the wrong entry/writer, and display it as authentic.                                                                                  
-                                                                                                                                           
-  For a journaling product, this lets a malicious server show the user "yesterday's entry" when they ask for today's, or move private      
-  content from journal A to journal B without detection.                                                                                   
-                                                                                                                                           
-  Fix: Bind AAD to the entry's identity at encrypt time:                                                                                   
-  const aad = new TextEncoder().encode(`writer:${storageAddress.toLowerCase()};entryId:${onChainId}`);                                     
-  crypto.subtle.encrypt({ name: "AES-GCM", iv, additionalData: aad }, cryptoKey, message);                                                 
-  For new entries (where onChainId isn't yet known) bind to a content-derived id or wait until creation, then re-encrypt; alternatively    
-  bind to (storageAddress, nonce) from the signed payload.                                                                                 
-                                                                                                                                           
-  Note: this requires another version bump (enc:v4:) and a migration story for v2/v3 entries.                                              
-                                                                                                                                           
-  ---                                                                                                                                      
-  H-2. /factory/create is fully unauthenticated — attacker can drain the relay wallet                                                      
-                                                                                                                                           
+  H-1 has been reclassified to MEDIUM and moved below — see entry after M-1.
+  The cross-writer half of this finding is already mitigated by the C-1 fix
+  (per-storage_id keys), which downgraded the practical severity.
+
+  ---
+  ✅ H-2. /factory/create is fully unauthenticated — attacker can drain the relay wallet
+  ℹ️: Fixed by adding `requireWalletAuth` middleware to /factory/create. The
+     route handler also asserts `admin === c.var.walletAddress`, so the
+     authenticated user can only create writers with themselves as admin
+     (closes the confused-deputy attack). Per-user rate limiting is still a
+     follow-up but the open-relay-drain hole is closed. The endpoint was
+     also removed from the public /docs page and DOCS.md so external
+     callers no longer find it documented.
+
   Files: packages/server/src/routes/writer.ts:169-217, packages/server/src/relay.ts                                                        
                                                                                                                                            
   .post("/factory/create", factoryCreateJsonValidator, async (c) => {                                                                      
@@ -141,8 +132,20 @@ Writer Security Audit
   operation.                                                                                                                               
                                                                                                                                            
   ---                                                                                                                                      
-  H-3. All sig-relayed write endpoints are unauthenticated — relay funds can be ground down                                                
-                                                                                                                                           
+  ✅ H-3. All sig-relayed write endpoints are unauthenticated — relay funds can be ground down
+  ℹ️: Fixed by adding `requireWalletAuth` middleware to /color-registry/set,
+     /writer/:address/entry/createWithChunk, /writer/:address/entry/:id/update,
+     and /writer/:address/entry/:id/delete. Each route handler asserts
+     `getAddress(recoveredSigner) === c.var.walletAddress` after recovering
+     the EIP-712 signer — so even if an attacker captures someone else's
+     signature, they can't authenticate as that wallet to submit it. The
+     four frontend write API helpers (setColor, createWithChunk, editEntry,
+     deleteEntry) and the factoryCreate helper now all forward a Privy
+     bearer token; all 8 call sites updated. The endpoints were also stripped
+     from /docs and DOCS.md. Per-IP rate limiting is still a follow-up but
+     the captured-signature replay + anonymous relay-drain attack class is
+     closed.
+
   Files: packages/server/src/routes/writer.ts:241,348,433 (createWithChunk, update, delete), :127 (color-registry/set)                     
                                                                                                                                            
   These endpoints accept a signature, recover the signer, and submit to the chain via the relay. There is no Privy auth and no rate        
@@ -166,8 +169,9 @@ Writer Security Audit
   forged-from-attacker-wallet signature is rejected before it ever reaches the chain.                                                      
                                                                                                                                            
   ---                                                                                                                                      
-  H-4. /manager/:address and /relay/wallets leak info without auth                                                                         
-                                                                                                                                           
+  ❌ H-4. /manager/:address and /relay/wallets leak info without auth                                                                         
+  ℹ️: Intentional :), all data is visible onchain & our encryption mechanism protects against from actors reading private content
+
   Files: packages/server/src/routes/writer.ts:39-47, packages/server/src/routes/relay.ts:6-17                                              
                                                                                                                                            
   - GET /manager/:address returns the full list of writers managed by any address along with all entries. Trivially enumerable and reveals 
@@ -195,7 +199,74 @@ Writer Security Audit
   The signature is hashed to 32 bytes, then truncated to 16. AES-128-GCM is still safe today, but you're paying the cost of a 256-bit      
   derivation and throwing half of it away. Switch to a 32-byte key (AES-256-GCM). While you're touching this, run the signature through    
   HKDF rather than a single keccak truncation, so you can derive multiple subkeys (e.g., per-writer) without re-prompting the user.        
-                                                                                                                                           
+
+  ❌ H-1 → reclassified to M. Encryption has no AAD — server can swap ciphertexts between entries
+  ℹ️: Won't fix at launch. Originally rated HIGH; downgraded to MEDIUM after
+     the C-1 fix because the cross-writer half of this attack is now
+     structurally impossible.
+
+     What C-1 fixed: each Writer has its own per-storage_id v4 key. A
+     ciphertext encrypted under writer A's key cannot be decrypted under
+     writer B's key — AES-GCM throws a tag mismatch. So a server cannot
+     move encrypted entries BETWEEN writers. The cross-place leak scenario
+     described in the original audit is closed.
+
+     What remains: same-writer ciphertext substitution. A compromised
+     server could swap entry 5 and entry 6 within the same writer (both
+     encrypted with the same per-writer key). The user's client would
+     decrypt both successfully and display each piece of content under
+     the wrong entry id. The attack requires write access to the API/DB,
+     which is the same trust boundary as any hosted web app.
+
+     Why we accept this:
+       - Threat model: requires a compromised or malicious *server*, not
+         an external attacker. That's the same trust boundary as every
+         non-zero-trust hosted application.
+       - Architecture: the API is a caching layer over chain events. The
+         chain is the source of truth. Anyone who doesn't trust the API
+         can run their own Ponder indexer against the factory address or
+         read entries directly from chain via eth_call. The escape hatch
+         exists by design.
+       - Project promise: "write today, forever" is anchored on the chain,
+         not on trusting the server. The encryption claim is "encrypted
+         at rest with a key the host can't read" — that claim remains
+         true. We are not claiming "and the host can't even rearrange
+         the encrypted blobs."
+       - Public message board entries are stored as plaintext, so this
+         finding does not apply to the launch public writer at all.
+
+     When to revisit:
+       - If we ever offer shared / multi-author writers where authors don't
+         trust each other but trust the host
+       - If we ever onboard contributors with prod DB access
+       - If we change the encryption claim to a stronger one (full E2EE)
+       - If we add public-facing trust statements about content immutability
+         beyond what the chain enforces
+
+     Possible future fix paths (none planned):
+       - Bind AAD to the user's signature bytes (Option 2 from the design
+         discussion); requires the frontend to fetch / verify the signature
+         out-of-band, not just trust the API.
+       - Have the frontend verify entry content against chain on first
+         load.
+       - Build a chain-only frontend variant for high-trust users.
+
+  Files: packages/web/src/utils/utils.ts:191-245
+
+  encrypt/decrypt use AES-GCM with a random 12-byte IV but no additional authenticated data (AAD). Because the same wallet uses one key
+  across all of its private entries (note: per-writer post C-1, so the cross-writer attack is closed), the server (or anyone with write
+  access to the DB / on-chain entries) can swap ciphertext between entries WITHIN the same writer, and the client will happily decrypt
+  them, attribute the decrypted text to the wrong entry, and display it as authentic.
+
+  For a journaling product, this lets a malicious server show the user "yesterday's entry" when they ask for today's within the same
+  writer.
+
+  Fix (deferred): Bind AAD to the entry's identity at encrypt time:
+  const aad = new TextEncoder().encode(`writer:${storageAddress.toLowerCase()};entryId:${onChainId}`);
+  crypto.subtle.encrypt({ name: "AES-GCM", iv, additionalData: aad }, cryptoKey, message);
+  For new entries (where onChainId isn't yet known) bind to a content-derived id or wait until creation, then re-encrypt; alternatively
+  bind to (storageAddress, nonce) from the signed payload. Note: requires another version bump (enc:v5:) and a migration story.
+
   M-2. Compression-then-encryption (length side channel)                                                                                   
                                                                                                                                            
   Files: packages/web/src/utils/utils.ts:170-189 and where it's used                                                                       

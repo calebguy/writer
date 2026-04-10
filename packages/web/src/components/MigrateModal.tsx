@@ -5,6 +5,7 @@ import { useOPWallet } from "@/utils/hooks";
 import { getCachedDerivedKey } from "@/utils/keyCache";
 import { signUpdate } from "@/utils/signer";
 import { compress, decompress, decrypt, encrypt } from "@/utils/utils";
+import { usePrivy } from "@privy-io/react-auth";
 import { useQueryClient } from "@tanstack/react-query";
 import { VisuallyHidden } from "radix-ui";
 import { useCallback, useState } from "react";
@@ -30,6 +31,7 @@ export function MigrateModal({
 	entriesToMigrate: MigrateEntry[];
 }) {
 	const [wallet] = useOPWallet();
+	const { getAccessToken } = usePrivy();
 	const queryClient = useQueryClient();
 	const [status, setStatus] = useState<MigrationStatus>("idle");
 	const [migratedCount, setMigratedCount] = useState(0);
@@ -105,6 +107,12 @@ export function MigrateModal({
 					},
 				);
 
+				const authToken = await getAccessToken();
+				if (!authToken) {
+					throw new Error(
+						"No auth token — log in again before retrying the migration",
+					);
+				}
 				await editEntry({
 					address: writerAddress,
 					id: Number(entry.onChainId),
@@ -112,6 +120,7 @@ export function MigrateModal({
 					nonce,
 					totalChunks,
 					content,
+					authToken,
 				});
 
 				setMigratedCount((c) => c + 1);
@@ -128,7 +137,7 @@ export function MigrateModal({
 			);
 			setStatus("error");
 		}
-	}, [wallet, entriesToMigrate, queryClient]);
+	}, [wallet, entriesToMigrate, queryClient, getAccessToken]);
 
 	// Group entries by writer for display
 	const entriesByWriter = entriesToMigrate.reduce<

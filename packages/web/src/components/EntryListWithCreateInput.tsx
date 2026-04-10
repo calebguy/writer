@@ -6,6 +6,7 @@ import { useOPWallet } from "@/utils/hooks";
 import { getCachedDerivedKey } from "@/utils/keyCache";
 import { signCreateWithChunk } from "@/utils/signer";
 import { compress, encrypt } from "@/utils/utils";
+import { usePrivy } from "@privy-io/react-auth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -42,6 +43,7 @@ export default function EntryListWithCreateInput({
 }) {
 	const [isExpanded, setIsExpanded] = useState(false);
 	const [wallet] = useOPWallet();
+	const { getAccessToken } = usePrivy();
 	const router = useRouter();
 	const queryClient = useQueryClient();
 
@@ -83,12 +85,18 @@ export default function EntryListWithCreateInput({
 				address: writerAddress,
 			});
 
+		const authToken = await getAccessToken();
+		if (!authToken) {
+			console.error("No auth token found");
+			return;
+		}
 		await mutateAsync({
 			address: writerAddress as Hex,
 			signature,
 			nonce,
 			chunkCount,
 			chunkContent,
+			authToken,
 		});
 	};
 

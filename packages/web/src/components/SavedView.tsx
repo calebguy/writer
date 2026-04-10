@@ -186,11 +186,19 @@ function MixedSavedGrid({
 				// unique storage_id in this batch. The keyCache dedupes, so a
 				// user with N saved entries from M writers signs at most M
 				// times (and only the first time each session).
+				//
+				// Defensively skip any entry without a storageId on it
+				// (legacy v1/v2/v3 entries from a DB row that hasn't been
+				// backfilled, or a cached API response from before the
+				// storage_id column existed).
 				const v4KeysByStorageId = new Map<string, Uint8Array>();
 				if (needsV4) {
 					const uniqueStorageIds = new Set(
 						needs
-							.filter((entry) => entry.raw?.startsWith("enc:v4:br:"))
+							.filter(
+								(entry) =>
+									entry.raw?.startsWith("enc:v4:br:") && entry.storageId,
+							)
 							.map((entry) => entry.storageId.toLowerCase()),
 					);
 					for (const storageId of uniqueStorageIds) {
@@ -205,9 +213,14 @@ function MixedSavedGrid({
 
 				const updates = await Promise.all(
 					needs.map(async (entry) => {
-						const keyV4 = v4KeysByStorageId.get(
-							entry.storageId.toLowerCase(),
-						);
+						// Only look up a v4 key if the entry is actually v4 AND
+						// has a storageId. v1/v2/v3 entries pass undefined and
+						// processPrivateEntry routes them to the right legacy
+						// key by prefix.
+						const keyV4 =
+							entry.raw?.startsWith("enc:v4:br:") && entry.storageId
+								? v4KeysByStorageId.get(entry.storageId.toLowerCase())
+								: undefined;
 						return [
 							entry.id,
 							await processPrivateEntry(keyV2, entry, keyV1, keyV3, keyV4),

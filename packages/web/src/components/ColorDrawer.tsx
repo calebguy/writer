@@ -4,6 +4,7 @@ import { setColor as setColorApi } from "@/utils/api";
 import { WriterContext } from "@/utils/context";
 import { useOPWallet } from "@/utils/hooks";
 import { signSetColor } from "@/utils/signer";
+import { usePrivy } from "@privy-io/react-auth";
 import { useMutation } from "@tanstack/react-query";
 import { useContext, useEffect, useState } from "react";
 import { type RgbColor, RgbColorPicker } from "react-colorful";
@@ -28,6 +29,7 @@ interface ColorDrawerProps {
 
 export function ColorDrawer({ open, onOpenChange }: ColorDrawerProps) {
 	const [wallet] = useOPWallet();
+	const { getAccessToken } = usePrivy();
 	const [saveClicked, setSaveClicked] = useState(false);
 	const { mutateAsync, isPending } = useMutation({
 		mutationFn: setColorApi,
@@ -122,7 +124,13 @@ export function ColorDrawer({ open, onOpenChange }: ColorDrawerProps) {
 									const { signature, nonce } = await signSetColor(wallet, {
 										hexColor,
 									});
-									await mutateAsync({ signature, nonce, hexColor });
+									const authToken = await getAccessToken();
+									if (!authToken) {
+										console.error("No auth token found");
+										setSaveClicked(false);
+										return;
+									}
+									await mutateAsync({ signature, nonce, hexColor, authToken });
 									setSaveClicked(false);
 									onOpenChange(false);
 								}}
