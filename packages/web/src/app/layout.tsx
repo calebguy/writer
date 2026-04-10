@@ -69,20 +69,20 @@ export default async function RootLayout({
 			className="min-h-dvh"
 			suppressHydrationWarning
 		>
-			<body className="flex justify-center">
+			<body
+				className={cn(
+					"flex justify-center",
+					ltRemark.variable,
+					diatypeRoundedMono.variable,
+				)}
+			>
 				<script
 					dangerouslySetInnerHTML={{
 						__html:
 							"(function(){try{var t=localStorage.getItem('writer-theme');var m=(t==='light'||t==='dark'||t==='system')?t:'system';var d=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.dataset.theme=(m==='system')?(d?'dark':'light'):m;}catch(e){}})();",
 					}}
 				/>
-				<div
-					className={cn(
-						"antialiased w-full grow flex flex-col px-4 md:px-8 pt-4 md:pt-8 pb-2 font-serif max-w-7xl",
-						ltRemark.variable,
-						diatypeRoundedMono.variable,
-					)}
-				>
+				<div className="antialiased w-full grow flex flex-col px-4 md:px-8 pt-4 md:pt-8 pb-2 font-serif max-w-7xl">
 					<Providers initialColor={initialColor || undefined}>
 						{children}
 					</Providers>

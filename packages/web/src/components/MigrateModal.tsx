@@ -118,7 +118,7 @@ export function MigrateModal({
 	}, {});
 
 	return (
-		<Modal open={open} onClose={handleClose}>
+		<Modal open={open} onClose={handleClose} className="max-w-md w-full">
 			<VisuallyHidden.Root>
 				<ModalTitle>Migrate Private Entries</ModalTitle>
 				<ModalDescription>
@@ -127,18 +127,20 @@ export function MigrateModal({
 			</VisuallyHidden.Root>
 
 			<div className="space-y-4">
-				<p className="text-sm text-neutral-800 dark:text-neutral-200">
-					Migrate your private entries to the new encryption key. The new key
-					includes a security warning so you know to only sign it on
-					writer.place.
-				</p>
+				<span className="text-2xl">Migrate Private Entries</span>
+				<div className="text-sm text-neutral-500 dark:text-neutral-400">
+					You have {entriesToMigrate.length} private entries that currently use
+					old signing keys. You will always have read access to these entries,
+					but we recommend migrating them to the new signing key for improved
+					security.
+				</div>
 
 				{/* Entry list */}
 				<div className="max-h-48 overflow-y-auto space-y-3">
 					{Object.entries(entriesByWriter).map(
 						([writerAddress, { title, entries }]) => (
 							<div key={writerAddress}>
-								<p className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide mb-1">
+								<p className="text-xs font-mono text-neutral-500 dark:text-neutral-400 uppercase tracking-wide mb-1">
 									{title}
 								</p>
 								<div className="space-y-1">
@@ -174,7 +176,7 @@ export function MigrateModal({
 				{status === "idle" && (
 					<button
 						type="button"
-						className="w-full p-2 text-sm border border-dashed border-neutral-400 dark:border-neutral-600 hover:border-primary hover:text-primary cursor-pointer transition-colors"
+						className="w-full p-2 text-sm border border-transparent hover:border-dashed bg-surface dark:border-neutral-600 hover:border-primary hover:text-primary cursor-pointer transition-colors"
 						onClick={migrate}
 					>
 						Migrate {entriesToMigrate.length}{" "}
