@@ -17,6 +17,14 @@ import {
 export const writer = pgTable("writer", {
 	address: varchar({ length: 42 }).primaryKey(),
 	storageAddress: varchar({ length: 42 }).unique().notNull(),
+	// Frozen, durable identifier for this writer. Set at creation time and
+	// never changed. For new writers this equals storageAddress; for legacy
+	// writers it is backfilled to equal storageAddress. The encryption key
+	// derivation (v4) binds to this value, so a writer that gets migrated to
+	// a different chain (or even just a different storage contract) keeps the
+	// same encryption key as long as `storage_id` is preserved across the
+	// migration. Treat this column as immutable: never UPDATE it after insert.
+	storageId: varchar({ length: 42 }).notNull(),
 	title: text().notNull(),
 	admin: text().notNull(),
 	managers: text().array().notNull(),
@@ -62,6 +70,13 @@ export const entry = pgTable(
 		//   so we are able to seed data in an async manner
 		// - we reference the storage address of the writer as the entries exist on the writer's storage
 		storageAddress: varchar({ length: 42 }).notNull(),
+		// Denormalized copy of writer.storage_id at the time the entry was
+		// created. Frozen for the life of the entry. This avoids a join +
+		// prop-drilling at every v4 decryption site: each entry already
+		// knows which encryption key identity it belongs to. Safe to
+		// denormalize because storage_id is itself frozen on the writer
+		// table — the two values can never get out of sync.
+		storageId: varchar({ length: 42 }).notNull(),
 		createdAtTransactionId: varchar({ length: 255 })
 			.unique()
 			.references(() => relayTx.id),

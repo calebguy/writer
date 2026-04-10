@@ -9,8 +9,22 @@ Writer Security Audit
   findings below, ordered by severity.                                                                                                     
   ---                                                                                                                                      
   CRITICAL                                                                                                                   
-  C-1. Encryption key derivation is not domain-bound (phishable)                                                                           
-                                                                                                                                           
+  ✅ C-1. Encryption key derivation is not domain-bound (phishable)
+  ℹ️: Fixed via Option B — added `getDerivedSigningKeyV4` in signer.ts that uses
+     EIP-712 typed data with the writer's frozen `storage_id` in the message
+     body, then HKDF-SHA256 → 32-byte AES-256-GCM. The domain intentionally
+     omits both `chainId` and `verifyingContract` so the derivation is
+     chain-portable AND survives chain migrations / contract redeploys (the
+     storage_id is what matters, not the live contract address). Schema +
+     migrations 0006/0007 add `storage_id` to writer + entry tables, frozen at
+     insert. Read paths (hooks.ts, Entry.tsx, SavedView, page.tsx) detect the
+     `enc:v4:br:` prefix and fetch the per-writer v4 key. Write paths
+     (EntryListWithCreateInput, Entry.tsx handleSave) always emit v4. The
+     MigrateModal upgrades v1/v2/v3 → v4 on user opt-in. v1/v2/v3 read paths
+     remain intact for backward compat. Also pulls in M-1 (now AES-256, not
+     AES-128). Does NOT yet address H-1 (no AAD binding to entry id) — that
+     remains a separate follow-up.
+
   Files: packages/web/src/utils/signer.ts:209-279                                                                                          
                                                                                                                                         
   const message = "Writer: write (privately) today, forever.\n\nNOTE: Only sign this message on https://writer.place.";
@@ -49,7 +63,7 @@ Writer Security Audit
   Then HKDF-Expand the signature into the AES key. EIP-712 domain separation makes signatures not reusable on other sites/contracts.       
                                                                                                                                            
   ---                                                                                                                                      
-  C-2. Signature replay protection can be bypassed via ECDSA malleability                                                                  
+  ✅ C-2. Signature replay protection can be bypassed via ECDSA malleability                                                                  
                                                                                                                                            
   Files: packages/chain/src/Writer.sol:50-54, packages/chain/src/VerifyTypedData.sol:32-52, packages/chain/src/ColorRegistry.sol:23-32     
                                                                                                                                            
@@ -168,8 +182,12 @@ Writer Security Audit
   ---                                                                                                                                      
   MEDIUM                                                                                                                                   
                                                                                                                                            
-  M-1. AES-128 instead of AES-256                                                                                                          
-                                                                                                                                           
+  ✅ M-1. AES-128 instead of AES-256
+  ℹ️: Fixed as part of C-1. v4 derivation uses HKDF-SHA256 to derive a 32-byte
+     key, which Web Crypto's AES-GCM importKey treats as AES-256-GCM. v1/v2/v3
+     still use AES-128 (16-byte truncated keccak) but those are read-only
+     legacy paths.
+
   Files: packages/web/src/utils/signer.ts:230,255,275                                                                                      
                                                                                                                                            
   return key.slice(0, 16); // Use the first 16 bytes for a 128-bit key                                                                  

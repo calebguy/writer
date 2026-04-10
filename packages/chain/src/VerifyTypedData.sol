@@ -6,13 +6,52 @@ import {ECDSA} from "oz/utils/cryptography/ECDSA.sol";
 abstract contract VerifyTypedData {
     bytes32 internal immutable DOMAIN_SEPARATOR;
 
+    /// @notice Build the EIP-712 domain separator WITHOUT `chainId`.
+    ///
+    /// @dev This is a deliberate, considered omission. The standard reason
+    ///      to bind chainId in an EIP-712 domain is to prevent cross-chain
+    ///      replay of *financial* transactions: e.g. a "transfer 100 USDC"
+    ///      signature on chain A being replayed against the same USDC
+    ///      contract address on chain B.
+    ///
+    ///      Writer is not a financial protocol. Every signature here
+    ///      authorizes the signer to author/edit/remove their own content.
+    ///      A "replayed" signature on a second chain just creates an
+    ///      identical entry authored by the same person, with no value
+    ///      transfer and no privilege escalation. The threat model that
+    ///      makes cross-chain replay dangerous (asset extraction, nonce
+    ///      burning, role grants via signature) does not apply.
+    ///
+    ///      Removing chainId turns this into a feature: when Writer is
+    ///      deployed at the same address on multiple chains (via the
+    ///      Arachnid deterministic deployer + identical bytecode + the same
+    ///      CREATE2 salts), a single user signature is portable across
+    ///      every chain it appears on. This enables:
+    ///        - "Write in rocks" mode: publish the same entry to multiple
+    ///          chains with one signature, no per-chain re-signing.
+    ///        - Lossless future migrations: launch on a new chain by
+    ///          replaying historical signatures from the DB. Original
+    ///          author provenance is preserved on every chain — no admin
+    ///          override, no "trust me" bulk import.
+    ///        - Idempotent retries: if a multi-chain publish partially
+    ///          fails, the same signature can be resubmitted to the failed
+    ///          chain later because each chain has its own independent
+    ///          digestWasExecuted map.
+    ///
+    ///      Replay protection inside a single chain is unaffected: the
+    ///      digest is still unique per (verifyingContract, structHash) and
+    ///      `digestWasExecuted` (in Writer.sol) blocks any second
+    ///      execution against the same digest on the same instance.
+    ///
+    ///      If a future security analyzer flags this, the rationale is
+    ///      this comment block. Do not "fix" by re-adding chainId without
+    ///      understanding what you'd lose.
     constructor(bytes memory name, bytes memory version) {
         DOMAIN_SEPARATOR = keccak256(
             abi.encode(
-                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                keccak256("EIP712Domain(string name,string version,address verifyingContract)"),
                 keccak256(name), // name
                 keccak256(version), // version
-                block.chainid, // chainId
                 address(this) // verifyingContract
             )
         );

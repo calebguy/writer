@@ -11,12 +11,52 @@ import {
 
 import { env } from "./env";
 
+// Domain intentionally omits `chainId`. See VerifyTypedData.sol for the
+// design rationale (chain-portable signatures). The contract typehash, the
+// frontend types schema in web/src/utils/signer.ts, and this domain shape
+// must all match exactly.
 const getDomain = (address: Hex) => ({
 	name: "Writer",
 	version: "1",
-	chainId: env.TARGET_CHAIN_ID,
 	verifyingContract: getAddress(address),
 });
+
+// secp256k1n / 2 — the upper bound for the "low" half of valid S values.
+// Any signature with s > this value is the malleated form of a signature
+// whose s' = n - s is in the low half. The chain-side fix (C-2) rejects
+// these via OZ ECDSA, but rejecting them here too is defense-in-depth: it
+// means a malleated signature never even reaches the relay, saving us the
+// gas cost of a chain-side revert.
+//
+// BigInt literal syntax (`0x...n`) avoided because the server tsconfig
+// targets pre-ES2020. Use the BigInt() constructor instead.
+const SECP256K1_N_DIV_2 = BigInt(
+	"0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0",
+);
+
+/**
+ * Throws if the signature has a high-S value (i.e. is the malleated form of
+ * another valid signature). Call this at the top of every recover*Signer
+ * helper, before passing the signature to viem's recoverTypedDataAddress
+ * (which does NOT enforce low-S itself).
+ *
+ * The signature format is `0x` + r(64 hex) + s(64 hex) + v(2 hex) = 132
+ * chars total. The s value occupies hex chars 66..130.
+ */
+function assertLowS(signature: Hex): void {
+	if (signature.length !== 132) {
+		throw new Error(
+			`assertLowS: invalid signature length ${signature.length}, expected 132 (0x + 65 bytes)`,
+		);
+	}
+	const sHex = signature.slice(66, 130);
+	const s = BigInt(`0x${sHex}`);
+	if (s > SECP256K1_N_DIV_2) {
+		throw new Error(
+			"high-S signature rejected (ECDSA malleability defense — see audit C-2)",
+		);
+	}
+}
 
 export function recoverCreateWithChunkSigner({
 	signature,
@@ -31,6 +71,7 @@ export function recoverCreateWithChunkSigner({
 	chunkCount: bigint;
 	address: Hex;
 }) {
+	assertLowS(signature);
 	return recoverTypedDataAddress({
 		domain: getDomain(address),
 		message: {
@@ -65,6 +106,7 @@ export function recoverUpdateEntryWithChunkSigner({
 	entryId: bigint;
 	address: Hex;
 }) {
+	assertLowS(signature);
 	// Recover the address
 	return recoverTypedDataAddress({
 		domain: getDomain(address),
@@ -98,6 +140,7 @@ export function recoverRemoveEntrySigner({
 	id: bigint;
 	address: Hex;
 }) {
+	assertLowS(signature);
 	return recoverTypedDataAddress({
 		domain: getDomain(address),
 		message: {
@@ -126,11 +169,12 @@ export function recoverSetColorSigner({
 	hexColor: Hex;
 	address: Hex;
 }) {
+	assertLowS(signature);
 	return recoverTypedDataAddress({
+		// chainId omitted — see getDomain() above and VerifyTypedData.sol
 		domain: {
 			name: "ColorRegistry",
 			version: "1",
-			chainId: env.TARGET_CHAIN_ID,
 			verifyingContract: getAddress(address),
 		},
 		message: {

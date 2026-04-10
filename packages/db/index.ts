@@ -87,6 +87,20 @@ class Db {
 		}));
 	}
 
+	/**
+	 * Look up a writer row by its storage contract address. Used by the
+	 * indexer's EntryCreated handler to denormalize the writer's frozen
+	 * storage_id onto each newly-created entry, and by the LogicSet handler
+	 * to rebind a writer's logic address after migration. Returns null if
+	 * no writer exists for that storage address (which can happen during
+	 * re-index when EntryCreated arrives before WriterCreated).
+	 */
+	async getWriterByStorageAddress(storageAddress: Hex | string) {
+		return this.pg.query.writer.findFirst({
+			where: eq(writer.storageAddress, storageAddress.toLowerCase()),
+		});
+	}
+
 	async getWriter(address: Hex) {
 		const data = await this.pg.query.writer.findFirst({
 			where: eq(writer.address, address.toLowerCase()),
@@ -354,13 +368,25 @@ class Db {
 		const normalizedManagers = Array.from(
 			new Set(item.managers.map((manager) => manager.toLowerCase())),
 		);
+		// `storageId` is the durable, frozen identifier for this writer (used
+		// by v4 encryption key derivation). For new writers it equals
+		// storageAddress at creation time. We default to storageAddress here
+		// only as a safety net in case a caller forgets to pass it; the
+		// indexer should always pass it explicitly.
+		const normalizedStorageId = (item.storageId ?? item.storageAddress).toLowerCase();
 		const normalizedWriter = {
 			...item,
 			address: item.address.toLowerCase(),
 			storageAddress: item.storageAddress.toLowerCase(),
+			storageId: normalizedStorageId,
 			admin: item.admin.toLowerCase(),
 			managers: normalizedManagers,
 		} satisfies InsertWriter;
+
+		// `storageId` is intentionally OMITTED from the conflict update set:
+		// it's frozen at insert time and must never change after creation,
+		// even if a re-import or a re-org overwrites every other field.
+		const { storageId: _frozenStorageId, ...mutableFields } = normalizedWriter;
 
 		return this.pg
 			.insert(writer)
@@ -372,7 +398,7 @@ class Db {
 			.onConflictDoUpdate({
 				target: [writer.address],
 				set: {
-					...normalizedWriter,
+					...mutableFields,
 					updatedAt: new Date(),
 				},
 			})
@@ -380,10 +406,16 @@ class Db {
 	}
 
 	async upsertEntry(item: InsertEntry) {
+		// `storageId` is the frozen, durable identifier for the writer this
+		// entry belongs to. At v1 it equals storageAddress; for migrated
+		// writers it would be the original storageAddress preserved across
+		// the migration. Defaults to storageAddress if the caller forgets.
+		const normalizedStorageId = (item.storageId ?? item.storageAddress).toLowerCase();
 		const normalizedEntry = {
 			...item,
 			author: item.author.toLowerCase(),
 			storageAddress: item.storageAddress.toLowerCase(),
+			storageId: normalizedStorageId,
 		} satisfies InsertEntry;
 
 		const conflictTarget = normalizedEntry.id
@@ -391,6 +423,11 @@ class Db {
 			: normalizedEntry.createdAtTransactionId
 				? [entry.createdAtTransactionId]
 				: [entry.storageAddress, entry.onChainId];
+
+		// `storageId` is intentionally OMITTED from the conflict update set:
+		// it's frozen at insert time and must never change after creation,
+		// even if a re-org or re-import overwrites every other field.
+		const { storageId: _frozenStorageId, ...mutableFields } = normalizedEntry;
 
 		const data = await this.pg
 			.insert(entry)
@@ -402,7 +439,7 @@ class Db {
 			.onConflictDoUpdate({
 				target: conflictTarget,
 				set: {
-					...normalizedEntry,
+					...mutableFields,
 					updatedAt: new Date(),
 				},
 			})
@@ -693,12 +730,28 @@ type SelectEntry = typeof entry.$inferSelect;
 type SelectChunk = typeof chunk.$inferSelect;
 type SelectSavedWriter = typeof savedWriter.$inferSelect;
 type SelectSavedEntry = typeof savedEntry.$inferSelect;
-type InsertWriter = Omit<typeof writer.$inferInsert, "createdAt" | "updatedAt">;
+// `storageId` is omitted-and-redeclared as optional so callers can omit it
+// (the upsertWriter helper defaults it to storageAddress). The underlying
+// column is still NOT NULL — the default just happens at the Db boundary.
+type InsertWriter = Omit<
+	typeof writer.$inferInsert,
+	"createdAt" | "updatedAt" | "storageId"
+> & {
+	storageId?: string;
+};
 type InsertRelayTransaction = Omit<
 	typeof relayTx.$inferInsert,
 	"updatedAt" | "createdAt"
 >;
-type InsertEntry = Omit<typeof entry.$inferInsert, "createdAt" | "updatedAt">;
+// `storageId` is omitted-and-redeclared as optional so callers can omit it
+// (the upsertEntry helper defaults it to storageAddress). The underlying
+// column is still NOT NULL — the default just happens at the Db boundary.
+type InsertEntry = Omit<
+	typeof entry.$inferInsert,
+	"createdAt" | "updatedAt" | "storageId"
+> & {
+	storageId?: string;
+};
 type InsertUser = Omit<typeof user.$inferInsert, "createdAt" | "updatedAt">;
 type InsertChunk = Omit<typeof chunk.$inferInsert, "createdAt">;
 type EntryWithChunks = SelectEntry & {

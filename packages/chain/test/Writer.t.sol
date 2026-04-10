@@ -441,12 +441,13 @@ contract WriterWithSigTest is TestBase {
         view
         returns (bytes memory)
     {
+        // Domain intentionally omits chainId — see VerifyTypedData.sol for the
+        // chain-portable signature design.
         bytes32 DOMAIN_SEPARATOR = keccak256(
             abi.encode(
-                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                keccak256("EIP712Domain(string name,string version,address verifyingContract)"),
                 keccak256(abi.encodePacked(writer.DOMAIN_NAME())),
                 keccak256(abi.encodePacked(writer.DOMAIN_VERSION())),
-                block.chainid,
                 verifyingContract
             )
         );

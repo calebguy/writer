@@ -42,6 +42,12 @@ ponder.on("WriterFactory:WriterCreated", async ({ event, context }) => {
 	await db.upsertWriter({
 		address: writerAddress,
 		storageAddress: storeAddress,
+		// storage_id is the frozen, durable identifier for this writer.
+		// Set ONCE at creation time to the storage contract address. The
+		// upsertWriter helper will refuse to update it on conflict, so
+		// re-running the indexer or hitting a re-org cannot ever change
+		// this value once it's been set.
+		storageId: storeAddress,
 		title,
 		admin,
 		managers: managers.map((m) => m.toString()),

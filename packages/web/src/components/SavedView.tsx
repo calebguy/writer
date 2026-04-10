@@ -162,6 +162,9 @@ function MixedSavedGrid({
 					);
 				if (needs.length === 0) return;
 
+				const needsV4 = needs.some((entry) =>
+					entry.raw?.startsWith("enc:v4:br:"),
+				);
 				const needsV3 = needs.some((entry) =>
 					entry.raw?.startsWith("enc:v3:br:"),
 				);
@@ -178,14 +181,38 @@ function MixedSavedGrid({
 				const keyV1 = needsV1
 					? await getCachedDerivedKey(activeWallet, "v1")
 					: undefined;
+
+				// v4 keys are per-writer (per storage_id). Pre-derive one per
+				// unique storage_id in this batch. The keyCache dedupes, so a
+				// user with N saved entries from M writers signs at most M
+				// times (and only the first time each session).
+				const v4KeysByStorageId = new Map<string, Uint8Array>();
+				if (needsV4) {
+					const uniqueStorageIds = new Set(
+						needs
+							.filter((entry) => entry.raw?.startsWith("enc:v4:br:"))
+							.map((entry) => entry.storageId.toLowerCase()),
+					);
+					for (const storageId of uniqueStorageIds) {
+						const key = await getCachedDerivedKey(
+							activeWallet,
+							"v4",
+							storageId,
+						);
+						v4KeysByStorageId.set(storageId, key);
+					}
+				}
+
 				const updates = await Promise.all(
-					needs.map(
-						async (entry) =>
-							[
-								entry.id,
-								await processPrivateEntry(keyV2, entry, keyV1, keyV3),
-							] as const,
-					),
+					needs.map(async (entry) => {
+						const keyV4 = v4KeysByStorageId.get(
+							entry.storageId.toLowerCase(),
+						);
+						return [
+							entry.id,
+							await processPrivateEntry(keyV2, entry, keyV1, keyV3, keyV4),
+						] as const;
+					}),
 				);
 
 				if (cancelled) return;

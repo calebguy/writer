@@ -54,8 +54,17 @@ ponder.on("WriterStorage:ChunkReceived", async ({ event }) => {
 
 ponder.on("WriterStorage:EntryCreated", async ({ event }) => {
 	const transactionId = await confirmRelayTx(event);
+	// Look up the writer's frozen storage_id to denormalize onto the entry.
+	// For v1 (no chain migrations) this equals storage_address; for migrated
+	// writers it would be the original storage_address that was preserved
+	// across the migration. Defaults to storageAddress if no writer row
+	// exists yet (e.g. mid re-index, where EntryCreated arrives before
+	// WriterCreated has been processed) — that case will self-correct on
+	// the next pass because storage_id is supposed to be frozen anyway.
+	const writerRow = await db.getWriterByStorageAddress(event.log.address);
 	await db.upsertEntry({
 		storageAddress: event.log.address,
+		storageId: writerRow?.storageId ?? event.log.address,
 		exists: true,
 		onChainId: event.args.id,
 		author: event.args.author,

@@ -178,9 +178,13 @@ export default function Entry({
 			if (isEntryPrivate(initialEntry)) {
 				setEncrypted(true);
 				if (wallet && isWalletAuthor(wallet, initialEntry)) {
+					const needsV4 = initialEntry.raw?.startsWith("enc:v4:br:");
 					const needsV3 = initialEntry.raw?.startsWith("enc:v3:br:");
 					const needsV2 = initialEntry.raw?.startsWith("enc:v2:br:");
 					const needsV1 = initialEntry.raw?.startsWith("enc:br:");
+					const keyV4 = needsV4
+						? await getCachedDerivedKey(wallet, "v4", initialEntry.storageId)
+						: undefined;
 					const keyV3 = needsV3
 						? await getCachedDerivedKey(wallet, "v3")
 						: undefined;
@@ -195,6 +199,7 @@ export default function Entry({
 						initialEntry,
 						keyV1,
 						keyV3,
+						keyV4,
 					);
 					setProcessedEntry(processed);
 					setEditedContent(processed.decompressed ?? "");
@@ -291,9 +296,19 @@ export default function Entry({
 		const compressedContent = await compress(editedContent);
 		let versionedCompressedContent = `br:${compressedContent}`;
 		if (encrypted) {
-			const key = await getCachedDerivedKey(wallet, "v3");
+			// Edits always re-encrypt with v4. Even if the original entry was
+			// stored as v1/v2/v3, the updated content is written as v4 — the
+			// edit produces a new ciphertext anyway, so we may as well lift it
+			// to the secure format. The previous storage_id is preserved on
+			// the entry row, so the v4 key is the same one the user would
+			// derive for any other entry on this writer.
+			const key = await getCachedDerivedKey(
+				wallet,
+				"v4",
+				initialEntry.storageId,
+			);
 			const encryptedContent = await encrypt(key, compressedContent);
-			versionedCompressedContent = `enc:v3:br:${encryptedContent}`;
+			versionedCompressedContent = `enc:v4:br:${encryptedContent}`;
 		}
 		// Store expected raw content for polling comparison
 		expectedRawContentRef.current = versionedCompressedContent;

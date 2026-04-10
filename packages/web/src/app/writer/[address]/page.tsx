@@ -88,14 +88,20 @@ export default function WriterPage() {
 
 	useEffect(() => {
 		if (!wallet || !hasPrivateEntries) return;
-		// Auto-unlock only if the key is already cached (no signature prompt).
+		// Auto-unlock only if a key is already cached (no signature prompt).
+		// For v4 entries the key is per-writer, so we check this writer's
+		// specific storage_id.
+		const v4Cached = writer?.storageId
+			? hasCachedDerivedKey(wallet, "v4", writer.storageId)
+			: false;
 		if (
+			v4Cached ||
 			hasCachedDerivedKey(wallet, "v3") ||
 			hasCachedDerivedKey(wallet, "v2")
 		) {
 			setAllowDecryption(true);
 		}
-	}, [wallet, hasPrivateEntries]);
+	}, [wallet, hasPrivateEntries, writer?.storageId]);
 
 	// Show loading state during the gap where entries exist but processedEntries hasn't been populated yet
 	const isEntriesProcessing =
@@ -169,6 +175,7 @@ export default function WriterPage() {
 			<EntryListWithCreateInput
 				writerTitle={writer.title}
 				writerAddress={writer.address}
+				writerStorageId={writer.storageId}
 				processedEntries={processedEntries}
 				canCreateEntries={canCreateEntries}
 				showUnlockBanner={showUnlockBanner}

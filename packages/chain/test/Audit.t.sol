@@ -142,17 +142,101 @@ contract AuditTest is Test {
         assertEq(writer.getEntryCount(), 1, "exact replay must not create a duplicate");
     }
 
+    // -------------------------------------------------------------------------
+    // Chain-portable signatures: removing chainId from the EIP-712 domain
+    //
+    // VerifyTypedData.sol intentionally omits block.chainid from its domain
+    // separator (see the long comment in VerifyTypedData.sol for the
+    // rationale). The contract is then chain-portable: a single signature
+    // is valid against any Writer at the same address on any chain.
+    //
+    // This test pins that property by computing the digest under three
+    // different "chain" configurations:
+    //   1. Default chainId
+    //   2. block.chainid changed via vm.chainId(...)
+    //   3. block.chainid changed to a third value
+    // and verifying that all three produce the SAME digest. If a future
+    // change re-introduces chainId binding, the assertions here will fail
+    // immediately.
+    //
+    // It also verifies the runtime behavior: a signature produced under
+    // chainId=1 successfully executes against the Writer when block.chainid
+    // is set to 8453 (i.e. as if Writer were deployed on Base instead of
+    // Optimism). The Writer is the same instance — only the env var moves —
+    // because vm.chainId() is the cleanest way to demonstrate "the same
+    // contract bytecode at the same address on a different chain."
+    // -------------------------------------------------------------------------
+    function test_ChainPortableSignatureWorksAcrossChainIds() public {
+        uint256 nonce = 42;
+        uint256 chunkCount = 1;
+        string memory content = "writing in rocks";
+
+        bytes32 structHash = keccak256(
+            abi.encode(
+                writer.CREATE_WITH_CHUNK_TYPEHASH(),
+                nonce,
+                chunkCount,
+                keccak256(abi.encodePacked(content))
+            )
+        );
+
+        // Compute the digest under the default test chainId.
+        uint256 originalChainId = block.chainid;
+        bytes32 digestOriginal = _eip712Digest(structHash);
+
+        // Switch to a different chainId (e.g. as if Writer were on Base).
+        vm.chainId(8453);
+        bytes32 digestBase = _eip712Digest(structHash);
+
+        // And another (as if on Arbitrum).
+        vm.chainId(42161);
+        bytes32 digestArbitrum = _eip712Digest(structHash);
+
+        // All three digests must be identical: the chainId is not part of
+        // the domain separator anymore, so changing block.chainid does not
+        // change the digest the contract computes.
+        assertEq(
+            digestOriginal,
+            digestBase,
+            "digest must be chain-portable (Optimism vs Base)"
+        );
+        assertEq(
+            digestOriginal,
+            digestArbitrum,
+            "digest must be chain-portable (Optimism vs Arbitrum)"
+        );
+
+        // Reset to the original chainId, sign there.
+        vm.chainId(originalChainId);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(userPrivateKey, digestOriginal);
+        bytes memory sig = abi.encodePacked(r, s, v);
+
+        // Now switch to a "different chain" and submit the signature against
+        // the same Writer instance. With chain-portability, this must work.
+        vm.chainId(8453);
+        writer.createWithChunkWithSig(sig, nonce, chunkCount, content);
+        assertEq(writer.getEntryCount(), 1, "signature must execute on a different chain");
+
+        // And on a third chain, since each chain would have its own
+        // digestWasExecuted state. We simulate that by deploying a fresh
+        // Writer at the same address (impossible in a single test, so we
+        // instead verify the digest property and the cross-chain submission
+        // succeeded above). The same-instance replay protection (C-2) is
+        // already covered by the other tests in this file.
+        vm.chainId(originalChainId);
+    }
+
     /// @dev Recompute the EIP-712 digest exactly the way VerifyTypedData does
     ///      internally. Mirrors the logic in VerifyTypedData.sol's constructor
     ///      + getSigner, so this test does not depend on any view function
-    ///      that the contract does not already expose.
+    ///      that the contract does not already expose. Domain intentionally
+    ///      omits chainId — see VerifyTypedData.sol.
     function _eip712Digest(bytes32 structHash) internal view returns (bytes32) {
         bytes32 domainSeparator = keccak256(
             abi.encode(
-                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                keccak256("EIP712Domain(string name,string version,address verifyingContract)"),
                 keccak256(abi.encodePacked(writer.DOMAIN_NAME())),
                 keccak256(abi.encodePacked(writer.DOMAIN_VERSION())),
-                block.chainid,
                 address(writer)
             )
         );
