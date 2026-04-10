@@ -97,3 +97,37 @@ ponder.on("WriterStorage:EntryUpdated", async ({ event }) => {
 		updatedAtTransactionId: transactionId,
 	});
 });
+
+// Re-point a writer row at a new logic contract when its storage's logic
+// pointer changes. This is the migration path for the C-2 fix: deploy a
+// patched Writer pointing at the existing WriterStorage, then call
+// `WriterStorage.setLogic(newWriter)` from the storage admin. The event
+// flows in here, the writer row is rewritten by storage_address, and
+// `saved_writer.writer_address` cascades automatically.
+//
+// Note on ordering: the factory's create() also calls setLogic() during
+// construction, before WriterCreated is emitted. In that case the writer
+// row does not yet exist; updateWriterAddressByStorage returns 0 and we
+// no-op. WriterCreated then runs and inserts the row with the same logic
+// address that LogicSet just emitted, so end state is correct either way.
+ponder.on("WriterStorage:LogicSet", async ({ event }) => {
+	const storageAddress = event.log.address;
+	const newLogic = event.args.logicAddress;
+	const updated = await db.updateWriterAddressByStorage(
+		storageAddress,
+		newLogic,
+	);
+	if (updated === 0) {
+		// First LogicSet for this storage — WriterCreated has not been
+		// processed yet. WriterCreated will set the initial value itself.
+		console.log(
+			"WriterStorage:LogicSet (no row yet, deferring to WriterCreated)",
+			{ storageAddress, newLogic },
+		);
+		return;
+	}
+	console.log("WriterStorage:LogicSet rebound writer.address", {
+		storageAddress,
+		newLogic,
+	});
+});
