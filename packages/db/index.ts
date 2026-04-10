@@ -636,6 +636,33 @@ class Db {
 			.set({ deletedAt: new Date() })
 			.where(eq(writer.address, address.toLowerCase()));
 	}
+
+	/**
+	 * Re-point a writer row at a new logic-contract address. Driven by the
+	 * `WriterStorage.LogicSet` event in the indexer when a Writer is migrated
+	 * to a fixed logic contract. Looks up the row by `storage_address` (which
+	 * is stable across migrations) and overwrites `address`. The
+	 * `saved_writer.writer_address` foreign key is `ON UPDATE CASCADE`, so
+	 * saved references follow the new address automatically.
+	 *
+	 * Returns the number of rows updated. Zero is a valid result during the
+	 * factory's construction-time `LogicSet` (which fires before the
+	 * `WriterCreated` handler creates the row); the caller should treat that
+	 * as a no-op.
+	 */
+	async updateWriterAddressByStorage(
+		storageAddress: Hex,
+		newAddress: Hex,
+	): Promise<number> {
+		const normalizedStorage = storageAddress.toLowerCase();
+		const normalizedNew = newAddress.toLowerCase();
+		const result = await this.pg
+			.update(writer)
+			.set({ address: normalizedNew, updatedAt: new Date() })
+			.where(eq(writer.storageAddress, normalizedStorage))
+			.returning({ address: writer.address });
+		return result.length;
+	}
 }
 
 export function writerToJsonSafe(data: SelectWriter) {

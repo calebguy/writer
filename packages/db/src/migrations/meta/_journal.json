@@ -36,6 +36,13 @@
       "when": 1775325123264,
       "tag": "0004_daily_switch",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1775804332513,
+      "tag": "0005_burly_colossus",
+      "breakpoints": true
     }
   ]
 }

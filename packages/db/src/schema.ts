@@ -139,7 +139,7 @@ export const savedWriter = pgTable(
 		userAddress: varchar({ length: 42 }).notNull(),
 		writerAddress: varchar({ length: 42 })
 			.notNull()
-			.references(() => writer.address),
+			.references(() => writer.address, { onUpdate: "cascade" }),
 		createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
 	},
 	(table) => ({
