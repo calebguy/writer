@@ -187,7 +187,8 @@ Writer Security Audit
   length. For private journaling this is low risk in practice, but worth noting if the threat model evolves. If you keep                   
   compression-before-encryption, document the assumption that no attacker-controlled data is ever mixed into a victim's plaintext.         
                                                                                                                                            
-  M-3. Writer.setStorage() is admin-mutable — undisclosed centralization risk                                                              
+  ❌ M-3. Writer.setStorage() is admin-mutable — undisclosed centralization risk  
+  ℹ️: admin = WRITER_ROLE generally for all                                                            
                                                                                                                                            
   File: packages/chain/src/Writer.sol:79-82                                                                                                
                                                                                                                                            
@@ -201,8 +202,8 @@ Writer Security Audit
   Mitigations: remove setStorage entirely (storage was bound at construction; pair is immutable) or make it a 2-step admin handoff so users
    can detect malicious swaps via events.                                                                                                  
                                                                                                                                            
-  M-4. replaceAdmin has no two-step handoff                                                                                                
-                                                                                                                                           
+  ❌ M-4. replaceAdmin has no two-step handoff                                                                                                
+  ℹ️: no                                                                                                                                       
   Files: packages/chain/src/Writer.sol:74-77, packages/chain/src/WriterStorage.sol:53-56                                                   
                                                                                                                                            
   A typo in replaceAdmin(0xWRONG) immediately and irrecoverably hands admin to the wrong address. Use OpenZeppelin's Ownable2Step-style    
@@ -220,8 +221,8 @@ Writer Security Audit
   content of each signature differs and signatureWasExecuted is keyed off the signature bytes (or, after the C-2 fix, off the digest       
   including content). Still, prefer crypto.getRandomValues(new BigUint64Array(2)) for 128 bits, or use a strict per-user counter.          
                                                                                                                                            
-  M-6. WriterStorage.update allows incomplete entries by design                                                                            
-                                                                                                                                           
+  ❌ M-6. WriterStorage.update allows incomplete entries by design                                                                            
+  ℹ️: it's on the caller to write chunks correctly                                                                                                                                   
   File: packages/chain/src/WriterStorage.sol:115-136                                                                                       
                                                                                                                                            
   update(id, totalChunks, content) clears chunks, sets totalChunks = N, but only writes chunk 0. If totalChunks > 1 the entry is left in an
@@ -229,8 +230,8 @@ Writer Security Audit
    this is dormant — but the contract is misleading and a future caller could create a permanently broken entry. Either remove the         
   totalChunks parameter from update or require totalChunks == 1 (and revert otherwise).                                                    
                                                                                                                                            
-  M-7. WriterStorage.addChunk allows out-of-order writes / partial entries                                                                 
-                                                                                                                                           
+  ❌ M-7. WriterStorage.addChunk allows out-of-order writes / partial entries
+  ℹ️: writing out of order should be supported, we can't guarantee which will hit the chain first                                                                                                                
   File: packages/chain/src/WriterStorage.sol:105-113                                                                                       
                                                                                                                                            
   addChunk only checks the requested index is empty, not that earlier chunks have been filled. A writer can publish chunk[5] without ever  
@@ -238,8 +239,8 @@ Writer Security Audit
   totalChunks, so consumers checking that flag are safe — but getEntryContent will silently concatenate empty strings with " " separators, 
   returning misleading data.                                                                                                               
                                                                                                                                            
-  M-8. getEntryContent joins chunks with a literal space                                                                                   
-                                                                                                                                           
+  ❌ M-8. getEntryContent joins chunks with a literal space                                                                                   
+  ℹ️: simple helper that generally is not used                                                                                                                                      
   File: packages/chain/src/WriterStorage.sol:154-167                                                                                       
                                                                                                                                            
   Concatenation uses " " between chunks. Words at chunk boundaries get a stray space inserted, and trailing/leading whitespace is          
@@ -324,8 +325,8 @@ Writer Security Audit
   The endpoint is named "hide" and only flips a DB flag. Document this clearly to users — there is no on-chain "hide", and anyone reading  
   the chain or your /writer/public indexer logs can still find the writer. This is not a privacy feature.                                  
                                                                                                                                            
-  L-9. Soft-delete claim in CLAUDE.md is incorrect                                                                                         
-                                                                                                                                           
+  ❌ L-9. Soft-delete claim in CLAUDE.md is incorrect                                                                                         
+  ℹ️: delete onchain but visible via block history forever                                                                                                                                         
   CLAUDE.md says "Soft Deletes: Maintains blockchain history integrity." Actually, WriterStorage.remove (WriterStorage.sol:79-103) does a  
   hard delete of the entry struct and removes it from entryIds. Only events preserve history. Either fix the docs or implement a deletedAt 
   flag in the struct.                                                                                                                      
@@ -334,13 +335,13 @@ Writer Security Audit
                                                                                                                                            
   Already covered by C-2; lower impact (only changes a user's color preference).                                                           
                                                                                                                                            
-  L-11. getEntryContent is unbounded gas                                                                                                   
-                                                                                                                                           
+  ❌ L-11. getEntryContent is unbounded gas                                                                                                   
+  ℹ️: simple helper generally not used                                                                                                                                    
   Looping string concatenation over an arbitrary number of chunks. View functions have no gas cap when called via eth_call, but the        
   frontend never calls this anyway. Recommend marking it external and only used as a debug helper, or removing it entirely.                
                                                                                                                                            
-  L-12. No pause/emergency stop                                                                                                            
-                                                                                                                                           
+  ❌ L-12. No pause/emergency stop                                                                                                            
+  ℹ️: you can't pause rocks                                                                                                                                      
   Writer and WriterStorage have no pause() mechanism. If a critical bug is found post-launch you have no way to halt writes other than     
   removing all WRITER_ROLE grants from every Writer manually. Consider adding Pausable to Writer (with the admin as pauser) — at the cost  
   of a minor centralization tradeoff.                                                                                                      

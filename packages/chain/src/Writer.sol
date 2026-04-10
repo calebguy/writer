@@ -22,22 +22,29 @@ contract Writer is AccessControl, VerifyTypedData {
     bytes32 public WRITER_ROLE = keccak256("WRITER");
 
     WriterStorage public store;
-    mapping(bytes32 => bool) public signatureWasExecuted;
+    /// @notice Tracks which EIP-712 digests have already been executed.
+    ///         Keyed off the digest (not the raw signature bytes) so that
+    ///         malleated signatures `(r, n - s, v')` cannot bypass replay
+    ///         protection — both byte representations of a malleable
+    ///         signature resolve to the same digest.
+    mapping(bytes32 => bool) public digestWasExecuted;
 
     string public title;
 
     modifier signedByWithRole(bytes memory signature, bytes32 structHash, bytes32 role) {
-        address signer = getSigner(signature, structHash);
+        bytes32 digest = _hashTypedData(structHash);
+        address signer = _recover(digest, signature);
         require(hasRole(role, signer), "Writer: Invalid signer role");
-        _validateAndMarkSignature(signature);
+        _validateAndMarkDigest(digest);
         _;
     }
 
     modifier signedByAuthorWithRole(bytes memory signature, bytes32 structHash, uint256 id, bytes32 role) {
-        address signer = getSigner(signature, structHash);
+        bytes32 digest = _hashTypedData(structHash);
+        address signer = _recover(digest, signature);
         require(store.getEntry(id).author == signer, "Writer: Signer must be the author");
         require(hasRole(role, signer), "Writer: Signer must be a writer");
-        _validateAndMarkSignature(signature);
+        _validateAndMarkDigest(digest);
         _;
     }
 
@@ -47,10 +54,9 @@ contract Writer is AccessControl, VerifyTypedData {
         _;
     }
 
-    function _validateAndMarkSignature(bytes memory signature) internal {
-        bytes32 signatureHash = keccak256(signature);
-        require(!signatureWasExecuted[signatureHash], "Writer: Signature has already been executed");
-        signatureWasExecuted[signatureHash] = true;
+    function _validateAndMarkDigest(bytes32 digest) internal {
+        require(!digestWasExecuted[digest], "Writer: Signature has already been executed");
+        digestWasExecuted[digest] = true;
     }
 
     event StorageSet(address indexed storageAddress);
