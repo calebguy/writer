@@ -12,10 +12,14 @@ import {
 } from "../constants";
 import { env } from "../env";
 import {
+	type ReconcileEntryResult,
+	type ReconcileWriterResult,
 	recoverCreateWithChunkSigner,
 	recoverRemoveEntrySigner,
 	recoverSetColorSigner,
 	recoverUpdateEntryWithChunkSigner,
+	reconcileEntryByDbId,
+	reconcileWriterByAddress,
 } from "../helpers";
 import {
 	addressAndIDParamSchema,
@@ -25,8 +29,9 @@ import {
 	deleteEntryJsonValidator,
 	factoryCreateJsonValidator,
 	updateEntryJsonValidator,
+	userAddressParamSchema,
 } from "../middleware";
-import { requireWriterAdminAuth } from "../privy";
+import { requireSavedAuth, requireWriterAdminAuth } from "../privy";
 import { makeRelayTxId, relay } from "../relay";
 import { Hono } from "hono";
 
@@ -40,6 +45,64 @@ const writerRoutes = new Hono()
 		}));
 		return c.json({ writers });
 	})
+	.post(
+		"/manager/:userAddress/reconcile",
+		userAddressParamSchema,
+		requireSavedAuth,
+		async (c) => {
+			const { userAddress } = c.req.valid("param");
+			const writers = await db.getWritersByManager(userAddress);
+
+			const writerResults: ReconcileWriterResult[] = [];
+			const entryResults: ReconcileEntryResult[] = [];
+
+			for (const w of writers) {
+				// Only reconcile writers that aren't yet confirmed onchain.
+				if (!w.createdAtHash) {
+					writerResults.push(
+						await reconcileWriterByAddress(w.address as Hex),
+					);
+				}
+
+				// Re-fetch in case the writer reconciliation above backfilled entries
+				// via on-chain logs, so we don't redundantly reconcile them.
+				const refreshed = await db.getWriter(w.address as Hex);
+				if (!refreshed) continue;
+
+				const pendingEntries = refreshed.entries.filter(
+					(entry) =>
+						!entry.deletedAt && (!entry.onChainId || !entry.createdAtHash),
+				);
+				for (const entry of pendingEntries) {
+					entryResults.push(await reconcileEntryByDbId(entry.id));
+				}
+			}
+
+			const summary = {
+				writers: {
+					total: writerResults.length,
+					updated: writerResults.filter((r) => r.action === "updated" && r.ok)
+						.length,
+					noop: writerResults.filter((r) => r.action === "noop").length,
+					skipped: writerResults.filter((r) => r.action === "skipped").length,
+					failed: writerResults.filter((r) => r.action === "failed").length,
+				},
+				entries: {
+					total: entryResults.length,
+					updated: entryResults.filter((r) => r.action === "updated" && r.ok)
+						.length,
+					noop: entryResults.filter((r) => r.action === "noop").length,
+					skipped: entryResults.filter((r) => r.action === "skipped").length,
+					failed: entryResults.filter((r) => r.action === "failed").length,
+				},
+			};
+
+			return c.json({
+				summary,
+				results: { writers: writerResults, entries: entryResults },
+			});
+		},
+	)
 	.get("/me/:address", addressParamSchema, async (c) => {
 		const { address } = c.req.valid("param");
 		const user = await db.getUser(address);

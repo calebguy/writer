@@ -6,8 +6,8 @@ import {
 	usePrivy,
 	useWallets,
 } from "@privy-io/react-auth";
-import { useEffect, useState } from "react";
-import type { Entry } from "./api";
+import { useEffect, useRef, useState } from "react";
+import { type Entry, reconcileManager } from "./api";
 import { getCachedEntry, setCachedEntry } from "./entryCache";
 import { getCachedDerivedKey } from "./keyCache";
 import { isEntryPrivate, isWalletAuthor, processPrivateEntry } from "./utils";
@@ -67,6 +67,51 @@ export function useOPWallet() {
 		: opEthereumWallet ?? ethereumWallets[0];
 
 	return [wallet, ready] as const;
+}
+
+/**
+ * When `isPending` stays true for `delayMs` (default 15s), call the
+ * manager-scoped reconcile endpoint to backfill anything the indexer missed,
+ * then notify via `onReconciled`. Fires once per pending session — if
+ * `isPending` flips to false and back to true, the timer re-arms.
+ */
+export function useReconcileStuckPending({
+	isPending,
+	userAddress,
+	onReconciled,
+	delayMs = 15_000,
+}: {
+	isPending: boolean;
+	userAddress: string | undefined;
+	onReconciled?: () => void;
+	delayMs?: number;
+}) {
+	const { getAccessToken } = usePrivy();
+	const callbacksRef = useRef({ getAccessToken, onReconciled });
+	callbacksRef.current = { getAccessToken, onReconciled };
+
+	useEffect(() => {
+		if (!isPending || !userAddress) return;
+
+		let cancelled = false;
+		const timer = setTimeout(async () => {
+			if (cancelled) return;
+			try {
+				const authToken = await callbacksRef.current.getAccessToken();
+				if (!authToken || cancelled) return;
+				await reconcileManager({ userAddress, authToken });
+				if (cancelled) return;
+				callbacksRef.current.onReconciled?.();
+			} catch (error) {
+				console.error("Failed to reconcile stuck pending state", error);
+			}
+		}, delayMs);
+
+		return () => {
+			cancelled = true;
+			clearTimeout(timer);
+		};
+	}, [isPending, userAddress, delayMs]);
 }
 
 export function useProcessedEntries(
