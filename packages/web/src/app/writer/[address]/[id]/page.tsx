@@ -1,7 +1,7 @@
 "use client";
 
 import Entry from "@/components/Entry";
-import { type Entry as EntryType, getEntry } from "@/utils/api";
+import { type Entry as EntryType, getEntry, getWriter } from "@/utils/api";
 import { getPrivateCachedEntry, getPublicCachedEntry } from "@/utils/entryCache";
 import { useEntryLoading } from "@/utils/EntryLoadingContext";
 import { useOPWallet } from "@/utils/hooks";
@@ -66,6 +66,13 @@ export default function EntryPage({
 		staleTime: 30 * 1000, // 30 seconds
 	});
 
+	// Fetch the writer to get legacyDomain for EIP-712 signing
+	const { data: writer } = useQuery({
+		queryKey: ["writer", address],
+		queryFn: () => getWriter(address as Hex),
+		staleTime: 60 * 1000,
+	});
+
 	const displayEntry = entry ?? cachedEntry;
 
 	if (!displayEntry) {
@@ -97,6 +104,7 @@ export default function EntryPage({
 				initialEntry={displayEntry}
 				address={address}
 				id={id}
+				legacyDomain={writer?.legacyDomain ?? true}
 				onEntryUpdate={() => {
 					// Invalidate and refetch
 					queryClient.invalidateQueries({ queryKey: ["entry", address, id] });

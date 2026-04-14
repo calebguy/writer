@@ -105,6 +105,7 @@ export function NavDropdown() {
 						entry,
 						writerAddress: writer.address,
 						writerTitle: writer.title,
+						legacyDomain: writer.legacyDomain,
 					});
 				}
 			}

@@ -30,6 +30,15 @@ export const writer = pgTable("writer", {
 	// Set at writer creation, frozen on chain (Writer.publicWritable is
 	// `immutable`), and never updated after insert here.
 	publicWritable: boolean().notNull().default(false),
+	// Whether this writer's on-chain EIP-712 domain includes `chainId`.
+	// True for writers created by the old factory (pre-redeploy). False
+	// for writers created by the new factory (chain-portable domain).
+	// Flipped to false when the writer's logic is migrated via
+	// `WriterStorage.setLogic` (the indexer's LogicSet handler does this).
+	// The frontend reads this to decide whether to include chainId when
+	// signing write operations. Defaults to true so legacy writers work
+	// out of the box without any user action.
+	legacyDomain: boolean().notNull().default(true),
 	title: text().notNull(),
 	admin: text().notNull(),
 	managers: text().array().notNull(),

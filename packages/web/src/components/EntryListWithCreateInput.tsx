@@ -19,6 +19,7 @@ export default function EntryListWithCreateInput({
 	writerTitle,
 	writerAddress,
 	writerStorageId,
+	writerLegacyDomain,
 	processedEntries,
 	canCreateEntries = true,
 	showUnlockBanner = false,
@@ -32,6 +33,8 @@ export default function EntryListWithCreateInput({
 	writerAddress: string;
 	/** Frozen storage_id of this writer; used for v4 encryption key derivation. */
 	writerStorageId: string;
+	/** Whether this writer uses the legacy EIP-712 domain (with chainId). */
+	writerLegacyDomain: boolean;
 	processedEntries: Entry[];
 	canCreateEntries?: boolean;
 	showUnlockBanner?: boolean;
@@ -83,6 +86,7 @@ export default function EntryListWithCreateInput({
 			await signCreateWithChunk(wallet, {
 				content: versionedCompressedContent,
 				address: writerAddress,
+				legacyDomain: writerLegacyDomain,
 			});
 
 		const authToken = await getAccessToken();

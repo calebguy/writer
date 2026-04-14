@@ -304,6 +304,7 @@ const writerRoutes = new Hono()
 				chunkContent,
 				chunkCount,
 				address: contractAddress,
+				legacyDomain: writer.legacyDomain,
 			});
 
 			// Audit fix for H-3: the EIP-712 recovered signer (which becomes
@@ -433,6 +434,7 @@ const writerRoutes = new Hono()
 				content,
 				entryId: id,
 				address: contractAddress,
+				legacyDomain: writer.legacyDomain,
 			});
 			// Audit fix for H-3: recovered signer must match the
 			// authenticated wallet (so an attacker can't replay a captured
@@ -527,6 +529,7 @@ const writerRoutes = new Hono()
 				nonce,
 				id,
 				address,
+				legacyDomain: writer.legacyDomain,
 			});
 			// Audit fix for H-3: recovered signer must match the
 			// authenticated wallet (so an attacker can't replay a captured

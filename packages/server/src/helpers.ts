@@ -11,15 +11,26 @@ import {
 
 import { env } from "./env";
 
-// Domain intentionally omits `chainId`. See VerifyTypedData.sol for the
-// design rationale (chain-portable signatures). The contract typehash, the
-// frontend types schema in web/src/utils/signer.ts, and this domain shape
-// must all match exactly.
-const getDomain = (address: Hex) => ({
-	name: "Writer",
-	version: "1",
-	verifyingContract: getAddress(address),
-});
+// New writers omit `chainId` from the EIP-712 domain (chain-portable
+// signatures — see VerifyTypedData.sol). Legacy writers (created by the
+// old factory, before the redeploy) still include chainId because their
+// on-chain VerifyTypedData embeds it. The `legacyDomain` flag is read
+// from the writer's DB row and threaded through by the route handlers.
+const getDomain = (address: Hex, legacyDomain = false) => {
+	if (legacyDomain) {
+		return {
+			name: "Writer" as const,
+			version: "1" as const,
+			chainId: env.TARGET_CHAIN_ID,
+			verifyingContract: getAddress(address),
+		};
+	}
+	return {
+		name: "Writer" as const,
+		version: "1" as const,
+		verifyingContract: getAddress(address),
+	};
+};
 
 // secp256k1n / 2 — the upper bound for the "low" half of valid S values.
 // Any signature with s > this value is the malleated form of a signature
@@ -64,16 +75,18 @@ export function recoverCreateWithChunkSigner({
 	chunkContent,
 	chunkCount,
 	address,
+	legacyDomain,
 }: {
 	signature: Hex;
 	nonce: bigint;
 	chunkContent: string;
 	chunkCount: bigint;
 	address: Hex;
+	legacyDomain?: boolean;
 }) {
 	assertLowS(signature);
 	return recoverTypedDataAddress({
-		domain: getDomain(address),
+		domain: getDomain(address, legacyDomain),
 		message: {
 			nonce,
 			chunkCount,
@@ -98,6 +111,7 @@ export function recoverUpdateEntryWithChunkSigner({
 	content,
 	entryId,
 	address,
+	legacyDomain,
 }: {
 	signature: Hex;
 	nonce: bigint;
@@ -105,11 +119,12 @@ export function recoverUpdateEntryWithChunkSigner({
 	content: string;
 	entryId: bigint;
 	address: Hex;
+	legacyDomain?: boolean;
 }) {
 	assertLowS(signature);
 	// Recover the address
 	return recoverTypedDataAddress({
-		domain: getDomain(address),
+		domain: getDomain(address, legacyDomain),
 		message: {
 			nonce,
 			totalChunks,
@@ -134,15 +149,17 @@ export function recoverRemoveEntrySigner({
 	nonce,
 	id,
 	address,
+	legacyDomain,
 }: {
 	signature: Hex;
 	nonce: bigint;
 	id: bigint;
 	address: Hex;
+	legacyDomain?: boolean;
 }) {
 	assertLowS(signature);
 	return recoverTypedDataAddress({
-		domain: getDomain(address),
+		domain: getDomain(address, legacyDomain),
 		message: {
 			nonce,
 			id,
