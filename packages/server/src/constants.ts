@@ -5,7 +5,7 @@ import { Db } from "db";
 import { optimism } from "viem/chains";
 
 export const CREATE_FUNCTION_SIGNATURE =
-	"create(string title, address admin, address[] managers, bytes32 salt)";
+	"create(string title, address admin, address[] managers, bool publicWritable, bytes32 salt)";
 export const CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE =
 	"createWithChunkWithSig(bytes signature, uint256 nonce, uint256 chunkCount, string chunkContent)";
 export const UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE =

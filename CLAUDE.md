@@ -172,7 +172,7 @@ Auth uses a **server-hint + client-reactive** model:
 2. **CREATE2 Addresses:** Predictable addresses before deployment
 3. **Signature-Based Auth:** Users sign with existing wallets, no centralized keys
 4. **Compression + Encryption:** Reduces onchain storage costs
-5. **Soft Deletes:** Maintains blockchain history integrity
+5. **Soft Deletes:** Maintains blockchain history integrity (delete from the chain but visible in block history)
 6. **Syndicate Relay:** Abstracts transaction complexity from users
 
 ## Code Patterns

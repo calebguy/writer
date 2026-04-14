@@ -3,7 +3,14 @@ import { type Hex, getAddress, keccak256 } from "viem";
 import { env } from "./env";
 
 const COLOR_REGISTRY_ADDRESS = env.NEXT_PUBLIC_COLOR_REGISTRY_ADDRESS as Hex;
-const TARGET_CHAIN_ID = env.NEXT_PUBLIC_TARGET_CHAIN_ID;
+
+// Note: every sign* function below intentionally OMITS `chainId` from the
+// EIP-712 domain. Writer's contracts also omit it (see VerifyTypedData.sol
+// for the full rationale). This makes signatures chain-portable: the same
+// signature works on every chain that has the same Writer contract at the
+// same address. The contract-side EIP712Domain typehash and the frontend
+// types schema must match exactly, so any change here requires a matching
+// change in VerifyTypedData.sol AND in server/src/helpers.ts.
 
 export async function signSetColor(
 	wallet: ConnectedWallet,
@@ -16,7 +23,6 @@ export async function signSetColor(
 		domain: {
 			name: "ColorRegistry",
 			version: "1",
-			chainId: TARGET_CHAIN_ID,
 			verifyingContract: getAddress(COLOR_REGISTRY_ADDRESS),
 		},
 		message: {
@@ -28,7 +34,6 @@ export async function signSetColor(
 			EIP712Domain: [
 				{ name: "name", type: "string" },
 				{ name: "version", type: "string" },
-				{ name: "chainId", type: "uint256" },
 				{ name: "verifyingContract", type: "address" },
 			],
 			SetHex: [
@@ -60,7 +65,6 @@ export async function signRemove(
 		domain: {
 			name: "Writer",
 			version: "1",
-			chainId: TARGET_CHAIN_ID,
 			verifyingContract: getAddress(address),
 		},
 		message: {
@@ -72,7 +76,6 @@ export async function signRemove(
 			EIP712Domain: [
 				{ name: "name", type: "string" },
 				{ name: "version", type: "string" },
-				{ name: "chainId", type: "uint256" },
 				{ name: "verifyingContract", type: "address" },
 			],
 			Remove: [
@@ -110,7 +113,6 @@ export async function signUpdate(
 		domain: {
 			name: "Writer",
 			version: "1",
-			chainId: TARGET_CHAIN_ID,
 			verifyingContract: getAddress(address),
 		},
 		message: {
@@ -124,7 +126,6 @@ export async function signUpdate(
 			EIP712Domain: [
 				{ name: "name", type: "string" },
 				{ name: "version", type: "string" },
-				{ name: "chainId", type: "uint256" },
 				{ name: "verifyingContract", type: "address" },
 			],
 			Update: [
@@ -164,7 +165,6 @@ export async function signCreateWithChunk(
 		domain: {
 			name: "Writer",
 			version: "1",
-			chainId: TARGET_CHAIN_ID,
 			verifyingContract: getAddress(address),
 		},
 		message: {
@@ -177,7 +177,6 @@ export async function signCreateWithChunk(
 			EIP712Domain: [
 				{ name: "name", type: "string" },
 				{ name: "version", type: "string" },
-				{ name: "chainId", type: "uint256" },
 				{ name: "verifyingContract", type: "address" },
 			],
 			CreateWithChunk: [
@@ -202,7 +201,26 @@ export async function signCreateWithChunk(
 }
 
 function getRandomNonce() {
-	return Number(crypto.getRandomValues(new Uint32Array(1))[0]);
+	// Generate 53 bits of entropy — the maximum that fits in a JavaScript
+	// `Number` without precision loss (Number.MAX_SAFE_INTEGER === 2^53 - 1).
+	//
+	// Birthday-collision threshold goes from ~2^16 (~65k entries per user,
+	// the previous 32-bit nonce) to ~2^26.5 (~95M entries per user). Way
+	// beyond any realistic per-user write volume.
+	//
+	// We stay inside Number rather than upgrading to bigint because the
+	// nonce flows through the JSON wire format (frontend → /writer/...
+	// endpoints → relay → calldata) and is currently typed as `number`
+	// throughout. Switching to bigint would force every layer to know
+	// about it. 53 bits is plenty given the actual threat model and avoids
+	// the type-plumbing churn.
+	const buf = new Uint32Array(2);
+	crypto.getRandomValues(buf);
+	// high21 (21 bits from buf[0]) × 2^32 + low32 (32 bits from buf[1])
+	// = 53 bits total.
+	const high21 = buf[0] & 0x1fffff;
+	const low32 = buf[1];
+	return high21 * 0x100000000 + low32;
 }
 
 // Keep old function for reading legacy entries
@@ -275,5 +293,111 @@ export async function getDerivedSigningKeyV3(
 	return key.slice(0, 16);
 }
 
-// Default export uses v3 for new encryptions
-export const getDerivedSigningKey = getDerivedSigningKeyV3;
+// V4 key derivation — fixes audit finding C-1.
+//
+// v1/v2/v3 all use personal_sign of a fixed string. personal_sign has no
+// domain binding, so any malicious site that prompts the user to sign the
+// same string can recover the same encryption key. The v3 message tries to
+// mitigate this with a textual warning, but textual warnings are not a
+// security boundary.
+//
+// v4 fixes this with three changes:
+//
+//   1. Sign EIP-712 typed data instead of personal_sign. The EIP-712 domain
+//      is structured data that wallets render distinctively, and the schema
+//      is committed to via the typehash, so a malicious site cannot prompt
+//      a different schema to recover the same key.
+//
+//   2. Bind the derivation to the writer's *frozen storage_id*, passed as a
+//      string field in the message body. The storage_id is set at writer
+//      creation time and never changes, even across chain migrations or
+//      contract redeploys. This means each writer has its own encryption
+//      key (limiting blast radius if any one key is ever compromised) AND
+//      that key survives any migration scenario where the storage_id is
+//      preserved in the DB.
+//
+//      We deliberately do NOT use `verifyingContract = currentStorageAddress`
+//      in the EIP-712 domain because the contract address can drift across
+//      chains or after a non-deterministic redeploy. The storage_id stays
+//      constant.
+//
+//      We deliberately do NOT include `chainId` in the domain. The signature
+//      is consumed entirely client-side as HKDF input — it is never
+//      submitted to any chain and there is no cross-chain replay scenario
+//      to defend against. Omitting chainId makes the derivation chain-
+//      portable, matching the chain-portable Writer signatures.
+//
+//   3. Run the signature through HKDF-SHA256 to derive a 32-byte AES-256
+//      key, replacing the v1/v2/v3 pattern of truncating a keccak hash to
+//      16 bytes (AES-128).
+//
+// The wallet UI shows the user:
+//   Domain:  Writer Encryption v1
+//   Message: storageId: 0x...  purpose: Derive encryption key for ...
+// The storageId is a structured field, not a free-text claim, so a phishing
+// attempt would have to either know the user's exact storageId in advance
+// (it does not — storage_ids are unique per writer and not publicly
+// discoverable as belonging to a specific user) or use a different one
+// (which would derive a different key, defeating the attack).
+export async function getDerivedSigningKeyV4(
+	wallet: ConnectedWallet,
+	storageId: string,
+): Promise<Uint8Array> {
+	const provider = await wallet.getEthereumProvider();
+	const payload = {
+		domain: {
+			name: "Writer Encryption",
+			version: "1",
+		},
+		message: {
+			storageId: storageId.toLowerCase(),
+			purpose:
+				"Derive encryption key for private entries on this place. Each Writer has its own key.",
+		},
+		primaryType: "DeriveKey",
+		types: {
+			EIP712Domain: [
+				{ name: "name", type: "string" },
+				{ name: "version", type: "string" },
+			],
+			DeriveKey: [
+				{ name: "storageId", type: "string" },
+				{ name: "purpose", type: "string" },
+			],
+		},
+	};
+
+	const signature = (await provider.request({
+		method: "eth_signTypedData_v4",
+		params: [wallet.address, JSON.stringify(payload)],
+	})) as Hex;
+
+	// Run the signature through HKDF-SHA256 to get a uniformly-random
+	// 32-byte AES-256 key. The `info` label namespaces this derivation so we
+	// can derive other subkeys from the same signature in the future without
+	// collision (e.g. v5 with a different KDF binding).
+	const signatureBytes = Uint8Array.from(
+		Buffer.from(signature.slice(2), "hex"),
+	);
+	const ikm = await crypto.subtle.importKey(
+		"raw",
+		signatureBytes as BufferSource,
+		"HKDF",
+		false,
+		["deriveBits"],
+	);
+	const derivedBits = await crypto.subtle.deriveBits(
+		{
+			name: "HKDF",
+			hash: "SHA-256",
+			salt: new Uint8Array(0),
+			info: new TextEncoder().encode("Writer:enc:v4:AES-256-GCM"),
+		},
+		ikm,
+		256, // bits → 32 bytes
+	);
+	return new Uint8Array(derivedBits);
+}
+
+// Default export uses v4 for new encryptions
+export const getDerivedSigningKey = getDerivedSigningKeyV4;

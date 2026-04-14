@@ -32,18 +32,20 @@ export function computeWriterAddress({
 	title,
 	admin,
 	managers,
+	publicWritable,
 }: {
 	address: Hex;
 	salt: Hex;
 	title: string;
 	admin: Hex;
 	managers: Hex[];
+	publicWritable: boolean;
 }) {
 	return publicClient.readContract({
 		address,
 		abi: WriterFactoryAbi,
 		functionName: "computeWriterAddress",
-		args: [title, admin, managers, salt],
+		args: [title, admin, managers, publicWritable, salt],
 	});
 }
 

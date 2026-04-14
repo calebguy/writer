@@ -163,7 +163,14 @@ export function useProcessedEntries(
 			}
 
 			try {
-				// Get derived keys (cached to avoid multiple signature requests)
+				// Get derived keys (cached to avoid multiple signature requests).
+				// v1/v2/v3 are global per user — one key works for all entries.
+				// v4 is per-writer (derived from storage_id), so we fetch one
+				// v4 key per unique storage_id present in the batch. In the
+				// common case (one writer at a time) that's a single key.
+				const needsV4 = privateEntriesToProcess.some((entry) =>
+					entry.raw?.startsWith("enc:v4:br:"),
+				);
 				const needsV3 = privateEntriesToProcess.some((entry) =>
 					entry.raw?.startsWith("enc:v3:br:"),
 				);
@@ -183,6 +190,31 @@ export function useProcessedEntries(
 					? await getCachedDerivedKey(wallet!, "v1")
 					: undefined;
 
+				// Pre-derive any v4 keys we'll need. The keyCache dedupes by
+				// (wallet, storageId, version), so visiting the same storageId
+				// twice in this loop only triggers one signature.
+				//
+				// Only v4-prefixed entries are considered here, AND we
+				// defensively skip any entry that doesn't carry a storageId
+				// (legacy v1/v2/v3 entries from a DB row that hasn't been
+				// backfilled, or a cached API response from before the
+				// storage_id column existed).
+				const v4KeysByStorageId = new Map<string, Uint8Array>();
+				if (needsV4) {
+					const uniqueStorageIds = new Set(
+						privateEntriesToProcess
+							.filter(
+								(entry) =>
+									entry.raw?.startsWith("enc:v4:br:") && entry.storageId,
+							)
+							.map((entry) => entry.storageId.toLowerCase()),
+					);
+					for (const storageId of uniqueStorageIds) {
+						const key = await getCachedDerivedKey(wallet!, "v4", storageId);
+						v4KeysByStorageId.set(storageId, key);
+					}
+				}
+
 				// Process each private entry and update state
 				const processedMap = new Map<number, Entry>();
 
@@ -200,11 +232,20 @@ export function useProcessedEntries(
 						continue;
 					}
 
+					// v4 keys are per-storageId. Only look up a key if the entry
+					// is actually a v4 entry AND has a storageId on it. v1/v2/v3
+					// entries pass undefined and processPrivateEntry routes them
+					// by prefix to the right legacy key.
+					const derivedKeyV4 =
+						entry.raw?.startsWith("enc:v4:br:") && entry.storageId
+							? v4KeysByStorageId.get(entry.storageId.toLowerCase())
+							: undefined;
 					const processed = await processPrivateEntry(
 						derivedKeyV2,
 						entry,
 						derivedKeyV1,
 						derivedKeyV3,
+						derivedKeyV4,
 					);
 					await setCachedEntry(writerAddress, entryId, processed, {
 						walletAddress,

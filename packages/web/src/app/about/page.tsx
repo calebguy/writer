@@ -12,8 +12,7 @@ export default function AboutPage() {
 						lasts forever.
 					</p>
 					<div className="flex items-baseline justify-center gap-1">
-						<span>Select</span>{" "}
-						<Lock className="h-4 w-4 text-primary inline-block" />{" "}
+						<span>Select</span> <Lock className="h-4 w-4 inline-block" />{" "}
 						<span>to keep your writing private.</span>
 					</div>
 					<p className="italic">Write today, forever.</p>

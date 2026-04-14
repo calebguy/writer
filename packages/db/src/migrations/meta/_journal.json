@@ -36,6 +36,34 @@
       "when": 1775325123264,
       "tag": "0004_daily_switch",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1775804332513,
+      "tag": "0005_burly_colossus",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1775835413815,
+      "tag": "0006_easy_peter_parker",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1775835669967,
+      "tag": "0007_majestic_warlock",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1775847174036,
+      "tag": "0008_mighty_marvel_apes",
+      "breakpoints": true
     }
   ]
 }

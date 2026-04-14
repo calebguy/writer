@@ -6,6 +6,7 @@ import { useOPWallet } from "@/utils/hooks";
 import { getCachedDerivedKey } from "@/utils/keyCache";
 import { signCreateWithChunk } from "@/utils/signer";
 import { compress, encrypt } from "@/utils/utils";
+import { usePrivy } from "@privy-io/react-auth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -17,6 +18,7 @@ import EntryList from "./EntryList";
 export default function EntryListWithCreateInput({
 	writerTitle,
 	writerAddress,
+	writerStorageId,
 	processedEntries,
 	canCreateEntries = true,
 	showUnlockBanner = false,
@@ -28,6 +30,8 @@ export default function EntryListWithCreateInput({
 }: {
 	writerTitle: string;
 	writerAddress: string;
+	/** Frozen storage_id of this writer; used for v4 encryption key derivation. */
+	writerStorageId: string;
 	processedEntries: Entry[];
 	canCreateEntries?: boolean;
 	showUnlockBanner?: boolean;
@@ -39,6 +43,7 @@ export default function EntryListWithCreateInput({
 }) {
 	const [isExpanded, setIsExpanded] = useState(false);
 	const [wallet] = useOPWallet();
+	const { getAccessToken } = usePrivy();
 	const router = useRouter();
 	const queryClient = useQueryClient();
 
@@ -66,9 +71,12 @@ export default function EntryListWithCreateInput({
 		const compressedContent = await compress(markdown);
 		let versionedCompressedContent = `br:${compressedContent}`;
 		if (encrypted) {
-			const key = await getCachedDerivedKey(wallet, "v3");
+			// New private writes always use v4 (per-writer EIP-712 + HKDF +
+			// AES-256-GCM). v1/v2/v3 read paths still work for legacy entries
+			// but no new entries are created with those formats.
+			const key = await getCachedDerivedKey(wallet, "v4", writerStorageId);
 			const encryptedContent = await encrypt(key, compressedContent);
-			versionedCompressedContent = `enc:v3:br:${encryptedContent}`;
+			versionedCompressedContent = `enc:v4:br:${encryptedContent}`;
 		}
 
 		const { signature, nonce, chunkCount, chunkContent } =
@@ -77,12 +85,18 @@ export default function EntryListWithCreateInput({
 				address: writerAddress,
 			});
 
+		const authToken = await getAccessToken();
+		if (!authToken) {
+			console.error("No auth token found");
+			return;
+		}
 		await mutateAsync({
 			address: writerAddress as Hex,
 			signature,
 			nonce,
 			chunkCount,
 			chunkContent,
+			authToken,
 		});
 	};
 

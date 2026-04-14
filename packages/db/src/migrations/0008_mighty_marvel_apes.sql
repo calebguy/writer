@@ -1,0 +1,1 @@
+ALTER TABLE "writer" ADD COLUMN "public_writable" boolean DEFAULT false NOT NULL;

@@ -5,7 +5,6 @@ import { Copy } from "@/components/icons/Copy";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { MAX_CONTENT_LENGTH, MAX_TITLE_LENGTH } from "utils/constants";
 
 const secondaryGray = "dark:text-neutral-200 text-neutral-800";
 
@@ -928,7 +927,9 @@ export default function DocsPage() {
 						API
 					</AnchorHeading>
 					<p className={`${secondaryGray} mb-4`}>
-						All write operations are authenticated via EIP-712 signatures.
+						Public read endpoints. Write endpoints exist but are restricted
+						to authenticated frontend clients (Privy bearer token required)
+						and are intentionally not documented here.
 					</p>
 					<div>
 						<span className={`${secondaryGray}`}>Base URL: </span>
@@ -977,30 +978,6 @@ export default function DocsPage() {
 							]}
 							response="{ writers: Writer[] }"
 						/>
-
-						<Endpoint
-							method="POST"
-							path="/factory/create"
-							description="Deploy a new Writer + WriterStorage contract pair."
-							body={[
-								{
-									name: "title",
-									type: "string",
-									description: `Writer title (max ${MAX_TITLE_LENGTH.toLocaleString()} characters)`,
-								},
-								{
-									name: "admin",
-									type: "address",
-									description: "Admin address",
-								},
-								{
-									name: "managers",
-									type: "address[]",
-									description: "Manager addresses",
-								},
-							]}
-							response="{ writer: Writer }"
-						/>
 					</Section>
 					<RelicDivider seed="writers-entries" />
 					<Section title="Entries">
@@ -1037,123 +1014,8 @@ export default function DocsPage() {
 							]}
 							response="{ entry: Entry }"
 						/>
-
-						<Endpoint
-							method="POST"
-							path="/writer/:address/entry/createWithChunk"
-							description="Create a new entry with the first chunk of content."
-							auth="EIP-712 signature (signer must have WRITER_ROLE)"
-							params={[
-								{
-									name: "address",
-									type: "address",
-									description: "Writer contract address",
-								},
-							]}
-							body={[
-								{
-									name: "signature",
-									type: "string",
-									description: "EIP-712 typed data signature",
-								},
-								{ name: "nonce", type: "bigint", description: "Unique nonce" },
-								{
-									name: "chunkCount",
-									type: "bigint",
-									description: "Total chunks for this entry",
-								},
-								{
-									name: "chunkContent",
-									type: "string",
-									description: `First chunk content (max ${MAX_CONTENT_LENGTH.toLocaleString()} characters)`,
-								},
-							]}
-							response="{ entry: Entry }"
-						/>
-
-						<Endpoint
-							method="POST"
-							path="/writer/:address/entry/:id/update"
-							description="Update an existing entry's content."
-							auth="EIP-712 signature (signer must be entry author)"
-							params={[
-								{
-									name: "address",
-									type: "address",
-									description: "Writer contract address",
-								},
-								{ name: "id", type: "string", description: "Entry ID" },
-							]}
-							body={[
-								{
-									name: "signature",
-									type: "string",
-									description: "EIP-712 typed data signature",
-								},
-								{ name: "nonce", type: "bigint", description: "Unique nonce" },
-								{
-									name: "totalChunks",
-									type: "bigint",
-									description: "New total chunks",
-								},
-								{
-									name: "content",
-									type: "string",
-									description: `New content (max ${MAX_CONTENT_LENGTH.toLocaleString()} characters)`,
-								},
-							]}
-							response="{ entry: Entry }"
-						/>
-
-						<Endpoint
-							method="POST"
-							path="/writer/:address/entry/:id/delete"
-							description="Delete an entry."
-							auth="EIP-712 signature (signer must be entry author)"
-							params={[
-								{
-									name: "address",
-									type: "address",
-									description: "Writer contract address",
-								},
-								{ name: "id", type: "string", description: "Entry ID" },
-							]}
-							body={[
-								{
-									name: "signature",
-									type: "string",
-									description: "EIP-712 typed data signature",
-								},
-								{ name: "nonce", type: "bigint", description: "Unique nonce" },
-							]}
-							response="{ writer: Writer }"
-						/>
 					</Section>
-					<RelicDivider seed="entries-color" />
-					<Section title="Color">
-						<Endpoint
-							method="POST"
-							path="/color-registry/set"
-							description="Set your primary color via EIP-712 signature."
-							auth="EIP-712 signature"
-							body={[
-								{
-									name: "signature",
-									type: "string",
-									description: "EIP-712 typed data signature",
-								},
-								{ name: "nonce", type: "bigint", description: "Unique nonce" },
-								{
-									name: "hexColor",
-									type: "bytes32",
-									description:
-										"Color in bytes32 format (0x-prefixed, 64 hex chars)",
-								},
-							]}
-							response="{ user: User }"
-						/>
-					</Section>
-					<RelicDivider seed="color-user" />
+					<RelicDivider seed="entries-user" />
 					<Section title="User">
 						<Endpoint
 							method="GET"

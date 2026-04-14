@@ -109,10 +109,16 @@ export function WriterList({
 		if (!address) {
 			return;
 		}
+		const authToken = await getAccessToken();
+		if (!authToken) {
+			console.error("No auth token found");
+			return;
+		}
 		await createWriter({
 			title: markdown,
 			admin: address as Hex,
 			managers: [address as Hex],
+			authToken,
 		});
 	};
 

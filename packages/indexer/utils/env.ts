@@ -25,6 +25,11 @@ const schema = z.object({
 	WS_RPC_URL: minString(),
 	TARGET_CHAIN_ID: minString().transform((val) => Number(val)),
 	FACTORY_ADDRESS: minString(),
+	// Optional: the old factory address for continued indexing of legacy
+	// writers created before the redeploy. If set, the indexer watches
+	// WriterCreated events from BOTH factories and tracks WriterStorage
+	// instances from both. If unset, only the new factory is tracked.
+	OLD_FACTORY_ADDRESS: minString().optional(),
 	COLOR_REGISTRY_ADDRESS: minString(),
 	START_BLOCK: minString().transform((val) => Number(val)),
 });

@@ -1,5 +1,6 @@
-import { randomBytes } from "node:crypto";
 import { entryToJsonSafe, publicWriterToJsonSafe, writerToJsonSafe } from "db";
+import { Hono } from "hono";
+import { randomBytes } from "node:crypto";
 import { computeWriterAddress, computeWriterStorageAddress } from "utils";
 import { type Hex, getAddress, toHex } from "viem";
 import {
@@ -14,12 +15,12 @@ import { env } from "../env";
 import {
 	type ReconcileEntryResult,
 	type ReconcileWriterResult,
+	reconcileEntryByDbId,
+	reconcileWriterByAddress,
 	recoverCreateWithChunkSigner,
 	recoverRemoveEntrySigner,
 	recoverSetColorSigner,
 	recoverUpdateEntryWithChunkSigner,
-	reconcileEntryByDbId,
-	reconcileWriterByAddress,
 } from "../helpers";
 import {
 	addressAndIDParamSchema,
@@ -31,9 +32,12 @@ import {
 	updateEntryJsonValidator,
 	userAddressParamSchema,
 } from "../middleware";
-import { requireSavedAuth, requireWriterAdminAuth } from "../privy";
+import {
+	requireSavedAuth,
+	requireWalletAuth,
+	requireWriterAdminAuth,
+} from "../privy";
 import { makeRelayTxId, relay } from "../relay";
-import { Hono } from "hono";
 
 const writerRoutes = new Hono()
 	.get("/manager/:address", async (c) => {
@@ -59,9 +63,7 @@ const writerRoutes = new Hono()
 			for (const w of writers) {
 				// Only reconcile writers that aren't yet confirmed onchain.
 				if (!w.createdAtHash) {
-					writerResults.push(
-						await reconcileWriterByAddress(w.address as Hex),
-					);
+					writerResults.push(await reconcileWriterByAddress(w.address as Hex));
 				}
 
 				// Re-fetch in case the writer reconciliation above backfilled entries
@@ -124,122 +126,166 @@ const writerRoutes = new Hono()
 		};
 		return c.json({ writer });
 	})
-	.post("/color-registry/set", colorRegistrySetJsonValidator, async (c) => {
-		const { signature, nonce, hexColor } = c.req.valid("json");
+	.post(
+		"/color-registry/set",
+		requireWalletAuth,
+		colorRegistrySetJsonValidator,
+		async (c) => {
+			const { signature, nonce, hexColor } = c.req.valid("json");
 
-		const address = await recoverSetColorSigner({
-			signature: signature as Hex,
-			nonce,
-			hexColor: hexColor as Hex,
-			address: env.COLOR_REGISTRY_ADDRESS as Hex,
-		});
+			const address = await recoverSetColorSigner({
+				signature: signature as Hex,
+				nonce,
+				hexColor: hexColor as Hex,
+				address: env.COLOR_REGISTRY_ADDRESS as Hex,
+			});
 
-		const args = {
-			signature,
-			nonce: Number(nonce),
-			hexColor,
-		};
-		try {
-			const { wallet, nonce: relayNonce } = await relay.sendTransaction({
-				to: env.COLOR_REGISTRY_ADDRESS,
-				abi: SET_HEX_FUNCTION_SIGNATURE,
-				args: [signature, Number(nonce), hexColor],
-			});
-			const transactionId = makeRelayTxId(wallet, relayNonce);
-			await db.createTx({
-				id: transactionId,
-				wallet,
-				nonce: relayNonce,
-				chainId: BigInt(env.TARGET_CHAIN_ID),
-				functionSignature: SET_HEX_FUNCTION_SIGNATURE,
-				args,
-				status: "PENDING",
-			});
-			const user = await db.upsertUser({
-				address: address,
-				color: hexColor,
-			});
-			return c.json({ user });
-		} catch (err) {
-			console.error("color-registry/set db error:", err);
-			const message = err instanceof Error ? err.message : "unknown database error";
-			return c.json({ error: `database error during color set: ${message}` }, 500);
-		}
-	})
-	.post("/factory/create", factoryCreateJsonValidator, async (c) => {
-		const { admin, managers, title } = c.req.valid("json");
-		const salt = toHex(randomBytes(32));
-		const args = { title, admin, managers, salt };
-		const [address, storageAddress] = await Promise.all([
-			computeWriterAddress({
-				address: env.FACTORY_ADDRESS as Hex,
-				salt,
-				title,
-				admin: getAddress(admin),
-				managers: managers.map(getAddress),
-			}),
-			computeWriterStorageAddress({
-				address: env.FACTORY_ADDRESS as Hex,
-				salt,
-			}),
-		]);
-		try {
-			const { wallet, nonce: relayNonce } = await relay.sendTransaction({
-				to: env.FACTORY_ADDRESS,
-				abi: CREATE_FUNCTION_SIGNATURE,
-				args: [title, admin, managers, salt],
-			});
-			const transactionId = makeRelayTxId(wallet, relayNonce);
-			await db.createTx({
-				id: transactionId,
-				wallet,
-				nonce: relayNonce,
-				chainId: BigInt(env.TARGET_CHAIN_ID),
-				functionSignature: CREATE_FUNCTION_SIGNATURE,
-				args,
-				status: "PENDING",
-			});
-			const data = await db.upsertWriter({
-				title,
-				admin,
-				managers,
-				transactionId,
-				address,
-				storageAddress,
-			});
-			const writer = writerToJsonSafe(data[0]);
-			return c.json({ writer }, 201);
-		} catch (err) {
-			console.error("factory/create db error:", err);
-			const message = err instanceof Error ? err.message : "unknown database error";
-			return c.json({ error: `database error during writer creation: ${message}` }, 500);
-		}
-	})
-	.post("/writer/:address/hide", addressParamSchema, requireWriterAdminAuth, async (c) => {
-		const { address } = c.req.valid("param");
-		const writer = await db.getWriter(address);
-		if (!writer) {
-			return c.json({ error: "writer not found" }, 404);
-		}
-		try {
-			await db.deleteWriter(address);
-			return c.json(
-				{
-					writer: {
-						...writerToJsonSafe(writer),
-						entries: writer.entries.map(entryToJsonSafe),
+			// Audit fix for H-3: the EIP-712 signer must match the authenticated
+			// wallet. Prevents an attacker from replaying a captured signature
+			// against the relay (and prevents anonymous relay-drain entirely).
+			if (getAddress(address) !== c.var.walletAddress) {
+				return c.json(
+					{ error: "signer does not match authenticated wallet" },
+					403,
+				);
+			}
+
+			const args = {
+				signature,
+				nonce: Number(nonce),
+				hexColor,
+			};
+			try {
+				const { wallet, nonce: relayNonce } = await relay.sendTransaction({
+					to: env.COLOR_REGISTRY_ADDRESS,
+					abi: SET_HEX_FUNCTION_SIGNATURE,
+					args: [signature, Number(nonce), hexColor],
+				});
+				const transactionId = makeRelayTxId(wallet, relayNonce);
+				await db.createTx({
+					id: transactionId,
+					wallet,
+					nonce: relayNonce,
+					chainId: BigInt(env.TARGET_CHAIN_ID),
+					functionSignature: SET_HEX_FUNCTION_SIGNATURE,
+					args,
+					status: "PENDING",
+				});
+				const user = await db.upsertUser({
+					address: address,
+					color: hexColor,
+				});
+				return c.json({ user });
+			} catch (err) {
+				console.error("color-registry/set db error:", err);
+				// Audit fix L-14: don't leak the underlying DB error message in
+				// the response. Logs above retain the full error for debugging.
+				return c.json({ error: "database error during color set" }, 500);
+			}
+		},
+	)
+	.post(
+		"/factory/create",
+		requireWalletAuth,
+		factoryCreateJsonValidator,
+		async (c) => {
+			const { admin, managers, title } = c.req.valid("json");
+
+			// Audit fix for H-2: the authenticated wallet must equal the `admin`
+			// field on the new writer. This prevents anonymous relay-drain (you
+			// must be logged in) AND prevents a confused-deputy attack where
+			// someone creates a writer with another wallet as admin. Per-user
+			// rate limiting is a separate follow-up.
+			if (getAddress(admin) !== c.var.walletAddress) {
+				return c.json({ error: "admin must equal authenticated wallet" }, 403);
+			}
+
+			const salt = toHex(randomBytes(32));
+			// publicWritable is hardcoded to false here. The UI never creates
+			// public writers — the launch public writer is deployed once via
+			// the `script/CreatePublicWriter.s.sol` foundry script and picked
+			// up by the indexer. If you ever want to surface public-writer
+			// creation in the UI, add a `publicWritable` field to the zod
+			// schema in middleware.ts and gate it with an admin check.
+			const publicWritable = false;
+			const args = { title, admin, managers, publicWritable, salt };
+			const [address, storageAddress] = await Promise.all([
+				computeWriterAddress({
+					address: env.FACTORY_ADDRESS as Hex,
+					salt,
+					title,
+					admin: getAddress(admin),
+					managers: managers.map(getAddress),
+					publicWritable,
+				}),
+				computeWriterStorageAddress({
+					address: env.FACTORY_ADDRESS as Hex,
+					salt,
+				}),
+			]);
+			try {
+				const { wallet, nonce: relayNonce } = await relay.sendTransaction({
+					to: env.FACTORY_ADDRESS,
+					abi: CREATE_FUNCTION_SIGNATURE,
+					args: [title, admin, managers, publicWritable, salt],
+				});
+				const transactionId = makeRelayTxId(wallet, relayNonce);
+				await db.createTx({
+					id: transactionId,
+					wallet,
+					nonce: relayNonce,
+					chainId: BigInt(env.TARGET_CHAIN_ID),
+					functionSignature: CREATE_FUNCTION_SIGNATURE,
+					args,
+					status: "PENDING",
+				});
+				const data = await db.upsertWriter({
+					title,
+					admin,
+					managers,
+					publicWritable,
+					transactionId,
+					address,
+					storageAddress,
+				});
+				const writer = writerToJsonSafe(data[0]);
+				return c.json({ writer }, 201);
+			} catch (err) {
+				console.error("factory/create db error:", err);
+				return c.json({ error: "database error during writer creation" }, 500);
+			}
+		},
+	)
+	.post(
+		"/writer/:address/hide",
+		addressParamSchema,
+		requireWriterAdminAuth,
+		async (c) => {
+			const { address } = c.req.valid("param");
+			const writer = await db.getWriter(address);
+			if (!writer) {
+				return c.json({ error: "writer not found" }, 404);
+			}
+			try {
+				await db.deleteWriter(address);
+				return c.json(
+					{
+						writer: {
+							...writerToJsonSafe(writer),
+							entries: writer.entries.map(entryToJsonSafe),
+						},
 					},
-				},
-				200,
-			);
-		} catch (err) {
-			console.error("writer/hide db error:", err);
-			const message = err instanceof Error ? err.message : "unknown database error";
-			return c.json({ error: `database error during writer hide: ${message}` }, 500);
-		}
-	})
+					200,
+				);
+			} catch (err) {
+				console.error("writer/hide db error:", err);
+				return c.json({ error: "database error during writer hide" }, 500);
+			}
+		},
+	)
 	.post(
 		"/writer/:address/entry/createWithChunk",
+		requireWalletAuth,
 		addressParamSchema,
 		createWithChunkJsonValidator,
 		async (c) => {
@@ -259,6 +305,17 @@ const writerRoutes = new Hono()
 				chunkCount,
 				address: contractAddress,
 			});
+
+			// Audit fix for H-3: the EIP-712 recovered signer (which becomes
+			// the entry's author) must match the authenticated wallet. This
+			// prevents an attacker from replaying someone else's captured
+			// signature against the relay.
+			if (getAddress(author) !== c.var.walletAddress) {
+				return c.json(
+					{ error: "signer does not match authenticated wallet" },
+					403,
+				);
+			}
 
 			const args = {
 				signature,
@@ -309,8 +366,7 @@ const writerRoutes = new Hono()
 				return c.json({ entry }, 201);
 			} catch (err) {
 				console.error("createWithChunk db error:", err);
-				const message = err instanceof Error ? err.message : "unknown database error";
-				return c.json({ error: `database error during entry creation: ${message}` }, 500);
+				return c.json({ error: "database error during entry creation" }, 500);
 			}
 		},
 	)
@@ -347,6 +403,7 @@ const writerRoutes = new Hono()
 	)
 	.post(
 		"/writer/:address/entry/:id/update",
+		requireWalletAuth,
 		addressAndIDParamSchema,
 		updateEntryJsonValidator,
 		async (c) => {
@@ -377,6 +434,15 @@ const writerRoutes = new Hono()
 				entryId: id,
 				address: contractAddress,
 			});
+			// Audit fix for H-3: recovered signer must match the
+			// authenticated wallet (so an attacker can't replay a captured
+			// signature against the relay).
+			if (getAddress(author) !== c.var.walletAddress) {
+				return c.json(
+					{ error: "signer does not match authenticated wallet" },
+					403,
+				);
+			}
 			if (entry.author.toLowerCase() !== author.toLowerCase()) {
 				return c.json({ error: "previous author does not match" }, 400);
 			}
@@ -391,7 +457,13 @@ const writerRoutes = new Hono()
 			const { wallet, nonce: relayNonce } = await relay.sendTransaction({
 				to: contractAddress,
 				abi: UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE,
-				args: [signature, Number(nonce), Number(id), Number(totalChunks), content],
+				args: [
+					signature,
+					Number(nonce),
+					Number(id),
+					Number(totalChunks),
+					content,
+				],
 			});
 			const transactionId = makeRelayTxId(wallet, relayNonce);
 			await db.createTx({
@@ -425,13 +497,13 @@ const writerRoutes = new Hono()
 				return c.json({ entry: entryToJsonSafe(data) }, 201);
 			} catch (err) {
 				console.error("update entry db error:", err);
-				const message = err instanceof Error ? err.message : "unknown database error";
-				return c.json({ error: `database error during entry update: ${message}` }, 500);
+				return c.json({ error: "database error during entry update" }, 500);
 			}
 		},
 	)
 	.post(
 		"/writer/:address/entry/:id/delete",
+		requireWalletAuth,
 		addressAndIDParamSchema,
 		deleteEntryJsonValidator,
 		async (c) => {
@@ -456,6 +528,15 @@ const writerRoutes = new Hono()
 				id,
 				address,
 			});
+			// Audit fix for H-3: recovered signer must match the
+			// authenticated wallet (so an attacker can't replay a captured
+			// signature against the relay).
+			if (getAddress(signer) !== c.var.walletAddress) {
+				return c.json(
+					{ error: "signer does not match authenticated wallet" },
+					403,
+				);
+			}
 			if (entry.author.toLowerCase() !== signer.toLowerCase()) {
 				return c.json({ error: "previous author does not match" }, 400);
 			}
@@ -490,8 +571,7 @@ const writerRoutes = new Hono()
 				});
 			} catch (err) {
 				console.error("delete entry db error:", err);
-				const message = err instanceof Error ? err.message : "unknown database error";
-				return c.json({ error: `database error during entry deletion: ${message}` }, 500);
+				return c.json({ error: "database error during entry deletion" }, 500);
 			}
 		},
 	);

@@ -5,6 +5,7 @@ import { useOPWallet } from "@/utils/hooks";
 import { getCachedDerivedKey } from "@/utils/keyCache";
 import { signUpdate } from "@/utils/signer";
 import { compress, decompress, decrypt, encrypt } from "@/utils/utils";
+import { usePrivy } from "@privy-io/react-auth";
 import { useQueryClient } from "@tanstack/react-query";
 import { VisuallyHidden } from "radix-ui";
 import { useCallback, useState } from "react";
@@ -30,6 +31,7 @@ export function MigrateModal({
 	entriesToMigrate: MigrateEntry[];
 }) {
 	const [wallet] = useOPWallet();
+	const { getAccessToken } = usePrivy();
 	const queryClient = useQueryClient();
 	const [status, setStatus] = useState<MigrationStatus>("idle");
 	const [migratedCount, setMigratedCount] = useState(0);
@@ -51,12 +53,29 @@ export function MigrateModal({
 		setErrorMessage(null);
 
 		try {
-			const keyV3 = await getCachedDerivedKey(wallet, "v3");
+			// Pre-derive a v4 key per unique storage_id in the batch. v4 keys
+			// are per-writer (the whole point of Option B for C-1), so a user
+			// migrating entries from N writers signs N times. The keyCache
+			// dedupes within a session.
+			const v4KeysByStorageId = new Map<string, Uint8Array>();
+			const uniqueStorageIds = new Set(
+				entriesToMigrate.map(({ entry }) => entry.storageId.toLowerCase()),
+			);
+			for (const storageId of uniqueStorageIds) {
+				v4KeysByStorageId.set(
+					storageId,
+					await getCachedDerivedKey(wallet, "v4", storageId),
+				);
+			}
 
 			for (const { entry, writerAddress } of entriesToMigrate) {
-				// Decrypt with old key
+				// Decrypt with old key. v3 is now also a migration source
+				// because v3 derivation is phishable too (audit C-1).
 				let decrypted: string;
-				if (entry.raw?.startsWith("enc:v2:br:")) {
+				if (entry.raw?.startsWith("enc:v3:br:")) {
+					const keyV3 = await getCachedDerivedKey(wallet, "v3");
+					decrypted = await decrypt(keyV3, entry.raw.slice(10));
+				} else if (entry.raw?.startsWith("enc:v2:br:")) {
 					const keyV2 = await getCachedDerivedKey(wallet, "v2");
 					decrypted = await decrypt(keyV2, entry.raw.slice(10));
 				} else if (entry.raw?.startsWith("enc:br:")) {
@@ -66,11 +85,18 @@ export function MigrateModal({
 					continue;
 				}
 
-				// Decompress to get original markdown, then re-compress and re-encrypt with v3
+				// Decompress to get original markdown, then re-compress and
+				// re-encrypt with the v4 key for this entry's writer.
+				const keyV4 = v4KeysByStorageId.get(entry.storageId.toLowerCase());
+				if (!keyV4) {
+					throw new Error(
+						`Missing v4 key for storage_id ${entry.storageId} (this should never happen)`,
+					);
+				}
 				const markdown = await decompress(decrypted);
 				const compressed = await compress(markdown);
-				const encrypted = await encrypt(keyV3, compressed);
-				const newContent = `enc:v3:br:${encrypted}`;
+				const encrypted = await encrypt(keyV4, compressed);
+				const newContent = `enc:v4:br:${encrypted}`;
 
 				const { signature, nonce, totalChunks, content } = await signUpdate(
 					wallet,
@@ -81,6 +107,12 @@ export function MigrateModal({
 					},
 				);
 
+				const authToken = await getAccessToken();
+				if (!authToken) {
+					throw new Error(
+						"No auth token — log in again before retrying the migration",
+					);
+				}
 				await editEntry({
 					address: writerAddress,
 					id: Number(entry.onChainId),
@@ -88,6 +120,7 @@ export function MigrateModal({
 					nonce,
 					totalChunks,
 					content,
+					authToken,
 				});
 
 				setMigratedCount((c) => c + 1);
@@ -104,7 +137,7 @@ export function MigrateModal({
 			);
 			setStatus("error");
 		}
-	}, [wallet, entriesToMigrate, queryClient]);
+	}, [wallet, entriesToMigrate, queryClient, getAccessToken]);
 
 	// Group entries by writer for display
 	const entriesByWriter = entriesToMigrate.reduce<
@@ -146,9 +179,11 @@ export function MigrateModal({
 								<div className="space-y-1">
 									{entries.map(({ entry }) => {
 										const isMigrated = migratedIds.has(entry.id);
-										const version = entry.raw?.startsWith("enc:v2:br:")
-											? "v2"
-											: "v1";
+										const version = entry.raw?.startsWith("enc:v3:br:")
+											? "v3"
+											: entry.raw?.startsWith("enc:v2:br:")
+												? "v2"
+												: "v1";
 										return (
 											<div
 												key={entry.id}
@@ -162,7 +197,7 @@ export function MigrateModal({
 													entry #{entry.onChainId}
 												</span>
 												<span className="shrink-0">
-													{isMigrated ? "v3" : version}
+													{isMigrated ? "v4" : version}
 												</span>
 											</div>
 										);

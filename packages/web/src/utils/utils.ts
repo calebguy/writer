@@ -249,7 +249,19 @@ export async function processPrivateEntry(
 	entry: Entry,
 	keyV1?: Uint8Array,
 	keyV3?: Uint8Array,
+	keyV4?: Uint8Array,
 ): Promise<Entry> {
+	if (entry.raw?.startsWith("enc:v4:br:")) {
+		if (!keyV4) {
+			throw new Error("V4 key required to decrypt entry");
+		}
+		const decrypted = await decrypt(keyV4, entry.raw.slice(10)); // "enc:v4:br:" = 10 chars
+		const decompressed = await decompress(decrypted);
+		return {
+			...entry,
+			decompressed,
+		};
+	}
 	if (entry.raw?.startsWith("enc:v3:br:")) {
 		if (!keyV3) {
 			throw new Error("V3 key required to decrypt entry");
@@ -292,7 +304,8 @@ export function isEntryPrivate(entry: Entry) {
 		entry.version?.startsWith("enc:") ||
 		entry.raw?.startsWith("enc:br:") ||
 		entry.raw?.startsWith("enc:v2:br:") ||
-		entry.raw?.startsWith("enc:v3:br:")
+		entry.raw?.startsWith("enc:v3:br:") ||
+		entry.raw?.startsWith("enc:v4:br:")
 	);
 }
 

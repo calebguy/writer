@@ -19,6 +19,11 @@ export const WriterFactoryAbi = [
 				internalType: "address[]",
 			},
 			{
+				name: "publicWritable",
+				type: "bool",
+				internalType: "bool",
+			},
+			{
 				name: "salt",
 				type: "bytes32",
 				internalType: "bytes32",
@@ -70,6 +75,11 @@ export const WriterFactoryAbi = [
 				name: "managers",
 				type: "address[]",
 				internalType: "address[]",
+			},
+			{
+				name: "publicWritable",
+				type: "bool",
+				internalType: "bool",
 			},
 			{
 				name: "salt",
@@ -124,6 +134,12 @@ export const WriterFactoryAbi = [
 				type: "address[]",
 				indexed: false,
 				internalType: "address[]",
+			},
+			{
+				name: "publicWritable",
+				type: "bool",
+				indexed: false,
+				internalType: "bool",
 			},
 		],
 		anonymous: false,

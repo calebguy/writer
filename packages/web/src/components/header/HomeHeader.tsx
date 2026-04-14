@@ -12,7 +12,7 @@ import { CreateWriterDrawer } from "../CreateWriterDrawer";
 import { NavDropdown } from "../NavDropdown";
 
 export function HomeHeader() {
-	const { authenticated } = usePrivy();
+	const { authenticated, getAccessToken } = usePrivy();
 	const queryClient = useQueryClient();
 	const [wallet] = useOPWallet();
 	const [isCreateSheetOpen, setIsCreateSheetOpen] = useState(false);
@@ -68,10 +68,16 @@ export function HomeHeader() {
 			return;
 		}
 
+		const authToken = await getAccessToken();
+		if (!authToken) {
+			console.error("No auth token found");
+			return;
+		}
 		await mutateAsync({
 			title,
 			admin: wallet.address as Hex,
 			managers: [wallet.address as Hex],
+			authToken,
 		});
 
 		setMarkdown("");

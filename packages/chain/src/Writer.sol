@@ -16,30 +16,20 @@ contract Writer is AccessControl, VerifyTypedData {
     bytes32 public constant UPDATE_TYPEHASH =
         keccak256("Update(uint256 nonce,uint256 entryId,uint256 totalChunks,string content)");
     bytes32 public constant SET_TITLE_TYPEHASH = keccak256("SetTitle(uint256 nonce,string title)");
+    bytes32 public constant GRANT_WRITER_ROLE_TYPEHASH = keccak256("GrantWriterRole(uint256 nonce,address account)");
+    bytes32 public constant REVOKE_WRITER_ROLE_TYPEHASH = keccak256("RevokeWriterRole(uint256 nonce,address account)");
+    bytes32 public constant RENOUNCE_WRITER_ROLE_TYPEHASH = keccak256("RenounceWriterRole(uint256 nonce)");
 
-    bytes public DOMAIN_NAME = "Writer";
-    bytes public DOMAIN_VERSION = "1";
-    bytes32 public WRITER_ROLE = keccak256("WRITER");
+    string public constant DOMAIN_NAME = "Writer";
+    string public constant DOMAIN_VERSION = "1";
+    bytes32 public constant WRITER_ROLE = keccak256("WRITER");
 
     WriterStorage public store;
-    mapping(bytes32 => bool) public signatureWasExecuted;
+    mapping(bytes32 => bool) public digestWasExecuted;
+
+    bool public immutable publicWritable;
 
     string public title;
-
-    modifier signedByWithRole(bytes memory signature, bytes32 structHash, bytes32 role) {
-        address signer = getSigner(signature, structHash);
-        require(hasRole(role, signer), "Writer: Invalid signer role");
-        _validateAndMarkSignature(signature);
-        _;
-    }
-
-    modifier signedByAuthorWithRole(bytes memory signature, bytes32 structHash, uint256 id, bytes32 role) {
-        address signer = getSigner(signature, structHash);
-        require(store.getEntry(id).author == signer, "Writer: Signer must be the author");
-        require(hasRole(role, signer), "Writer: Signer must be a writer");
-        _validateAndMarkSignature(signature);
-        _;
-    }
 
     modifier onlyAuthorWithRole(uint256 id, bytes32 role) {
         require(store.getEntry(id).author == msg.sender, "Writer: Only author can perform this action");
@@ -47,20 +37,53 @@ contract Writer is AccessControl, VerifyTypedData {
         _;
     }
 
-    function _validateAndMarkSignature(bytes memory signature) internal {
-        bytes32 signatureHash = keccak256(signature);
-        require(!signatureWasExecuted[signatureHash], "Writer: Signature has already been executed");
-        signatureWasExecuted[signatureHash] = true;
+    /// @dev Recover the EIP-712 signer for `structHash`, enforce that they
+    ///      hold `role`, and consume the digest in `digestWasExecuted` so it
+    ///      cannot be replayed. Returns the recovered signer so the caller
+    ///      can use it (e.g. as the entry author) without paying for a
+    ///      second ECDSA recover.
+    function _verifyAndMark(bytes memory signature, bytes32 structHash, bytes32 role)
+        internal
+        returns (address signer)
+    {
+        bytes32 digest = _hashTypedData(structHash);
+        signer = _recover(digest, signature);
+        require(hasRole(role, signer), "Writer: Invalid signer role");
+        _validateAndMarkDigest(digest);
+    }
+
+    /// @dev Same as `_verifyAndMark` plus an additional check that the
+    ///      recovered signer is the author of entry `id`. Used by the
+    ///      sig-flavored update / remove / addChunk paths.
+    function _verifyAndMarkAuthor(bytes memory signature, bytes32 structHash, uint256 id, bytes32 role)
+        internal
+        returns (address signer)
+    {
+        bytes32 digest = _hashTypedData(structHash);
+        signer = _recover(digest, signature);
+        require(store.getEntry(id).author == signer, "Writer: Signer must be the author");
+        require(hasRole(role, signer), "Writer: Signer must be a writer");
+        _validateAndMarkDigest(digest);
+    }
+
+    function _validateAndMarkDigest(bytes32 digest) internal {
+        require(!digestWasExecuted[digest], "Writer: Signature has already been executed");
+        digestWasExecuted[digest] = true;
     }
 
     event StorageSet(address indexed storageAddress);
     event TitleSet(string indexed title);
 
-    constructor(string memory newTitle, address storageAddress, address admin, address[] memory writers)
-        VerifyTypedData(DOMAIN_NAME, DOMAIN_VERSION)
-    {
+    constructor(
+        string memory newTitle,
+        address storageAddress,
+        address admin,
+        address[] memory writers,
+        bool _publicWritable
+    ) VerifyTypedData(DOMAIN_NAME, DOMAIN_VERSION) {
         store = WriterStorage(storageAddress);
         title = newTitle;
+        publicWritable = _publicWritable;
 
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         uint256 length = writers.length;
@@ -69,6 +92,17 @@ contract Writer is AccessControl, VerifyTypedData {
         }
         emit StorageSet(storageAddress);
         emit TitleSet(newTitle);
+    }
+
+    function hasRole(bytes32 role, address account) public view virtual override returns (bool) {
+        if (account == address(0)) {
+            return false;
+        }
+        // if public, let anyone be a writer
+        if (publicWritable && role == WRITER_ROLE) {
+            return true;
+        }
+        return super.hasRole(role, account);
     }
 
     function replaceAdmin(address newAdmin) external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -86,16 +120,35 @@ contract Writer is AccessControl, VerifyTypedData {
         emit TitleSet(newTitle);
     }
 
-    function setTitleWithSig(bytes memory signature, uint256 nonce, string calldata newTitle)
-        external
-        signedByWithRole(
-            signature,
-            keccak256(abi.encode(SET_TITLE_TYPEHASH, nonce, keccak256(abi.encodePacked(newTitle)))),
-            DEFAULT_ADMIN_ROLE
-        )
-    {
+    function setTitleWithSig(bytes memory signature, uint256 nonce, string calldata newTitle) external {
+        bytes32 structHash = keccak256(abi.encode(SET_TITLE_TYPEHASH, nonce, keccak256(abi.encodePacked(newTitle))));
+        _verifyAndMark(signature, structHash, DEFAULT_ADMIN_ROLE);
         title = newTitle;
         emit TitleSet(newTitle);
+    }
+
+    function grantWriterRoleWithSig(bytes memory signature, uint256 nonce, address account) external {
+        require(!publicWritable, "Writer: role grants are no-ops on public writers");
+        require(account != address(0), "Writer: cannot grant to zero address");
+        bytes32 structHash = keccak256(abi.encode(GRANT_WRITER_ROLE_TYPEHASH, nonce, account));
+        _verifyAndMark(signature, structHash, DEFAULT_ADMIN_ROLE);
+        _grantRole(WRITER_ROLE, account);
+    }
+
+    function revokeWriterRoleWithSig(bytes memory signature, uint256 nonce, address account) external {
+        require(!publicWritable, "Writer: role revokes are no-ops on public writers");
+        bytes32 structHash = keccak256(abi.encode(REVOKE_WRITER_ROLE_TYPEHASH, nonce, account));
+        _verifyAndMark(signature, structHash, DEFAULT_ADMIN_ROLE);
+        _revokeRole(WRITER_ROLE, account);
+    }
+
+    function renounceWriterRoleWithSig(bytes memory signature, uint256 nonce) external {
+        require(!publicWritable, "Writer: role renounce is a no-op on public writers");
+        bytes32 structHash = keccak256(abi.encode(RENOUNCE_WRITER_ROLE_TYPEHASH, nonce));
+        // _verifyAndMark requires the signer to currently hold WRITER_ROLE.
+        // The recovered signer is the wallet that's leaving.
+        address signer = _verifyAndMark(signature, structHash, WRITER_ROLE);
+        _revokeRole(WRITER_ROLE, signer);
     }
 
     function getEntryCount() external view returns (uint256) {
@@ -132,10 +185,10 @@ contract Writer is AccessControl, VerifyTypedData {
 
     function createWithSig(bytes memory signature, uint256 nonce, uint256 chunkCount)
         external
-        signedByWithRole(signature, keccak256(abi.encode(CREATE_TYPEHASH, nonce, chunkCount)), WRITER_ROLE)
         returns (uint256, WriterStorage.Entry memory)
     {
-        address signer = getSigner(signature, keccak256(abi.encode(CREATE_TYPEHASH, nonce, chunkCount)));
+        bytes32 structHash = keccak256(abi.encode(CREATE_TYPEHASH, nonce, chunkCount));
+        address signer = _verifyAndMark(signature, structHash, WRITER_ROLE);
         return store.create(chunkCount, signer);
     }
 
@@ -149,17 +202,11 @@ contract Writer is AccessControl, VerifyTypedData {
 
     function createWithChunkWithSig(bytes memory signature, uint256 nonce, uint256 chunkCount, string calldata content)
         external
-        signedByWithRole(
-            signature,
-            keccak256(abi.encode(CREATE_WITH_CHUNK_TYPEHASH, nonce, chunkCount, keccak256(abi.encodePacked(content)))),
-            WRITER_ROLE
-        )
         returns (uint256, WriterStorage.Entry memory)
     {
-        address signer = getSigner(
-            signature,
-            keccak256(abi.encode(CREATE_WITH_CHUNK_TYPEHASH, nonce, chunkCount, keccak256(abi.encodePacked(content))))
-        );
+        bytes32 structHash =
+            keccak256(abi.encode(CREATE_WITH_CHUNK_TYPEHASH, nonce, chunkCount, keccak256(abi.encodePacked(content))));
+        address signer = _verifyAndMark(signature, structHash, WRITER_ROLE);
         return store.createWithChunk(chunkCount, content, signer);
     }
 
@@ -173,17 +220,11 @@ contract Writer is AccessControl, VerifyTypedData {
 
     function addChunkWithSig(bytes memory signature, uint256 nonce, uint256 id, uint256 index, string calldata content)
         external
-        signedByAuthorWithRole(
-            signature,
-            keccak256(abi.encode(ADD_CHUNK_TYPEHASH, nonce, id, index, keccak256(abi.encodePacked(content)))),
-            id,
-            WRITER_ROLE
-        )
         returns (WriterStorage.Entry memory entry)
     {
-        address signer = getSigner(
-            signature, keccak256(abi.encode(ADD_CHUNK_TYPEHASH, nonce, id, index, keccak256(abi.encodePacked(content))))
-        );
+        bytes32 structHash =
+            keccak256(abi.encode(ADD_CHUNK_TYPEHASH, nonce, id, index, keccak256(abi.encodePacked(content))));
+        address signer = _verifyAndMarkAuthor(signature, structHash, id, WRITER_ROLE);
         return store.addChunk(id, index, content, signer);
     }
 
@@ -191,11 +232,9 @@ contract Writer is AccessControl, VerifyTypedData {
         store.remove(id, msg.sender);
     }
 
-    function removeWithSig(bytes memory signature, uint256 nonce, uint256 id)
-        external
-        signedByAuthorWithRole(signature, keccak256(abi.encode(REMOVE_TYPEHASH, nonce, id)), id, WRITER_ROLE)
-    {
-        address signer = getSigner(signature, keccak256(abi.encode(REMOVE_TYPEHASH, nonce, id)));
+    function removeWithSig(bytes memory signature, uint256 nonce, uint256 id) external {
+        bytes32 structHash = keccak256(abi.encode(REMOVE_TYPEHASH, nonce, id));
+        address signer = _verifyAndMarkAuthor(signature, structHash, id, WRITER_ROLE);
         store.remove(id, signer);
     }
 
@@ -213,19 +252,11 @@ contract Writer is AccessControl, VerifyTypedData {
         uint256 id,
         uint256 totalChunks,
         string calldata content
-    )
-        external
-        signedByAuthorWithRole(
-            signature,
-            keccak256(abi.encode(UPDATE_TYPEHASH, nonce, id, totalChunks, keccak256(abi.encodePacked(content)))),
-            id,
-            WRITER_ROLE
-        )
-    {
-        address signer = getSigner(
-            signature,
-            keccak256(abi.encode(UPDATE_TYPEHASH, nonce, id, totalChunks, keccak256(abi.encodePacked(content))))
+    ) external {
+        bytes32 structHash = keccak256(
+            abi.encode(UPDATE_TYPEHASH, nonce, id, totalChunks, keccak256(abi.encodePacked(content)))
         );
+        address signer = _verifyAndMarkAuthor(signature, structHash, id, WRITER_ROLE);
         store.update(id, totalChunks, content, signer);
     }
 }

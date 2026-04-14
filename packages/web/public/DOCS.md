@@ -285,7 +285,7 @@ Get a user's hex color.
 
 ## API
 
-All write operations are authenticated via EIP-712 signatures.
+Public read endpoints. Write endpoints exist but are restricted to authenticated frontend clients (Privy bearer token required) and are intentionally not documented here.
 
 ### Writers
 
@@ -315,18 +315,6 @@ Get all writers managed by an address.
 
 **Response:** `{ writers: Writer[] }`
 
-#### `POST /factory/create`
-
-Deploy a new Writer + WriterStorage contract pair.
-
-| Body Field | Type | Description |
-|------------|------|-------------|
-| `title` | `string` | Writer title |
-| `admin` | `address` | Admin address |
-| `managers` | `address[]` | Manager addresses |
-
-**Response:** `{ writer: Writer }`
-
 ---
 
 ### Entries
@@ -352,67 +340,6 @@ Get a pending entry before onchain confirmation.
 | `id` | `string` | Database entry ID |
 
 **Response:** `{ entry: Entry }`
-
-#### `POST /writer/:address/entry/createWithChunk`
-
-Create a new entry with the first chunk of content.
-
-**Auth:** EIP-712 signature (signer must have WRITER_ROLE)
-
-| Body Field | Type | Description |
-|------------|------|-------------|
-| `signature` | `string` | EIP-712 typed data signature |
-| `nonce` | `bigint` | Unique nonce |
-| `chunkCount` | `bigint` | Total chunks for this entry |
-| `chunkContent` | `string` | First chunk content |
-
-**Response:** `{ entry: Entry }`
-
-#### `POST /writer/:address/entry/:id/update`
-
-Update an existing entry's content.
-
-**Auth:** EIP-712 signature (signer must be entry author)
-
-| Body Field | Type | Description |
-|------------|------|-------------|
-| `signature` | `string` | EIP-712 typed data signature |
-| `nonce` | `bigint` | Unique nonce |
-| `totalChunks` | `bigint` | New total chunks |
-| `content` | `string` | New content |
-
-**Response:** `{ entry: Entry }`
-
-#### `POST /writer/:address/entry/:id/delete`
-
-Delete an entry.
-
-**Auth:** EIP-712 signature (signer must be entry author)
-
-| Body Field | Type | Description |
-|------------|------|-------------|
-| `signature` | `string` | EIP-712 typed data signature |
-| `nonce` | `bigint` | Unique nonce |
-
-**Response:** `{ writer: Writer }`
-
----
-
-### Color
-
-#### `POST /color-registry/set`
-
-Set your primary color via EIP-712 signature.
-
-**Auth:** EIP-712 signature
-
-| Body Field | Type | Description |
-|------------|------|-------------|
-| `signature` | `string` | EIP-712 typed data signature |
-| `nonce` | `bigint` | Unique nonce |
-| `hexColor` | `bytes32` | Color in bytes32 format (0x-prefixed, 64 hex chars) |
-
-**Response:** `{ user: User }`
 
 ---
 

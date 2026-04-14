@@ -32,8 +32,9 @@ const savedRoutes = new Hono()
 				return c.json({ ok: true }, 201);
 			} catch (err) {
 				console.error("save writer db error:", err);
-				const message = err instanceof Error ? err.message : "unknown database error";
-				return c.json({ error: `database error during save writer: ${message}` }, 500);
+				// Audit fix L-14: don't leak the underlying DB error message
+				// in the response. Logs above retain the full error for debugging.
+				return c.json({ error: "database error during save writer" }, 500);
 			}
 		},
 	)
@@ -48,8 +49,7 @@ const savedRoutes = new Hono()
 				return c.json({ ok: true }, 200);
 			} catch (err) {
 				console.error("unsave writer db error:", err);
-				const message = err instanceof Error ? err.message : "unknown database error";
-				return c.json({ error: `database error during unsave writer: ${message}` }, 500);
+				return c.json({ error: "database error during unsave writer" }, 500);
 			}
 		},
 	)
@@ -72,8 +72,7 @@ const savedRoutes = new Hono()
 				return c.json({ ok: true }, 201);
 			} catch (err) {
 				console.error("save entry db error:", err);
-				const message = err instanceof Error ? err.message : "unknown database error";
-				return c.json({ error: `database error during save entry: ${message}` }, 500);
+				return c.json({ error: "database error during save entry" }, 500);
 			}
 		},
 	)
@@ -92,8 +91,7 @@ const savedRoutes = new Hono()
 				return c.json({ ok: true }, 200);
 			} catch (err) {
 				console.error("unsave entry db error:", err);
-				const message = err instanceof Error ? err.message : "unknown database error";
-				return c.json({ error: `database error during unsave entry: ${message}` }, 500);
+				return c.json({ error: "database error during unsave entry" }, 500);
 			}
 		},
 	);
