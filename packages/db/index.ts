@@ -700,7 +700,7 @@ class Db {
 			// relay tx — update it by transactionId instead of duplicating.
 			const isUniqueViolation =
 				err instanceof Error &&
-				err.message.includes("chunk_created_at_transaction_id_unique");
+				err.message.includes("chunk_createdAtTransactionId_unique");
 			if (!isUniqueViolation || !item.createdAtTransactionId) {
 				throw err;
 			}
