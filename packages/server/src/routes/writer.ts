@@ -1,5 +1,6 @@
-import { randomBytes } from "node:crypto";
 import { entryToJsonSafe, publicWriterToJsonSafe, writerToJsonSafe } from "db";
+import { Hono } from "hono";
+import { randomBytes } from "node:crypto";
 import { computeWriterAddress, computeWriterStorageAddress } from "utils";
 import { type Hex, getAddress, toHex } from "viem";
 import {
@@ -12,6 +13,10 @@ import {
 } from "../constants";
 import { env } from "../env";
 import {
+	type ReconcileEntryResult,
+	type ReconcileWriterResult,
+	reconcileEntryByDbId,
+	reconcileWriterByAddress,
 	recoverCreateWithChunkSigner,
 	recoverRemoveEntrySigner,
 	recoverSetColorSigner,
@@ -25,10 +30,14 @@ import {
 	deleteEntryJsonValidator,
 	factoryCreateJsonValidator,
 	updateEntryJsonValidator,
+	userAddressParamSchema,
 } from "../middleware";
-import { requireWalletAuth, requireWriterAdminAuth } from "../privy";
+import {
+	requireSavedAuth,
+	requireWalletAuth,
+	requireWriterAdminAuth,
+} from "../privy";
 import { makeRelayTxId, relay } from "../relay";
-import { Hono } from "hono";
 
 const writerRoutes = new Hono()
 	.get("/manager/:address", async (c) => {
@@ -40,6 +49,62 @@ const writerRoutes = new Hono()
 		}));
 		return c.json({ writers });
 	})
+	.post(
+		"/manager/:userAddress/reconcile",
+		userAddressParamSchema,
+		requireSavedAuth,
+		async (c) => {
+			const { userAddress } = c.req.valid("param");
+			const writers = await db.getWritersByManager(userAddress);
+
+			const writerResults: ReconcileWriterResult[] = [];
+			const entryResults: ReconcileEntryResult[] = [];
+
+			for (const w of writers) {
+				// Only reconcile writers that aren't yet confirmed onchain.
+				if (!w.createdAtHash) {
+					writerResults.push(await reconcileWriterByAddress(w.address as Hex));
+				}
+
+				// Re-fetch in case the writer reconciliation above backfilled entries
+				// via on-chain logs, so we don't redundantly reconcile them.
+				const refreshed = await db.getWriter(w.address as Hex);
+				if (!refreshed) continue;
+
+				const pendingEntries = refreshed.entries.filter(
+					(entry) =>
+						!entry.deletedAt && (!entry.onChainId || !entry.createdAtHash),
+				);
+				for (const entry of pendingEntries) {
+					entryResults.push(await reconcileEntryByDbId(entry.id));
+				}
+			}
+
+			const summary = {
+				writers: {
+					total: writerResults.length,
+					updated: writerResults.filter((r) => r.action === "updated" && r.ok)
+						.length,
+					noop: writerResults.filter((r) => r.action === "noop").length,
+					skipped: writerResults.filter((r) => r.action === "skipped").length,
+					failed: writerResults.filter((r) => r.action === "failed").length,
+				},
+				entries: {
+					total: entryResults.length,
+					updated: entryResults.filter((r) => r.action === "updated" && r.ok)
+						.length,
+					noop: entryResults.filter((r) => r.action === "noop").length,
+					skipped: entryResults.filter((r) => r.action === "skipped").length,
+					failed: entryResults.filter((r) => r.action === "failed").length,
+				},
+			};
+
+			return c.json({
+				summary,
+				results: { writers: writerResults, entries: entryResults },
+			});
+		},
+	)
 	.get("/me/:address", addressParamSchema, async (c) => {
 		const { address } = c.req.valid("param");
 		const user = await db.getUser(address);
@@ -66,154 +131,158 @@ const writerRoutes = new Hono()
 		requireWalletAuth,
 		colorRegistrySetJsonValidator,
 		async (c) => {
-		const { signature, nonce, hexColor } = c.req.valid("json");
+			const { signature, nonce, hexColor } = c.req.valid("json");
 
-		const address = await recoverSetColorSigner({
-			signature: signature as Hex,
-			nonce,
-			hexColor: hexColor as Hex,
-			address: env.COLOR_REGISTRY_ADDRESS as Hex,
-		});
+			const address = await recoverSetColorSigner({
+				signature: signature as Hex,
+				nonce,
+				hexColor: hexColor as Hex,
+				address: env.COLOR_REGISTRY_ADDRESS as Hex,
+			});
 
-		// Audit fix for H-3: the EIP-712 signer must match the authenticated
-		// wallet. Prevents an attacker from replaying a captured signature
-		// against the relay (and prevents anonymous relay-drain entirely).
-		if (getAddress(address) !== c.var.walletAddress) {
-			return c.json(
-				{ error: "signer does not match authenticated wallet" },
-				403,
-			);
-		}
+			// Audit fix for H-3: the EIP-712 signer must match the authenticated
+			// wallet. Prevents an attacker from replaying a captured signature
+			// against the relay (and prevents anonymous relay-drain entirely).
+			if (getAddress(address) !== c.var.walletAddress) {
+				return c.json(
+					{ error: "signer does not match authenticated wallet" },
+					403,
+				);
+			}
 
-		const args = {
-			signature,
-			nonce: Number(nonce),
-			hexColor,
-		};
-		try {
-			const { wallet, nonce: relayNonce } = await relay.sendTransaction({
-				to: env.COLOR_REGISTRY_ADDRESS,
-				abi: SET_HEX_FUNCTION_SIGNATURE,
-				args: [signature, Number(nonce), hexColor],
-			});
-			const transactionId = makeRelayTxId(wallet, relayNonce);
-			await db.createTx({
-				id: transactionId,
-				wallet,
-				nonce: relayNonce,
-				chainId: BigInt(env.TARGET_CHAIN_ID),
-				functionSignature: SET_HEX_FUNCTION_SIGNATURE,
-				args,
-				status: "PENDING",
-			});
-			const user = await db.upsertUser({
-				address: address,
-				color: hexColor,
-			});
-			return c.json({ user });
-		} catch (err) {
-			console.error("color-registry/set db error:", err);
-			// Audit fix L-14: don't leak the underlying DB error message in
-			// the response. Logs above retain the full error for debugging.
-			return c.json({ error: "database error during color set" }, 500);
-		}
-	})
+			const args = {
+				signature,
+				nonce: Number(nonce),
+				hexColor,
+			};
+			try {
+				const { wallet, nonce: relayNonce } = await relay.sendTransaction({
+					to: env.COLOR_REGISTRY_ADDRESS,
+					abi: SET_HEX_FUNCTION_SIGNATURE,
+					args: [signature, Number(nonce), hexColor],
+				});
+				const transactionId = makeRelayTxId(wallet, relayNonce);
+				await db.createTx({
+					id: transactionId,
+					wallet,
+					nonce: relayNonce,
+					chainId: BigInt(env.TARGET_CHAIN_ID),
+					functionSignature: SET_HEX_FUNCTION_SIGNATURE,
+					args,
+					status: "PENDING",
+				});
+				const user = await db.upsertUser({
+					address: address,
+					color: hexColor,
+				});
+				return c.json({ user });
+			} catch (err) {
+				console.error("color-registry/set db error:", err);
+				// Audit fix L-14: don't leak the underlying DB error message in
+				// the response. Logs above retain the full error for debugging.
+				return c.json({ error: "database error during color set" }, 500);
+			}
+		},
+	)
 	.post(
 		"/factory/create",
 		requireWalletAuth,
 		factoryCreateJsonValidator,
 		async (c) => {
-		const { admin, managers, title } = c.req.valid("json");
+			const { admin, managers, title } = c.req.valid("json");
 
-		// Audit fix for H-2: the authenticated wallet must equal the `admin`
-		// field on the new writer. This prevents anonymous relay-drain (you
-		// must be logged in) AND prevents a confused-deputy attack where
-		// someone creates a writer with another wallet as admin. Per-user
-		// rate limiting is a separate follow-up.
-		if (getAddress(admin) !== c.var.walletAddress) {
-			return c.json(
-				{ error: "admin must equal authenticated wallet" },
-				403,
-			);
-		}
+			// Audit fix for H-2: the authenticated wallet must equal the `admin`
+			// field on the new writer. This prevents anonymous relay-drain (you
+			// must be logged in) AND prevents a confused-deputy attack where
+			// someone creates a writer with another wallet as admin. Per-user
+			// rate limiting is a separate follow-up.
+			if (getAddress(admin) !== c.var.walletAddress) {
+				return c.json({ error: "admin must equal authenticated wallet" }, 403);
+			}
 
-		const salt = toHex(randomBytes(32));
-		// publicWritable is hardcoded to false here. The UI never creates
-		// public writers — the launch public writer is deployed once via
-		// the `script/CreatePublicWriter.s.sol` foundry script and picked
-		// up by the indexer. If you ever want to surface public-writer
-		// creation in the UI, add a `publicWritable` field to the zod
-		// schema in middleware.ts and gate it with an admin check.
-		const publicWritable = false;
-		const args = { title, admin, managers, publicWritable, salt };
-		const [address, storageAddress] = await Promise.all([
-			computeWriterAddress({
-				address: env.FACTORY_ADDRESS as Hex,
-				salt,
-				title,
-				admin: getAddress(admin),
-				managers: managers.map(getAddress),
-				publicWritable,
-			}),
-			computeWriterStorageAddress({
-				address: env.FACTORY_ADDRESS as Hex,
-				salt,
-			}),
-		]);
-		try {
-			const { wallet, nonce: relayNonce } = await relay.sendTransaction({
-				to: env.FACTORY_ADDRESS,
-				abi: CREATE_FUNCTION_SIGNATURE,
-				args: [title, admin, managers, publicWritable, salt],
-			});
-			const transactionId = makeRelayTxId(wallet, relayNonce);
-			await db.createTx({
-				id: transactionId,
-				wallet,
-				nonce: relayNonce,
-				chainId: BigInt(env.TARGET_CHAIN_ID),
-				functionSignature: CREATE_FUNCTION_SIGNATURE,
-				args,
-				status: "PENDING",
-			});
-			const data = await db.upsertWriter({
-				title,
-				admin,
-				managers,
-				publicWritable,
-				transactionId,
-				address,
-				storageAddress,
-			});
-			const writer = writerToJsonSafe(data[0]);
-			return c.json({ writer }, 201);
-		} catch (err) {
-			console.error("factory/create db error:", err);
-			return c.json({ error: "database error during writer creation" }, 500);
-		}
-	})
-	.post("/writer/:address/hide", addressParamSchema, requireWriterAdminAuth, async (c) => {
-		const { address } = c.req.valid("param");
-		const writer = await db.getWriter(address);
-		if (!writer) {
-			return c.json({ error: "writer not found" }, 404);
-		}
-		try {
-			await db.deleteWriter(address);
-			return c.json(
-				{
-					writer: {
-						...writerToJsonSafe(writer),
-						entries: writer.entries.map(entryToJsonSafe),
+			const salt = toHex(randomBytes(32));
+			// publicWritable is hardcoded to false here. The UI never creates
+			// public writers — the launch public writer is deployed once via
+			// the `script/CreatePublicWriter.s.sol` foundry script and picked
+			// up by the indexer. If you ever want to surface public-writer
+			// creation in the UI, add a `publicWritable` field to the zod
+			// schema in middleware.ts and gate it with an admin check.
+			const publicWritable = false;
+			const args = { title, admin, managers, publicWritable, salt };
+			const [address, storageAddress] = await Promise.all([
+				computeWriterAddress({
+					address: env.FACTORY_ADDRESS as Hex,
+					salt,
+					title,
+					admin: getAddress(admin),
+					managers: managers.map(getAddress),
+					publicWritable,
+				}),
+				computeWriterStorageAddress({
+					address: env.FACTORY_ADDRESS as Hex,
+					salt,
+				}),
+			]);
+			try {
+				const { wallet, nonce: relayNonce } = await relay.sendTransaction({
+					to: env.FACTORY_ADDRESS,
+					abi: CREATE_FUNCTION_SIGNATURE,
+					args: [title, admin, managers, publicWritable, salt],
+				});
+				const transactionId = makeRelayTxId(wallet, relayNonce);
+				await db.createTx({
+					id: transactionId,
+					wallet,
+					nonce: relayNonce,
+					chainId: BigInt(env.TARGET_CHAIN_ID),
+					functionSignature: CREATE_FUNCTION_SIGNATURE,
+					args,
+					status: "PENDING",
+				});
+				const data = await db.upsertWriter({
+					title,
+					admin,
+					managers,
+					publicWritable,
+					transactionId,
+					address,
+					storageAddress,
+				});
+				const writer = writerToJsonSafe(data[0]);
+				return c.json({ writer }, 201);
+			} catch (err) {
+				console.error("factory/create db error:", err);
+				return c.json({ error: "database error during writer creation" }, 500);
+			}
+		},
+	)
+	.post(
+		"/writer/:address/hide",
+		addressParamSchema,
+		requireWriterAdminAuth,
+		async (c) => {
+			const { address } = c.req.valid("param");
+			const writer = await db.getWriter(address);
+			if (!writer) {
+				return c.json({ error: "writer not found" }, 404);
+			}
+			try {
+				await db.deleteWriter(address);
+				return c.json(
+					{
+						writer: {
+							...writerToJsonSafe(writer),
+							entries: writer.entries.map(entryToJsonSafe),
+						},
 					},
-				},
-				200,
-			);
-		} catch (err) {
-			console.error("writer/hide db error:", err);
-			return c.json({ error: "database error during writer hide" }, 500);
-		}
-	})
+					200,
+				);
+			} catch (err) {
+				console.error("writer/hide db error:", err);
+				return c.json({ error: "database error during writer hide" }, 500);
+			}
+		},
+	)
 	.post(
 		"/writer/:address/entry/createWithChunk",
 		requireWalletAuth,
@@ -388,7 +457,13 @@ const writerRoutes = new Hono()
 			const { wallet, nonce: relayNonce } = await relay.sendTransaction({
 				to: contractAddress,
 				abi: UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE,
-				args: [signature, Number(nonce), Number(id), Number(totalChunks), content],
+				args: [
+					signature,
+					Number(nonce),
+					Number(id),
+					Number(totalChunks),
+					content,
+				],
 			});
 			const transactionId = makeRelayTxId(wallet, relayNonce);
 			await db.createTx({

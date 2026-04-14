@@ -163,6 +163,27 @@ export async function getWritersByManager(address: Hex | string) {
 	return (await res.json()).writers;
 }
 
+export async function reconcileManager({
+	userAddress,
+	authToken,
+}: {
+	userAddress: Hex | string;
+	authToken: string;
+}) {
+	const res = await client.manager[":userAddress"].reconcile.$post(
+		{
+			param: { userAddress: getAddress(userAddress) },
+		},
+		{
+			headers: { Authorization: `Bearer ${authToken}` },
+		},
+	);
+	if (!res.ok) {
+		throw new Error(res.statusText);
+	}
+	return res.json();
+}
+
 export async function getRelayWallets() {
 	const res = await client.relay.wallets.$get();
 	if (!res.ok) {

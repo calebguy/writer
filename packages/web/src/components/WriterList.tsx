@@ -8,6 +8,7 @@ import {
 	hideWriter as hideWriterApi,
 } from "@/utils/api";
 import { POLLING_INTERVAL } from "@/utils/constants";
+import { useReconcileStuckPending } from "@/utils/hooks";
 import { usePrivy } from "@privy-io/react-auth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
@@ -121,27 +122,36 @@ export function WriterList({
 		});
 	};
 
+	const hasPendingWriters =
+		writers?.some((writer) => !writer.createdAtHash) ?? false;
+
 	useEffect(() => {
 		if (isPolling || !writers || writers.length === 0) {
 			return;
 		}
 
-		const hasPendingWriters = writers.some((writer) => !writer.createdAtHash);
 		if (hasPendingWriters) {
 			setIsPolling(true);
 		}
-	}, [isPolling, writers]);
+	}, [isPolling, writers, hasPendingWriters]);
 
 	useEffect(() => {
 		if (!isPolling || !writers || writers.length === 0) {
 			return;
 		}
 
-		const hasPendingWriters = writers.some((writer) => !writer.createdAtHash);
 		if (!hasPendingWriters) {
 			setIsPolling(false);
 		}
-	}, [isPolling, writers]);
+	}, [isPolling, writers, hasPendingWriters]);
+
+	// If a writer stays unconfirmed onchain for >15s, ask the server to
+	// reconcile in case the indexer missed the WriterCreated event.
+	useReconcileStuckPending({
+		isPending: hasPendingWriters,
+		userAddress: address,
+		onReconciled: refetch,
+	});
 
 	if (!isLoggedIn) {
 		return <LoginPrompt toWhat="write" logo={loginLogo} />;
