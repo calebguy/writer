@@ -16,35 +16,17 @@ contract Writer is AccessControl, VerifyTypedData {
     bytes32 public constant UPDATE_TYPEHASH =
         keccak256("Update(uint256 nonce,uint256 entryId,uint256 totalChunks,string content)");
     bytes32 public constant SET_TITLE_TYPEHASH = keccak256("SetTitle(uint256 nonce,string title)");
-    bytes32 public constant GRANT_WRITER_ROLE_TYPEHASH =
-        keccak256("GrantWriterRole(uint256 nonce,address account)");
-    bytes32 public constant REVOKE_WRITER_ROLE_TYPEHASH =
-        keccak256("RevokeWriterRole(uint256 nonce,address account)");
-    bytes32 public constant RENOUNCE_WRITER_ROLE_TYPEHASH =
-        keccak256("RenounceWriterRole(uint256 nonce)");
+    bytes32 public constant GRANT_WRITER_ROLE_TYPEHASH = keccak256("GrantWriterRole(uint256 nonce,address account)");
+    bytes32 public constant REVOKE_WRITER_ROLE_TYPEHASH = keccak256("RevokeWriterRole(uint256 nonce,address account)");
+    bytes32 public constant RENOUNCE_WRITER_ROLE_TYPEHASH = keccak256("RenounceWriterRole(uint256 nonce)");
 
     string public constant DOMAIN_NAME = "Writer";
     string public constant DOMAIN_VERSION = "1";
     bytes32 public constant WRITER_ROLE = keccak256("WRITER");
 
     WriterStorage public store;
-    /// @notice Tracks which EIP-712 digests have already been executed.
-    ///         Keyed off the digest (not the raw signature bytes) so that
-    ///         malleated signatures `(r, n - s, v')` cannot bypass replay
-    ///         protection — both byte representations of a malleable
-    ///         signature resolve to the same digest.
     mapping(bytes32 => bool) public digestWasExecuted;
 
-    /// @notice If true, anyone can author entries on this Writer (the
-    ///         WRITER_ROLE check is implicitly satisfied for every non-zero
-    ///         address). Authors are still tracked per-entry, and only the
-    ///         original author can edit or remove their own entries.
-    /// @dev    Set at construction and never changed afterwards. A Writer
-    ///         is either a private journal/blog (publicWritable=false,
-    ///         requires WRITER_ROLE) or a public message board
-    ///         (publicWritable=true, anyone can write). The choice is
-    ///         immutable so existing authors on a public board can never
-    ///         have their write access revoked.
     bool public immutable publicWritable;
 
     string public title;
@@ -104,11 +86,6 @@ contract Writer is AccessControl, VerifyTypedData {
         publicWritable = _publicWritable;
 
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
-        // Even on public writers we still grant WRITER_ROLE to the initial
-        // managers list — the role becomes effectively meaningless for
-        // create/addChunk on a public writer (everyone passes the role
-        // check via the hasRole override below) but stays as a "founding
-        // team" concept for off-chain UI / future features.
         uint256 length = writers.length;
         for (uint256 i = 0; i < length; i++) {
             _grantRole(WRITER_ROLE, writers[i]);
@@ -117,32 +94,11 @@ contract Writer is AccessControl, VerifyTypedData {
         emit TitleSet(newTitle);
     }
 
-    /// @notice Override OZ AccessControl's hasRole with two changes:
-    ///   1. address(0) can never hold any role, even if `_grantRole` was
-    ///      somehow called for it. This is defense-in-depth so a malformed
-    ///      signature that recovers to address(0) cannot pass any role
-    ///      check, including the implicit "everyone has WRITER_ROLE" rule
-    ///      for public writers.
-    ///   2. On public writers (`publicWritable == true`), every non-zero
-    ///      address implicitly holds WRITER_ROLE. This is what makes the
-    ///      contract behave as a public message board: anyone can author
-    ///      entries, while the per-entry author check (enforced by
-    ///      `_verifyAndMarkAuthor` and `onlyAuthorWithRole`) still
-    ///      restricts edits / removals to the original author.
-    /// @dev   Only WRITER_ROLE is granted publicly. DEFAULT_ADMIN_ROLE
-    ///       (used by setTitle, setStorage, replaceAdmin, etc.) is NOT
-    ///       affected, so admin operations remain locked to the actual
-    ///       admin even on public writers.
-    function hasRole(bytes32 role, address account)
-        public
-        view
-        virtual
-        override
-        returns (bool)
-    {
+    function hasRole(bytes32 role, address account) public view virtual override returns (bool) {
         if (account == address(0)) {
             return false;
         }
+        // if public, let anyone be a writer
         if (publicWritable && role == WRITER_ROLE) {
             return true;
         }
@@ -165,36 +121,12 @@ contract Writer is AccessControl, VerifyTypedData {
     }
 
     function setTitleWithSig(bytes memory signature, uint256 nonce, string calldata newTitle) external {
-        bytes32 structHash =
-            keccak256(abi.encode(SET_TITLE_TYPEHASH, nonce, keccak256(abi.encodePacked(newTitle))));
+        bytes32 structHash = keccak256(abi.encode(SET_TITLE_TYPEHASH, nonce, keccak256(abi.encodePacked(newTitle))));
         _verifyAndMark(signature, structHash, DEFAULT_ADMIN_ROLE);
         title = newTitle;
         emit TitleSet(newTitle);
     }
 
-    // -------------------------------------------------------------------------
-    // Role management via signature (gasless admin operations)
-    //
-    // These three functions let the writer admin (and individual writers, in
-    // the case of renounce) manage WRITER_ROLE membership without needing a
-    // funded wallet. The signed payload is relayed via the same Privy/relay
-    // path as content writes.
-    //
-    // Scope is intentionally narrow: only WRITER_ROLE can be granted /
-    // revoked / renounced this way. DEFAULT_ADMIN_ROLE management is NOT
-    // exposed via signature — admin transfers must happen via the direct
-    // `replaceAdmin` call from a funded wallet, so they're slow and
-    // deliberate enough to not be typo'd.
-    //
-    // All three revert on `publicWritable == true` writers because every
-    // address implicitly holds WRITER_ROLE on a public writer (via the
-    // hasRole override). Granting / revoking the underlying storage slot
-    // would have no effect on the actual access check, which is exactly
-    // the kind of silent confusion that produces footguns.
-    // -------------------------------------------------------------------------
-
-    /// @notice Admin grants WRITER_ROLE to `account`. Signed by an account
-    ///         that holds DEFAULT_ADMIN_ROLE.
     function grantWriterRoleWithSig(bytes memory signature, uint256 nonce, address account) external {
         require(!publicWritable, "Writer: role grants are no-ops on public writers");
         require(account != address(0), "Writer: cannot grant to zero address");
@@ -203,8 +135,6 @@ contract Writer is AccessControl, VerifyTypedData {
         _grantRole(WRITER_ROLE, account);
     }
 
-    /// @notice Admin revokes WRITER_ROLE from `account`. Signed by an
-    ///         account that holds DEFAULT_ADMIN_ROLE.
     function revokeWriterRoleWithSig(bytes memory signature, uint256 nonce, address account) external {
         require(!publicWritable, "Writer: role revokes are no-ops on public writers");
         bytes32 structHash = keccak256(abi.encode(REVOKE_WRITER_ROLE_TYPEHASH, nonce, account));
@@ -212,10 +142,6 @@ contract Writer is AccessControl, VerifyTypedData {
         _revokeRole(WRITER_ROLE, account);
     }
 
-    /// @notice Voluntary self-revocation. Signer renounces their own
-    ///         WRITER_ROLE. Useful for "I'm done contributing to this
-    ///         shared writer, take me off the list" without needing the
-    ///         admin to revoke them.
     function renounceWriterRoleWithSig(bytes memory signature, uint256 nonce) external {
         require(!publicWritable, "Writer: role renounce is a no-op on public writers");
         bytes32 structHash = keccak256(abi.encode(RENOUNCE_WRITER_ROLE_TYPEHASH, nonce));
@@ -327,8 +253,9 @@ contract Writer is AccessControl, VerifyTypedData {
         uint256 totalChunks,
         string calldata content
     ) external {
-        bytes32 structHash =
-            keccak256(abi.encode(UPDATE_TYPEHASH, nonce, id, totalChunks, keccak256(abi.encodePacked(content))));
+        bytes32 structHash = keccak256(
+            abi.encode(UPDATE_TYPEHASH, nonce, id, totalChunks, keccak256(abi.encodePacked(content)))
+        );
         address signer = _verifyAndMarkAuthor(signature, structHash, id, WRITER_ROLE);
         store.update(id, totalChunks, content, signer);
     }

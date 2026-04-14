@@ -44,7 +44,7 @@ import {Writer} from "../src/Writer.sol";
 ///           ADMIN=0xYourAdminWallet                                     \
 ///           SALT=0x000000000000000000000000000000000000000000000000000000000000002a \
 ///           forge script script/CreatePublicWriter.s.sol                \
-///             --rpc-url $OP_RPC_URL                                     \
+///             --rpc-url $RPC_URL                                        \
 ///             --broadcast                                               \
 ///             --private-key $DEPLOY_KEY                                 \
 ///             -vvv

@@ -3,6 +3,8 @@ pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
 import {Writer} from "../src/Writer.sol";
+import {WriterDeployer} from "../src/WriterDeployer.sol";
+import {WriterStorageDeployer} from "../src/WriterStorageDeployer.sol";
 import {WriterFactory} from "../src/WriterFactory.sol";
 
 contract WriterFactoryTest is Test {
@@ -12,7 +14,10 @@ contract WriterFactoryTest is Test {
     address[] users = [user];
 
     function setUp() public {
-        factory = new WriterFactory();
+        // Deploy the sub-deployers first, then wire the orchestrator
+        WriterDeployer writerDeployer = new WriterDeployer();
+        WriterStorageDeployer storageDeployer = new WriterStorageDeployer();
+        factory = new WriterFactory(address(writerDeployer), address(storageDeployer));
     }
 
     function test_Create() public {
