@@ -61,6 +61,10 @@ async function handleWriterCreated(
 		storageAddress: storeAddress,
 		storageId: storeAddress,
 		publicWritable,
+		// New factory writers use the chain-portable domain (no chainId).
+		// Old factory writers default to legacyDomain=true via the column
+		// default, so the old handler doesn't need to pass this explicitly.
+		legacyDomain: false,
 		title,
 		admin,
 		managers: managers.map((m) => m.toString()),

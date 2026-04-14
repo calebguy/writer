@@ -64,6 +64,13 @@
       "when": 1775847174036,
       "tag": "0008_mighty_marvel_apes",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1776147113496,
+      "tag": "0009_curvy_longshot",
+      "breakpoints": true
     }
   ]
 }

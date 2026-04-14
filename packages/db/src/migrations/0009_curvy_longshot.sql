@@ -1,0 +1,1 @@
+ALTER TABLE "writer" ADD COLUMN "legacy_domain" boolean DEFAULT true NOT NULL;

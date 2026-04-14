@@ -394,8 +394,19 @@ class Db {
 		// even if a re-import or a re-org overwrites every other field.
 		// `publicWritable` is similarly frozen — the on-chain field is
 		// `immutable`, so the DB copy should match.
-		const { storageId: _frozenStorageId, publicWritable: _frozenPublic, ...mutableFields } =
-			normalizedWriter;
+		// `legacyDomain` is NOT frozen here — it defaults to true on insert
+		// (for old-factory writers) or false (for new-factory writers), but
+		// CAN be flipped to false later by the indexer's LogicSet handler
+		// when a writer's logic is migrated. That flip happens via a separate
+		// UPDATE (updateWriterAddressByStorage), not via upsertWriter, so
+		// we still strip it from the conflict update set to prevent a
+		// re-index from accidentally reverting a flipped value.
+		const {
+			storageId: _frozenStorageId,
+			publicWritable: _frozenPublic,
+			legacyDomain: _frozenLegacy,
+			...mutableFields
+		} = normalizedWriter;
 
 		return this.pg
 			.insert(writer)
@@ -691,6 +702,11 @@ class Db {
 	 * `saved_writer.writer_address` foreign key is `ON UPDATE CASCADE`, so
 	 * saved references follow the new address automatically.
 	 *
+	 * Also flips `legacyDomain` to `false`: a logic migration means the
+	 * Writer now uses the chain-portable EIP-712 domain (no chainId), so
+	 * the frontend should stop including chainId when signing for this
+	 * writer.
+	 *
 	 * Returns the number of rows updated. Zero is a valid result during the
 	 * factory's construction-time `LogicSet` (which fires before the
 	 * `WriterCreated` handler creates the row); the caller should treat that
@@ -704,7 +720,11 @@ class Db {
 		const normalizedNew = newAddress.toLowerCase();
 		const result = await this.pg
 			.update(writer)
-			.set({ address: normalizedNew, updatedAt: new Date() })
+			.set({
+				address: normalizedNew,
+				legacyDomain: false,
+				updatedAt: new Date(),
+			})
 			.where(eq(writer.storageAddress, normalizedStorage))
 			.returning({ address: writer.address });
 		return result.length;

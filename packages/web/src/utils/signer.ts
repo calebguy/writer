@@ -3,14 +3,46 @@ import { type Hex, getAddress, keccak256 } from "viem";
 import { env } from "./env";
 
 const COLOR_REGISTRY_ADDRESS = env.NEXT_PUBLIC_COLOR_REGISTRY_ADDRESS as Hex;
+const TARGET_CHAIN_ID = env.NEXT_PUBLIC_TARGET_CHAIN_ID;
 
-// Note: every sign* function below intentionally OMITS `chainId` from the
-// EIP-712 domain. Writer's contracts also omit it (see VerifyTypedData.sol
-// for the full rationale). This makes signatures chain-portable: the same
-// signature works on every chain that has the same Writer contract at the
-// same address. The contract-side EIP712Domain typehash and the frontend
-// types schema must match exactly, so any change here requires a matching
-// change in VerifyTypedData.sol AND in server/src/helpers.ts.
+// EIP-712 domain helper. New writers use a chain-portable domain (no
+// chainId) — see VerifyTypedData.sol for the rationale. Legacy writers
+// (created by the old factory, before the redeploy) still use the old
+// domain WITH chainId because their on-chain VerifyTypedData embeds it.
+//
+// The `legacyDomain` flag is read from the writer's DB row (exposed via
+// the API as `writer.legacyDomain`). It defaults to `true` for old writers
+// and is flipped to `false` when a logic migration (setLogic) happens.
+function writerDomain(address: string, legacyDomain: boolean) {
+	if (legacyDomain) {
+		return {
+			domain: {
+				name: "Writer",
+				version: "1",
+				chainId: TARGET_CHAIN_ID,
+				verifyingContract: getAddress(address),
+			},
+			domainTypes: [
+				{ name: "name", type: "string" },
+				{ name: "version", type: "string" },
+				{ name: "chainId", type: "uint256" },
+				{ name: "verifyingContract", type: "address" },
+			],
+		};
+	}
+	return {
+		domain: {
+			name: "Writer",
+			version: "1",
+			verifyingContract: getAddress(address),
+		},
+		domainTypes: [
+			{ name: "name", type: "string" },
+			{ name: "version", type: "string" },
+			{ name: "verifyingContract", type: "address" },
+		],
+	};
+}
 
 export async function signSetColor(
 	wallet: ConnectedWallet,
@@ -56,28 +88,25 @@ export async function signSetColor(
 
 export async function signRemove(
 	wallet: ConnectedWallet,
-	{ id, address }: { id: number; address: string },
+	{
+		id,
+		address,
+		legacyDomain = false,
+	}: { id: number; address: string; legacyDomain?: boolean },
 ) {
 	const provider = await wallet.getEthereumProvider();
 	const method = "eth_signTypedData_v4";
 	const nonce = getRandomNonce();
+	const { domain, domainTypes } = writerDomain(address, legacyDomain);
 	const payload = {
-		domain: {
-			name: "Writer",
-			version: "1",
-			verifyingContract: getAddress(address),
-		},
+		domain,
 		message: {
 			nonce,
 			id,
 		},
 		primaryType: "Remove",
 		types: {
-			EIP712Domain: [
-				{ name: "name", type: "string" },
-				{ name: "version", type: "string" },
-				{ name: "verifyingContract", type: "address" },
-			],
+			EIP712Domain: domainTypes,
 			Remove: [
 				{ name: "nonce", type: "uint256" },
 				{ name: "id", type: "uint256" },
@@ -102,19 +131,22 @@ export async function signUpdate(
 		entryId,
 		address,
 		content,
-	}: { entryId: number; address: string; content: string },
+		legacyDomain = false,
+	}: {
+		entryId: number;
+		address: string;
+		content: string;
+		legacyDomain?: boolean;
+	},
 ) {
 	const totalChunks = 1;
 	const nonce = getRandomNonce();
 
 	const provider = await wallet.getEthereumProvider();
 	const method = "eth_signTypedData_v4";
+	const { domain, domainTypes } = writerDomain(address, legacyDomain);
 	const payload = {
-		domain: {
-			name: "Writer",
-			version: "1",
-			verifyingContract: getAddress(address),
-		},
+		domain,
 		message: {
 			nonce,
 			entryId,
@@ -123,11 +155,7 @@ export async function signUpdate(
 		},
 		primaryType: "Update",
 		types: {
-			EIP712Domain: [
-				{ name: "name", type: "string" },
-				{ name: "version", type: "string" },
-				{ name: "verifyingContract", type: "address" },
-			],
+			EIP712Domain: domainTypes,
 			Update: [
 				{ name: "nonce", type: "uint256" },
 				{ name: "entryId", type: "uint256" },
@@ -153,7 +181,11 @@ export async function signUpdate(
 
 export async function signCreateWithChunk(
 	wallet: ConnectedWallet,
-	{ content, address }: { content: string; address: string },
+	{
+		content,
+		address,
+		legacyDomain = false,
+	}: { content: string; address: string; legacyDomain?: boolean },
 ) {
 	const chunkCount = 1;
 	const nonce = getRandomNonce();
@@ -161,12 +193,9 @@ export async function signCreateWithChunk(
 
 	const provider = await wallet.getEthereumProvider();
 	const method = "eth_signTypedData_v4";
+	const { domain, domainTypes } = writerDomain(address, legacyDomain);
 	const payload = {
-		domain: {
-			name: "Writer",
-			version: "1",
-			verifyingContract: getAddress(address),
-		},
+		domain,
 		message: {
 			nonce,
 			chunkContent,
@@ -174,11 +203,7 @@ export async function signCreateWithChunk(
 		},
 		primaryType: "CreateWithChunk",
 		types: {
-			EIP712Domain: [
-				{ name: "name", type: "string" },
-				{ name: "version", type: "string" },
-				{ name: "verifyingContract", type: "address" },
-			],
+			EIP712Domain: domainTypes,
 			CreateWithChunk: [
 				{ name: "nonce", type: "uint256" },
 				{ name: "chunkCount", type: "uint256" },

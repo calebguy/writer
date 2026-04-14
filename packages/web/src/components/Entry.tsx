@@ -48,12 +48,15 @@ export default function Entry({
 	id,
 	isPending,
 	onEntryUpdate,
+	legacyDomain = false,
 }: {
 	initialEntry: EntryType;
 	address: string;
 	id: string;
 	isPending?: boolean;
 	onEntryUpdate: () => void;
+	/** Whether this entry's writer uses the legacy EIP-712 domain (with chainId). */
+	legacyDomain?: boolean;
 }) {
 	const [wallet] = useOPWallet();
 	const { getAccessToken, authenticated, ready } = usePrivy();
@@ -323,6 +326,7 @@ export default function Entry({
 				entryId: Number(id),
 				address: address as Hex,
 				content: versionedCompressedContent,
+				legacyDomain,
 			});
 		const authToken = await getAccessToken();
 		if (!authToken) {
@@ -556,6 +560,7 @@ export default function Entry({
 											const { signature, nonce } = await signRemove(wallet, {
 												id: Number(id),
 												address: address as Hex,
+												legacyDomain,
 											});
 											const authToken = await getAccessToken();
 											if (!authToken) {

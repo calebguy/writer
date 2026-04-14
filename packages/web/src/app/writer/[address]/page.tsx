@@ -194,6 +194,7 @@ export default function WriterPage() {
 				writerTitle={writer.title}
 				writerAddress={writer.address}
 				writerStorageId={writer.storageId}
+				writerLegacyDomain={writer.legacyDomain}
 				processedEntries={processedEntries}
 				canCreateEntries={canCreateEntries}
 				showUnlockBanner={showUnlockBanner}

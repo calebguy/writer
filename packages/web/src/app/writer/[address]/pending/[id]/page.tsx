@@ -1,5 +1,5 @@
 import Entry from "@/components/Entry";
-import { getPendingEntry } from "@/utils/api";
+import { getPendingEntry, getWriter } from "@/utils/api";
 import { revalidatePath } from "next/cache";
 import type { Hex } from "viem";
 
@@ -9,7 +9,10 @@ export default async function PendingEntryPage({
 	params: Promise<{ address: string; id: string }>;
 }) {
 	const { address, id } = await params;
-	const entry = await getPendingEntry(address as Hex, Number(id));
+	const [entry, writer] = await Promise.all([
+		getPendingEntry(address as Hex, Number(id)),
+		getWriter(address as Hex),
+	]);
 
 	return (
 		<div className="flex-grow flex flex-col">
@@ -18,6 +21,7 @@ export default async function PendingEntryPage({
 				address={address}
 				id={id}
 				isPending
+				legacyDomain={writer?.legacyDomain ?? true}
 				onEntryUpdate={async () => {
 					"use server";
 					revalidatePath(`/writer/${address}/pending/${id}`);

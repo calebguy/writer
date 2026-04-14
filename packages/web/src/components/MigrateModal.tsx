@@ -17,6 +17,7 @@ export interface MigrateEntry {
 	entry: Entry;
 	writerAddress: string;
 	writerTitle: string;
+	legacyDomain: boolean;
 }
 
 type MigrationStatus = "idle" | "migrating" | "done" | "error";
@@ -68,7 +69,7 @@ export function MigrateModal({
 				);
 			}
 
-			for (const { entry, writerAddress } of entriesToMigrate) {
+			for (const { entry, writerAddress, legacyDomain } of entriesToMigrate) {
 				// Decrypt with old key. v3 is now also a migration source
 				// because v3 derivation is phishable too (audit C-1).
 				let decrypted: string;
@@ -104,6 +105,7 @@ export function MigrateModal({
 						entryId: Number(entry.onChainId),
 						address: writerAddress as Hex,
 						content: newContent,
+						legacyDomain,
 					},
 				);
 
