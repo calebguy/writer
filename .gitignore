@@ -15,3 +15,5 @@ dev.ts
 # local reference files (not part of build)
 reference/
 .vercel
+
+db/scripts/dev/

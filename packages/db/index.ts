@@ -676,15 +676,40 @@ class Db {
 		};
 	}
 
-	upsertChunk(item: InsertChunk) {
-		return this.pg
-			.insert(chunk)
-			.values({ ...item, createdAt: new Date() })
-			.onConflictDoUpdate({
-				target: [chunk.entryId, chunk.index],
-				set: { ...item },
-			})
-			.returning();
+	async upsertChunk(item: InsertChunk) {
+		try {
+			// Primary path: upsert on (entryId, index). Handles the normal
+			// case where the server pre-creates the chunk (instant UI update)
+			// and the indexer later reconciles with on-chain data — both use
+			// the same entryId because upsertEntry reconciled the entry row
+			// by createdAtTransactionId first.
+			return await this.pg
+				.insert(chunk)
+				.values({ ...item, createdAt: new Date() })
+				.onConflictDoUpdate({
+					target: [chunk.entryId, chunk.index],
+					set: { ...item },
+				})
+				.returning();
+		} catch (err) {
+			// Fallback: if (entryId, index) didn't conflict but
+			// createdAtTransactionId did, it means the server and indexer
+			// resolved the same on-chain entry to different DB rows (e.g.,
+			// from migration retries or reconciliation edge cases). The
+			// chunk already exists under a different entryId for the same
+			// relay tx — update it by transactionId instead of duplicating.
+			const isUniqueViolation =
+				err instanceof Error &&
+				err.message.includes("chunk_created_at_transaction_id_unique");
+			if (!isUniqueViolation || !item.createdAtTransactionId) {
+				throw err;
+			}
+			return await this.pg
+				.update(chunk)
+				.set({ ...item })
+				.where(eq(chunk.createdAtTransactionId, item.createdAtTransactionId))
+				.returning();
+		}
 	}
 
 	deleteWriter(address: Hex) {
