@@ -40,7 +40,6 @@ export default function CreateInput({
 	const [markdown, setMarkdown] = useState<string>("");
 	const editorRef = useRef<MDXEditorMethods>(null);
 	const [showHint, setShowHint] = useState(true);
-	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [loadingContent, setLoadingContent] = useState<string>("");
 	const [encrypted, setEncrypted] = useState(false);
 
@@ -76,12 +75,12 @@ export default function CreateInput({
 
 	// Handle keyboard shortcuts
 	useEffect(() => {
-		const handleKeyDown = async (event: KeyboardEvent) => {
+		const handleKeyDown = (event: KeyboardEvent) => {
 			// Submit on cmd/ctrl + enter
 			if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
 				event.preventDefault();
 				if (markdown.trim() !== "") {
-					await handleSubmit();
+					handleSubmit();
 				}
 			} else if (event.key === "Escape") {
 				handleReset();
@@ -110,26 +109,25 @@ export default function CreateInput({
 		onExpand?.(false);
 	};
 
-	const handleSubmit = async () => {
+	const handleSubmit = () => {
 		if (markdown.trim() === "") return;
+		const data = { markdown, encrypted };
+		// Reset the form immediately. Any pending-UI is the parent's job
+		// (typically via TanStack `onMutate`). We fire-and-forget onSubmit
+		// so the input doesn't sit in a "submitting" state while the
+		// parent's mutation flight + optimistic card handle it.
 		setLoadingContent(markdown);
-		setIsSubmitting(true);
-		try {
-			await onSubmit({ markdown, encrypted });
-			editorRef.current?.setMarkdown("");
-			setMarkdown("");
-			setHasFocus(false);
-			setIsExpanded(false);
-			setEncrypted(false);
-			onExpand?.(false);
-		} catch (error) {
-			console.error("Submit failed:", error);
-		} finally {
-			setIsSubmitting(false);
-		}
+		editorRef.current?.setMarkdown("");
+		setMarkdown("");
+		setHasFocus(false);
+		setIsExpanded(false);
+		setEncrypted(false);
+		onExpand?.(false);
+		Promise.resolve(onSubmit(data)).catch((err) => {
+			console.error("Submit failed:", err);
+		});
 	};
 
-	const isLoadingOrSubmitting = isLoading || isSubmitting;
 
 	return (
 		<>
@@ -140,7 +138,7 @@ export default function CreateInput({
 				})}
 				ref={containerRef}
 			>
-				{isLoadingOrSubmitting && (
+				{isLoading && (
 					<div className="absolute inset-0 bg-secondary border border-secondary flex flex-col items-center justify-between h-full">
 						<div className="text-primary w-full text-left break-words p-2 overflow-hidden">
 							<MarkdownRenderer
@@ -165,7 +163,7 @@ export default function CreateInput({
 						</div>
 					</div>
 				)}
-				{!isLoadingOrSubmitting && (
+				{!isLoading && (
 					<>
 						<div
 							className={cn(

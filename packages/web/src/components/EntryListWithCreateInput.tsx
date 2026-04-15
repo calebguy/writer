@@ -184,7 +184,7 @@ export default function EntryListWithCreateInput({
 							onExpand={setIsExpanded}
 							canExpand={true}
 							onSubmit={handleSubmit}
-							isLoading={isPending}
+							isLoading={false}
 						/>
 					</div>
 				)}
@@ -208,7 +208,7 @@ export default function EntryListWithCreateInput({
 				<CreateEntryDrawer
 					placeholder={`Write in ${writerTitle}`}
 					onSubmit={handleSubmit}
-					isLoading={isPending}
+					isLoading={false}
 				/>
 			)}
 		</>
