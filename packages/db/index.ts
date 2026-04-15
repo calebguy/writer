@@ -330,6 +330,14 @@ class Db {
 				updatedAt: new Date(),
 				createdAt: new Date(),
 			})
+			.onConflictDoUpdate({
+				target: [relayTx.id],
+				set: {
+					...tx,
+					updatedAt: new Date(),
+					createdAt: new Date(),
+				},
+			})
 			.returning();
 	}
 
