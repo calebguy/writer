@@ -1,12 +1,11 @@
 "use client";
 
 import { useEntryLoading } from "@/utils/EntryLoadingContext";
-import type { Entry as EntryType } from "@/utils/api";
+import type { Entry as EntryType, Writer } from "@/utils/api";
 import {
 	deleteEntry,
 	editEntry,
 	getEntry,
-	getPendingEntry,
 	getSaved,
 	saveEntry,
 	unsaveEntry,
@@ -120,19 +119,47 @@ export default function Entry({
 		}
 	}, [processedEntry, setEntryLoading]);
 
+	const writerQueryKey = ["writer", address] as const;
+	const entryQueryKey = ["entry", address, id] as const;
+
 	const { mutateAsync: mutateAsyncDelete, isPending: isPendingDelete } =
 		useMutation({
 			mutationFn: deleteEntry,
 			mutationKey: ["delete-entry", address, id],
+			onMutate: async () => {
+				await queryClient.cancelQueries({ queryKey: writerQueryKey });
+				const previous = queryClient.getQueryData<Writer>(writerQueryKey);
+				if (!previous) return { previous: undefined };
+				const now = new Date().toISOString();
+				queryClient.setQueryData<Writer>(writerQueryKey, (current) =>
+					current
+						? {
+								...current,
+								entries: current.entries.map((e) =>
+									e.onChainId === id
+										? { ...e, deletedAt: now, deletedAtBlockDatetime: now }
+										: e,
+								),
+							}
+						: current,
+				);
+				return { previous };
+			},
+			onError: (_err, _vars, ctx) => {
+				if (ctx?.previous) {
+					queryClient.setQueryData(writerQueryKey, ctx.previous);
+				}
+			},
 			onSuccess: async () => {
-				// Invalidate caches
 				await clearPublicCachedEntry(address, id);
 				if (wallet?.address) {
 					clearPrivateCachedEntry(wallet.address, address, id);
 				}
-				queryClient.invalidateQueries({ queryKey: ["writer", address] });
-				queryClient.removeQueries({ queryKey: ["entry", address, id] });
+				queryClient.removeQueries({ queryKey: entryQueryKey });
 				router.push(`/writer/${address}`);
+			},
+			onSettled: () => {
+				queryClient.invalidateQueries({ queryKey: writerQueryKey });
 			},
 		});
 
@@ -140,15 +167,76 @@ export default function Entry({
 		useMutation({
 			mutationFn: editEntry,
 			mutationKey: ["edit-entry", address, id],
+			onMutate: async (vars) => {
+				await queryClient.cancelQueries({ queryKey: writerQueryKey });
+				await queryClient.cancelQueries({ queryKey: entryQueryKey });
+				const previousWriter =
+					queryClient.getQueryData<Writer>(writerQueryKey);
+				const previousEntry =
+					queryClient.getQueryData<EntryType>(entryQueryKey);
+
+				const now = new Date().toISOString();
+				const applyEntryPatch = (entry: EntryType): EntryType => ({
+					...entry,
+					raw: vars.content,
+					decompressed: vars.decompressed ?? entry.decompressed,
+					updatedAt: now,
+					chunks:
+						entry.chunks.length > 0
+							? entry.chunks.map((chunk, idx) =>
+									idx === 0 ? { ...chunk, content: vars.content } : chunk,
+								)
+							: [
+									{
+										id: -Date.now(),
+										entryId: entry.id,
+										index: 0,
+										content: vars.content,
+										createdAt: now,
+										createdAtTransactionId: null,
+									},
+								],
+					version: vars.content.startsWith("enc:v4:br:") ? "enc:v4:br:" : "br:",
+				});
+
+				if (previousWriter) {
+					queryClient.setQueryData<Writer>(writerQueryKey, (current) =>
+						current
+							? {
+									...current,
+									entries: current.entries.map((e) =>
+										e.onChainId === id ? applyEntryPatch(e) : e,
+									),
+								}
+							: current,
+					);
+				}
+				if (previousEntry) {
+					queryClient.setQueryData<EntryType>(
+						entryQueryKey,
+						applyEntryPatch(previousEntry),
+					);
+				}
+				return { previousWriter, previousEntry };
+			},
+			onError: (_err, _vars, ctx) => {
+				if (ctx?.previousWriter) {
+					queryClient.setQueryData(writerQueryKey, ctx.previousWriter);
+				}
+				if (ctx?.previousEntry) {
+					queryClient.setQueryData(entryQueryKey, ctx.previousEntry);
+				}
+			},
 			onSuccess: async () => {
-				// Invalidate caches - entry will be re-fetched and re-processed
 				await clearPublicCachedEntry(address, id);
 				if (wallet?.address) {
 					clearPrivateCachedEntry(wallet.address, address, id);
 				}
-				queryClient.invalidateQueries({ queryKey: ["entry", address, id] });
-				queryClient.invalidateQueries({ queryKey: ["writer", address] });
 				onEntryUpdate();
+			},
+			onSettled: () => {
+				queryClient.invalidateQueries({ queryKey: entryQueryKey });
+				queryClient.invalidateQueries({ queryKey: writerQueryKey });
 			},
 		});
 
@@ -238,25 +326,6 @@ export default function Entry({
 		);
 	}, [initialEntry, wallet, isPending]);
 
-	// Poll for on-chain confirmation when pending
-	useEffect(() => {
-		if (!isPending) return;
-
-		const pollInterval = setInterval(async () => {
-			try {
-				const entry = await getPendingEntry(address as Hex, Number(id));
-				if (entry.onChainId) {
-					clearInterval(pollInterval);
-					router.replace(`/writer/${address}/${entry.onChainId}`);
-				}
-			} catch (error) {
-				console.error("Error polling for entry confirmation:", error);
-			}
-		}, 3000);
-
-		return () => clearInterval(pollInterval);
-	}, [isPending, address, id, router]);
-
 	// Poll for edit confirmation when edit is submitted
 	useEffect(() => {
 		if (!editSubmitted || !expectedRawContentRef.current) return;
@@ -341,6 +410,7 @@ export default function Entry({
 			totalChunks,
 			content,
 			authToken,
+			decompressed: editedContent,
 		});
 	};
 

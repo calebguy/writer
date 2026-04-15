@@ -10,12 +10,8 @@ export function BackButton({ writerAddress }: { writerAddress: string }) {
 	const { authenticated } = usePrivy();
 	const segments = pathname.split("/").filter(Boolean);
 
-	// Check if we're on an entry page:
-	// - /writer/:address/:entryId (3 segments)
-	// - /writer/:address/pending/:id (4 segments)
-	const isEntryPage =
-		segments.length === 3 ||
-		(segments.length === 4 && segments[2] === "pending");
+	// Check if we're on an entry page: /writer/:address/:entryId (3 segments)
+	const isEntryPage = segments.length === 3;
 
 	const handleBack = () => {
 		// If there's no history to go back to, navigate to the appropriate fallback

@@ -1,6 +1,6 @@
 "use client";
 
-import type { Entry } from "@/utils/api";
+import type { Entry, Writer } from "@/utils/api";
 import { createWithChunk } from "@/utils/api";
 import { useOPWallet } from "@/utils/hooks";
 import { getCachedDerivedKey } from "@/utils/keyCache";
@@ -50,13 +50,75 @@ export default function EntryListWithCreateInput({
 	const router = useRouter();
 	const queryClient = useQueryClient();
 
+	const queryKey = ["writer", writerAddress] as const;
 	const { mutateAsync, isPending } = useMutation({
 		mutationFn: createWithChunk,
 		mutationKey: ["create-with-chunk", writerAddress],
+		onMutate: async (vars) => {
+			await queryClient.cancelQueries({ queryKey });
+			const previous = queryClient.getQueryData<Writer>(queryKey);
+			if (!previous) return { previous: undefined };
+
+			const now = new Date().toISOString();
+			// Negative temp id so it can't collide with real serial ids from the DB.
+			const tempId = -Date.now();
+			const optimisticEntry = {
+				id: tempId,
+				exists: true,
+				onChainId: null,
+				author: vars.author ?? "",
+				createdAtHash: null,
+				createdAtBlock: null,
+				createdAtBlockDatetime: null,
+				deletedAtHash: null,
+				deletedAtBlock: null,
+				deletedAtBlockDatetime: null,
+				updatedAtHash: null,
+				updatedAtBlock: null,
+				updatedAtBlockDatetime: null,
+				createdAt: now,
+				updatedAt: now,
+				deletedAt: null,
+				storageAddress: previous.storageAddress,
+				storageId: previous.storageId,
+				createdAtTransactionId: null,
+				deletedAtTransactionId: null,
+				updatedAtTransactionId: null,
+				chunks: [
+					{
+						id: tempId,
+						entryId: tempId,
+						index: 0,
+						content: vars.chunkContent,
+						createdAt: now,
+						createdAtTransactionId: null,
+					},
+				],
+				raw: vars.chunkContent,
+				version: vars.chunkContent.startsWith("enc:v4:br:")
+					? "enc:v4:br:"
+					: "br:",
+				// Pre-populating decompressed lets `useProcessedEntries` skip the
+				// decrypt step and render the user's typed content instantly.
+				decompressed: vars.decompressed ?? "",
+			} as unknown as Entry;
+
+			queryClient.setQueryData<Writer>(queryKey, (current) =>
+				current
+					? { ...current, entries: [optimisticEntry, ...current.entries] }
+					: current,
+			);
+
+			return { previous };
+		},
+		onError: (_err, _vars, ctx) => {
+			if (ctx?.previous) queryClient.setQueryData(queryKey, ctx.previous);
+		},
 		onSuccess: () => {
-			// Invalidate writer query to refetch entries including the new one
-			queryClient.invalidateQueries({ queryKey: ["writer", writerAddress] });
 			router.refresh();
+		},
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey });
 		},
 	});
 
@@ -101,6 +163,8 @@ export default function EntryListWithCreateInput({
 			chunkCount,
 			chunkContent,
 			authToken,
+			decompressed: markdown,
+			author: wallet.address,
 		});
 	};
 

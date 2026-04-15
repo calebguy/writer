@@ -25,7 +25,11 @@ export function HomeHeader() {
 			queryClient.setQueriesData<Writer[]>(
 				{ queryKey: ["get-writers"] },
 				(prev) => {
-					const nextWriter = { ...writer, entries: [] };
+					// Cast is safe: the factory/create response and the writer
+					// list entry have the same runtime shape. Hono narrows the
+					// two endpoints to slightly different static types for
+					// fields whose serialization strips `undefined`.
+					const nextWriter = { ...writer, entries: [] } as unknown as Writer;
 					if (!prev) return [nextWriter];
 					if (
 						prev.some(

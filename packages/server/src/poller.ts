@@ -12,6 +12,23 @@ async function pollPendingTransactions() {
 
 			try {
 				const status = await relay.getTransaction(parsed.wallet, parsed.nonce);
+				// Relay reports an error: the tx never landed. Mark it as
+				// terminal so we stop polling and so any consumer of the
+				// pending overlay drops it.
+				if (status.status === "error") {
+					await db.upsertTx({
+						id: tx.id,
+						wallet: tx.wallet,
+						nonce: tx.nonce,
+						chainId: tx.chainId,
+						functionSignature: tx.functionSignature,
+						args: tx.args,
+						hash: status.hash ?? tx.hash,
+						status: "ABANDONED",
+						error: status.error ?? "relay error",
+					});
+					continue;
+				}
 				if (status.hash || status.status !== "pending") {
 					await db.upsertTx({
 						id: tx.id,

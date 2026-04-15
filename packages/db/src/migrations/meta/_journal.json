@@ -71,6 +71,13 @@
       "when": 1776147113496,
       "tag": "0009_curvy_longshot",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1776223417770,
+      "tag": "0010_useful_harrier",
+      "breakpoints": true
     }
   ]
 }
