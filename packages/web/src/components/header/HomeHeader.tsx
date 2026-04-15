@@ -48,21 +48,21 @@ export function HomeHeader() {
 				entries: [],
 			} as unknown as Writer;
 
-			const snapshots: Array<{
-				queryKey: readonly unknown[];
-				previous: Writer[] | undefined;
-			}> = [];
+			// Snapshot all current get-writers caches before mutating so onError
+			// can restore them. We snapshot separately from the update call
+			// because TanStack's `setQueriesData` updater only receives the
+			// old value, not the query itself.
+			const snapshots = queryClient.getQueriesData<Writer[]>({
+				queryKey: ["get-writers"],
+			});
 			queryClient.setQueriesData<Writer[]>(
 				{ queryKey: ["get-writers"] },
-				(prev, query) => {
-					snapshots.push({ queryKey: query.queryKey, previous: prev });
-					return prev ? [optimistic, ...prev] : [optimistic];
-				},
+				(prev) => (prev ? [optimistic, ...prev] : [optimistic]),
 			);
 			return { snapshots };
 		},
 		onError: (_err, _vars, ctx) => {
-			for (const { queryKey, previous } of ctx?.snapshots ?? []) {
+			for (const [queryKey, previous] of ctx?.snapshots ?? []) {
 				queryClient.setQueryData(queryKey, previous);
 			}
 		},
