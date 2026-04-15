@@ -23,6 +23,7 @@ import {
 import {
 	chunk,
 	entry,
+	ingestorCursor,
 	savedEntry,
 	savedWriter,
 	relayTx,
@@ -45,6 +46,7 @@ class Db {
 				chunk,
 				savedWriter,
 				savedEntry,
+				ingestorCursor,
 				writerRelations,
 				entryRelations,
 				chunkRelations,
@@ -805,6 +807,34 @@ class Db {
 			.where(eq(writer.storageAddress, normalizedStorage))
 			.returning({ address: writer.address });
 		return result.length;
+	}
+
+	// -----------------------------------------------------------------------
+	// Ingestor cursor
+	// -----------------------------------------------------------------------
+
+	async getAllStorageAddresses(): Promise<string[]> {
+		const rows = await this.pg
+			.selectDistinct({ storageAddress: writer.storageAddress })
+			.from(writer);
+		return rows.map((r) => r.storageAddress);
+	}
+
+	async getCursor(): Promise<bigint | null> {
+		const row = await this.pg.query.ingestorCursor.findFirst({
+			where: eq(ingestorCursor.id, 1),
+		});
+		return row?.lastBlock ?? null;
+	}
+
+	async setCursor(blockNumber: bigint): Promise<void> {
+		await this.pg
+			.insert(ingestorCursor)
+			.values({ id: 1, lastBlock: blockNumber, updatedAt: new Date() })
+			.onConflictDoUpdate({
+				target: [ingestorCursor.id],
+				set: { lastBlock: blockNumber, updatedAt: new Date() },
+			});
 	}
 }
 
