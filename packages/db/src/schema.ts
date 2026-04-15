@@ -140,20 +140,35 @@ export const requestStatus = pgEnum("request_status", [
 	"ABANDONED",
 ]);
 
-export const relayTx = pgTable("relay_tx", {
-	id: varchar("id", { length: 255 }).primaryKey(),
-	wallet: varchar({ length: 42 }),
-	nonce: integer(),
-	chainId: bigint({ mode: "bigint" }).notNull(),
-	blockNumber: bigint({ mode: "bigint" }),
-	hash: text(),
-	status: requestStatus().default("PENDING").notNull(),
-	functionSignature: text().notNull(),
-	args: jsonb().notNull(),
-	error: text(),
-	createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
-	updatedAt: timestamp({ withTimezone: true }).notNull(),
-});
+export const relayTx = pgTable(
+	"relay_tx",
+	{
+		id: varchar("id", { length: 255 }).primaryKey(),
+		wallet: varchar({ length: 42 }),
+		nonce: integer(),
+		chainId: bigint({ mode: "bigint" }).notNull(),
+		blockNumber: bigint({ mode: "bigint" }),
+		hash: text(),
+		status: requestStatus().default("PENDING").notNull(),
+		functionSignature: text().notNull(),
+		args: jsonb().notNull(),
+		// Address of the writer this tx targets: the writer contract for
+		// entry routes, or the deterministically-computed writer address
+		// for factory creates. Lets us look up pending txs by writer with
+		// a simple indexed lookup instead of JSONB gymnastics across
+		// heterogeneous `args` shapes. Nullable to allow txs (e.g.
+		// color-registry) that don't target a writer.
+		targetAddress: varchar({ length: 42 }),
+		error: text(),
+		createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp({ withTimezone: true }).notNull(),
+	},
+	(tx) => ({
+		targetAddressIndex: index("relay_tx_target_address_idx").on(
+			tx.targetAddress,
+		),
+	}),
+);
 
 export const user = pgTable("user", {
 	address: varchar({ length: 42 }).primaryKey(),

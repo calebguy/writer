@@ -15,12 +15,14 @@ import { env } from "../env";
 import {
 	type ReconcileEntryResult,
 	type ReconcileWriterResult,
+	humanizeSimulateError,
 	reconcileEntryByDbId,
 	reconcileWriterByAddress,
 	recoverCreateWithChunkSigner,
 	recoverRemoveEntrySigner,
 	recoverSetColorSigner,
 	recoverUpdateEntryWithChunkSigner,
+	simulateContractOrThrow,
 } from "../helpers";
 import {
 	addressAndIDParamSchema,
@@ -38,15 +40,27 @@ import {
 	requireWriterAdminAuth,
 } from "../privy";
 import { makeRelayTxId, relay } from "../relay";
+import { watchRelayReceipt } from "../receipt-watcher";
+import {
+	applyOverlayToWriters,
+	getWriterWithOverlay,
+} from "../pending-overlay";
 
 const writerRoutes = new Hono()
 	.get("/manager/:address", async (c) => {
 		const address = getAddress(c.req.param("address"));
 		const data = await db.getWritersByManager(address);
-		const writers = data.map((w) => ({
+		const confirmed = data.map((w) => ({
 			...writerToJsonSafe(w),
 			entries: w.entries.map(entryToJsonSafe),
 		}));
+		// Overlay pending relay_tx rows so optimistic state shows up in the
+		// writers list before the indexer confirms each tx. The cast is
+		// structural: the overlay treats rows as loose JSON and doesn't
+		// rely on the stricter Drizzle field nullability.
+		const writers = await applyOverlayToWriters(
+			confirmed as Parameters<typeof applyOverlayToWriters>[0],
+		);
 		return c.json({ writers });
 	})
 	.post(
@@ -116,14 +130,14 @@ const writerRoutes = new Hono()
 	})
 	.get("/writer/:address", async (c) => {
 		const address = getAddress(c.req.param("address"));
-		const data = await db.getWriter(address);
-		if (!data) {
+		// Overlay serves the same shape as before when the writer already
+		// exists in the DB, and synthesizes a pending-writer shape from
+		// relay_tx.args when it doesn't (e.g. right after /factory/create,
+		// before WriterCreated is indexed).
+		const writer = await getWriterWithOverlay(address);
+		if (!writer) {
 			return c.json({ error: "writer not found" }, 404);
 		}
-		const writer = {
-			...writerToJsonSafe(data),
-			entries: data.entries.map(entryToJsonSafe),
-		};
 		return c.json({ writer });
 	})
 	.post(
@@ -170,6 +184,14 @@ const writerRoutes = new Hono()
 					functionSignature: SET_HEX_FUNCTION_SIGNATURE,
 					args,
 					status: "PENDING",
+				});
+				watchRelayReceipt({
+					txId: transactionId,
+					wallet,
+					nonce: relayNonce,
+					chainId: BigInt(env.TARGET_CHAIN_ID),
+					functionSignature: SET_HEX_FUNCTION_SIGNATURE,
+					args,
 				});
 				const user = await db.upsertUser({
 					address: address,
@@ -224,6 +246,18 @@ const writerRoutes = new Hono()
 				}),
 			]);
 			try {
+				await simulateContractOrThrow({
+					to: env.FACTORY_ADDRESS as Hex,
+					functionSignature: CREATE_FUNCTION_SIGNATURE,
+					args: [title, admin, managers, publicWritable, salt],
+				});
+			} catch (err) {
+				return c.json(
+					{ error: `simulation failed: ${humanizeSimulateError(err)}` },
+					400,
+				);
+			}
+			try {
 				const { wallet, nonce: relayNonce } = await relay.sendTransaction({
 					to: env.FACTORY_ADDRESS,
 					abi: CREATE_FUNCTION_SIGNATURE,
@@ -238,21 +272,50 @@ const writerRoutes = new Hono()
 					functionSignature: CREATE_FUNCTION_SIGNATURE,
 					args,
 					status: "PENDING",
+					// Pending-overlay lookup key: the deterministic writer
+					// address this tx creates. The overlay synthesizes the
+					// writer row from these args until the indexer writes
+					// the authoritative row on WriterCreated.
+					targetAddress: address,
 				});
-				const data = await db.upsertWriter({
+				watchRelayReceipt({
+					txId: transactionId,
+					wallet,
+					nonce: relayNonce,
+					chainId: BigInt(env.TARGET_CHAIN_ID),
+					functionSignature: CREATE_FUNCTION_SIGNATURE,
+					args,
+				});
+				// The indexer is the sole writer of the `writer` table.
+				// Return a synthesized pending-writer shape (same shape as
+				// the overlay serves on reads) so existing FE callers can
+				// keep using `onSuccess: ({ writer }) => ...` without
+				// changes. Field shape must match writerToJsonSafe:
+				// nullable-bigint columns are `string | undefined`,
+				// nullable-text/timestamp columns are `string | null`/
+				// `Date | null`.
+				const now = new Date();
+				const writer = {
+					address,
+					storageAddress,
+					storageId: storageAddress,
+					publicWritable,
+					legacyDomain: false,
 					title,
 					admin,
 					managers,
-					publicWritable,
+					createdAtHash: null,
+					createdAtBlock: undefined,
+					createdAtBlockDatetime: null,
+					createdAt: now,
+					updatedAt: now,
+					deletedAt: null,
 					transactionId,
-					address,
-					storageAddress,
-				});
-				const writer = writerToJsonSafe(data[0]);
+				};
 				return c.json({ writer }, 201);
 			} catch (err) {
-				console.error("factory/create db error:", err);
-				return c.json({ error: "database error during writer creation" }, 500);
+				console.error("factory/create error:", err);
+				return c.json({ error: "error during writer creation" }, 500);
 			}
 		},
 	)
@@ -325,6 +388,18 @@ const writerRoutes = new Hono()
 				chunkContent,
 			};
 			try {
+				await simulateContractOrThrow({
+					to: contractAddress,
+					functionSignature: CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
+					args: [signature, Number(nonce), Number(chunkCount), chunkContent],
+				});
+			} catch (err) {
+				return c.json(
+					{ error: `simulation failed: ${humanizeSimulateError(err)}` },
+					400,
+				);
+			}
+			try {
 				const { wallet, nonce: relayNonce } = await relay.sendTransaction({
 					to: contractAddress,
 					abi: CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
@@ -339,52 +414,41 @@ const writerRoutes = new Hono()
 					functionSignature: CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
 					args,
 					status: "PENDING",
+					targetAddress: contractAddress,
 				});
-				const raw = chunkContent;
-				const [data] = await db.upsertEntry({
-					exists: true,
-					storageAddress: writer.storageAddress,
-					createdAtTransactionId: transactionId,
-					author,
+				watchRelayReceipt({
+					txId: transactionId,
+					wallet,
+					nonce: relayNonce,
+					chainId: BigInt(env.TARGET_CHAIN_ID),
+					functionSignature: CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
+					args,
 				});
-				if (!data) {
-					return c.json({ error: "entry not found" }, 404);
-				}
-				await db.upsertChunk({
-					entryId: data.id,
-					content: raw,
-					createdAtTransactionId: transactionId,
-					index: 0,
-				});
-				const entryRefreshed = await db.getEntry(
-					writer.storageAddress as Hex,
-					data.id,
-				);
-				if (!entryRefreshed) {
-					return c.json({ error: "entry not found" }, 404);
-				}
-				const entry = entryToJsonSafe(entryRefreshed);
-				return c.json({ entry }, 201);
+				// Indexer is the sole writer of `entry` / `chunk`. The
+				// pending overlay surfaces this tx via `relay_tx` on reads
+				// until EntryCreated fires. FE callers already update their
+				// TanStack cache optimistically via onMutate, so a minimal
+				// ack response is sufficient.
+				return c.json({ pending: { transactionId, author } }, 202);
 			} catch (err) {
-				console.error("createWithChunk db error:", err);
-				return c.json({ error: "database error during entry creation" }, 500);
+				console.error("createWithChunk error:", err);
+				return c.json({ error: "error during entry creation" }, 500);
 			}
 		},
 	)
 	.get("/writer/:address/entry/:id", addressAndIDParamSchema, async (c) => {
 		const { address, id } = c.req.valid("param");
-		const writer = await db.getWriter(address);
+		// Use the overlay so pending updates / deletes show through on the
+		// single-entry read path too.
+		const writer = await getWriterWithOverlay(address);
 		if (!writer) {
 			return c.json({ error: "writer not found" }, 404);
 		}
-		const entry = await db.getEntryByOnchainId(
-			writer.storageAddress as Hex,
-			id,
-		);
+		const entry = writer.entries.find((e) => e.onChainId === String(id));
 		if (!entry) {
 			return c.json({ error: "entry not found" }, 404);
 		}
-		return c.json({ entry: entryToJsonSafe(entry) });
+		return c.json({ entry });
 	})
 	.get(
 		"/writer/:address/entry/pending/:id",
@@ -456,6 +520,24 @@ const writerRoutes = new Hono()
 				content,
 				id: Number(id),
 			};
+			try {
+				await simulateContractOrThrow({
+					to: contractAddress,
+					functionSignature: UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE,
+					args: [
+						signature,
+						Number(nonce),
+						Number(id),
+						Number(totalChunks),
+						content,
+					],
+				});
+			} catch (err) {
+				return c.json(
+					{ error: `simulation failed: ${humanizeSimulateError(err)}` },
+					400,
+				);
+			}
 			const { wallet, nonce: relayNonce } = await relay.sendTransaction({
 				to: contractAddress,
 				abi: UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE,
@@ -476,31 +558,21 @@ const writerRoutes = new Hono()
 				functionSignature: UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE,
 				args,
 				status: "PENDING",
+				targetAddress: contractAddress,
+			});
+			watchRelayReceipt({
+				txId: transactionId,
+				wallet,
+				nonce: relayNonce,
+				chainId: BigInt(env.TARGET_CHAIN_ID),
+				functionSignature: UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE,
+				args,
 			});
 
-			try {
-				const [data] = await db.upsertEntry({
-					createdAtTransactionId: entry.createdAtTransactionId,
-					id: entry.id,
-					exists: true,
-					storageAddress: writer.storageAddress,
-					author,
-					updatedAtTransactionId: transactionId,
-				});
-				if (!data) {
-					return c.json({ error: "entry not found after update" }, 404);
-				}
-				await db.upsertChunk({
-					entryId: data.id,
-					content: content,
-					createdAtTransactionId: transactionId,
-					index: 0,
-				});
-				return c.json({ entry: entryToJsonSafe(data) }, 201);
-			} catch (err) {
-				console.error("update entry db error:", err);
-				return c.json({ error: "database error during entry update" }, 500);
-			}
+			// Indexer is the sole writer of `entry` / `chunk`. The pending
+			// overlay patches in the new content on reads until EntryUpdated
+			// fires. FE's onMutate already replaced the cache; this is an ack.
+			return c.json({ pending: { transactionId } }, 202);
 		},
 	)
 	.post(
@@ -546,6 +618,18 @@ const writerRoutes = new Hono()
 
 			const args = { signature, nonce: Number(nonce), id: Number(id) };
 			try {
+				await simulateContractOrThrow({
+					to: address as Hex,
+					functionSignature: DELETE_ENTRY_FUNCTION_SIGNATURE,
+					args: [signature, Number(nonce), Number(id)],
+				});
+			} catch (err) {
+				return c.json(
+					{ error: `simulation failed: ${humanizeSimulateError(err)}` },
+					400,
+				);
+			}
+			try {
 				const { wallet, nonce: relayNonce } = await relay.sendTransaction({
 					to: address,
 					abi: DELETE_ENTRY_FUNCTION_SIGNATURE,
@@ -560,21 +644,22 @@ const writerRoutes = new Hono()
 					functionSignature: DELETE_ENTRY_FUNCTION_SIGNATURE,
 					args,
 					status: "PENDING",
+					targetAddress: address,
 				});
-				await db.deleteEntry(writer.storageAddress as Hex, id, transactionId);
-				const newData = await db.getWriter(address);
-				if (!newData) {
-					return c.json({ error: "writer not found" }, 404);
-				}
-				return c.json({
-					writer: {
-						...writerToJsonSafe(newData),
-						entries: newData.entries.map(entryToJsonSafe),
-					},
+				watchRelayReceipt({
+					txId: transactionId,
+					wallet,
+					nonce: relayNonce,
+					chainId: BigInt(env.TARGET_CHAIN_ID),
+					functionSignature: DELETE_ENTRY_FUNCTION_SIGNATURE,
+					args,
 				});
+				// Indexer is the sole writer of `entry`. The overlay marks
+				// this entry as deletedAt on reads until EntryRemoved fires.
+				return c.json({ pending: { transactionId } }, 202);
 			} catch (err) {
-				console.error("delete entry db error:", err);
-				return c.json({ error: "database error during entry deletion" }, 500);
+				console.error("delete entry error:", err);
+				return c.json({ error: "error during entry deletion" }, 500);
 			}
 		},
 	);

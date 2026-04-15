@@ -109,6 +109,9 @@ export async function editEntry({
 	totalChunks: number;
 	content: string;
 	authToken: string;
+	// Plaintext the user typed. Not sent — only used by `onMutate` to
+	// populate the optimistic cache entry's `decompressed`.
+	decompressed?: string;
 }) {
 	const res = await client.writer[":address"].entry[":id"].update.$post(
 		{
@@ -348,7 +351,10 @@ export async function factoryCreate({
 export async function createWithChunk({
 	address,
 	authToken,
-	...json
+	signature,
+	nonce,
+	chunkCount,
+	chunkContent,
 }: {
 	address: string;
 	signature: string;
@@ -356,11 +362,17 @@ export async function createWithChunk({
 	chunkCount: number;
 	chunkContent: string;
 	authToken: string;
+	// Plaintext the user typed. Not sent to the server — only used by
+	// `onMutate` to populate the optimistic cache entry's `decompressed`.
+	decompressed?: string;
+	// Author address. Not sent to the server (the server recovers it from
+	// the signature) — used by `onMutate` to set the optimistic entry's author.
+	author?: string;
 }) {
 	const res = await client.writer[":address"].entry.createWithChunk.$post(
 		{
 			param: { address },
-			json,
+			json: { signature, nonce, chunkCount, chunkContent },
 		},
 		{
 			headers: { Authorization: `Bearer ${authToken}` },

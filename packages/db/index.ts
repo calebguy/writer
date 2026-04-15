@@ -323,17 +323,24 @@ class Db {
 	}
 
 	createTx(tx: Omit<InsertRelayTransaction, "updatedAt" | "createdAt">) {
+		// Normalize targetAddress to lowercase so the `getPendingTxsFor`
+		// lookup (which also lowercases) matches regardless of casing used
+		// at the call site.
+		const normalized = {
+			...tx,
+			targetAddress: tx.targetAddress?.toLowerCase(),
+		};
 		return this.pg
 			.insert(relayTx)
 			.values({
-				...tx,
+				...normalized,
 				updatedAt: new Date(),
 				createdAt: new Date(),
 			})
 			.onConflictDoUpdate({
 				target: [relayTx.id],
 				set: {
-					...tx,
+					...normalized,
 					updatedAt: new Date(),
 					createdAt: new Date(),
 				},
@@ -375,6 +382,26 @@ class Db {
 			),
 			orderBy: (tx, { asc }) => [asc(tx.createdAt)],
 			limit,
+		});
+	}
+
+	/**
+	 * Returns all in-flight relay_tx rows targeting the given writer address.
+	 * "In-flight" = PENDING or SUBMITTED (not yet CONFIRMED or ABANDONED).
+	 * Used by the pending overlay to surface optimistic state to the read
+	 * path until the indexer catches up.
+	 *
+	 * Ordered by createdAt desc so callers can take the most recent pending
+	 * write per (entry, operation) pair in the overlay merge.
+	 */
+	async getPendingTxsFor(targetAddress: string) {
+		const normalized = targetAddress.toLowerCase();
+		return this.pg.query.relayTx.findMany({
+			where: and(
+				eq(relayTx.targetAddress, normalized),
+				inArray(relayTx.status, ["PENDING", "SUBMITTED"] as const),
+			),
+			orderBy: (tx, { desc: d }) => [d(tx.createdAt)],
 		});
 	}
 

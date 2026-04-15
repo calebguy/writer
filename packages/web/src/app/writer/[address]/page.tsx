@@ -10,11 +10,7 @@ import {
 	saveWriter,
 	unsaveWriter,
 } from "@/utils/api";
-import {
-	useOPWallet,
-	useProcessedEntries,
-	useReconcileStuckPending,
-} from "@/utils/hooks";
+import { useOPWallet, useProcessedEntries } from "@/utils/hooks";
 import { hasCachedDerivedKey } from "@/utils/keyCache";
 import { isEntryPrivate } from "@/utils/utils";
 import { usePrivy } from "@privy-io/react-auth";
@@ -65,15 +61,6 @@ export default function WriterPage() {
 	useEffect(() => {
 		setShouldPoll(hasPendingEntries);
 	}, [hasPendingEntries]);
-
-	// If an entry stays unconfirmed onchain for >15s, ask the server to
-	// reconcile in case the indexer missed the EntryCreated event.
-	useReconcileStuckPending({
-		isPending: hasPendingEntries,
-		userAddress: wallet?.address,
-		onReconciled: () =>
-			queryClient.invalidateQueries({ queryKey: ["writer", address] }),
-	});
 
 	// Process entries as soon as they arrive - shows immediately, processes private entries in background
 	const handleDecryptError = useCallback((error: unknown) => {

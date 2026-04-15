@@ -1,15 +1,71 @@
 import { db, publicClient } from "./constants";
 import { parseRelayTxId, relay } from "./relay";
 import {
+	BaseError,
+	ContractFunctionRevertedError,
 	decodeEventLog,
 	type Hex,
 	getAddress,
 	hexToBigInt,
+	parseAbi,
 	parseAbiItem,
 	recoverTypedDataAddress,
 } from "viem";
 
 import { env } from "./env";
+
+// Burn-ish address used as `account` in simulateContract calls below.
+// All mutating functions we simulate are `*WithSig` (signature-auth, not
+// msg.sender-auth) or the permissionless `WriterFactory.create`, so the
+// caller doesn't matter for simulation correctness. Using a fixed address
+// avoids accidentally hitting wallet-specific state.
+const SIM_CALLER = "0x000000000000000000000000000000000000dEaD" as Hex;
+
+/**
+ * Runs `eth_call` against the given function before the server hands it
+ * to the relay. Catches reverts (wrong signer, wrong role, invalid args,
+ * high-S signatures — exactly the class of bug that can leave the DB
+ * out of sync with the chain) so we can 400 before touching the relay.
+ *
+ * Does NOT catch nonce replay: on the sim fork, `digestWasExecuted` is
+ * clean so a replayed signature simulates as valid. That case is still
+ * caught chain-side by the actual tx reverting; the inline receipt
+ * watcher (see receipt-watcher.ts) marks the relay_tx ABANDONED.
+ */
+export async function simulateContractOrThrow({
+	to,
+	functionSignature,
+	args,
+}: {
+	to: Hex;
+	functionSignature: string;
+	args: readonly unknown[];
+}): Promise<void> {
+	const abi = parseAbi([
+		`function ${functionSignature}`,
+	] as readonly string[]);
+	const functionName = functionSignature.slice(0, functionSignature.indexOf("("));
+	await publicClient.simulateContract({
+		address: to,
+		abi,
+		functionName,
+		args: args as unknown[],
+		account: SIM_CALLER,
+	});
+}
+
+export function humanizeSimulateError(err: unknown): string {
+	if (err instanceof BaseError) {
+		const revert = err.walk(
+			(e) => e instanceof ContractFunctionRevertedError,
+		) as ContractFunctionRevertedError | null;
+		if (revert) {
+			return revert.data?.errorName ?? revert.shortMessage ?? "reverted";
+		}
+		return err.shortMessage ?? err.message;
+	}
+	return err instanceof Error ? err.message : "simulate failed";
+}
 
 // New writers omit `chainId` from the EIP-712 domain (chain-portable
 // signatures — see VerifyTypedData.sol). Legacy writers (created by the
