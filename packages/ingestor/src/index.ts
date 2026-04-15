@@ -26,14 +26,12 @@ async function main() {
 	const startBlock = cursor != null ? cursor + 1n : BigInt(env.START_BLOCK);
 	console.log(`Starting from block ${startBlock}`);
 
-	// Catchup phase: batch-process historical blocks
-	const lastCaughtUp = await catchup(db, httpClient, registry, startBlock);
-	console.log(`Catchup complete at block ${lastCaughtUp}`);
-
-	// Health server
-	let currentTip = lastCaughtUp;
+	// Start health server BEFORE catchup so Render doesn't kill us
+	// for failing health checks during a long historical sync.
+	let lastProcessed = startBlock - 1n;
+	let currentTip = await httpClient.getBlockNumber();
 	startHealthServer(env.HEALTH_PORT, () => ({
-		lastBlock: lastCaughtUp,
+		lastBlock: lastProcessed,
 		chainTip: currentTip,
 		storageAddresses: registry.storageCount,
 	}));
@@ -47,8 +45,12 @@ async function main() {
 		}
 	}, 10_000);
 
+	// Catchup phase: batch-process historical blocks
+	lastProcessed = await catchup(db, httpClient, registry, startBlock);
+	console.log(`Catchup complete at block ${lastProcessed}`);
+
 	// Realtime phase: WebSocket block subscription
-	await startRealtime(db, httpClient, wsClient, registry, lastCaughtUp);
+	await startRealtime(db, httpClient, wsClient, registry, lastProcessed);
 }
 
 // Graceful shutdown

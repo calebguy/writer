@@ -737,12 +737,21 @@ class Db {
 			// and the indexer later reconciles with on-chain data — both use
 			// the same entryId because upsertEntry reconciled the entry row
 			// by createdAtTransactionId first.
+			// Build the conflict-update set. Never overwrite a non-null
+			// createdAtTransactionId with null — this happens during
+			// re-indexing when the ingestor replays historical chunks
+			// whose original relay_tx used the old Syndicate UUID format
+			// (not matchable via dw:{wallet}:{nonce}).
+			const conflictSet: Record<string, unknown> = { ...item };
+			if (item.createdAtTransactionId == null) {
+				delete conflictSet.createdAtTransactionId;
+			}
 			return await this.pg
 				.insert(chunk)
 				.values({ ...item, createdAt: new Date() })
 				.onConflictDoUpdate({
 					target: [chunk.entryId, chunk.index],
-					set: { ...item },
+					set: conflictSet,
 				})
 				.returning();
 		} catch (err) {
