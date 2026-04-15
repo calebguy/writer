@@ -332,6 +332,7 @@ class Db {
 			...tx,
 			targetAddress: tx.targetAddress?.toLowerCase(),
 		};
+		const { id: _conflictKey, ...createSet } = normalized;
 		return this.pg
 			.insert(relayTx)
 			.values({
@@ -342,7 +343,7 @@ class Db {
 			.onConflictDoUpdate({
 				target: [relayTx.id],
 				set: {
-					...normalized,
+					...createSet,
 					updatedAt: new Date(),
 					createdAt: new Date(),
 				},
@@ -351,6 +352,7 @@ class Db {
 	}
 
 	upsertTx(item: InsertRelayTransaction) {
+		const { id: _conflictKey, ...updateSet } = item;
 		return this.pg
 			.insert(relayTx)
 			.values({
@@ -359,7 +361,7 @@ class Db {
 			})
 			.onConflictDoUpdate({
 				target: [relayTx.id],
-				set: { ...item, updatedAt: new Date() },
+				set: { ...updateSet, updatedAt: new Date() },
 			})
 			.returning();
 	}
@@ -456,6 +458,7 @@ class Db {
 		// we still strip it from the conflict update set to prevent a
 		// re-index from accidentally reverting a flipped value.
 		const {
+			address: _conflictKey,
 			storageId: _frozenStorageId,
 			publicWritable: _frozenPublic,
 			legacyDomain: _frozenLegacy,
@@ -506,13 +509,21 @@ class Db {
 					? [entry.createdAtTransactionId]
 					: [entry.storageAddress, entry.onChainId];
 
-		// `storageId` is intentionally OMITTED from the conflict update set:
-		// it's frozen at insert time and must never change after creation,
-		// even if a re-org or re-import overwrites every other field.
-		const { storageId: _frozenStorageId, ...mutableFields } = normalizedEntry;
+		// Strip frozen fields and conflict-target columns from the update
+		// set. Conflict target columns can't appear in SET (Postgres
+		// requirement), and frozen fields must never change after insert.
+		const {
+			storageId: _frozenStorageId,
+			id: _id,
+			storageAddress: _sa,
+			onChainId: _ocid,
+			createdAtTransactionId: _catid,
+			...mutableFields
+		} = normalizedEntry;
 
 		// Don't overwrite non-null transaction ID fields with null during
-		// re-indexing (same rationale as upsertChunk).
+		// re-indexing (same rationale as upsertChunk). Only include them
+		// in the update set when they carry a real value.
 		const conflictSet: Record<string, unknown> = {
 			...mutableFields,
 			updatedAt: new Date(),
@@ -522,8 +533,8 @@ class Db {
 			"updatedAtTransactionId",
 			"deletedAtTransactionId",
 		] as const) {
-			if (normalizedEntry[key] == null) {
-				delete conflictSet[key];
+			if (normalizedEntry[key] != null) {
+				conflictSet[key] = normalizedEntry[key];
 			}
 		}
 
@@ -560,6 +571,7 @@ class Db {
 
 	upsertUser(item: InsertUser) {
 		const normalizedAddress = item.address.toLowerCase();
+		const { address: _conflictKey, ...updateFields } = item;
 		return this.pg
 			.insert(user)
 			.values({
@@ -569,7 +581,7 @@ class Db {
 			})
 			.onConflictDoUpdate({
 				target: [user.address],
-				set: { ...item, address: normalizedAddress, updatedAt: new Date() },
+				set: { ...updateFields, updatedAt: new Date() },
 			})
 			.returning();
 	}
@@ -763,7 +775,8 @@ class Db {
 			// re-indexing when the ingestor replays historical chunks
 			// whose original relay_tx used the old Syndicate UUID format
 			// (not matchable via dw:{wallet}:{nonce}).
-			const conflictSet: Record<string, unknown> = { ...item };
+			const { entryId: _eid, index: _idx, ...updateFields } = item;
+			const conflictSet: Record<string, unknown> = { ...updateFields };
 			if (item.createdAtTransactionId == null) {
 				delete conflictSet.createdAtTransactionId;
 			}
