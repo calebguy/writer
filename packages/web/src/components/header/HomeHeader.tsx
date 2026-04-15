@@ -21,27 +21,52 @@ export function HomeHeader() {
 	const { mutateAsync, isPending } = useMutation({
 		mutationFn: factoryCreate,
 		mutationKey: ["create-from-factory-header"],
-		onSuccess: ({ writer }) => {
+		onMutate: async (vars) => {
+			// Optimistic placeholder — same pattern as WriterList. The real
+			// deterministic address isn't known until the server computes
+			// it from salt, so we key on a sentinel; onSettled's refetch
+			// replaces this row with the server-overlay row (which carries
+			// the real address and survives until the indexer confirms).
+			const tempAddress = `pending-${Date.now()}`;
+			const now = new Date();
+			const optimistic = {
+				address: tempAddress,
+				storageAddress: tempAddress,
+				storageId: tempAddress,
+				publicWritable: false,
+				legacyDomain: false,
+				title: vars.title,
+				admin: String(vars.admin),
+				managers: (vars.managers as string[]).map(String),
+				createdAtHash: null,
+				createdAtBlock: undefined,
+				createdAtBlockDatetime: null,
+				createdAt: now,
+				updatedAt: now,
+				deletedAt: null,
+				transactionId: null,
+				entries: [],
+			} as unknown as Writer;
+
+			const snapshots: Array<{
+				queryKey: readonly unknown[];
+				previous: Writer[] | undefined;
+			}> = [];
 			queryClient.setQueriesData<Writer[]>(
 				{ queryKey: ["get-writers"] },
-				(prev) => {
-					// Cast is safe: the factory/create response and the writer
-					// list entry have the same runtime shape. Hono narrows the
-					// two endpoints to slightly different static types for
-					// fields whose serialization strips `undefined`.
-					const nextWriter = { ...writer, entries: [] } as unknown as Writer;
-					if (!prev) return [nextWriter];
-					if (
-						prev.some(
-							(existing) =>
-								existing.address.toLowerCase() === writer.address.toLowerCase(),
-						)
-					) {
-						return prev;
-					}
-					return [nextWriter, ...prev];
+				(prev, query) => {
+					snapshots.push({ queryKey: query.queryKey, previous: prev });
+					return prev ? [optimistic, ...prev] : [optimistic];
 				},
 			);
+			return { snapshots };
+		},
+		onError: (_err, _vars, ctx) => {
+			for (const { queryKey, previous } of ctx?.snapshots ?? []) {
+				queryClient.setQueryData(queryKey, previous);
+			}
+		},
+		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: ["get-writers"] });
 		},
 	});
@@ -68,24 +93,28 @@ export function HomeHeader() {
 
 	const handleCreateWriter = async () => {
 		const title = markdown.trim();
-		if (!title || !wallet?.address || isPending) {
+		if (!title || !wallet?.address) {
 			return;
 		}
-
+		// Close + clear immediately so the user sees the optimistic
+		// writer card on the page below. The mutation runs in the
+		// background — onMutate already inserted the pending row.
+		setMarkdown("");
+		setIsCreateSheetOpen(false);
+		const walletAddress = wallet.address;
 		const authToken = await getAccessToken();
 		if (!authToken) {
 			console.error("No auth token found");
 			return;
 		}
-		await mutateAsync({
+		mutateAsync({
 			title,
-			admin: wallet.address as Hex,
-			managers: [wallet.address as Hex],
+			admin: walletAddress as Hex,
+			managers: [walletAddress as Hex],
 			authToken,
+		}).catch((err) => {
+			console.error("Create writer failed:", err);
 		});
-
-		setMarkdown("");
-		setIsCreateSheetOpen(false);
 	};
 
 	const handleOpenChange = (open: boolean) => {

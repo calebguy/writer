@@ -405,6 +405,23 @@ class Db {
 		});
 	}
 
+	/**
+	 * Returns all in-flight relay_tx rows matching a given function signature.
+	 * Used by the overlay to find pending factory creates when listing writers
+	 * for a manager — we can't key those on target_address because the target
+	 * is a brand-new writer address that hasn't been joined back to any manager
+	 * yet; the managers live inside `args`.
+	 */
+	async getPendingTxsByFunction(functionSignature: string) {
+		return this.pg.query.relayTx.findMany({
+			where: and(
+				eq(relayTx.functionSignature, functionSignature),
+				inArray(relayTx.status, ["PENDING", "SUBMITTED"] as const),
+			),
+			orderBy: (tx, { desc: d }) => [d(tx.createdAt)],
+		});
+	}
+
 	upsertWriter(item: InsertWriter) {
 		const normalizedManagers = Array.from(
 			new Set(item.managers.map((manager) => manager.toLowerCase())),

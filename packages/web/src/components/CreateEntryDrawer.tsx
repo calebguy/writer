@@ -29,7 +29,6 @@ export function CreateEntryDrawer({
 	const { isOpen, setOpen } = useCreateEntryDrawer();
 	const [markdown, setMarkdown] = useState("");
 	const [encrypted, setEncrypted] = useState(false);
-	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [drawerTarget, setDrawerTarget] = useState<HTMLDivElement | null>(null);
 	const drawerTargetRef = useCallback((node: HTMLDivElement | null) => {
 		setDrawerTarget(node);
@@ -49,12 +48,16 @@ export function CreateEntryDrawer({
 		setOpen(false);
 	};
 
-	const handleSubmit = async () => {
-		if (!markdown.trim() || isLoading || isSubmitting) return;
-		setIsSubmitting(true);
-		await onSubmit({ markdown, encrypted });
-		setIsSubmitting(false);
+	const handleSubmit = () => {
+		if (!markdown.trim() || isLoading) return;
+		const data = { markdown, encrypted };
+		// Reset + close immediately. The parent's onMutate optimistically
+		// inserts the pending entry card on the underlying page, so the
+		// user sees the card as soon as the drawer closes.
 		handleReset();
+		Promise.resolve(onSubmit(data)).catch((err) => {
+			console.error("Submit failed:", err);
+		});
 	};
 
 	const editorContent = (
@@ -115,11 +118,11 @@ export function CreateEntryDrawer({
 					}
 				}}
 			>
-				<DynamicDrawerContent loading={isLoading || isSubmitting}>
+				<DynamicDrawerContent loading={isLoading}>
 					<DynamicDrawerTitle className="sr-only">
 						Create Entry
 					</DynamicDrawerTitle>
-					{isLoading || isSubmitting ? (
+					{isLoading ? (
 						<div className="h-56 flex items-center justify-center">
 							<LoadingRelic size={32} className="bg-secondary!" />
 						</div>

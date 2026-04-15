@@ -136,6 +136,84 @@ export async function applyOverlayToWriters(
 	});
 }
 
+/**
+ * Overlay helper for the /manager/:address route. Does two things:
+ *
+ *  1. Applies pending entry ops to each confirmed writer (same as
+ *     applyOverlayToWriters).
+ *  2. Prepends synthesized pending-writer rows for any pending factory
+ *     `create` tx where the caller's address is listed as a manager in
+ *     relay_tx.args — so a writer the user just kicked off shows up on
+ *     the list page before the indexer picks up WriterCreated.
+ */
+export async function applyOverlayToWritersForManager(
+	managerAddress: string,
+	writers: WriterJson[],
+): Promise<WriterJson[]> {
+	const normalizedManager = managerAddress.toLowerCase();
+	const [withEntryOverlay, pendingCreates] = await Promise.all([
+		applyOverlayToWriters(writers),
+		db.getPendingTxsByFunction(CREATE_FUNCTION_SIGNATURE),
+	]);
+
+	const alreadyListed = new Set(
+		withEntryOverlay.map((w) => w.address.toLowerCase()),
+	);
+	const synthesized: WriterJson[] = [];
+
+	console.log("[overlay] manager", normalizedManager, "pendingCreates", pendingCreates.length, "alreadyListed", Array.from(alreadyListed));
+
+	for (const tx of pendingCreates) {
+		console.log("[overlay] tx", tx.id, "target", tx.targetAddress, "status", tx.status, "args", JSON.stringify(tx.args));
+		if (!tx.targetAddress) { console.log("  skip: no targetAddress"); continue; }
+		const target = tx.targetAddress.toLowerCase();
+		if (alreadyListed.has(target)) { console.log("  skip: already listed"); continue; }
+
+		const args = tx.args as
+			| {
+					title?: string;
+					admin?: string;
+					managers?: string[];
+					publicWritable?: boolean;
+			  }
+			| null;
+		if (!args) { console.log("  skip: no args"); continue; }
+
+		const managerHit = (args.managers ?? []).some(
+			(m) => m.toLowerCase() === normalizedManager,
+		);
+		const adminHit = (args.admin ?? "").toLowerCase() === normalizedManager;
+		console.log("  managerHit", managerHit, "adminHit", adminHit);
+		if (!managerHit && !adminHit) { console.log("  skip: neither manager nor admin hit"); continue; }
+
+		const synth = synthesizePendingWriter(target, [
+			{
+				id: tx.id,
+				functionSignature: tx.functionSignature,
+				args: tx.args,
+				targetAddress: tx.targetAddress,
+				createdAt: tx.createdAt,
+			},
+		]);
+		if (synth) {
+			synthesized.push(synth);
+			alreadyListed.add(target);
+			console.log("  synthesized writer", synth.address);
+		} else {
+			console.log("  skip: synth returned null");
+		}
+	}
+	console.log("[overlay] synthesized", synthesized.length, "withEntryOverlay", withEntryOverlay.length);
+
+	// Pending creates are the newest rows on the user's list; sort by
+	// createdAt desc to match the user's most-recent-first expectation.
+	synthesized.sort(
+		(a, b) =>
+			new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+	);
+	return [...synthesized, ...withEntryOverlay];
+}
+
 // ---------------------------------------------------------------------------
 // Implementation helpers
 // ---------------------------------------------------------------------------

@@ -42,7 +42,7 @@ import {
 import { makeRelayTxId, relay } from "../relay";
 import { watchRelayReceipt } from "../receipt-watcher";
 import {
-	applyOverlayToWriters,
+	applyOverlayToWritersForManager,
 	getWriterWithOverlay,
 } from "../pending-overlay";
 
@@ -54,12 +54,14 @@ const writerRoutes = new Hono()
 			...writerToJsonSafe(w),
 			entries: w.entries.map(entryToJsonSafe),
 		}));
-		// Overlay pending relay_tx rows so optimistic state shows up in the
-		// writers list before the indexer confirms each tx. The cast is
-		// structural: the overlay treats rows as loose JSON and doesn't
-		// rely on the stricter Drizzle field nullability.
-		const writers = await applyOverlayToWriters(
-			confirmed as Parameters<typeof applyOverlayToWriters>[0],
+		// Overlay pending relay_tx rows so optimistic state shows up in
+		// the writers list before the indexer confirms each tx. The
+		// manager-scoped overlay also synthesizes rows for pending
+		// factory creates where this user is listed as admin/manager, so
+		// a freshly-created writer appears without a page refresh.
+		const writers = await applyOverlayToWritersForManager(
+			address,
+			confirmed as Parameters<typeof applyOverlayToWritersForManager>[1],
 		);
 		return c.json({ writers });
 	})
