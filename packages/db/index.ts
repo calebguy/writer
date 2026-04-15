@@ -492,16 +492,40 @@ class Db {
 			storageId: normalizedStorageId,
 		} satisfies InsertEntry;
 
-		const conflictTarget = normalizedEntry.id
-			? [entry.id]
-			: normalizedEntry.createdAtTransactionId
-				? [entry.createdAtTransactionId]
-				: [entry.storageAddress, entry.onChainId];
+		// Prefer the (storageAddress, onChainId) composite index when
+		// onChainId is available — it's the true on-chain identity of the
+		// entry and avoids collisions when re-indexing with a different
+		// createdAtTransactionId than the original insert. Fall back to
+		// createdAtTransactionId for pending entries (no onChainId yet),
+		// and finally to the DB serial id.
+		const conflictTarget = normalizedEntry.onChainId != null
+			? [entry.storageAddress, entry.onChainId]
+			: normalizedEntry.id
+				? [entry.id]
+				: normalizedEntry.createdAtTransactionId
+					? [entry.createdAtTransactionId]
+					: [entry.storageAddress, entry.onChainId];
 
 		// `storageId` is intentionally OMITTED from the conflict update set:
 		// it's frozen at insert time and must never change after creation,
 		// even if a re-org or re-import overwrites every other field.
 		const { storageId: _frozenStorageId, ...mutableFields } = normalizedEntry;
+
+		// Don't overwrite non-null transaction ID fields with null during
+		// re-indexing (same rationale as upsertChunk).
+		const conflictSet: Record<string, unknown> = {
+			...mutableFields,
+			updatedAt: new Date(),
+		};
+		for (const key of [
+			"createdAtTransactionId",
+			"updatedAtTransactionId",
+			"deletedAtTransactionId",
+		] as const) {
+			if (normalizedEntry[key] == null) {
+				delete conflictSet[key];
+			}
+		}
 
 		const data = await this.pg
 			.insert(entry)
@@ -512,10 +536,7 @@ class Db {
 			})
 			.onConflictDoUpdate({
 				target: conflictTarget,
-				set: {
-					...mutableFields,
-					updatedAt: new Date(),
-				},
+				set: conflictSet,
 			})
 			.returning();
 		return Promise.all(
