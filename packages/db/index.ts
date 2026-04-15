@@ -789,6 +789,40 @@ class Db {
 				})
 				.returning();
 		} catch (err) {
+			// Drizzle's onConflictDoUpdate with column targets can fail to
+			// match the named unique index (entry_index_idx) due to casing
+			// mode interactions. If the (entryId, index) conflict fires as
+			// an error instead of being caught, fall back to an explicit
+			// UPDATE.
+			const isEntryIndexViolation =
+				err instanceof Error &&
+				err.message.includes("entry_index_idx");
+			if (isEntryIndexViolation) {
+				const { entryId: _eid2, index: _idx2, ...fields } = item;
+				if (item.createdAtTransactionId == null) {
+					const { createdAtTransactionId: _skip, ...safeFields } = fields;
+					return await this.pg
+						.update(chunk)
+						.set(safeFields)
+						.where(
+							and(
+								eq(chunk.entryId, item.entryId),
+								eq(chunk.index, item.index),
+							),
+						)
+						.returning();
+				}
+				return await this.pg
+					.update(chunk)
+					.set(fields)
+					.where(
+						and(
+							eq(chunk.entryId, item.entryId),
+							eq(chunk.index, item.index),
+						),
+					)
+					.returning();
+			}
 			// Fallback: if (entryId, index) didn't conflict but
 			// createdAtTransactionId did, it means the server and indexer
 			// resolved the same on-chain entry to different DB rows (e.g.,

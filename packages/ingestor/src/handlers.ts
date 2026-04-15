@@ -314,21 +314,36 @@ async function handleLogicSet(log: Log, db: Db): Promise<void> {
 	const storageAddress = log.address;
 	const newLogic = args.logicAddress;
 
-	const updated = await db.updateWriterAddressByStorage(
-		storageAddress as Hex,
-		newLogic as Hex,
-	);
-	if (updated === 0) {
+	// Check if the writer already points at this logic address. During
+	// factory construction, setLogic() fires AFTER WriterCreated — both
+	// set the same address. We must NOT flip legacyDomain in that case
+	// because updateWriterAddressByStorage unconditionally sets it to
+	// false, which would break old-factory writers that need it true.
+	const writerRow = await db.getWriterByStorageAddress(storageAddress as Hex);
+	if (!writerRow) {
 		console.log("LogicSet: no writer row yet (deferred to WriterCreated)", {
 			storageAddress,
 			newLogic,
 		});
-	} else {
-		console.log("LogicSet: rebound writer.address", {
+		return;
+	}
+	if (writerRow.address.toLowerCase() === newLogic.toLowerCase()) {
+		console.log("LogicSet: address unchanged (construction-time, skipping)", {
 			storageAddress,
 			newLogic,
 		});
+		return;
 	}
+
+	const updated = await db.updateWriterAddressByStorage(
+		storageAddress as Hex,
+		newLogic as Hex,
+	);
+	console.log("LogicSet: rebound writer.address", {
+		storageAddress,
+		newLogic,
+		updated,
+	});
 }
 
 async function handleHexSet(log: Log, db: Db): Promise<void> {
