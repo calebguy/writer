@@ -6,7 +6,6 @@ import {
 	deleteEntry,
 	editEntry,
 	getEntry,
-	getPendingEntry,
 	getSaved,
 	saveEntry,
 	unsaveEntry,
@@ -326,25 +325,6 @@ export default function Entry({
 			!isPending
 		);
 	}, [initialEntry, wallet, isPending]);
-
-	// Poll for on-chain confirmation when pending
-	useEffect(() => {
-		if (!isPending) return;
-
-		const pollInterval = setInterval(async () => {
-			try {
-				const entry = await getPendingEntry(address as Hex, Number(id));
-				if (entry.onChainId) {
-					clearInterval(pollInterval);
-					router.replace(`/writer/${address}/${entry.onChainId}`);
-				}
-			} catch (error) {
-				console.error("Error polling for entry confirmation:", error);
-			}
-		}, 3000);
-
-		return () => clearInterval(pollInterval);
-	}, [isPending, address, id, router]);
 
 	// Poll for edit confirmation when edit is submitted
 	useEffect(() => {

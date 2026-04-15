@@ -996,24 +996,6 @@ export default function DocsPage() {
 							response="{ entry: Entry }"
 						/>
 
-						<Endpoint
-							method="GET"
-							path="/writer/:address/entry/pending/:id"
-							description="Get a pending entry before onchain confirmation."
-							params={[
-								{
-									name: "address",
-									type: "address",
-									description: "Writer contract address",
-								},
-								{
-									name: "id",
-									type: "string",
-									description: "Database entry ID",
-								},
-							]}
-							response="{ entry: Entry }"
-						/>
 					</Section>
 					<RelicDivider seed="entries-user" />
 					<Section title="User">
