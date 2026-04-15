@@ -206,12 +206,20 @@ async function handleChunkReceived(
 		transactionId,
 	});
 
-	await db.upsertChunk({
-		index: Number(args.index),
-		entryId: entry.id,
-		content: args.content,
-		createdAtTransactionId: transactionId,
-	});
+	try {
+		await db.upsertChunk({
+			index: Number(args.index),
+			entryId: entry.id,
+			content: args.content,
+			createdAtTransactionId: transactionId,
+		});
+	} catch (err) {
+		console.error("ChunkReceived: upsertChunk failed (continuing)", {
+			entryId: entry.id,
+			index: Number(args.index),
+			error: err instanceof Error ? err.message : String(err),
+		});
+	}
 }
 
 async function handleEntryUpdated(

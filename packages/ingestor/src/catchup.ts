@@ -64,7 +64,16 @@ export async function processBlockRange(
 		const blockData = blockCache.get(log.blockNumber!);
 		if (!blockData) continue;
 
-		await processLog(log, txData, blockData, db, registry);
+		try {
+			await processLog(log, txData, blockData, db, registry);
+		} catch (err) {
+			console.error("Error processing log (continuing)", {
+				block: log.blockNumber?.toString(),
+				logIndex: log.logIndex,
+				tx: log.transactionHash,
+				error: err instanceof Error ? err.message : String(err),
+			});
+		}
 	}
 
 	// If new storage addresses were discovered (from WriterCreated events),
@@ -89,7 +98,15 @@ export async function processBlockRange(
 				if (!txData) continue;
 				const blockData = blockCache.get(log.blockNumber!);
 				if (!blockData) continue;
-				await processLog(log, txData, blockData, db, registry);
+				try {
+					await processLog(log, txData, blockData, db, registry);
+				} catch (err) {
+					console.error("Error processing supplemental log (continuing)", {
+						block: log.blockNumber?.toString(),
+						logIndex: log.logIndex,
+						error: err instanceof Error ? err.message : String(err),
+					});
+				}
 			}
 		}
 	}
