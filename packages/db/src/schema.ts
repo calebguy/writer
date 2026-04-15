@@ -170,6 +170,12 @@ export const relayTx = pgTable(
 	}),
 );
 
+export const ingestorCursor = pgTable("ingestor_cursor", {
+	id: integer().primaryKey().default(1),
+	lastBlock: bigint({ mode: "bigint" }).notNull(),
+	updatedAt: timestamp({ withTimezone: true }).notNull(),
+});
+
 export const user = pgTable("user", {
 	address: varchar({ length: 42 }).primaryKey(),
 	color: text(),
