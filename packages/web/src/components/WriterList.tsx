@@ -39,11 +39,7 @@ export function WriterList({
 
 	const address = user?.wallet?.address;
 
-	const {
-		data: writers,
-		isLoading,
-		refetch,
-	} = useQuery({
+	const { data: writers, isLoading } = useQuery({
 		queryFn: () => getWritersByManager(address as Hex),
 		queryKey: ["get-writers", address],
 		enabled: !!address && authenticated,
@@ -93,52 +89,20 @@ export function WriterList({
 			queryClient.invalidateQueries({ queryKey: ["get-writers", address] });
 		},
 	});
-	const { mutateAsync: createWriter } = useMutation({
+	const { mutateAsync: createWriter, isPending: isCreating } = useMutation({
 		mutationFn: factoryCreate,
 		mutationKey: ["create-from-factory"],
-		onMutate: async (vars) => {
+		onSuccess: (data) => {
+			// Insert the server-returned writer (with real deterministic
+			// address and createdAtHash: null) into the cache. The card
+			// only appears after the POST succeeds — while waiting, the
+			// CreateInput shows its own loading state.
 			const queryKey = ["get-writers", address] as const;
-			await queryClient.cancelQueries({ queryKey });
-			const previous = queryClient.getQueryData<Writer[]>(queryKey);
-
-			// Placeholder writer card shown immediately. `address` is a
-			// sentinel because the real deterministic writer address is
-			// only known after the server computes it from the salt.
-			// onSettled -> refetch replaces this with the server-overlay
-			// row which carries the real address.
-			const tempAddress = `pending-${Date.now()}`;
-			const now = new Date();
-			const optimistic = {
-				address: tempAddress,
-				storageAddress: tempAddress,
-				storageId: tempAddress,
-				publicWritable: false,
-				legacyDomain: false,
-				title: vars.title,
-				admin: String(vars.admin),
-				managers: (vars.managers as string[]).map(String),
-				createdAtHash: null,
-				createdAtBlock: undefined,
-				createdAtBlockDatetime: null,
-				createdAt: now,
-				updatedAt: now,
-				deletedAt: null,
-				transactionId: null,
-				entries: [],
-			} as unknown as Writer;
-
-			queryClient.setQueryData<Writer[]>(queryKey, (prev) =>
-				prev ? [optimistic, ...prev] : [optimistic],
+			queryClient.setQueryData<Writer[]>(queryKey, (current) =>
+				current
+					? [data.writer as unknown as Writer, ...current]
+					: [data.writer as unknown as Writer],
 			);
-			return { previous, queryKey };
-		},
-		onError: (_err, _vars, ctx) => {
-			if (ctx?.queryKey) {
-				queryClient.setQueryData(ctx.queryKey, ctx.previous);
-			}
-		},
-		onSettled: () => {
-			refetch();
 			setIsPolling(true);
 		},
 	});
@@ -203,7 +167,7 @@ export function WriterList({
 				<CreateInput
 					placeholder="Create a Place"
 					onSubmit={handleSubmit}
-					isLoading={false}
+					isLoading={isCreating}
 				/>
 			</div>
 			{(writers ?? []).length === 0 && (

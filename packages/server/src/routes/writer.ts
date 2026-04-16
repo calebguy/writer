@@ -254,6 +254,7 @@ const writerRoutes = new Hono()
 					args: [title, admin, managers, publicWritable, salt],
 				});
 			} catch (err) {
+				console.error("Simulation failed:", err);
 				return c.json(
 					{ error: `simulation failed: ${humanizeSimulateError(err)}` },
 					400,
@@ -396,6 +397,7 @@ const writerRoutes = new Hono()
 					args: [signature, Number(nonce), Number(chunkCount), chunkContent],
 				});
 			} catch (err) {
+				console.error("Simulation failed:", err);
 				return c.json(
 					{ error: `simulation failed: ${humanizeSimulateError(err)}` },
 					400,
@@ -519,6 +521,7 @@ const writerRoutes = new Hono()
 					],
 				});
 			} catch (err) {
+				console.error("Simulation failed:", err);
 				return c.json(
 					{ error: `simulation failed: ${humanizeSimulateError(err)}` },
 					400,
@@ -610,6 +613,7 @@ const writerRoutes = new Hono()
 					args: [signature, Number(nonce), Number(id)],
 				});
 			} catch (err) {
+				console.error("Simulation failed:", err);
 				return c.json(
 					{ error: `simulation failed: ${humanizeSimulateError(err)}` },
 					400,
