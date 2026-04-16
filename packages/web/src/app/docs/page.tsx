@@ -316,7 +316,6 @@ const tocItems = [
 	{ id: "api", label: "API", depth: 0 },
 	{ id: "writers", label: "Writers", depth: 1 },
 	{ id: "entries", label: "Entries", depth: 1 },
-	{ id: "color", label: "Color", depth: 1 },
 	{ id: "user", label: "User", depth: 1 },
 	{ id: "content-encoding", label: "Content Encoding", depth: 0 },
 	{ id: "format-prefixes", label: "Format Prefixes", depth: 1 },

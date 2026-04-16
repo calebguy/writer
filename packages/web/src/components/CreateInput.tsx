@@ -112,11 +112,10 @@ export default function CreateInput({
 	const handleSubmit = () => {
 		if (markdown.trim() === "") return;
 		const data = { markdown, encrypted };
-		// Reset the form immediately. Any pending-UI is the parent's job
-		// (typically via TanStack `onMutate`). We fire-and-forget onSubmit
-		// so the input doesn't sit in a "submitting" state while the
-		// parent's mutation flight + optimistic card handle it.
 		setLoadingContent(markdown);
+		// Optimistically clear the editor — restore on failure.
+		const prevMarkdown = markdown;
+		const prevEncrypted = encrypted;
 		editorRef.current?.setMarkdown("");
 		setMarkdown("");
 		setHasFocus(false);
@@ -125,6 +124,11 @@ export default function CreateInput({
 		onExpand?.(false);
 		Promise.resolve(onSubmit(data)).catch((err) => {
 			console.error("Submit failed:", err);
+			// Restore the content so the user can retry
+			editorRef.current?.setMarkdown(prevMarkdown);
+			setMarkdown(prevMarkdown);
+			setEncrypted(prevEncrypted);
+			setHasFocus(true);
 		});
 	};
 

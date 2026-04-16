@@ -55,11 +55,12 @@ function ThemeButton({
 
 function isLegacyEncrypted(raw: string | undefined | null): boolean {
 	if (!raw) return false;
-	// v1, v2, AND v3 are all considered "legacy" by the migrate tool. v3 is
-	// included because v3 derivation is also phishable (audit C-1) — the
-	// migrate tool now upgrades v1/v2/v3 → v4 (per-writer EIP-712 + HKDF +
-	// AES-256-GCM, see signer.ts:getDerivedSigningKeyV4).
+	// v1/v2/v3/v4 are all considered "legacy" by the migrate tool.
+	// v4 is included because it uses a generic EIP-712 domain name
+	// ("Writer Encryption") — v5 brands it as "writer.place encryption"
+	// for better phishing resistance.
 	return (
+		raw.startsWith("enc:v4:br:") ||
 		raw.startsWith("enc:v3:br:") ||
 		raw.startsWith("enc:v2:br:") ||
 		raw.startsWith("enc:br:")

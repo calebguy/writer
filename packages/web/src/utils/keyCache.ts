@@ -4,19 +4,20 @@ import {
 	getDerivedSigningKeyV2,
 	getDerivedSigningKeyV3,
 	getDerivedSigningKeyV4,
+	getDerivedSigningKeyV5,
 } from "./signer";
 
-export type KeyVersion = "v1" | "v2" | "v3" | "v4";
+export type KeyVersion = "v1" | "v2" | "v3" | "v4" | "v5";
 
 // In-memory cache for derived keys (session-scoped for security).
 //
 // Cache key formats:
 //   v1/v2/v3: "${walletAddress}:${version}"               — global per user
-//   v4:       "${walletAddress}:${storageId}:${version}"  — per writer
+//   v4/v5:    "${walletAddress}:${storageId}:${version}"  — per writer
 //
-// The v4 keys are per-writer because v4 derivation is bound to a specific
+// The v4/v5 keys are per-writer because derivation is bound to a specific
 // storageId. Visiting writer A and then writer B requires two signatures
-// (one v4 key per writer), but each is cached for the rest of the session.
+// (one key per writer), but each is cached for the rest of the session.
 const keyCache = new Map<string, Uint8Array>();
 
 function legacyKeyCacheKey(
@@ -26,31 +27,40 @@ function legacyKeyCacheKey(
 	return `${walletAddress.toLowerCase()}:${version}`;
 }
 
-function v4KeyCacheKey(walletAddress: string, storageId: string): string {
-	return `${walletAddress.toLowerCase()}:${storageId.toLowerCase()}:v4`;
+function perWriterCacheKey(
+	walletAddress: string,
+	storageId: string,
+	version: "v4" | "v5",
+): string {
+	return `${walletAddress.toLowerCase()}:${storageId.toLowerCase()}:${version}`;
 }
 
 /**
  * Fetch a derived encryption key, deriving + caching it on first access.
  *
  * For v1/v2/v3 (global keys), `storageId` must be omitted.
- * For v4 (per-writer keys), `storageId` is required.
+ * For v4/v5 (per-writer keys), `storageId` is required.
  */
 export async function getCachedDerivedKey(
 	wallet: ConnectedWallet,
 	version: KeyVersion,
 	storageId?: string,
 ): Promise<Uint8Array> {
-	if (version === "v4") {
+	if (version === "v5" || version === "v4") {
 		if (!storageId) {
-			throw new Error("getCachedDerivedKey: v4 requires a storageId");
+			throw new Error(
+				`getCachedDerivedKey: ${version} requires a storageId`,
+			);
 		}
-		const cacheKey = v4KeyCacheKey(wallet.address, storageId);
+		const cacheKey = perWriterCacheKey(wallet.address, storageId, version);
 		const cached = keyCache.get(cacheKey);
 		if (cached) {
 			return cached;
 		}
-		const key = await getDerivedSigningKeyV4(wallet, storageId);
+		const key =
+			version === "v5"
+				? await getDerivedSigningKeyV5(wallet, storageId)
+				: await getDerivedSigningKeyV4(wallet, storageId);
 		keyCache.set(cacheKey, key);
 		return key;
 	}
@@ -76,24 +86,26 @@ export async function getCachedDerivedKey(
  * Check whether a derived key is already in the cache (no signature prompt).
  *
  * For v1/v2/v3, `storageId` must be omitted.
- * For v4, `storageId` is required.
+ * For v4/v5, `storageId` is required.
  */
 export function hasCachedDerivedKey(
 	wallet: ConnectedWallet,
 	version: KeyVersion,
 	storageId?: string,
 ): boolean {
-	if (version === "v4") {
+	if (version === "v5" || version === "v4") {
 		if (!storageId) return false;
-		return keyCache.has(v4KeyCacheKey(wallet.address, storageId));
+		return keyCache.has(
+			perWriterCacheKey(wallet.address, storageId, version),
+		);
 	}
 	return keyCache.has(legacyKeyCacheKey(wallet.address, version));
 }
 
 /**
  * Bulk-fetch the legacy v1/v2/v3 keys for backward-compat decryption paths.
- * Does NOT include v4 because v4 keys are per-writer and can't be sensibly
- * fetched without a storageId.
+ * Does NOT include v4/v5 because those keys are per-writer and can't be
+ * sensibly fetched without a storageId.
  */
 export async function getCachedDerivedLegacyKeys(
 	wallet: ConnectedWallet,
@@ -109,7 +121,7 @@ export async function getCachedDerivedLegacyKeys(
 }
 
 // Backwards-compat alias — kept so existing call sites don't break. Same
-// behavior as getCachedDerivedLegacyKeys: returns only v1/v2/v3, not v4.
+// behavior as getCachedDerivedLegacyKeys: returns only v1/v2/v3, not v4/v5.
 export const getCachedDerivedKeys = getCachedDerivedLegacyKeys;
 
 export function clearCachedKeysForWallet(walletAddress: string): void {

@@ -397,10 +397,6 @@ export async function getDerivedSigningKeyV4(
 		params: [wallet.address, JSON.stringify(payload)],
 	})) as Hex;
 
-	// Run the signature through HKDF-SHA256 to get a uniformly-random
-	// 32-byte AES-256 key. The `info` label namespaces this derivation so we
-	// can derive other subkeys from the same signature in the future without
-	// collision (e.g. v5 with a different KDF binding).
 	const signatureBytes = Uint8Array.from(
 		Buffer.from(signature.slice(2), "hex"),
 	);
@@ -419,10 +415,74 @@ export async function getDerivedSigningKeyV4(
 			info: new TextEncoder().encode("Writer:enc:v4:AES-256-GCM"),
 		},
 		ikm,
-		256, // bits → 32 bytes
+		256,
 	);
 	return new Uint8Array(derivedBits);
 }
 
-// Default export uses v4 for new encryptions
-export const getDerivedSigningKey = getDerivedSigningKeyV4;
+// V5 key derivation — updates the EIP-712 domain name to "writer.place
+// encryption" and adds an origin warning to the purpose field. This makes
+// the signature request visually identifiable as belonging to writer.place,
+// giving users a social signal to reject the prompt on phishing sites.
+//
+// Cryptographically identical to v4 (same HKDF, same AES-256-GCM), but
+// the different domain name produces a different domain separator → different
+// signature → different key. Existing v4 entries must be migrated.
+export async function getDerivedSigningKeyV5(
+	wallet: ConnectedWallet,
+	storageId: string,
+): Promise<Uint8Array> {
+	const provider = await wallet.getEthereumProvider();
+	const payload = {
+		domain: {
+			name: "writer.place encryption",
+			version: "1",
+		},
+		message: {
+			storageId: storageId.toLowerCase(),
+			purpose:
+				"Get your encryption key for this Writer. \n\nNote: Only sign this message from writer.place.",
+		},
+		primaryType: "DeriveKey",
+		types: {
+			EIP712Domain: [
+				{ name: "name", type: "string" },
+				{ name: "version", type: "string" },
+			],
+			DeriveKey: [
+				{ name: "storageId", type: "string" },
+				{ name: "purpose", type: "string" },
+			],
+		},
+	};
+
+	const signature = (await provider.request({
+		method: "eth_signTypedData_v4",
+		params: [wallet.address, JSON.stringify(payload)],
+	})) as Hex;
+
+	const signatureBytes = Uint8Array.from(
+		Buffer.from(signature.slice(2), "hex"),
+	);
+	const ikm = await crypto.subtle.importKey(
+		"raw",
+		signatureBytes as BufferSource,
+		"HKDF",
+		false,
+		["deriveBits"],
+	);
+	const derivedBits = await crypto.subtle.deriveBits(
+		{
+			name: "HKDF",
+			hash: "SHA-256",
+			salt: new Uint8Array(0),
+			info: new TextEncoder().encode("Writer:enc:v5:AES-256-GCM"),
+		},
+		ikm,
+		256,
+	);
+	return new Uint8Array(derivedBits);
+}
+
+// Default export uses v5 for new encryptions
+export const getDerivedSigningKey = getDerivedSigningKeyV5;

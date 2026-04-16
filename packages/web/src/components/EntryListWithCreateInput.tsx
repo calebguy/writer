@@ -45,6 +45,7 @@ export default function EntryListWithCreateInput({
 	emptyMessage?: string;
 }) {
 	const [isExpanded, setIsExpanded] = useState(false);
+	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [wallet] = useOPWallet();
 	const { getAccessToken } = usePrivy();
 	const router = useRouter();
@@ -95,9 +96,11 @@ export default function EntryListWithCreateInput({
 					},
 				],
 				raw: vars.chunkContent,
-				version: vars.chunkContent.startsWith("enc:v4:br:")
-					? "enc:v4:br:"
-					: "br:",
+				version: vars.chunkContent.startsWith("enc:v5:br:")
+					? "enc:v5:br:"
+					: vars.chunkContent.startsWith("enc:v4:br:")
+						? "enc:v4:br:"
+						: "br:",
 				// Pre-populating decompressed lets `useProcessedEntries` skip the
 				// decrypt step and render the user's typed content instantly.
 				decompressed: vars.decompressed ?? "",
@@ -133,15 +136,17 @@ export default function EntryListWithCreateInput({
 			return;
 		}
 
+		setIsSubmitting(true);
+		try {
+
 		const compressedContent = await compress(markdown);
 		let versionedCompressedContent = `br:${compressedContent}`;
 		if (encrypted) {
-			// New private writes always use v4 (per-writer EIP-712 + HKDF +
-			// AES-256-GCM). v1/v2/v3 read paths still work for legacy entries
-			// but no new entries are created with those formats.
-			const key = await getCachedDerivedKey(wallet, "v4", writerStorageId);
+			// New private writes always use v5 (per-writer EIP-712 + HKDF +
+			// AES-256-GCM with writer.place branded domain).
+			const key = await getCachedDerivedKey(wallet, "v5", writerStorageId);
 			const encryptedContent = await encrypt(key, compressedContent);
-			versionedCompressedContent = `enc:v4:br:${encryptedContent}`;
+			versionedCompressedContent = `enc:v5:br:${encryptedContent}`;
 		}
 
 		const { signature, nonce, chunkCount, chunkContent } =
@@ -166,6 +171,9 @@ export default function EntryListWithCreateInput({
 			decompressed: markdown,
 			author: wallet.address,
 		});
+		} finally {
+			setIsSubmitting(false);
+		}
 	};
 
 	return (
@@ -184,7 +192,7 @@ export default function EntryListWithCreateInput({
 							onExpand={setIsExpanded}
 							canExpand={true}
 							onSubmit={handleSubmit}
-							isLoading={false}
+							isLoading={isSubmitting || isPending}
 						/>
 					</div>
 				)}
@@ -208,7 +216,7 @@ export default function EntryListWithCreateInput({
 				<CreateEntryDrawer
 					placeholder={`Write in ${writerTitle}`}
 					onSubmit={handleSubmit}
-					isLoading={false}
+					isLoading={isSubmitting || isPending}
 				/>
 			)}
 		</>

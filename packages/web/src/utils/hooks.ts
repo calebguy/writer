@@ -168,6 +168,9 @@ export function useProcessedEntries(
 				// v4 is per-writer (derived from storage_id), so we fetch one
 				// v4 key per unique storage_id present in the batch. In the
 				// common case (one writer at a time) that's a single key.
+				const needsV5 = privateEntriesToProcess.some((entry) =>
+					entry.raw?.startsWith("enc:v5:br:"),
+				);
 				const needsV4 = privateEntriesToProcess.some((entry) =>
 					entry.raw?.startsWith("enc:v4:br:"),
 				);
@@ -190,15 +193,24 @@ export function useProcessedEntries(
 					? await getCachedDerivedKey(wallet!, "v1")
 					: undefined;
 
-				// Pre-derive any v4 keys we'll need. The keyCache dedupes by
+				// Pre-derive per-writer keys (v4/v5). The keyCache dedupes by
 				// (wallet, storageId, version), so visiting the same storageId
 				// twice in this loop only triggers one signature.
-				//
-				// Only v4-prefixed entries are considered here, AND we
-				// defensively skip any entry that doesn't carry a storageId
-				// (legacy v1/v2/v3 entries from a DB row that hasn't been
-				// backfilled, or a cached API response from before the
-				// storage_id column existed).
+				const v5KeysByStorageId = new Map<string, Uint8Array>();
+				if (needsV5) {
+					const uniqueStorageIds = new Set(
+						privateEntriesToProcess
+							.filter(
+								(entry) =>
+									entry.raw?.startsWith("enc:v5:br:") && entry.storageId,
+							)
+							.map((entry) => entry.storageId.toLowerCase()),
+					);
+					for (const storageId of uniqueStorageIds) {
+						const key = await getCachedDerivedKey(wallet!, "v5", storageId);
+						v5KeysByStorageId.set(storageId, key);
+					}
+				}
 				const v4KeysByStorageId = new Map<string, Uint8Array>();
 				if (needsV4) {
 					const uniqueStorageIds = new Set(
@@ -232,10 +244,10 @@ export function useProcessedEntries(
 						continue;
 					}
 
-					// v4 keys are per-storageId. Only look up a key if the entry
-					// is actually a v4 entry AND has a storageId on it. v1/v2/v3
-					// entries pass undefined and processPrivateEntry routes them
-					// by prefix to the right legacy key.
+					const derivedKeyV5 =
+						entry.raw?.startsWith("enc:v5:br:") && entry.storageId
+							? v5KeysByStorageId.get(entry.storageId.toLowerCase())
+							: undefined;
 					const derivedKeyV4 =
 						entry.raw?.startsWith("enc:v4:br:") && entry.storageId
 							? v4KeysByStorageId.get(entry.storageId.toLowerCase())
@@ -246,6 +258,7 @@ export function useProcessedEntries(
 						derivedKeyV1,
 						derivedKeyV3,
 						derivedKeyV4,
+						derivedKeyV5,
 					);
 					await setCachedEntry(writerAddress, entryId, processed, {
 						walletAddress,

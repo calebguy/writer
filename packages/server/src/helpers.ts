@@ -1,16 +1,16 @@
-import { db, publicClient } from "./constants";
-import { parseRelayTxId, relay } from "./relay";
 import {
 	BaseError,
 	ContractFunctionRevertedError,
-	decodeEventLog,
 	type Hex,
+	decodeEventLog,
 	getAddress,
 	hexToBigInt,
 	parseAbi,
 	parseAbiItem,
 	recoverTypedDataAddress,
 } from "viem";
+import { db, publicClient } from "./constants";
+import { parseRelayTxId, relay } from "./relay";
 
 import { env } from "./env";
 
@@ -41,10 +41,11 @@ export async function simulateContractOrThrow({
 	functionSignature: string;
 	args: readonly unknown[];
 }): Promise<void> {
-	const abi = parseAbi([
-		`function ${functionSignature}`,
-	] as readonly string[]);
-	const functionName = functionSignature.slice(0, functionSignature.indexOf("("));
+	const abi = parseAbi([`function ${functionSignature}`] as readonly string[]);
+	const functionName = functionSignature.slice(
+		0,
+		functionSignature.indexOf("("),
+	);
 	await publicClient.simulateContract({
 		address: to,
 		abi,
@@ -416,7 +417,9 @@ async function backfillWriterEntriesByLogs({
 				log.blockNumber === null
 			) {
 				warnings.push(
-					`skipped malformed EntryCreated log at block ${String(log.blockNumber)}`,
+					`skipped malformed EntryCreated log at block ${String(
+						log.blockNumber,
+					)}`,
 				);
 				continue;
 			}
@@ -429,7 +432,10 @@ async function backfillWriterEntriesByLogs({
 				blockTimestamps.set(blockNumber, createdAtBlockDatetime);
 			}
 
-			const byOnchain = await db.getEntryByOnchainId(storageAddress, log.args.id);
+			const byOnchain = await db.getEntryByOnchainId(
+				storageAddress,
+				log.args.id,
+			);
 			const byHash = byOnchain
 				? null
 				: await db.getEntryByStorageAndCreationHash(
@@ -517,7 +523,10 @@ export async function reconcileEntryByDbId(
 	const relayId = parseRelayTxId(entry.createdAtTransactionId);
 	if (relayId) {
 		try {
-			const txStatus = await relay.getTransaction(relayId.wallet, relayId.nonce);
+			const txStatus = await relay.getTransaction(
+				relayId.wallet,
+				relayId.nonce,
+			);
 			txHash = txStatus.hash ?? null;
 		} catch (error) {
 			warnings.push(
@@ -568,7 +577,10 @@ export async function reconcileEntryByDbId(
 			entryId,
 			ok: false,
 			action: "failed",
-			warnings: [...warnings, `transaction reverted (status=${receipt.status})`],
+			warnings: [
+				...warnings,
+				`transaction reverted (status=${receipt.status})`,
+			],
 			before,
 			after: {
 				onChainId: entry.onChainId?.toString() ?? null,
@@ -710,7 +722,10 @@ export async function reconcileWriterByAddress(
 	const relayId = parseRelayTxId(writer.transactionId);
 	if (relayId) {
 		try {
-			const txStatus = await relay.getTransaction(relayId.wallet, relayId.nonce);
+			const txStatus = await relay.getTransaction(
+				relayId.wallet,
+				relayId.nonce,
+			);
 			txHash = txStatus.hash ?? null;
 		} catch (error) {
 			warnings.push(
@@ -763,7 +778,10 @@ export async function reconcileWriterByAddress(
 			address: normalizedAddress,
 			ok: false,
 			action: "failed",
-			warnings: [...warnings, `transaction reverted (status=${receipt.status})`],
+			warnings: [
+				...warnings,
+				`transaction reverted (status=${receipt.status})`,
+			],
 			before,
 			after: {
 				storageAddress: writer.storageAddress,

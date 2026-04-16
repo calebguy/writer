@@ -18,12 +18,16 @@ export const processRawContent = (raw: string) => {
 	if (raw.startsWith("br:")) {
 		version = "br";
 		decompressed = decompressBrotli(raw.slice(3));
+	} else if (raw.startsWith("enc:v5:br:")) {
+		version = "enc:v5:br:";
+	} else if (raw.startsWith("enc:v4:br:")) {
+		version = "enc:v4:br:";
 	} else if (raw.startsWith("enc:v3:br:")) {
-		version = "enc:v3:br";
+		version = "enc:v3:br:";
 	} else if (raw.startsWith("enc:v2:br:")) {
-		version = "enc:v2:br";
+		version = "enc:v2:br:";
 	} else if (raw.startsWith("enc:br:")) {
-		version = "enc:br";
+		version = "enc:br:";
 	}
 	// @note how should we handle non-supported versions?
 	return { version, decompressed };

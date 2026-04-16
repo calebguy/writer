@@ -196,7 +196,11 @@ export default function Entry({
 										createdAtTransactionId: null,
 									},
 								],
-					version: vars.content.startsWith("enc:v4:br:") ? "enc:v4:br:" : "br:",
+					version: vars.content.startsWith("enc:v5:br:")
+					? "enc:v5:br:"
+					: vars.content.startsWith("enc:v4:br:")
+						? "enc:v4:br:"
+						: "br:",
 				});
 
 				if (previousWriter) {
@@ -269,16 +273,18 @@ export default function Entry({
 			if (isEntryPrivate(initialEntry)) {
 				setEncrypted(true);
 				if (wallet && isWalletAuthor(wallet, initialEntry)) {
-					// `needsV4` only triggers the v4 key fetch when the entry
-					// is actually a v4 entry. Also defensively guard against
-					// a v4 entry arriving without a storageId (which would
-					// indicate a corrupt API response or pre-migration cache).
+					const needsV5 =
+						initialEntry.raw?.startsWith("enc:v5:br:") &&
+						!!initialEntry.storageId;
 					const needsV4 =
 						initialEntry.raw?.startsWith("enc:v4:br:") &&
 						!!initialEntry.storageId;
 					const needsV3 = initialEntry.raw?.startsWith("enc:v3:br:");
 					const needsV2 = initialEntry.raw?.startsWith("enc:v2:br:");
 					const needsV1 = initialEntry.raw?.startsWith("enc:br:");
+					const keyV5 = needsV5
+						? await getCachedDerivedKey(wallet, "v5", initialEntry.storageId)
+						: undefined;
 					const keyV4 = needsV4
 						? await getCachedDerivedKey(wallet, "v4", initialEntry.storageId)
 						: undefined;
@@ -297,6 +303,7 @@ export default function Entry({
 						keyV1,
 						keyV3,
 						keyV4,
+						keyV5,
 					);
 					setProcessedEntry(processed);
 					setEditedContent(processed.decompressed ?? "");
@@ -382,11 +389,11 @@ export default function Entry({
 			// derive for any other entry on this writer.
 			const key = await getCachedDerivedKey(
 				wallet,
-				"v4",
+				"v5",
 				initialEntry.storageId,
 			);
 			const encryptedContent = await encrypt(key, compressedContent);
-			versionedCompressedContent = `enc:v4:br:${encryptedContent}`;
+			versionedCompressedContent = `enc:v5:br:${encryptedContent}`;
 		}
 		// Store expected raw content for polling comparison
 		expectedRawContentRef.current = versionedCompressedContent;

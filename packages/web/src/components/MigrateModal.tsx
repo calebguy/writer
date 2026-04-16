@@ -54,26 +54,25 @@ export function MigrateModal({
 		setErrorMessage(null);
 
 		try {
-			// Pre-derive a v4 key per unique storage_id in the batch. v4 keys
-			// are per-writer (the whole point of Option B for C-1), so a user
-			// migrating entries from N writers signs N times. The keyCache
-			// dedupes within a session.
-			const v4KeysByStorageId = new Map<string, Uint8Array>();
+			// Pre-derive a v5 key per unique storage_id in the batch.
+			const v5KeysByStorageId = new Map<string, Uint8Array>();
 			const uniqueStorageIds = new Set(
 				entriesToMigrate.map(({ entry }) => entry.storageId.toLowerCase()),
 			);
 			for (const storageId of uniqueStorageIds) {
-				v4KeysByStorageId.set(
+				v5KeysByStorageId.set(
 					storageId,
-					await getCachedDerivedKey(wallet, "v4", storageId),
+					await getCachedDerivedKey(wallet, "v5", storageId),
 				);
 			}
 
 			for (const { entry, writerAddress, legacyDomain } of entriesToMigrate) {
-				// Decrypt with old key. v3 is now also a migration source
-				// because v3 derivation is phishable too (audit C-1).
+				// Decrypt with old key (v1/v2/v3/v4 → v5).
 				let decrypted: string;
-				if (entry.raw?.startsWith("enc:v3:br:")) {
+				if (entry.raw?.startsWith("enc:v4:br:")) {
+					const keyV4 = await getCachedDerivedKey(wallet, "v4", entry.storageId);
+					decrypted = await decrypt(keyV4, entry.raw.slice(10));
+				} else if (entry.raw?.startsWith("enc:v3:br:")) {
 					const keyV3 = await getCachedDerivedKey(wallet, "v3");
 					decrypted = await decrypt(keyV3, entry.raw.slice(10));
 				} else if (entry.raw?.startsWith("enc:v2:br:")) {
@@ -87,17 +86,17 @@ export function MigrateModal({
 				}
 
 				// Decompress to get original markdown, then re-compress and
-				// re-encrypt with the v4 key for this entry's writer.
-				const keyV4 = v4KeysByStorageId.get(entry.storageId.toLowerCase());
-				if (!keyV4) {
+				// re-encrypt with the v5 key for this entry's writer.
+				const keyV5 = v5KeysByStorageId.get(entry.storageId.toLowerCase());
+				if (!keyV5) {
 					throw new Error(
-						`Missing v4 key for storage_id ${entry.storageId} (this should never happen)`,
+						`Missing v5 key for storage_id ${entry.storageId}`,
 					);
 				}
 				const markdown = await decompress(decrypted);
 				const compressed = await compress(markdown);
-				const encrypted = await encrypt(keyV4, compressed);
-				const newContent = `enc:v4:br:${encrypted}`;
+				const encrypted = await encrypt(keyV5, compressed);
+				const newContent = `enc:v5:br:${encrypted}`;
 
 				const { signature, nonce, totalChunks, content } = await signUpdate(
 					wallet,
@@ -181,11 +180,13 @@ export function MigrateModal({
 								<div className="space-y-1">
 									{entries.map(({ entry }) => {
 										const isMigrated = migratedIds.has(entry.id);
-										const version = entry.raw?.startsWith("enc:v3:br:")
-											? "v3"
-											: entry.raw?.startsWith("enc:v2:br:")
-												? "v2"
-												: "v1";
+										const version = entry.raw?.startsWith("enc:v4:br:")
+											? "v4"
+											: entry.raw?.startsWith("enc:v3:br:")
+												? "v3"
+												: entry.raw?.startsWith("enc:v2:br:")
+													? "v2"
+													: "v1";
 										return (
 											<div
 												key={entry.id}
@@ -199,7 +200,7 @@ export function MigrateModal({
 													entry #{entry.onChainId}
 												</span>
 												<span className="shrink-0">
-													{isMigrated ? "v4" : version}
+													{isMigrated ? "v5" : version}
 												</span>
 											</div>
 										);
