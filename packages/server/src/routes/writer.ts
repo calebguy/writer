@@ -156,6 +156,8 @@ const writerRoutes = new Hono()
 				address: env.COLOR_REGISTRY_ADDRESS as Hex,
 			});
 
+			console.log("color-registry/set — recovered:", getAddress(address), "privy:", c.var.walletAddress);
+
 			// Audit fix for H-3: the EIP-712 signer must match the authenticated
 			// wallet. Prevents an attacker from replaying a captured signature
 			// against the relay (and prevents anonymous relay-drain entirely).
