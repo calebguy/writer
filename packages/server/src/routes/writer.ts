@@ -156,12 +156,10 @@ const writerRoutes = new Hono()
 				address: env.COLOR_REGISTRY_ADDRESS as Hex,
 			});
 
-			console.log("color-registry/set — recovered:", getAddress(address), "privy:", c.var.walletAddress);
-
 			// Audit fix for H-3: the EIP-712 signer must match the authenticated
 			// wallet. Prevents an attacker from replaying a captured signature
 			// against the relay (and prevents anonymous relay-drain entirely).
-			if (getAddress(address) !== c.var.walletAddress) {
+			if (!c.var.walletAddresses.has(getAddress(address))) {
 				return c.json(
 					{ error: "signer does not match authenticated wallet" },
 					403,
@@ -222,7 +220,7 @@ const writerRoutes = new Hono()
 			// must be logged in) AND prevents a confused-deputy attack where
 			// someone creates a writer with another wallet as admin. Per-user
 			// rate limiting is a separate follow-up.
-			if (getAddress(admin) !== c.var.walletAddress) {
+			if (!c.var.walletAddresses.has(getAddress(admin))) {
 				return c.json({ error: "admin must equal authenticated wallet" }, 403);
 			}
 
@@ -379,7 +377,7 @@ const writerRoutes = new Hono()
 			// the entry's author) must match the authenticated wallet. This
 			// prevents an attacker from replaying someone else's captured
 			// signature against the relay.
-			if (getAddress(author) !== c.var.walletAddress) {
+			if (!c.var.walletAddresses.has(getAddress(author))) {
 				return c.json(
 					{ error: "signer does not match authenticated wallet" },
 					403,
@@ -493,7 +491,7 @@ const writerRoutes = new Hono()
 			// Audit fix for H-3: recovered signer must match the
 			// authenticated wallet (so an attacker can't replay a captured
 			// signature against the relay).
-			if (getAddress(author) !== c.var.walletAddress) {
+			if (!c.var.walletAddresses.has(getAddress(author))) {
 				return c.json(
 					{ error: "signer does not match authenticated wallet" },
 					403,
@@ -597,7 +595,7 @@ const writerRoutes = new Hono()
 			// Audit fix for H-3: recovered signer must match the
 			// authenticated wallet (so an attacker can't replay a captured
 			// signature against the relay).
-			if (getAddress(signer) !== c.var.walletAddress) {
+			if (!c.var.walletAddresses.has(getAddress(signer))) {
 				return c.json(
 					{ error: "signer does not match authenticated wallet" },
 					403,

@@ -6,10 +6,10 @@ import { db } from "./constants";
 import { env } from "./env";
 
 // Tell Hono about the variables our middlewares stash on the request
-// context, so route handlers get type-safe access to `c.var.walletAddress`.
+// context, so route handlers get type-safe access to `c.var.walletAddresses`.
 declare module "hono" {
 	interface ContextVariableMap {
-		walletAddress: Hex;
+		walletAddresses: Set<Hex>;
 	}
 }
 
@@ -26,7 +26,10 @@ function getAuthenticatedWallet(c: Context) {
 async function verifyPrivyToken(token: string) {
 	const verifiedClaims = await privy.verifyAuthToken(token);
 	const user = await privy.getUser(verifiedClaims.userId);
-	return user.wallet?.address;
+	const walletAddresses = user.linkedAccounts
+		.filter((a): a is Extract<typeof a, { type: "wallet" }> => a.type === "wallet")
+		.map((a) => a.address);
+	return walletAddresses;
 }
 
 /**
@@ -46,30 +49,29 @@ export async function requireSavedAuth(c: Context, next: Next) {
 		return c.json({ error: "unauthorized" }, 401);
 	}
 
-	let walletAddress: string | undefined;
+	let walletAddresses: string[];
 	try {
-		walletAddress = await verifyPrivyToken(token);
+		walletAddresses = await verifyPrivyToken(token);
 	} catch {
 		return c.json({ error: "unauthorized" }, 401);
 	}
 
 	const userAddress = c.req.param("userAddress");
-	if (!userAddress || !walletAddress) {
+	if (!userAddress || walletAddresses.length === 0) {
 		return c.json({ error: "unauthorized" }, 401);
 	}
 
-	let normalizedWallet: string;
-	let normalizedUser: string;
+	let normalizedUser: Hex;
 	try {
-		normalizedWallet = getAddress(walletAddress);
-		normalizedUser = getAddress(userAddress);
+		normalizedUser = getAddress(userAddress) as Hex;
 	} catch {
-		// One of the addresses (almost always the URL param) is malformed.
-		// Return 401 instead of letting the error bubble to a 500.
 		return c.json({ error: "unauthorized" }, 401);
 	}
 
-	if (normalizedWallet !== normalizedUser) {
+	const normalizedWallets = new Set(
+		walletAddresses.map((a) => getAddress(a) as Hex),
+	);
+	if (!normalizedWallets.has(normalizedUser)) {
 		return c.json({ error: "forbidden" }, 403);
 	}
 
@@ -78,7 +80,7 @@ export async function requireSavedAuth(c: Context, next: Next) {
 
 /**
  * Verifies the Privy token and stashes the authenticated wallet address on
- * the Hono context as `c.var.walletAddress`. Used by every endpoint that
+ * the Hono context as `c.var.walletAddresses`. Used by every endpoint that
  * fires a relayer transaction (audit fixes for H-2 / H-3): the route handler
  * is then expected to assert that the EIP-712 recovered signer (or, for
  * /factory/create, the request body's `admin` field) matches `walletAddress`.
@@ -92,17 +94,20 @@ export async function requireWalletAuth(c: Context, next: Next) {
 		return c.json({ error: "unauthorized" }, 401);
 	}
 
-	let walletAddress: string | undefined;
+	let walletAddresses: string[];
 	try {
-		walletAddress = await verifyPrivyToken(token);
+		walletAddresses = await verifyPrivyToken(token);
 	} catch {
 		return c.json({ error: "unauthorized" }, 401);
 	}
-	if (!walletAddress) {
+	if (walletAddresses.length === 0) {
 		return c.json({ error: "unauthorized" }, 401);
 	}
 
-	c.set("walletAddress", getAddress(walletAddress) as Hex);
+	c.set(
+		"walletAddresses",
+		new Set(walletAddresses.map((a) => getAddress(a) as Hex)),
+	);
 	await next();
 }
 
@@ -120,14 +125,14 @@ export async function requireWriterAdminAuth(c: Context, next: Next) {
 		return c.json({ error: "unauthorized" }, 401);
 	}
 
-	let walletAddress: string | undefined;
+	let walletAddresses: string[];
 	try {
-		walletAddress = await verifyPrivyToken(token);
+		walletAddresses = await verifyPrivyToken(token);
 	} catch {
 		return c.json({ error: "unauthorized" }, 401);
 	}
 
-	if (!walletAddress) {
+	if (walletAddresses.length === 0) {
 		return c.json({ error: "unauthorized" }, 401);
 	}
 
@@ -137,10 +142,8 @@ export async function requireWriterAdminAuth(c: Context, next: Next) {
 	}
 
 	let normalizedWriterAddress: Hex;
-	let normalizedWalletAddress: string;
 	try {
 		normalizedWriterAddress = getAddress(address) as Hex;
-		normalizedWalletAddress = getAddress(walletAddress);
 	} catch {
 		return c.json({ error: "unauthorized" }, 401);
 	}
@@ -150,15 +153,17 @@ export async function requireWriterAdminAuth(c: Context, next: Next) {
 		return c.json({ error: "writer not found" }, 404);
 	}
 
-	let normalizedDbAdmin: string;
+	let normalizedDbAdmin: Hex;
 	try {
-		normalizedDbAdmin = getAddress(writer.admin);
+		normalizedDbAdmin = getAddress(writer.admin) as Hex;
 	} catch {
-		// DB row has a malformed admin somehow — treat as unauthorized.
 		return c.json({ error: "forbidden" }, 403);
 	}
 
-	if (normalizedDbAdmin !== normalizedWalletAddress) {
+	const normalizedWallets = new Set(
+		walletAddresses.map((a) => getAddress(a) as Hex),
+	);
+	if (!normalizedWallets.has(normalizedDbAdmin)) {
 		return c.json({ error: "forbidden" }, 403);
 	}
 
