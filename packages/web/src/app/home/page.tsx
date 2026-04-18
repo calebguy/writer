@@ -1,8 +1,6 @@
 import { WriterList } from "@/components/WriterList";
 import { pickLogo } from "@/utils/random";
-import { getAuthenticatedUser } from "@/utils/auth";
 
-export default async function Home() {
-	const user = await getAuthenticatedUser();
-	return <WriterList initialLoggedIn={!!user} loginLogo={pickLogo()} />;
+export default function Home() {
+	return <WriterList loginLogo={pickLogo()} />;
 }

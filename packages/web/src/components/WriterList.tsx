@@ -1,5 +1,6 @@
 "use client";
 
+import { useIsLoggedIn } from "@/hooks/useIsLoggedIn";
 import {
 	type Writer,
 	factoryCreate,
@@ -28,12 +29,9 @@ const SKELETON_KEYS = Array.from(
 	(_, i) => `skeleton-${i}`,
 );
 
-export function WriterList({
-	initialLoggedIn = false,
-	loginLogo,
-}: { initialLoggedIn?: boolean; loginLogo: number }) {
+export function WriterList({ loginLogo }: { loginLogo: number }) {
 	const { ready, authenticated, user, getAccessToken } = usePrivy();
-	const isLoggedIn = ready ? authenticated : initialLoggedIn;
+	const isLoggedIn = useIsLoggedIn();
 	const [isPolling, setIsPolling] = useState(false);
 	const queryClient = useQueryClient();
 

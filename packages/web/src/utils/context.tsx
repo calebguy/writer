@@ -2,6 +2,8 @@ import { createContext } from "react";
 import type { Writer } from "./api";
 import type { RGB } from "./utils";
 
+export const AuthHintContext = createContext<boolean>(false);
+
 export interface WriterContextType {
 	writer: Writer | null;
 	setWriter: (content: Writer | null) => void;

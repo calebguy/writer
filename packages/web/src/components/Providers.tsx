@@ -2,6 +2,7 @@
 
 import { useAuthColor } from "@/hooks/useAuthColor";
 import {
+	AuthHintContext,
 	WriterContext,
 	type WriterContextType,
 	defaultColor,
@@ -40,9 +41,11 @@ export const queryClient = new QueryClient({
 export function Providers({
 	children,
 	initialColor,
+	initialLoggedIn = false,
 }: Readonly<{
 	children: React.ReactNode;
 	initialColor?: string;
+	initialLoggedIn?: boolean;
 }>) {
 	const [writer, setWriter] = useState<WriterContextType["writer"]>(null);
 
@@ -148,20 +151,22 @@ export function Providers({
 					},
 				}}
 			>
-				<WriterContext
-					value={{
-						writer,
-						setWriter,
-						defaultColor,
-						primaryColor,
-						setPrimaryColor: handleSetPrimaryColor,
-						setPrimaryFromLongHex: handleSetPrimaryFromLongHex,
-						resetPrimaryColor: handleResetPrimaryColor,
-					}}
-				>
-					<AuthColorSync />
-					{children}
-				</WriterContext>
+				<AuthHintContext value={initialLoggedIn}>
+					<WriterContext
+						value={{
+							writer,
+							setWriter,
+							defaultColor,
+							primaryColor,
+							setPrimaryColor: handleSetPrimaryColor,
+							setPrimaryFromLongHex: handleSetPrimaryFromLongHex,
+							resetPrimaryColor: handleResetPrimaryColor,
+						}}
+					>
+						<AuthColorSync />
+						{children}
+					</WriterContext>
+				</AuthHintContext>
 			</PrivyProvider>
 		</QueryClientProvider>
 	);

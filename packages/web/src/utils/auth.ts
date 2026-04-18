@@ -24,3 +24,14 @@ export async function getAuthenticatedUser() {
 		return null;
 	}
 }
+
+// Cheap cookie-only hint for first-paint UI. Returns true if Privy has an
+// active session cookie (even when the id-token has expired and will be
+// refreshed client-side). Not a verification — for that, use getAuthenticatedUser.
+export async function getAuthHint(): Promise<boolean> {
+	const cookieStore = await cookies();
+	return !!(
+		cookieStore.get("privy-id-token")?.value ||
+		cookieStore.get("privy-session")?.value
+	);
+}

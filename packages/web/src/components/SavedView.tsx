@@ -4,6 +4,7 @@ import { EntryCardSkeleton } from "@/components/EntryCardSkeleton";
 import { WriterCardSkeleton } from "@/components/WriterCardSkeleton";
 import { Lock } from "@/components/icons/Lock";
 import { Unlock } from "@/components/icons/Unlock";
+import { useIsLoggedIn } from "@/hooks/useIsLoggedIn";
 import { type SavedEntry, type SavedWriter, getSaved } from "@/utils/api";
 import { cn } from "@/utils/cn";
 import { useOPWallet } from "@/utils/hooks";
@@ -47,12 +48,9 @@ type MixedSavedItem =
 			writer: SavedEntry["writer"];
 	  };
 
-export default function SavedView({
-	initialLoggedIn = false,
-	loginLogo,
-}: { initialLoggedIn?: boolean; loginLogo: number }) {
-	const { ready, authenticated, user } = usePrivy();
-	const isLoggedIn = ready ? authenticated : initialLoggedIn;
+export default function SavedView({ loginLogo }: { loginLogo: number }) {
+	const { ready, user } = usePrivy();
+	const isLoggedIn = useIsLoggedIn();
 	const userAddress = user?.wallet?.address as Hex | undefined;
 
 	const { data, isLoading } = useQuery({

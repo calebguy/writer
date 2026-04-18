@@ -1,5 +1,5 @@
 import { Providers } from "@/components/Providers";
-import { getAuthenticatedUser } from "@/utils/auth";
+import { getAuthHint, getAuthenticatedUser } from "@/utils/auth";
 import { cn } from "@/utils/cn";
 import { getUserColor } from "@/utils/getUserColor";
 import { bytes32ToHexColor, getSecondaryColor, hexToRGB } from "@/utils/utils";
@@ -41,7 +41,10 @@ export default async function RootLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
-	const user = await getAuthenticatedUser();
+	const [user, initialLoggedIn] = await Promise.all([
+		getAuthenticatedUser(),
+		getAuthHint(),
+	]);
 	let initialColor: string | null = null;
 
 	if (user?.wallet?.address) {
@@ -83,7 +86,10 @@ export default async function RootLayout({
 					}}
 				/>
 				<div className="antialiased w-full grow flex flex-col px-4 md:px-8 pt-4 md:pt-8 pb-2 font-serif max-w-7xl">
-					<Providers initialColor={initialColor || undefined}>
+					<Providers
+						initialColor={initialColor || undefined}
+						initialLoggedIn={initialLoggedIn}
+					>
 						{children}
 					</Providers>
 				</div>
