@@ -354,8 +354,6 @@ async function handleHexSet(log: Log, db: Db): Promise<void> {
 	});
 	const args = decoded.args as { user: string; hexColor: string };
 
-	console.log("HexSet", { user: args.user, color: args.hexColor });
-
 	await db.upsertUser({
 		address: args.user,
 		color: args.hexColor,

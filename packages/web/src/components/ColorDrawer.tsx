@@ -13,12 +13,12 @@ import {
 	hexColorToBytes32,
 	setPrimaryAndSecondaryCSSVariables,
 } from "../utils/utils";
+import { LoadingRelic } from "./LoadingRelic";
 import {
 	DynamicDrawerContent,
 	DynamicDrawerRoot,
 	DynamicDrawerTitle,
 } from "./dsl/DynamicDrawer";
-import { LoadingRelic } from "./LoadingRelic";
 import { Save } from "./icons/Save";
 import { Undo } from "./icons/Undo";
 
@@ -70,10 +70,13 @@ export function ColorDrawer({ open, onOpenChange }: ColorDrawerProps) {
 	};
 
 	return (
-		<DynamicDrawerRoot open={open} onOpenChange={(o) => {
-			if (!o) handleClose();
-			else onOpenChange(o);
-		}}>
+		<DynamicDrawerRoot
+			open={open}
+			onOpenChange={(o) => {
+				if (!o) handleClose();
+				else onOpenChange(o);
+			}}
+		>
 			<DynamicDrawerContent className="bg-primary!" loading={isSaving}>
 				<DynamicDrawerTitle className="sr-only">Set Color</DynamicDrawerTitle>
 				{isSaving ? (
