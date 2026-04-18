@@ -52,8 +52,7 @@ export default function EntryListWithCreateInput({
 	const queryClient = useQueryClient();
 	// External wallets (MetaMask, WalletConnect, etc.) pop a signature prompt;
 	// Privy's embedded wallet signs silently, so we only show a loader for external.
-	const isExternalWallet =
-		!!wallet && wallet.walletClientType !== "privy";
+	const isExternalWallet = !!wallet && wallet.walletClientType !== "privy";
 
 	const queryKey = ["writer", writerAddress] as const;
 	const { mutateAsync } = useMutation({
@@ -207,11 +206,12 @@ export default function EntryListWithCreateInput({
 						onUnlock={showUnlockBanner ? onUnlock : undefined}
 					/>
 				)}
-				{!isExpanded && processedEntries.length === 0 && (
+				{/* TODO do we need to fix this elsewhere? ie: when we only have private entries and someone hits this page */}
+				{/* {!isExpanded && processedEntries.length === 0 && (
 					<div className="col-span-full flex items-center justify-center min-h-[60vh] text-neutral-500">
 						{emptyMessage}
 					</div>
-				)}
+				)} */}
 			</div>
 			{canCreateEntries && (
 				<CreateEntryDrawer
