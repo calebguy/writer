@@ -27,7 +27,7 @@ function navIconClass(active: boolean) {
 		: "cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary";
 }
 
-export function MobileBottomNav() {
+export function MobileBottomNav({ preview = false }: { preview?: boolean } = {}) {
 	const pathname = usePathname();
 	const router = useRouter();
 	const { logout, authenticated, ready } = usePrivy();
@@ -163,7 +163,7 @@ export function MobileBottomNav() {
 		setStoredThemeMode(mode);
 	};
 
-	if (!shouldShow) {
+	if (!shouldShow && !preview) {
 		return null;
 	}
 
@@ -199,10 +199,18 @@ export function MobileBottomNav() {
 		<>
 			<div
 				ref={containerRef}
-				className={`md:hidden fixed left-1/2 -translate-x-1/2 z-40 transition-transform duration-300 ease-in-out ${
-					hidden ? "translate-y-[calc(100%+60px)]" : ""
-				}`}
-				style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 14px)" }}
+				className={
+					preview
+						? "relative flex justify-center"
+						: `md:hidden fixed left-1/2 -translate-x-1/2 z-40 transition-transform duration-300 ease-in-out ${
+								hidden ? "translate-y-[calc(100%+60px)]" : ""
+							}`
+				}
+				style={
+					preview
+						? undefined
+						: { bottom: "calc(env(safe-area-inset-bottom, 0px) + 14px)" }
+				}
 			>
 				<div className="relative flex items-center justify-center">
 					{showSubMenu && (

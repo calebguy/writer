@@ -63,7 +63,13 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 	}, [inOnboardingFlow]);
 	useEffect(() => {
 		if (!ready || isLoading) return;
-		if ((writers?.length ?? 0) === 0 && !inOnboardingFlow) {
+		// `writers` is undefined both while the query is disabled (Privy not
+		// fully hydrated yet) and while it's loading. Only trigger onboarding
+		// once the query has actually resolved to an empty array — otherwise
+		// users with existing writers get flashed into the centered layout
+		// during the Privy-hydrating gap and the flag goes sticky there.
+		if (!writers) return;
+		if (writers.length === 0 && !inOnboardingFlow) {
 			setInOnboardingFlow(true);
 		}
 	}, [ready, isLoading, writers, inOnboardingFlow]);
