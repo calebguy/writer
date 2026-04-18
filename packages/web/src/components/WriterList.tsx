@@ -8,6 +8,7 @@ import {
 	getWritersByManager,
 	hideWriter as hideWriterApi,
 } from "@/utils/api";
+import { cn } from "@/utils/cn";
 import { POLLING_INTERVAL } from "@/utils/constants";
 import { usePrivy } from "@privy-io/react-auth";
 import {
@@ -18,7 +19,7 @@ import {
 } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import type { Hex } from "viem";
 import CreateInput, { type CreateInputData } from "./CreateInput";
@@ -41,7 +42,6 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 	const queryClient = useQueryClient();
 
 	const address = user?.wallet?.address;
-
 	const isCreatingWriter =
 		useIsMutating({ mutationKey: ["create-from-factory"] }) > 0;
 
@@ -51,6 +51,9 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 		enabled: !!address && authenticated,
 		refetchInterval: isPolling && !isCreatingWriter ? POLLING_INTERVAL : false,
 	});
+	const hasWriters = useMemo(() => {
+		return (writers?.length ?? 0) > 0;
+	}, [writers]);
 
 	// Prefetch writer data on hover for instant navigation
 	const prefetchWriter = useCallback(
@@ -193,78 +196,95 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 	}
 
 	return (
-		<div className="grid gap-2 grid-cols-1 min-[321px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
-			<div className="hidden md:block">
+		<div
+			className={cn(
+				{
+					"grid gap-2 grid-cols-1 min-[321px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]":
+						hasWriters,
+				},
+				{
+					"grow flex flex-col items-center justify-center": !hasWriters,
+				},
+			)}
+		>
+			<div
+				className={cn("hidden md:block", {
+					"w-[224px] h-[224px]": !hasWriters,
+				})}
+			>
 				<CreateInput placeholder="Create a Place" onSubmit={handleSubmit} />
 			</div>
-			{(writers ?? []).length === 0 && (
-				<div className="col-span-full flex items-center justify-center min-h-[60vh] text-neutral-500">
-					no writers created yet
+			{!hasWriters && (
+				<div className="text-center text-base text-neutral-500 dark:text-neutral-400 mt-4">
+					Create your first Place
 				</div>
 			)}
-			{(writers ?? []).map((writer) =>
-				(() => {
-					const isPendingWriter = !writer.createdAtHash;
-					return (
-						<Link
-							href={isPendingWriter ? "#" : `/writer/${writer.address}`}
-							key={writer.address}
-							className={`home-writer-card aspect-square bg-surface flex flex-col overflow-hidden px-2 pt-2 pb-1.5 relative ${
-								isPendingWriter ? "cursor-loading" : "hover:cursor-zoom-in"
-							}`}
-							onClick={isPendingWriter ? (e) => e.preventDefault() : undefined}
-							onMouseEnter={
-								isPendingWriter
-									? undefined
-									: () => prefetchWriter(writer.address)
-							}
-						>
-							<div className="grow min-h-0 min-w-0 overflow-y-auto">
-								<MarkdownRenderer
-									markdown={writer.title}
-									className="text-black dark:text-white writer-title home-writer-content"
-								/>
-							</div>
-							<div className="writer-card-meta shrink-0 text-right text-sm text-neutral-400 dark:text-neutral-600 leading-3 pt-2">
-								<div
-									className={
-										isPendingWriter
-											? "inline-block"
-											: "group home-hide-group inline-block"
-									}
-								>
-									{isPendingWriter ? (
-										<span className="pending-entry-spinner inline-flex ml-auto">
-											<span className="pending-entry-spinner-track" />
-											<AiOutlineLoading3Quarters className="pending-entry-spinner-icon w-3 h-3 rotating" />
-										</span>
-									) : (
-										<>
-											<span className="group-hover:hidden block">
-												{writer.entries.length.toString()}
-											</span>
-											<button
-												type="button"
-												className="group-hover:block hidden ml-auto absolute bottom-1.5 right-2 z-10 text-primary hover:text-primary cursor-pointer"
-												onClick={(e) => {
-													e.preventDefault();
-													e.stopPropagation();
-													hideWriter(writer.address as Hex);
-												}}
-											>
-												<ClosedEye className="w-4 h-4" />
-											</button>
-											<div className="absolute left-0 top-0 w-full h-full bg-surface-overlay/90 hidden group-hover:flex items-center justify-center pointer-events-none">
-												<span className="text-primary italic">Hide?</span>
-											</div>
-										</>
-									)}
+			{hasWriters &&
+				writers?.map((writer) =>
+					(() => {
+						const isPendingWriter = !writer.createdAtHash;
+						return (
+							<Link
+								href={isPendingWriter ? "#" : `/writer/${writer.address}`}
+								key={writer.address}
+								className={`home-writer-card aspect-square bg-surface flex flex-col overflow-hidden px-2 pt-2 pb-1.5 relative ${
+									isPendingWriter ? "cursor-loading" : "hover:cursor-zoom-in"
+								}`}
+								onClick={
+									isPendingWriter ? (e) => e.preventDefault() : undefined
+								}
+								onMouseEnter={
+									isPendingWriter
+										? undefined
+										: () => prefetchWriter(writer.address)
+								}
+							>
+								<div className="grow min-h-0 min-w-0 overflow-y-auto">
+									<MarkdownRenderer
+										markdown={writer.title}
+										className="text-black dark:text-white writer-title home-writer-content"
+									/>
 								</div>
-							</div>
-						</Link>
-					);
-				})(),
-			)}
+								<div className="writer-card-meta shrink-0 text-right text-sm text-neutral-400 dark:text-neutral-600 leading-3 pt-2">
+									<div
+										className={
+											isPendingWriter
+												? "inline-block"
+												: "group home-hide-group inline-block"
+										}
+									>
+										{isPendingWriter ? (
+											<span className="pending-entry-spinner inline-flex ml-auto">
+												<span className="pending-entry-spinner-track" />
+												<AiOutlineLoading3Quarters className="pending-entry-spinner-icon w-3 h-3 rotating" />
+											</span>
+										) : (
+											<>
+												<span className="group-hover:hidden block">
+													{writer.entries.length.toString()}
+												</span>
+												<button
+													type="button"
+													className="group-hover:block hidden ml-auto absolute bottom-1.5 right-2 z-10 text-primary hover:text-primary cursor-pointer"
+													onClick={(e) => {
+														e.preventDefault();
+														e.stopPropagation();
+														hideWriter(writer.address as Hex);
+													}}
+												>
+													<ClosedEye className="w-4 h-4" />
+												</button>
+												<div className="absolute left-0 top-0 w-full h-full bg-surface-overlay/90 hidden group-hover:flex items-center justify-center pointer-events-none">
+													<span className="text-primary italic">Hide?</span>
+												</div>
+											</>
+										)}
+									</div>
+								</div>
+							</Link>
+						);
+					})(),
+				)}
 		</div>
 	);
 }
