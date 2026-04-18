@@ -328,7 +328,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 	// three so the central card never shifts position between states.
 	return (
 		<div className="grow flex flex-col items-center justify-center">
-			<div className="hidden md:block w-[224px] h-[224px]">
+			<div className="hidden md:block w-[234px] h-[234px]">
 				{onboardingMode === "created" && confirmedFirstWriter ? (
 					renderWriterCard(confirmedFirstWriter)
 				) : (
