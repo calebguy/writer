@@ -376,49 +376,55 @@ export default function Entry({
 	const handleSave = async () => {
 		setEditSubmitted(true);
 		if (!editedContent || !wallet) {
+			setEditSubmitted(false);
 			return;
 		}
-		const compressedContent = await compress(editedContent);
-		let versionedCompressedContent = `br:${compressedContent}`;
-		if (encrypted) {
-			// Edits always re-encrypt with v4. Even if the original entry was
-			// stored as v1/v2/v3, the updated content is written as v4 — the
-			// edit produces a new ciphertext anyway, so we may as well lift it
-			// to the secure format. The previous storage_id is preserved on
-			// the entry row, so the v4 key is the same one the user would
-			// derive for any other entry on this writer.
-			const key = await getCachedDerivedKey(
-				wallet,
-				"v5",
-				initialEntry.storageId,
-			);
-			const encryptedContent = await encrypt(key, compressedContent);
-			versionedCompressedContent = `enc:v5:br:${encryptedContent}`;
-		}
-		// Store expected raw content for polling comparison
-		expectedRawContentRef.current = versionedCompressedContent;
-		const { signature, nonce, entryId, totalChunks, content } =
-			await signUpdate(wallet, {
-				entryId: Number(id),
+		try {
+			const compressedContent = await compress(editedContent);
+			let versionedCompressedContent = `br:${compressedContent}`;
+			if (encrypted) {
+				// Edits always re-encrypt with v4. Even if the original entry was
+				// stored as v1/v2/v3, the updated content is written as v4 — the
+				// edit produces a new ciphertext anyway, so we may as well lift it
+				// to the secure format. The previous storage_id is preserved on
+				// the entry row, so the v4 key is the same one the user would
+				// derive for any other entry on this writer.
+				const key = await getCachedDerivedKey(
+					wallet,
+					"v5",
+					initialEntry.storageId,
+				);
+				const encryptedContent = await encrypt(key, compressedContent);
+				versionedCompressedContent = `enc:v5:br:${encryptedContent}`;
+			}
+			// Store expected raw content for polling comparison
+			expectedRawContentRef.current = versionedCompressedContent;
+			const { signature, nonce, entryId, totalChunks, content } =
+				await signUpdate(wallet, {
+					entryId: Number(id),
+					address: address as Hex,
+					content: versionedCompressedContent,
+					legacyDomain,
+				});
+			const authToken = await getAccessToken();
+			if (!authToken) {
+				console.error("No auth token found");
+				setEditSubmitted(false);
+				return;
+			}
+			await mutateAsyncEdit({
 				address: address as Hex,
-				content: versionedCompressedContent,
-				legacyDomain,
+				id: entryId,
+				signature,
+				nonce,
+				totalChunks,
+				content,
+				authToken,
+				decompressed: editedContent,
 			});
-		const authToken = await getAccessToken();
-		if (!authToken) {
-			console.error("No auth token found");
-			return;
+		} catch {
+			setEditSubmitted(false);
 		}
-		await mutateAsyncEdit({
-			address: address as Hex,
-			id: entryId,
-			signature,
-			nonce,
-			totalChunks,
-			content,
-			authToken,
-			decompressed: editedContent,
-		});
 	};
 
 	useEffect(() => {
@@ -540,8 +546,8 @@ export default function Entry({
 						<div
 							className={cn(
 								"w-full text-left wrap-break-word p-2 overflow-hidden",
-								{ "text-red-900": deleteSubmitted },
-								{ "text-primary": !deleteSubmitted },
+								{ "[&_*]:!text-red-900": deleteSubmitted },
+								{ "[&_*]:!text-primary": !deleteSubmitted },
 							)}
 						>
 							<MarkdownRenderer markdown={editedContent} />
@@ -634,25 +640,29 @@ export default function Entry({
 												setDeletedSubmitted(false);
 												return;
 											}
-											const { signature, nonce } = await signRemove(wallet, {
-												id: Number(id),
-												address: address as Hex,
-												legacyDomain,
-											});
-											const authToken = await getAccessToken();
-											if (!authToken) {
-												console.error("No auth token found");
+											try {
+												const { signature, nonce } = await signRemove(wallet, {
+													id: Number(id),
+													address: address as Hex,
+													legacyDomain,
+												});
+												const authToken = await getAccessToken();
+												if (!authToken) {
+													console.error("No auth token found");
+													setDeletedSubmitted(false);
+													return;
+												}
+												await mutateAsyncDelete({
+													address: address as Hex,
+													id: Number(id),
+													signature,
+													nonce,
+													authToken,
+												});
 												setDeletedSubmitted(false);
-												return;
+											} catch {
+												setDeletedSubmitted(false);
 											}
-											await mutateAsyncDelete({
-												address: address as Hex,
-												id: Number(id),
-												signature,
-												nonce,
-												authToken,
-											});
-											setDeletedSubmitted(false);
 										}}
 									>
 										do it
