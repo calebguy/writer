@@ -10,7 +10,12 @@ import {
 } from "@/utils/api";
 import { POLLING_INTERVAL } from "@/utils/constants";
 import { usePrivy } from "@privy-io/react-auth";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useIsMutating,
+	useMutation,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
@@ -37,11 +42,14 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 
 	const address = user?.wallet?.address;
 
+	const isCreatingWriter =
+		useIsMutating({ mutationKey: ["create-from-factory"] }) > 0;
+
 	const { data: writers, isLoading } = useQuery({
 		queryFn: () => getWritersByManager(address as Hex),
 		queryKey: ["get-writers", address],
 		enabled: !!address && authenticated,
-		refetchInterval: isPolling ? POLLING_INTERVAL : false,
+		refetchInterval: isPolling && !isCreatingWriter ? POLLING_INTERVAL : false,
 	});
 
 	// Prefetch writer data on hover for instant navigation

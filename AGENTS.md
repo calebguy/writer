@@ -191,6 +191,26 @@ Writer and entry creations use TanStack Query's `onMutate` for optimistic insert
 - The UI renders a per-card spinner while `createdAtHash` is null; a background poller waits for the indexer/ingestor to confirm.
 - **Do not** gate the insertion on the POST's 200 response (the old `onSuccess` pattern). The chain is the source of truth; the POST is just "accepted for relay."
 
+### Gate polling on in-flight create mutations
+
+The ingestor-confirmation poller (`refetchInterval` on the writer list and writer page) MUST be gated on `useIsMutating` for the matching create mutation key. If polling is allowed to fire while `/create` or `/createWithChunk` is in flight, the server returns a list without the new row (API writes are synchronous, so it only lands after the POST resolves) and React Query replaces the optimistic cache with the server response — causing a visible flash where the pending card disappears and then reappears after `onSettled` invalidates.
+
+Pattern (already applied in `WriterList.tsx` and `app/writer/[address]/page.tsx`):
+
+```ts
+const isCreatingWriter = useIsMutating({ mutationKey: ["create-from-factory"] }) > 0;
+// ...
+refetchInterval: isPolling && !isCreatingWriter ? POLLING_INTERVAL : false,
+```
+
+```ts
+const isCreatingEntry = useIsMutating({ mutationKey: ["create-with-chunk", address] }) > 0;
+// ...
+refetchInterval: shouldPoll && !isCreatingEntry ? 3000 : false,
+```
+
+Writes are synchronous server-side, so `onSettled`'s invalidation is the correct moment to pull server truth; polling only exists to await onchain ingestion populating `createdAtHash` / `onChainId`. Do not remove these gates when refactoring.
+
 ## Architecture Decisions
 
 1. **Dual Contract Model:** Separates logic (Writer) from state (WriterStorage)

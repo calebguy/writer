@@ -6,8 +6,9 @@
     --privy-color-background-2: var(--color-background);
     --privy-color-foreground-4: var(--color-surface-raised);
     --privy-color-accent: rgb(var(--color-primary));
-
-
+    --privy-color-info-bg-hover: var(--privy-color-background-2);
+    --privy-color-icon-success: rgb(var(--color-primary));
+    --privy-color-accent-dark: rgb(var(--color-secondary));
 
     --privy-color-background-3: #e5e5e5;
     --privy-color-foreground: #F8F8F8;
@@ -16,7 +17,6 @@
     --privy-color-foreground-accent: #0a0a0a;
     --privy-color-accent-light: hsl(0, 0%, 100%);
     --privy-color-accent-hover: hsl(0, 0%, 94%);
-    --privy-color-accent-dark: hsl(0, 0%, 88%);
     --privy-color-accent-darkest: hsl(0, 0%, 40%);
     --privy-color-success: #0E3E2D;
     --privy-color-success-dark: #ACEECB;
@@ -32,7 +32,6 @@
     --privy-color-warning-dark: #FEF9A0;
     --privy-color-error-dark: #FCA5A5;
     --privy-color-info-bg: #1a1a1a;
-    --privy-color-info-bg-hover: var(--privy-color-background-2);
     --privy-color-border-default: #262626;
     --privy-color-border-hover: #404040;
     --privy-color-border-error: #F87171;
@@ -60,7 +59,6 @@
     --privy-color-icon-muted: #a3a3a3;
     --privy-color-icon-subtle: #737373;
     --privy-color-icon-inverse: #0a0a0a;
-    --privy-color-icon-success: rgb(var(--color-primary));
     --privy-color-icon-warning: #FDF27B;
     --privy-color-icon-error: #EF4444;
     --privy-color-icon-interactive: #d4d4d4;
@@ -95,8 +93,10 @@
     --privy-color-background-2: var(--color-surface);
     --privy-color-foreground-4: var(--color-surface-raised);
     --privy-color-accent: rgb(var(--color-primary));
-
-
+    --privy-color-info-bg: var(--privy-color-background-2);
+    --privy-color-info-bg-hover: var(--privy-color-background-2);
+    --privy-color-border-interactive-hover: rgb(var(--color-primary));
+    --privy-color-accent-dark: rgb(var(--color-secondary));
 
     --privy-color-background-3: #e7e7e1;
     --privy-color-foreground: #171717;
@@ -105,7 +105,6 @@
     --privy-color-foreground-accent: #ffffff;
     --privy-color-accent-light: #262626;
     --privy-color-accent-hover: #262626;
-    --privy-color-accent-dark: #111111;
     --privy-color-accent-darkest: #000000;
     --privy-color-success: #171717;
     --privy-color-success-dark: #171717;
@@ -114,7 +113,6 @@
     --privy-color-border-default: #c9c9c2;
     --privy-color-border-hover: #b5b5ae;
     --privy-color-border-interactive: #171717;
-    --privy-color-border-interactive-hover: #171717;
     --privy-color-background-hover: #e7e7e1;
     --privy-color-background-clicked: #dfdfd9;
     --privy-color-background-disabled: #f3f3ef;

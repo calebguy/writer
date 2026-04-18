@@ -14,7 +14,12 @@ import { useOPWallet, useProcessedEntries } from "@/utils/hooks";
 import { hasCachedDerivedKey } from "@/utils/keyCache";
 import { isEntryPrivate } from "@/utils/utils";
 import { usePrivy } from "@privy-io/react-auth";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+	useIsMutating,
+	useMutation,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Hex } from "viem";
@@ -35,6 +40,9 @@ export default function WriterPage() {
 	const [allowDecryption, setAllowDecryption] = useState(false);
 	const [unlockError, setUnlockError] = useState<string | null>(null);
 
+	const isCreatingEntry =
+		useIsMutating({ mutationKey: ["create-with-chunk", address] }) > 0;
+
 	const { data: writer, isLoading } = useQuery({
 		queryKey: ["writer", address],
 		queryFn: () => getWriter(address as Hex),
@@ -51,8 +59,10 @@ export default function WriterPage() {
 			}
 			return undefined;
 		},
-		// Poll every 3 seconds when there are pending entries
-		refetchInterval: shouldPoll ? 3000 : false,
+		// Poll every 3 seconds when there are pending entries, but pause while a
+		// create mutation is in flight so the refetch can't clobber the
+		// optimistic entry before the server has persisted it.
+		refetchInterval: shouldPoll && !isCreatingEntry ? 3000 : false,
 	});
 
 	// Update polling state when pending entries change
@@ -69,14 +79,11 @@ export default function WriterPage() {
 		setUnlockError("Signature request was rejected.");
 	}, []);
 
-	const { processedEntries, hasLockedPrivateEntries, processedOnce } = useProcessedEntries(
-		writer?.entries,
-		address,
-		{
+	const { processedEntries, hasLockedPrivateEntries, processedOnce } =
+		useProcessedEntries(writer?.entries, address, {
 			allowDecryption,
 			onDecryptError: handleDecryptError,
-		},
-	);
+		});
 
 	const hasPrivateEntries =
 		writer?.entries?.some((entry) => isEntryPrivate(entry)) ?? false;
@@ -151,13 +158,15 @@ export default function WriterPage() {
 	// Otherwise, only addresses in the writer's managers list can. Edit
 	// and delete are still restricted to the original author of each
 	// entry — see Entry.tsx's `canEdit` (which checks isWalletAuthor).
-	const canCreateEntries = Boolean(
-		walletAddress &&
-			(writer?.publicWritable ||
-				writer?.managers?.some(
-					(manager) => manager.toLowerCase() === walletAddress,
-				)),
-	);
+	const canCreateEntries =
+		isLoggedIn &&
+		Boolean(
+			walletAddress &&
+				(writer?.publicWritable ||
+					writer?.managers?.some(
+						(manager) => manager.toLowerCase() === walletAddress,
+					)),
+		);
 
 	if (!writer || isLoading || isEntriesProcessing) {
 		return (
@@ -188,7 +197,11 @@ export default function WriterPage() {
 				isUnlocking={allowDecryption && !unlockError}
 				unlockError={unlockError}
 				showLockedEntries={showLockedEntries}
-				emptyMessage={allEntriesPrivate && !canCreateEntries ? "no public entries" : "no entries yet"}
+				emptyMessage={
+					allEntriesPrivate && !canCreateEntries
+						? "no public entries"
+						: "no entries yet"
+				}
 				onUnlock={() => {
 					setUnlockError(null);
 					setAllowDecryption(true);
