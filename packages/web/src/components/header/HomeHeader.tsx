@@ -160,7 +160,6 @@ export function HomeHeader() {
 				onCreate={() => {
 					void handleCreateWriter();
 				}}
-				isPending={isPending}
 				isDisabled={isPending || !markdown.trim() || !wallet?.address}
 			/>
 		</>

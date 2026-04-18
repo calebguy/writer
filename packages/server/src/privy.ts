@@ -26,10 +26,13 @@ function getAuthenticatedWallet(c: Context) {
 async function verifyPrivyToken(token: string) {
 	const verifiedClaims = await privy.verifyAuthToken(token);
 	const user = await privy.getUser(verifiedClaims.userId);
-	const walletAddresses = user.linkedAccounts
-		.filter((a): a is Extract<typeof a, { type: "wallet" }> => a.type === "wallet")
+	const ethWalletAddresses = user.linkedAccounts
+		.filter(
+			(a): a is Extract<typeof a, { type: "wallet" }> =>
+				a.type === "wallet" && a.address.startsWith("0x"),
+		)
 		.map((a) => a.address);
-	return walletAddresses;
+	return ethWalletAddresses;
 }
 
 /**

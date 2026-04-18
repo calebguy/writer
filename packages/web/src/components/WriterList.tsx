@@ -87,21 +87,46 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 			queryClient.invalidateQueries({ queryKey: ["get-writers", address] });
 		},
 	});
-	const { mutateAsync: createWriter, isPending: isCreating } = useMutation({
+	const { mutateAsync: createWriter } = useMutation({
 		mutationFn: factoryCreate,
 		mutationKey: ["create-from-factory"],
-		onSuccess: (data) => {
-			// Insert the server-returned writer (with real deterministic
-			// address and createdAtHash: null) into the cache. The card
-			// only appears after the POST succeeds — while waiting, the
-			// CreateInput shows its own loading state.
+		onMutate: async (vars) => {
 			const queryKey = ["get-writers", address] as const;
+			await queryClient.cancelQueries({ queryKey });
+			const tempAddress = `pending-${Date.now()}`;
+			const now = new Date();
+			const optimistic = {
+				address: tempAddress,
+				storageAddress: tempAddress,
+				storageId: tempAddress,
+				publicWritable: false,
+				legacyDomain: false,
+				title: vars.title,
+				admin: String(vars.admin),
+				managers: (vars.managers as string[]).map(String),
+				createdAtHash: null,
+				createdAtBlock: undefined,
+				createdAtBlockDatetime: null,
+				createdAt: now,
+				updatedAt: now,
+				deletedAt: null,
+				transactionId: null,
+				entries: [],
+			} as unknown as Writer;
+			const previous = queryClient.getQueryData<Writer[]>(queryKey);
 			queryClient.setQueryData<Writer[]>(queryKey, (current) =>
-				current
-					? [data.writer as unknown as Writer, ...current]
-					: [data.writer as unknown as Writer],
+				current ? [optimistic, ...current] : [optimistic],
 			);
-			setIsPolling(true);
+			return { previous, queryKey };
+		},
+		onError: (_err, _vars, ctx) => {
+			if (ctx?.queryKey) {
+				queryClient.setQueryData(ctx.queryKey, ctx.previous);
+			}
+		},
+		onSettled: () => {
+			if (!address) return;
+			queryClient.invalidateQueries({ queryKey: ["get-writers", address] });
 		},
 	});
 
@@ -162,11 +187,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 	return (
 		<div className="grid gap-2 grid-cols-1 min-[321px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
 			<div className="hidden md:block">
-				<CreateInput
-					placeholder="Create a Place"
-					onSubmit={handleSubmit}
-					isLoading={isCreating}
-				/>
+				<CreateInput placeholder="Create a Place" onSubmit={handleSubmit} />
 			</div>
 			{(writers ?? []).length === 0 && (
 				<div className="col-span-full flex items-center justify-center min-h-[60vh] text-neutral-500">

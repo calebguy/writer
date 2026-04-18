@@ -34,9 +34,9 @@ Writer enables users to create "places" (smart contract-backed writers) where th
 - **Chain:** Optimism (L2)
 - **Tooling:** Foundry
 
-### Indexer (packages/indexer)
-- **Framework:** Ponder
-- **Purpose:** Syncs onchain events to database
+### Ingestor (packages/ingestor)
+- **Runtime:** Bun
+- **Purpose:** Syncs onchain events to database via viem (catchup + WebSocket realtime)
 
 ## Project Structure
 
@@ -62,7 +62,7 @@ writer/
 │   │       ├── WriterFactory.sol
 │   │       ├── Writer.sol
 │   │       └── WriterStorage.sol
-│   ├── indexer/             # Ponder event indexer
+│   ├── ingestor/            # Onchain event ingestor (viem)
 │   └── utils/               # Shared ABIs and utilities
 ```
 
@@ -115,7 +115,7 @@ All protected routes check `privy-id-token` cookie via Privy server auth.
 2. Backend validates signature and recovers signer
 3. Transaction relayed via Syndicate
 4. Database record created with pending status
-5. Indexer updates status when confirmed onchain
+5. Ingestor updates status when confirmed onchain
 
 ### Endpoints
 - `GET /writer/public` - List public writers
@@ -152,19 +152,44 @@ bun run format
 - `SYNDICATE_PROJECT_ID` - Syndicate project ID
 - `FACTORY_ADDRESS` - WriterFactory contract address
 
-### Indexer
-- `RPC_URL` - Optimism RPC endpoint
+### Ingestor
+- `DATABASE_URL` - PostgreSQL connection string
+- `RPC_URL` - Optimism HTTP RPC endpoint
+- `WS_RPC_URL` - Optimism WebSocket RPC endpoint
+- `TARGET_CHAIN_ID` - Chain ID to sync
 - `FACTORY_ADDRESS` - WriterFactory contract address
+- `OLD_FACTORY_ADDRESS` - (optional) Legacy WriterFactory address
+- `COLOR_REGISTRY_ADDRESS` - ColorRegistry contract address
+- `START_BLOCK` - Initial block to sync from when no cursor exists
+- `HEALTH_PORT` - (optional) Port for health check server (default 3001)
 
 ## Frontend Auth Pattern
 
 Auth uses a **server-hint + client-reactive** model:
-- Server components call `getAuthenticatedUser()` (cookie-based) and pass `initialLoggedIn` as a prop to client components
-- Client components use `usePrivy()` for reactive auth state (`ready`, `authenticated`, `user`)
-- While Privy initializes (`ready=false`), the server hint determines what to show (e.g., skeletons vs LoginPrompt)
-- Once `ready=true`, client-side `authenticated` takes over, enabling dynamic updates on login/logout without page reloads
+- `layout.tsx` calls `getAuthHint()` (cookie presence check — `privy-id-token || privy-session`) and passes the boolean through `Providers`, which exposes it via `AuthHintContext`.
+- Client components call `useIsLoggedIn()` (in `packages/web/src/hooks/useIsLoggedIn.ts`). The hook merges the SSR hint with Privy's live state: `ready ? authenticated : hint`.
+- Why `privy-session`, not just `privy-id-token`: the id-token cookie is short-lived (~1hr); `privy-session` is long-lived (~30d) and is what Privy uses to resurrect the id-token client-side. Checking both avoids the "sign in" → "write" flash when a logged-in user returns after the id-token expired.
+- Use `getAuthenticatedUser()` only when you actually need a *verified* user object (e.g., for `user.wallet.address` server-side). For UI "is this person logged in?" questions, use `getAuthHint()` / `useIsLoggedIn()` — no network round-trip.
 
 **Privy `useLogin` caveat:** Do NOT use `useLogin({ onComplete })` for side effects like `window.location.reload()` — the `onComplete` callback can fire on mount when Privy auto-detects an existing session, causing infinite reload loops. Use `usePrivy().login` instead when you don't need the callback, or guard with a ref tracking explicit user interaction.
+
+## Wallet Signing UX
+
+User-initiated writes (create/update/remove entries) sign EIP-712 payloads. The signing UX depends on wallet type:
+
+- **Privy embedded wallet** (`wallet.walletClientType === "privy"`): signs silently, no user prompt. Proceed with the optimistic flow immediately — clear input, show pending card, run the mutation. A loader here would flash unnecessarily and break the "instant" feel.
+- **External wallets** (MetaMask, WalletConnect, Coinbase, etc.): signing triggers a popup/app prompt the user must act on. Show a loader (e.g., `CreateInput`'s `isLoading` overlay) for the *signing window only*, so the user has visible feedback that we're waiting on their wallet.
+
+Implementation pattern: track an `isSigning` state, set it true *only* when `walletClientType !== "privy"`, wrap just the sign call in `try/finally` (not compression/encryption — those are fast). Writer creation (`factoryCreate`) does not sign, so no loader logic is needed there.
+
+## Optimistic Create Mutations
+
+Writer and entry creations use TanStack Query's `onMutate` for optimistic insertion:
+- `onMutate` inserts a pending placeholder into the relevant cache (`["get-writers", address]` or `["writer", writerAddress]`) with `createdAtHash: null`.
+- `onError` restores the snapshot taken in `onMutate`.
+- `onSettled` invalidates to let the server row replace the optimistic one.
+- The UI renders a per-card spinner while `createdAtHash` is null; a background poller waits for the indexer/ingestor to confirm.
+- **Do not** gate the insertion on the POST's 200 response (the old `onSuccess` pattern). The chain is the source of truth; the POST is just "accepted for relay."
 
 ## Architecture Decisions
 

@@ -13,18 +13,15 @@ import {
 	DynamicDrawerRoot,
 	DynamicDrawerTitle,
 } from "./dsl/DynamicDrawer";
-import { LoadingRelic } from "./LoadingRelic";
 
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 
 export function CreateEntryDrawer({
 	placeholder,
 	onSubmit,
-	isLoading = false,
 }: {
 	placeholder?: string;
 	onSubmit: (data: CreateInputData) => Promise<void> | void;
-	isLoading?: boolean;
 }) {
 	const { isOpen, setOpen } = useCreateEntryDrawer();
 	const [markdown, setMarkdown] = useState("");
@@ -49,7 +46,7 @@ export function CreateEntryDrawer({
 	};
 
 	const handleSubmit = () => {
-		if (!markdown.trim() || isLoading) return;
+		if (!markdown.trim()) return;
 		const data = { markdown, encrypted };
 		// Reset + close immediately. The parent's onMutate optimistically
 		// inserts the pending entry card on the underlying page, so the
@@ -118,17 +115,11 @@ export function CreateEntryDrawer({
 					}
 				}}
 			>
-				<DynamicDrawerContent loading={isLoading}>
+				<DynamicDrawerContent>
 					<DynamicDrawerTitle className="sr-only">
 						Create Entry
 					</DynamicDrawerTitle>
-					{isLoading ? (
-						<div className="h-56 flex items-center justify-center">
-							<LoadingRelic size={32} className="bg-secondary!" />
-						</div>
-					) : (
-						<div ref={drawerTargetRef} />
-					)}
+					<div ref={drawerTargetRef} />
 				</DynamicDrawerContent>
 			</DynamicDrawerRoot>
 		</>

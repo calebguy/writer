@@ -8,7 +8,6 @@ import {
 	DynamicDrawerRoot,
 	DynamicDrawerTitle,
 } from "./dsl/DynamicDrawer";
-import { LoadingRelic } from "./LoadingRelic";
 
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 
@@ -18,7 +17,6 @@ export function CreateWriterDrawer({
 	markdown,
 	onMarkdownChange,
 	onCreate,
-	isPending,
 	isDisabled,
 }: {
 	open: boolean;
@@ -26,7 +24,6 @@ export function CreateWriterDrawer({
 	markdown: string;
 	onMarkdownChange: (value: string) => void;
 	onCreate: () => void;
-	isPending: boolean;
 	isDisabled: boolean;
 }) {
 	const [drawerTarget, setDrawerTarget] = useState<HTMLDivElement | null>(null);
@@ -75,17 +72,11 @@ export function CreateWriterDrawer({
 				<div className="hidden">{editorContent}</div>
 			)}
 			<DynamicDrawerRoot open={open} onOpenChange={onOpenChange}>
-				<DynamicDrawerContent loading={isPending}>
+				<DynamicDrawerContent>
 					<DynamicDrawerTitle className="sr-only">
 						Create Writer
 					</DynamicDrawerTitle>
-					{isPending ? (
-						<div className="h-56 md:h-64 flex items-center justify-center">
-							<LoadingRelic size={32} className="bg-secondary!" />
-						</div>
-					) : (
-						<div ref={drawerTargetRef} />
-					)}
+					<div ref={drawerTargetRef} />
 				</DynamicDrawerContent>
 			</DynamicDrawerRoot>
 		</>

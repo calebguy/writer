@@ -45,68 +45,81 @@ export default function EntryListWithCreateInput({
 	emptyMessage?: string;
 }) {
 	const [isExpanded, setIsExpanded] = useState(false);
-	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [isSigning, setIsSigning] = useState(false);
 	const [wallet] = useOPWallet();
 	const { getAccessToken } = usePrivy();
 	const router = useRouter();
 	const queryClient = useQueryClient();
+	// External wallets (MetaMask, WalletConnect, etc.) pop a signature prompt;
+	// Privy's embedded wallet signs silently, so we only show a loader for external.
+	const isExternalWallet =
+		!!wallet && wallet.walletClientType !== "privy";
 
 	const queryKey = ["writer", writerAddress] as const;
-	const { mutateAsync, isPending } = useMutation({
+	const { mutateAsync } = useMutation({
 		mutationFn: createWithChunk,
 		mutationKey: ["create-with-chunk", writerAddress],
-		onSuccess: (_data, vars) => {
+		onMutate: async (vars) => {
+			await queryClient.cancelQueries({ queryKey });
 			const previous = queryClient.getQueryData<Writer>(queryKey);
-			if (previous) {
-				const now = new Date().toISOString();
-				const tempId = -Date.now();
-				const optimisticEntry = {
-					id: tempId,
-					exists: true,
-					onChainId: null,
-					author: vars.author ?? "",
-					createdAtHash: null,
-					createdAtBlock: null,
-					createdAtBlockDatetime: null,
-					deletedAtHash: null,
-					deletedAtBlock: null,
-					deletedAtBlockDatetime: null,
-					updatedAtHash: null,
-					updatedAtBlock: null,
-					updatedAtBlockDatetime: null,
-					createdAt: now,
-					updatedAt: now,
-					deletedAt: null,
-					storageAddress: previous.storageAddress,
-					storageId: previous.storageId,
-					createdAtTransactionId: null,
-					deletedAtTransactionId: null,
-					updatedAtTransactionId: null,
-					chunks: [
-						{
-							id: tempId,
-							entryId: tempId,
-							index: 0,
-							content: vars.chunkContent,
-							createdAt: now,
-							createdAtTransactionId: null,
-						},
-					],
-					raw: vars.chunkContent,
-					version: vars.chunkContent.startsWith("enc:v5:br:")
-						? "enc:v5:br:"
-						: vars.chunkContent.startsWith("enc:v4:br:")
-							? "enc:v4:br:"
-							: "br:",
-					decompressed: vars.decompressed ?? "",
-				} as unknown as Entry;
+			if (!previous) return { previous };
 
-				queryClient.setQueryData<Writer>(queryKey, (current) =>
-					current
-						? { ...current, entries: [optimisticEntry, ...current.entries] }
-						: current,
-				);
+			const now = new Date().toISOString();
+			const tempId = -Date.now();
+			const optimisticEntry = {
+				id: tempId,
+				exists: true,
+				onChainId: null,
+				author: vars.author ?? "",
+				createdAtHash: null,
+				createdAtBlock: null,
+				createdAtBlockDatetime: null,
+				deletedAtHash: null,
+				deletedAtBlock: null,
+				deletedAtBlockDatetime: null,
+				updatedAtHash: null,
+				updatedAtBlock: null,
+				updatedAtBlockDatetime: null,
+				createdAt: now,
+				updatedAt: now,
+				deletedAt: null,
+				storageAddress: previous.storageAddress,
+				storageId: previous.storageId,
+				createdAtTransactionId: null,
+				deletedAtTransactionId: null,
+				updatedAtTransactionId: null,
+				chunks: [
+					{
+						id: tempId,
+						entryId: tempId,
+						index: 0,
+						content: vars.chunkContent,
+						createdAt: now,
+						createdAtTransactionId: null,
+					},
+				],
+				raw: vars.chunkContent,
+				version: vars.chunkContent.startsWith("enc:v5:br:")
+					? "enc:v5:br:"
+					: vars.chunkContent.startsWith("enc:v4:br:")
+						? "enc:v4:br:"
+						: "br:",
+				decompressed: vars.decompressed ?? "",
+			} as unknown as Entry;
+
+			queryClient.setQueryData<Writer>(queryKey, (current) =>
+				current
+					? { ...current, entries: [optimisticEntry, ...current.entries] }
+					: current,
+			);
+			return { previous };
+		},
+		onError: (_err, _vars, ctx) => {
+			if (ctx?.previous) {
+				queryClient.setQueryData(queryKey, ctx.previous);
 			}
+		},
+		onSuccess: () => {
 			router.refresh();
 		},
 		onSettled: () => {
@@ -125,25 +138,27 @@ export default function EntryListWithCreateInput({
 			return;
 		}
 
-		setIsSubmitting(true);
+		if (isExternalWallet) setIsSigning(true);
+		let signed: Awaited<ReturnType<typeof signCreateWithChunk>>;
 		try {
+			const compressedContent = await compress(markdown);
+			let versionedCompressedContent = `br:${compressedContent}`;
+			if (encrypted) {
+				// New private writes always use v5 (per-writer EIP-712 + HKDF +
+				// AES-256-GCM with writer.place branded domain).
+				const key = await getCachedDerivedKey(wallet, "v5", writerStorageId);
+				const encryptedContent = await encrypt(key, compressedContent);
+				versionedCompressedContent = `enc:v5:br:${encryptedContent}`;
+			}
 
-		const compressedContent = await compress(markdown);
-		let versionedCompressedContent = `br:${compressedContent}`;
-		if (encrypted) {
-			// New private writes always use v5 (per-writer EIP-712 + HKDF +
-			// AES-256-GCM with writer.place branded domain).
-			const key = await getCachedDerivedKey(wallet, "v5", writerStorageId);
-			const encryptedContent = await encrypt(key, compressedContent);
-			versionedCompressedContent = `enc:v5:br:${encryptedContent}`;
-		}
-
-		const { signature, nonce, chunkCount, chunkContent } =
-			await signCreateWithChunk(wallet, {
+			signed = await signCreateWithChunk(wallet, {
 				content: versionedCompressedContent,
 				address: writerAddress,
 				legacyDomain: writerLegacyDomain,
 			});
+		} finally {
+			if (isExternalWallet) setIsSigning(false);
+		}
 
 		const authToken = await getAccessToken();
 		if (!authToken) {
@@ -152,17 +167,14 @@ export default function EntryListWithCreateInput({
 		}
 		await mutateAsync({
 			address: writerAddress as Hex,
-			signature,
-			nonce,
-			chunkCount,
-			chunkContent,
+			signature: signed.signature,
+			nonce: signed.nonce,
+			chunkCount: signed.chunkCount,
+			chunkContent: signed.chunkContent,
 			authToken,
 			decompressed: markdown,
 			author: wallet.address,
 		});
-		} finally {
-			setIsSubmitting(false);
-		}
 	};
 
 	return (
@@ -181,7 +193,7 @@ export default function EntryListWithCreateInput({
 							onExpand={setIsExpanded}
 							canExpand={true}
 							onSubmit={handleSubmit}
-							isLoading={isSubmitting || isPending}
+							isLoading={isSigning}
 						/>
 					</div>
 				)}
@@ -205,7 +217,6 @@ export default function EntryListWithCreateInput({
 				<CreateEntryDrawer
 					placeholder={`Write in ${writerTitle}`}
 					onSubmit={handleSubmit}
-					isLoading={isSubmitting || isPending}
 				/>
 			)}
 		</>

@@ -164,7 +164,7 @@ export default function WriterPage() {
 			<div className="grid gap-2 grid-cols-1 min-[321px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
 				{canCreateEntries && (
 					<div className="relative">
-						<CreateInput onSubmit={() => {}} isLoading={false} />
+						<CreateInput onSubmit={() => {}} />
 						<div className="absolute inset-0 bg-surface-overlay/90 flex flex-col items-center justify-center" />
 					</div>
 				)}
