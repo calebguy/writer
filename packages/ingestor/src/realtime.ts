@@ -3,6 +3,9 @@ import type { PublicClient } from "viem";
 import type { AddressRegistry } from "./addresses";
 import { processBlockRange } from "./catchup";
 
+const INITIAL_RECONNECT_DELAY_MS = 2_000;
+const MAX_RECONNECT_DELAY_MS = 30_000;
+
 export async function startRealtime(
 	db: Db,
 	httpClient: PublicClient,
@@ -11,49 +14,75 @@ export async function startRealtime(
 	startFromBlock: bigint,
 ): Promise<void> {
 	let lastProcessed = startFromBlock;
+	let reconnectDelay = INITIAL_RECONNECT_DELAY_MS;
 
 	console.log(
 		`Realtime mode: watching for new blocks from ${lastProcessed + 1n}`,
 	);
 
-	return new Promise<void>((_, reject) => {
-		const unwatch = wsClient.watchBlockNumber({
-			onBlockNumber: async (blockNumber) => {
-				try {
-					// Handle gaps (missed blocks during brief disconnects)
-					const from = lastProcessed + 1n;
-					if (blockNumber < from) return; // already processed
+	return new Promise<void>((_resolve) => {
+		let unwatch: (() => void) | null = null;
+		let shuttingDown = false;
 
-					if (blockNumber > from) {
-						console.log(
-							`Gap detected: processing blocks ${from} to ${blockNumber}`,
+		const subscribe = () => {
+			if (shuttingDown) return;
+
+			unwatch = wsClient.watchBlockNumber({
+				onBlockNumber: async (blockNumber) => {
+					// Reset backoff once we're receiving blocks again
+					reconnectDelay = INITIAL_RECONNECT_DELAY_MS;
+					try {
+						const from = lastProcessed + 1n;
+						if (blockNumber < from) return; // already processed
+
+						if (blockNumber > from) {
+							console.log(
+								`Gap detected: processing blocks ${from} to ${blockNumber}`,
+							);
+						}
+
+						await processBlockRange(
+							db,
+							httpClient,
+							registry,
+							from,
+							blockNumber,
 						);
+						await db.setCursor(blockNumber);
+						lastProcessed = blockNumber;
+					} catch (err) {
+						console.error(`Error processing block ${blockNumber}:`, err);
+						// Don't rethrow — the next block will retry from lastProcessed
 					}
+				},
+				onError: (err) => {
+					console.error("WebSocket block subscription error:", err);
+					if (shuttingDown) return;
 
-					await processBlockRange(
-						db,
-						httpClient,
-						registry,
-						from,
-						blockNumber,
+					try {
+						unwatch?.();
+					} catch {
+						// Subscription may already be torn down
+					}
+					unwatch = null;
+
+					const delay = reconnectDelay;
+					reconnectDelay = Math.min(
+						reconnectDelay * 2,
+						MAX_RECONNECT_DELAY_MS,
 					);
-					await db.setCursor(blockNumber);
-					lastProcessed = blockNumber;
-				} catch (err) {
-					console.error(`Error processing block ${blockNumber}:`, err);
-					// Don't reject — the next block will retry from lastProcessed
-				}
-			},
-			onError: (err) => {
-				console.error("WebSocket block subscription error:", err);
-				reject(err);
-			},
-			emitOnBegin: true,
-		});
+					console.log(`Resubscribing to block stream in ${delay}ms...`);
+					setTimeout(subscribe, delay);
+				},
+				emitOnBegin: true,
+			});
+		};
 
-		// Clean up on process exit
+		subscribe();
+
 		const cleanup = () => {
-			unwatch();
+			shuttingDown = true;
+			unwatch?.();
 		};
 		process.on("SIGTERM", cleanup);
 		process.on("SIGINT", cleanup);
