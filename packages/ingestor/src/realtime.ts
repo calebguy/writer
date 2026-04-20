@@ -23,15 +23,16 @@ export async function startRealtime(
 	return new Promise<void>((_resolve) => {
 		let unwatch: (() => void) | null = null;
 		let shuttingDown = false;
+		let queue: Promise<void> = Promise.resolve();
 
 		const subscribe = () => {
 			if (shuttingDown) return;
 
 			unwatch = wsClient.watchBlockNumber({
-				onBlockNumber: async (blockNumber) => {
+				onBlockNumber: (blockNumber) => {
 					// Reset backoff once we're receiving blocks again
 					reconnectDelay = INITIAL_RECONNECT_DELAY_MS;
-					try {
+					queue = queue.then(async () => {
 						const from = lastProcessed + 1n;
 						if (blockNumber < from) return; // already processed
 
@@ -41,19 +42,25 @@ export async function startRealtime(
 							);
 						}
 
-						await processBlockRange(
-							db,
-							httpClient,
-							registry,
-							from,
-							blockNumber,
-						);
-						await db.setCursor(blockNumber);
+						// Optimistically advance the cursor so re-entrant handlers
+						// queued behind this one see the in-flight range as claimed
+						// and no-op via the `blockNumber < from` check above.
+						const previousProcessed = lastProcessed;
 						lastProcessed = blockNumber;
-					} catch (err) {
-						console.error(`Error processing block ${blockNumber}:`, err);
-						// Don't rethrow — the next block will retry from lastProcessed
-					}
+						try {
+							await processBlockRange(
+								db,
+								httpClient,
+								registry,
+								from,
+								blockNumber,
+							);
+							await db.setCursor(blockNumber);
+						} catch (err) {
+							console.error(`Error processing block ${blockNumber}:`, err);
+							lastProcessed = previousProcessed;
+						}
+					});
 				},
 				onError: (err) => {
 					console.error("WebSocket block subscription error:", err);
