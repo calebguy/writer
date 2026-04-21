@@ -24,14 +24,66 @@ export async function startRealtime(
 		let unwatch: (() => void) | null = null;
 		let shuttingDown = false;
 		let queue: Promise<void> = Promise.resolve();
+		let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+		let reconnectScheduled = false;
+		let reconnectAttemptsInMinute = 0;
+		const reconnectMetricsInterval = setInterval(() => {
+			if (reconnectAttemptsInMinute > 0) {
+				console.warn(
+					`WS reconnect attempts in last minute: ${reconnectAttemptsInMinute}`,
+				);
+				reconnectAttemptsInMinute = 0;
+			}
+		}, 60_000);
+
+		const clearReconnectTimer = () => {
+			if (reconnectTimer) {
+				clearTimeout(reconnectTimer);
+				reconnectTimer = null;
+			}
+			reconnectScheduled = false;
+		};
+
+		const stopWatching = () => {
+			const stop = unwatch;
+			unwatch = null;
+			if (!stop) return;
+			try {
+				stop();
+			} catch {
+				// Subscription may already be torn down
+			}
+		};
+
+		const scheduleReconnect = () => {
+			if (shuttingDown || reconnectScheduled) return;
+
+			reconnectAttemptsInMinute += 1;
+			const baseDelay = reconnectDelay;
+			reconnectDelay = Math.min(reconnectDelay * 2, MAX_RECONNECT_DELAY_MS);
+			const jitterFactor = 0.8 + Math.random() * 0.4; // +/-20%
+			const delay = Math.max(250, Math.floor(baseDelay * jitterFactor));
+
+			reconnectScheduled = true;
+			console.log(
+				`Resubscribing to block stream in ${delay}ms (base ${baseDelay}ms)...`,
+			);
+			reconnectTimer = setTimeout(() => {
+				reconnectTimer = null;
+				reconnectScheduled = false;
+				subscribe();
+			}, delay);
+		};
 
 		const subscribe = () => {
-			if (shuttingDown) return;
+			if (shuttingDown || unwatch) return;
 
 			unwatch = wsClient.watchBlockNumber({
 				onBlockNumber: (blockNumber) => {
-					// Reset backoff once we're receiving blocks again
+					// Reset backoff once we're receiving blocks again.
 					reconnectDelay = INITIAL_RECONNECT_DELAY_MS;
+					clearReconnectTimer();
+
 					queue = queue.then(async () => {
 						const from = lastProcessed + 1n;
 						if (blockNumber < from) return; // already processed
@@ -66,20 +118,8 @@ export async function startRealtime(
 					console.error("WebSocket block subscription error:", err);
 					if (shuttingDown) return;
 
-					try {
-						unwatch?.();
-					} catch {
-						// Subscription may already be torn down
-					}
-					unwatch = null;
-
-					const delay = reconnectDelay;
-					reconnectDelay = Math.min(
-						reconnectDelay * 2,
-						MAX_RECONNECT_DELAY_MS,
-					);
-					console.log(`Resubscribing to block stream in ${delay}ms...`);
-					setTimeout(subscribe, delay);
+					stopWatching();
+					scheduleReconnect();
 				},
 				emitOnBegin: true,
 			});
@@ -89,7 +129,9 @@ export async function startRealtime(
 
 		const cleanup = () => {
 			shuttingDown = true;
-			unwatch?.();
+			clearInterval(reconnectMetricsInterval);
+			clearReconnectTimer();
+			stopWatching();
 		};
 		process.on("SIGTERM", cleanup);
 		process.on("SIGINT", cleanup);

@@ -32,7 +32,9 @@ export const wsClient: PublicClient = createPublicClient({
 		keepAlive: true,
 		name: "ingestor-ws",
 		key: "ingestor-ws",
-		reconnect: true,
+		// Reconnect is managed explicitly in realtime.ts to avoid
+		// overlapping reconnect loops under socket churn.
+		reconnect: false,
 		retryCount: 5,
 		retryDelay: 2000,
 	}),
