@@ -5,7 +5,6 @@ import type { Entry as EntryType, Writer } from "@/utils/api";
 import {
 	deleteEntry,
 	editEntry,
-	getEntry,
 	getSaved,
 	saveEntry,
 	unsaveEntry,
@@ -33,6 +32,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Hex } from "viem";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { Lock } from "./icons/Lock";
 import { LoadingRelic } from "./LoadingRelic";
 import { Logo } from "./icons/Logo";
@@ -71,7 +71,25 @@ export default function Entry({
 	const [encrypted, setEncrypted] = useState(false);
 	const [editedContent, setEditedContent] = useState("");
 	const initializedRef = useRef(false);
-	const expectedRawContentRef = useRef<string | null>(null);
+	// Mirror of processedEntry for reads inside effects — we can't put the
+	// state itself in the effect's dep array without turning local
+	// setProcessedEntry() calls into a trigger that reverts the optimistic
+	// update (see `loadProcessedEntry` below).
+	const processedEntryRef = useRef<EntryType | null>(null);
+	useEffect(() => {
+		processedEntryRef.current = processedEntry;
+	}, [processedEntry]);
+	// Locked decompressed content from a just-committed edit. Released only
+	// once the server's `initialEntry` reports both the matching content AND
+	// a confirmed `updatedAtHash`. Guards two revert races:
+	//   1) The window between the optimistic `setProcessedEntry` and the
+	//      cache patch from `onMutate`, where a refetch could return the
+	//      pre-edit content.
+	//   2) The ingestor race where `EntryUpdated` is processed before
+	//      `ChunkReceived`, leaving the server briefly serving the old
+	//      chunks under a confirmed `updatedAtHash` once the pending
+	//      overlay has dropped off.
+	const pendingSavedContentRef = useRef<string | null>(null);
 	const walletAddress = wallet?.address?.toLowerCase();
 	const { data: savedData } = useQuery({
 		queryKey: ["saved", walletAddress],
@@ -181,6 +199,13 @@ export default function Entry({
 					raw: vars.content,
 					decompressed: vars.decompressed ?? entry.decompressed,
 					updatedAt: now,
+					// Flip the pending-edit signal immediately so the inline
+					// "saving" spinner shows before the first refetch returns
+					// the overlay. The real tx id and hash come back from the
+					// server once the relayer submits and the indexer sees
+					// EntryUpdated.
+					updatedAtTransactionId: "pending",
+					updatedAtHash: null,
 					chunks:
 						entry.chunks.length > 0
 							? entry.chunks.map((chunk, idx) =>
@@ -248,6 +273,42 @@ export default function Entry({
 		async function loadProcessedEntry() {
 			if (!initialEntry) return;
 
+			const currentProcessed = processedEntryRef.current;
+
+			// Hold the optimistic save until the server both (a) returns
+			// matching content and (b) reports a real `updatedAtHash`.
+			// Until then, any refetch might be serving pre-edit or
+			// confirmation-race data — discard it to keep the committed
+			// content on screen.
+			const pendingSaved = pendingSavedContentRef.current;
+			if (pendingSaved !== null) {
+				const matches = initialEntry.decompressed === pendingSaved;
+				const confirmed = !!initialEntry.updatedAtHash;
+				if (matches && confirmed) {
+					pendingSavedContentRef.current = null;
+					// fall through to the normal sync (which will be a no-op
+					// since processedEntry already matches)
+				} else {
+					return;
+				}
+			}
+
+			// Already initialized — only re-sync if something actually
+			// changed. Without these guards, any local setProcessedEntry
+			// (e.g. the optimistic patch in handleSave) used to retrigger
+			// this effect via a stale `processedEntry` dep and clobber the
+			// optimistic content back to `initialEntry`'s previous value.
+			if (initializedRef.current && currentProcessed) {
+				const needsDecryption =
+					isEntryPrivate(currentProcessed) &&
+					!currentProcessed.decompressed &&
+					wallet;
+				const contentMatchesInitial =
+					currentProcessed.raw === initialEntry.raw &&
+					currentProcessed.decompressed === initialEntry.decompressed;
+				if (!needsDecryption && contentMatchesInitial) return;
+			}
+
 			// If already processed (has decompressed content), set immediately
 			if (initialEntry.decompressed) {
 				setProcessedEntry(initialEntry);
@@ -255,16 +316,6 @@ export default function Entry({
 				setEncrypted(isEntryPrivate(initialEntry));
 				initializedRef.current = true;
 				return;
-			}
-
-			// Skip if already initialized, but allow re-processing for undecrypted private entries
-			// when wallet becomes available (fixes direct page load race condition)
-			if (initializedRef.current && processedEntry) {
-				const needsReprocessing =
-					isEntryPrivate(processedEntry) &&
-					!processedEntry.decompressed &&
-					wallet;
-				if (!needsReprocessing) return;
 			}
 
 			// Only sleep for unprocessed entries that need decryption
@@ -322,7 +373,7 @@ export default function Entry({
 			}
 		}
 		loadProcessedEntry();
-	}, [initialEntry, wallet, processedEntry]);
+	}, [initialEntry, wallet]);
 
 	const canEdit = useMemo(() => {
 		return (
@@ -332,35 +383,6 @@ export default function Entry({
 			!isPending
 		);
 	}, [initialEntry, wallet, isPending]);
-
-	// Poll for edit confirmation when edit is submitted
-	useEffect(() => {
-		if (!editSubmitted || !expectedRawContentRef.current) return;
-
-		const pollInterval = setInterval(async () => {
-			try {
-				const entry = await getEntry(address as Hex, Number(id));
-				if (entry.raw === expectedRawContentRef.current) {
-					clearInterval(pollInterval);
-					expectedRawContentRef.current = null;
-					// Update processedEntry with the new content before exiting edit mode
-					setProcessedEntry((prev) =>
-						prev
-							? { ...prev, decompressed: editedContent, raw: entry.raw }
-							: prev,
-					);
-					setEditSubmitted(false);
-					setIsEditing(false);
-					// Refresh entry data in background
-					onEntryUpdate();
-				}
-			} catch (error) {
-				console.error("Error polling for edit confirmation:", error);
-			}
-		}, 3000);
-
-		return () => clearInterval(pollInterval);
-	}, [editSubmitted, address, id, editedContent, onEntryUpdate]);
 
 	const isContentChanged = useMemo(() => {
 		return (
@@ -374,13 +396,28 @@ export default function Entry({
 	}, [isPendingDelete, isPendingEdit, deleteSubmitted, editSubmitted]);
 
 	const handleSave = async () => {
+		if (!editedContent || !wallet) return;
+
+		// Embedded (Privy) wallets sign silently — we can drop out of edit
+		// mode the instant the user clicks save and roll back if anything in
+		// the try block throws. External wallets (MetaMask, WalletConnect)
+		// pop a signature prompt and the round trip is visible to the user,
+		// so we keep the blocking overlay up until the server accepts.
+		const isEmbeddedWallet = wallet.walletClientType === "privy";
+		const priorProcessed = processedEntry;
+		const intendedContent = editedContent;
+
 		setEditSubmitted(true);
-		if (!editedContent || !wallet) {
-			setEditSubmitted(false);
-			return;
+		if (isEmbeddedWallet) {
+			pendingSavedContentRef.current = intendedContent;
+			setProcessedEntry((prev) =>
+				prev ? { ...prev, decompressed: intendedContent } : prev,
+			);
+			setIsEditing(false);
 		}
+
 		try {
-			const compressedContent = await compress(editedContent);
+			const compressedContent = await compress(intendedContent);
 			let versionedCompressedContent = `br:${compressedContent}`;
 			if (encrypted) {
 				// Edits always re-encrypt with v4. Even if the original entry was
@@ -397,8 +434,6 @@ export default function Entry({
 				const encryptedContent = await encrypt(key, compressedContent);
 				versionedCompressedContent = `enc:v5:br:${encryptedContent}`;
 			}
-			// Store expected raw content for polling comparison
-			expectedRawContentRef.current = versionedCompressedContent;
 			const { signature, nonce, entryId, totalChunks, content } =
 				await signUpdate(wallet, {
 					entryId: Number(id),
@@ -408,9 +443,7 @@ export default function Entry({
 				});
 			const authToken = await getAccessToken();
 			if (!authToken) {
-				console.error("No auth token found");
-				setEditSubmitted(false);
-				return;
+				throw new Error("No auth token found");
 			}
 			await mutateAsyncEdit({
 				address: address as Hex,
@@ -420,9 +453,31 @@ export default function Entry({
 				totalChunks,
 				content,
 				authToken,
-				decompressed: editedContent,
+				decompressed: intendedContent,
 			});
-		} catch {
+			pendingSavedContentRef.current = intendedContent;
+			setProcessedEntry((prev) =>
+				prev
+					? {
+							...prev,
+							decompressed: intendedContent,
+							raw: versionedCompressedContent,
+						}
+					: prev,
+			);
+			setIsEditing(false);
+			setEditSubmitted(false);
+		} catch (err) {
+			console.error("Edit failed", err);
+			if (isEmbeddedWallet) {
+				// Optimistic exit failed — restore the prior entry state and
+				// bounce the user back into the editor with their draft
+				// intact so they can retry without re-typing.
+				pendingSavedContentRef.current = null;
+				setProcessedEntry(priorProcessed);
+				setEditedContent(intendedContent);
+				setIsEditing(true);
+			}
 			setEditSubmitted(false);
 		}
 	};
@@ -478,6 +533,21 @@ export default function Entry({
 	const createdAt = processedEntry.createdAtBlockDatetime
 		? format(new Date(processedEntry.createdAtBlockDatetime), dateFmt)
 		: format(new Date(processedEntry.createdAt), dateFmt);
+
+	// An edit is awaiting on-chain confirmation when the pending-overlay has
+	// stamped the entry with a tx id but the indexer hasn't populated
+	// updatedAtHash yet. Mirrors EntryList's `!onChainId` pending-new-entry
+	// signal.
+	const isConfirmingEdit =
+		!!initialEntry.updatedAtTransactionId && !initialEntry.updatedAtHash;
+
+	// External wallets (MetaMask, WalletConnect, etc.) pop a signature prompt
+	// and the round trip is visible, so we keep the blocking overlay up
+	// until the server accepts. Embedded (Privy) wallets sign silently and
+	// get the optimistic-exit flow in `handleSave`.
+	const isExternalWallet = !!wallet && wallet.walletClientType !== "privy";
+	const showBlockingOverlay =
+		isEditing && (deleteSubmitted || (isExternalWallet && editSubmitted));
 
 	return (
 		<div className="grow flex flex-col">
@@ -535,7 +605,7 @@ export default function Entry({
 						<Unlock className="h-3.5 w-3.5 ml-0.5" />
 					)}
 				</button>
-				{isEditing && isEditPending && (
+				{showBlockingOverlay && (
 					<div
 						className={cn(
 							"absolute inset-0 flex flex-col items-center justify-between h-full z-20",
@@ -567,9 +637,16 @@ export default function Entry({
 				})}
 			>
 				<div>
-					<span className="text-neutral-400 dark:text-neutral-600 bold">
-						{createdAt}
-					</span>
+					{isConfirmingEdit || editSubmitted ? (
+						<span className="pending-entry-spinner inline-flex">
+							<span className="pending-entry-spinner-track" />
+							<AiOutlineLoading3Quarters className="pending-entry-spinner-icon w-3 h-3 rotating" />
+						</span>
+					) : (
+						<span className="text-neutral-400 dark:text-neutral-600 bold">
+							{createdAt}
+						</span>
+					)}
 					{isLoggedIn && walletAddress && (
 						<div>
 							<button

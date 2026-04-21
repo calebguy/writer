@@ -57,13 +57,27 @@ export default function EntryPage({
 		checkCache();
 	}, [address, id, wallet?.address]);
 
-	// Use React Query with cache as initial data
+	// Use React Query with cache as initial data. The query is always
+	// enabled once the cache has been checked so that invalidations (from
+	// edit mutations) can refetch; `initialDataUpdatedAt` suppresses the
+	// initial cold fetch when the cache hits.
 	const { data: entry, refetch } = useQuery({
 		queryKey: ["entry", address, id],
 		queryFn: () => getEntry(address as Hex, Number(id)),
 		initialData: cachedEntry ?? undefined,
-		enabled: cacheChecked && !cachedEntry, // Only fetch if cache miss
+		initialDataUpdatedAt: cachedEntry ? Date.now() : undefined,
+		enabled: cacheChecked,
 		staleTime: 30 * 1000, // 30 seconds
+		// While an edit is pending on-chain confirmation (overlay stamped
+		// updatedAtTransactionId but indexer hasn't filled updatedAtHash yet),
+		// poll every 3s so the Entry's inline "saving" spinner clears as soon
+		// as the indexer catches up.
+		refetchInterval: (query) => {
+			const data = query.state.data;
+			const pending =
+				!!data?.updatedAtTransactionId && !data?.updatedAtHash;
+			return pending ? 3000 : false;
+		},
 	});
 
 	// Fetch the writer to get legacyDomain for EIP-712 signing
