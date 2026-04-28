@@ -27,7 +27,15 @@ export async function startRealtime(
 		let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 		let reconnectScheduled = false;
 		let reconnectAttemptsInMinute = 0;
+		let socketResetAttemptsInMinute = 0;
 		const reconnectMetricsInterval = setInterval(() => {
+			if (socketResetAttemptsInMinute > 0) {
+				console.warn(
+					`WS socket cache resets in last minute: ${socketResetAttemptsInMinute}`,
+				);
+				socketResetAttemptsInMinute = 0;
+			}
+
 			if (reconnectAttemptsInMinute > 0) {
 				console.warn(
 					`WS reconnect attempts in last minute: ${reconnectAttemptsInMinute}`,
@@ -43,6 +51,30 @@ export async function startRealtime(
 			}
 			reconnectScheduled = false;
 		};
+
+		const closeCachedSocketClient = async (reason: string) => {
+			try {
+				const transport = wsClient.transport as unknown as {
+					getRpcClient?: () => Promise<{ close?: () => void }>;
+				};
+				if (typeof transport.getRpcClient !== "function") return;
+				const rpcClient = await transport.getRpcClient();
+				if (typeof rpcClient?.close === "function") {
+					rpcClient.close();
+					socketResetAttemptsInMinute += 1;
+					console.warn(`Reset WS socket client cache (${reason}).`);
+				}
+			} catch (err) {
+				console.warn("Failed to reset WS socket client cache:", err);
+			}
+		};
+
+		const wsHeartbeatInterval = setInterval(() => {
+			if (shuttingDown) return;
+			void wsClient.getBlockNumber().catch((err) => {
+				console.warn("WS heartbeat failed:", err);
+			});
+		}, 5 * 60_000);
 
 		const stopWatching = () => {
 			const stop = unwatch;
@@ -119,6 +151,7 @@ export async function startRealtime(
 					if (shuttingDown) return;
 
 					stopWatching();
+					void closeCachedSocketClient("onError");
 					scheduleReconnect();
 				},
 				emitOnBegin: true,
@@ -130,8 +163,10 @@ export async function startRealtime(
 		const cleanup = () => {
 			shuttingDown = true;
 			clearInterval(reconnectMetricsInterval);
+			clearInterval(wsHeartbeatInterval);
 			clearReconnectTimer();
 			stopWatching();
+			void closeCachedSocketClient("cleanup");
 		};
 		process.on("SIGTERM", cleanup);
 		process.on("SIGINT", cleanup);
