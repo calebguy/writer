@@ -24,7 +24,7 @@ import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Hex } from "viem";
 
-const LOADING_SKELETON_AMOUNT = 6;
+const LOADING_SKELETON_AMOUNT = 15;
 const LOADING_SKELETON_KEYS = Array.from(
 	{ length: LOADING_SKELETON_AMOUNT },
 	(_, i) => `writer-entry-skeleton-${i}`,

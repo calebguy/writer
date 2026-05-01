@@ -28,7 +28,7 @@ import { ClosedEye } from "./icons/ClosedEye";
 import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 
-const SKELETON_COUNT = 6;
+const SKELETON_COUNT = 15;
 const SKELETON_KEYS = Array.from(
 	{ length: SKELETON_COUNT },
 	(_, i) => `skeleton-${i}`,

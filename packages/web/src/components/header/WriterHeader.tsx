@@ -52,7 +52,10 @@ export function WriterHeader({
 				{showSkeleton ? (
 					<div className="h-[39px] w-18 bg-surface dark:bg-surface-raised animate-pulse rounded-lg" />
 				) : (
-					<MarkdownRenderer markdown={writer.title} className="text-primary" />
+					<MarkdownRenderer
+						markdown={writer.title}
+						className="text-primary [&_.prose]:!text-primary [&_.prose_*]:!text-primary"
+					/>
 				)}
 			</div>
 
