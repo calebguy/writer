@@ -73,7 +73,7 @@ function AnchorHeading({
 			id={id}
 			className={`${
 				className ?? ""
-			} cursor-pointer scroll-mt-24 group inline-flex items-center`}
+			} cursor-pointer scroll-mt-16 group inline-flex items-center`}
 			onClick={() => copyAnchor(id)}
 		>
 			{children}
@@ -107,13 +107,29 @@ function Section({
 }: { title: string; children: React.ReactNode; description?: string }) {
 	const id = slugify(title);
 	return (
-		<section className="bg-surface p-2">
+		<section className="bg-surface p-2.5 rounded-xs">
 			<AnchorHeading id={id} className="text-3xl font-serif text-primary">
 				{title}
 			</AnchorHeading>
 			{description && <p className={`${secondaryGray}`}>{description}</p>}
 			<div className="mt-4">{children}</div>
 		</section>
+	);
+}
+
+function FlowText({
+	children,
+	className = "",
+}: {
+	children: React.ReactNode;
+	className?: string;
+}) {
+	return (
+		<div className={`bg-surface-raised p-2 rounded-xs ${className}`}>
+			<p className={`font-mono ${secondaryGray} text-sm text-center`}>
+				{children}
+			</p>
+		</div>
 	);
 }
 
@@ -342,7 +358,7 @@ function TableOfContents() {
 					}
 				}
 			},
-			{ rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+			{ rootMargin: "-64px 0px -85% 0px", threshold: 0 },
 		);
 
 		for (const el of elements) {
@@ -362,6 +378,7 @@ function TableOfContents() {
 							href={`#${item.id}`}
 							onClick={(e) => {
 								e.preventDefault();
+								setActiveId(item.id);
 								copyAnchor(item.id);
 							}}
 							className={`block text-sm transition-colors ${
@@ -414,7 +431,7 @@ export default function DocsPage() {
 						Smart Contracts
 					</AnchorHeading>
 
-					<div className="bg-surface p-2">
+					<div className="bg-surface p-2.5 rounded-xs">
 						<p
 							className={`${secondaryGray} flex items-center gap-2 flex-wrap mb-2`}
 						>
@@ -926,13 +943,13 @@ export default function DocsPage() {
 						API
 					</AnchorHeading>
 					<p className={`${secondaryGray} mb-4`}>
-						Public read endpoints. Write endpoints exist but are restricted
-						to authenticated frontend clients (Privy bearer token required)
-						and are intentionally not documented here.
+						Public read endpoints. Write endpoints exist but are restricted to
+						authenticated frontend clients (Privy bearer token required) and are
+						intentionally not documented here.
 					</p>
 					<div>
 						<span className={`${secondaryGray}`}>Base URL: </span>
-						<div className="mb-4 bg-surface p-2">
+						<div className="mb-4 bg-surface p-2.5 rounded-xs">
 							<p className={`${secondaryGray} flex items-center gap-2`}>
 								<code className="font-mono text-primary">
 									https://api.writer.place
@@ -994,7 +1011,6 @@ export default function DocsPage() {
 							]}
 							response="{ entry: Entry }"
 						/>
-
 					</Section>
 					<RelicDivider seed="entries-user" />
 					<Section title="User">
@@ -1029,17 +1045,23 @@ export default function DocsPage() {
 						requests contain the final encoded string, not raw markdown.
 					</p>
 
-					<div className="mb-4 bg-surface p-2">
-						<p className={`font-mono ${secondaryGray} text-center`}>
-							markdown &rarr; compress &rarr; encrypt (optional) &rarr; prefix
-							&rarr; store
-						</p>
-					</div>
+					<FlowText className="mb-4">
+						markdown &rarr; compress &rarr; encrypt (optional) &rarr; prefix
+						&rarr; store
+					</FlowText>
 
 					<Section
 						title="Format Prefixes"
-						description="The version prefix at the start of the stored content string indicates how to decode it."
+						description="The version prefix at the start of the stored content string indicates how the official Writer frontend decodes it."
 					>
+						<p className={`${secondaryGray} mb-4`}>
+							Writer contracts store entry content as strings and do not enforce
+							a specific encryption scheme. The prefixes documented here
+							describe the format used by Writer&apos;s frontend. Other clients
+							may store different formats, but compatibility with Writer&apos;s
+							frontend requires following this convention.
+						</p>
+
 						<div className="space-y-6">
 							<div className="border-b border-neutral-300 dark:border-neutral-700 pb-6">
 								<code className="font-mono font-bold text-primary">br:</code>
@@ -1054,80 +1076,110 @@ export default function DocsPage() {
 
 							<div className="border-b border-neutral-300 dark:border-neutral-700 pb-6">
 								<code className="font-mono font-bold text-primary">
-									enc:v3:br:
+									enc:v5:br:
 								</code>
 								<p className={`${secondaryGray} mt-1`}>
-									Private entry, current format. AES-GCM encrypted with v3 key,
-									Brotli compressed.
+									Private entry, current format. Brotli compressed, then AES-GCM
+									encrypted with the v5 per-writer key.
 								</p>
 								<p className={`${secondaryGray} mt-1 font-mono text-sm`}>
-									enc:v3:br:A7f3kQ9x...
+									enc:v5:br:A7f3kQ9x...
 								</p>
 							</div>
-
-							<div className="border-b border-neutral-300 dark:border-neutral-700 pb-6 opacity-50">
-								<code className="font-mono font-bold">enc:v2:br:</code>
-								<p className={`${secondaryGray} mt-1`}>Deprecated</p>
-							</div>
-
-							<div className="pb-6 opacity-50">
-								<code className="font-mono font-bold">enc:br:</code>
-								<p className={`${secondaryGray} mt-1`}>Deprecated</p>
-							</div>
 						</div>
+
+						<p className={`${secondaryGray} mt-4`}>
+							Older private prefixes including{" "}
+							<code className="font-mono">enc:v4:br:</code>,{" "}
+							<code className="font-mono">enc:v3:br:</code>,{" "}
+							<code className="font-mono">enc:v2:br:</code>, and{" "}
+							<code className="font-mono">enc:br:</code> are legacy formats
+							supported for backwards compatibility. The app can migrate older
+							entries to the current{" "}
+							<code className="font-mono">enc:v5:br:</code> format.
+						</p>
 					</Section>
 					<RelicDivider seed="prefixes-compression" />
 					<Section
 						title="Compression"
 						description="All content is compressed with Brotli at quality level 11 (maximum), then Base64 encoded. This reduces onchain storage costs."
 					>
-						<div className="bg-surface-raised p-2">
-							<p className={`font-mono ${secondaryGray} text-sm text-center`}>
-								markdown &rarr; UTF-8 encode &rarr; brotli compress (quality 11)
-								&rarr; base64 encode
-							</p>
-						</div>
+						<FlowText>
+							markdown &rarr; UTF-8 encode &rarr; brotli compress (quality 11)
+							&rarr; base64 encode
+						</FlowText>
 					</Section>
 					<RelicDivider seed="compression-encryption" />
 					<Section
 						title="Encryption"
-						description="Private entries are encrypted after compression using AES-GCM with a 128-bit key and 12-byte random IV."
+						description="Private entries are encrypted after compression using AES-GCM with a 256-bit key and 12-byte random IV."
 					>
-						<div className="bg-surface-raised p-2 mb-4">
-							<p className={`font-mono ${secondaryGray} text-sm text-center`}>
-								compressed content &rarr; AES-GCM encrypt &rarr; prepend IV
-								&rarr; base64 encode
-							</p>
-						</div>
+						<FlowText className="mb-4">
+							compressed content &rarr; AES-GCM encrypt &rarr; prepend IV &rarr;
+							base64 encode
+						</FlowText>
 
 						<p className={`${secondaryGray} mb-4`}>
-							The encryption key is deterministically derived from a wallet
-							signature:
+							For current private entries, the encryption key is derived locally
+							from an EIP-712 wallet signature bound to the Writer&apos;s
+							storage ID:
 						</p>
 
 						<ol
-							className={`${secondaryGray} list-decimal list-inside space-y-2`}
+							className={`${secondaryGray} list-decimal list-inside space-y-2 mb-4`}
 						>
 							<li>
-								User signs a fixed message with{" "}
-								<code className="font-mono text-primary">personal_sign</code>
+								User signs structured data with{" "}
+								<code className="font-mono text-primary">
+									eth_signTypedData_v4
+								</code>
 							</li>
-							<li>Signature is hashed with Keccak-256</li>
-							<li>First 16 bytes of the hash become the AES key</li>
+							<li>
+								Domain:{" "}
+								<code className="font-mono">writer.place encryption</code>,
+								version <code className="font-mono">1</code>
+							</li>
+							<li>
+								The message includes the Writer storage ID and purpose text
+							</li>
+							<li>
+								The signature is passed through HKDF-SHA256 with info{" "}
+								<code className="font-mono">Writer:enc:v5:AES-256-GCM</code>
+							</li>
+							<li>The derived 32 bytes become the AES-256-GCM key</li>
 						</ol>
 
 						<p className={`${secondaryGray} mb-4`}>
-							The key never leaves the client. Only the entry author can decrypt
-							their private entries &mdash; the server and contract store opaque
-							ciphertext.
+							The key never leaves the client. Writer&apos;s server, database,
+							and smart contracts store opaque ciphertext and cannot decrypt
+							private entry content.
 						</p>
 
 						<p className={`${secondaryGray} mb-4`}>
-							V1, V2, and V3 keys differ only in the message signed during key
-							derivation. V3 is the current default and includes a security
-							warning to only sign on writer.place. V1 and V2 are supported for
-							backward compatibility with older entries. A migration tool is
-							available in the app to re-encrypt legacy entries with the V3 key.
+							Private means content-encrypted, not invisible. Onchain metadata
+							such as writer address, author address, timestamps, entry count,
+							and approximate content size may still be public.
+						</p>
+
+						<p className={`${secondaryGray} mb-4`}>
+							Users are responsible for wallet access. If the author wallet is
+							lost, private entries encrypted for that wallet may be
+							unrecoverable. Only sign Writer encryption messages on
+							writer.place.
+						</p>
+
+						<p className={`${secondaryGray} mb-4`}>
+							The format is intentionally deterministic and self-custodial:
+							anyone with the onchain ciphertext, the author wallet, and this
+							derivation spec can rebuild a reader without Writer&apos;s
+							frontend or backend.
+						</p>
+
+						<p className={`${secondaryGray} mb-4`}>
+							V5 is the current default. V1, V2, V3, and V4 are supported only
+							for backward compatibility with older entries. A migration tool is
+							available in the app to re-encrypt legacy entries with the current
+							V5 format.
 						</p>
 					</Section>
 					<RelicDivider seed="encryption-decoding" />
@@ -1138,37 +1190,23 @@ export default function DocsPage() {
 						<div className="space-y-6">
 							<div className="border-b border-neutral-300 dark:border-neutral-700 pb-6">
 								<code className="font-mono font-bold text-primary">br:</code>
-								<p
-									className={`${secondaryGray} mt-1 bg-surface-raised text-center p-2 font-mono`}
-								>
+								<FlowText className="mt-1">
 									strip prefix &rarr; base64 decode &rarr; brotli decompress
-								</p>
+								</FlowText>
 							</div>
 
 							<div className="border-b border-neutral-300 dark:border-neutral-700 pb-6">
 								<code className="font-mono font-bold text-primary">
-									enc:v3:br:
+									enc:v5:br:
 								</code>
-								<p
-									className={`${secondaryGray} mt-1 bg-surface-raised text-center p-2 font-mono`}
-								>
-									strip prefix &rarr; base64 decode &rarr; AES-GCM decrypt (v3
-									key) &rarr; brotli decompress
-								</p>
-							</div>
-
-							<div className="border-b border-neutral-300 dark:border-neutral-700 pb-6 opacity-50">
-								<code className="font-mono font-bold">enc:v2:br:</code>
-								<p className={`${secondaryGray} mt-1`}>Deprecated</p>
-							</div>
-
-							<div className="pb-6 opacity-50">
-								<code className="font-mono font-bold">enc:br:</code>
-								<p className={`${secondaryGray} mt-1`}>Deprecated</p>
+								<FlowText className="mt-1">
+									strip prefix &rarr; base64 decode IV + ciphertext &rarr;
+									AES-GCM decrypt (v5 key) &rarr; brotli decompress
+								</FlowText>
 							</div>
 						</div>
 
-						<p className={`${secondaryGray}`}>
+						<p className={`${secondaryGray} mt-6`}>
 							Public entries are decoded server-side and returned as plaintext
 							in the{" "}
 							<code className="font-mono text-primary">decompressed</code>{" "}
