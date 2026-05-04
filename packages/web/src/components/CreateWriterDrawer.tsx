@@ -48,7 +48,7 @@ export function CreateWriterDrawer({
 					aspectSquare={false}
 					placeholder="Create a Place"
 					onChange={onMarkdownChange}
-					className="bg-transparent text-black dark:text-white h-full flex w-full p-2 create-input-mdx"
+					className="bg-transparent text-black dark:text-white h-full flex w-full p-0! create-input-mdx"
 				/>
 			</div>
 			<div className="mt-3 flex gap-2">

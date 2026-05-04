@@ -210,7 +210,7 @@ export default function CreateInput({
 						</button>
 						<button
 							type="button"
-							className="create-input-control hover:text-primary text-neutral-600 mt-1 cursor-pointer"
+							className="create-input-control hover:text-primary text-neutral-400 dark:text-neutral-600 mt-1 cursor-pointer"
 							onClick={() => {
 								setIsExpanded(!isExpanded);
 								onExpand?.(!isExpanded);

@@ -1,6 +1,5 @@
 "use client";
 
-import CreateInput from "@/components/CreateInput";
 import { EntryCardSkeleton } from "@/components/EntryCardSkeleton";
 import EntryListWithCreateInput from "@/components/EntryListWithCreateInput";
 import {
@@ -171,12 +170,6 @@ export default function WriterPage() {
 	if (!writer || isLoading || isEntriesProcessing) {
 		return (
 			<div className="grid gap-2 grid-cols-1 min-[321px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
-				{canCreateEntries && (
-					<div className="relative">
-						<CreateInput onSubmit={() => {}} />
-						<div className="absolute inset-0 bg-surface-overlay/90 flex flex-col items-center justify-center" />
-					</div>
-				)}
 				{LOADING_SKELETON_KEYS.map((key) => (
 					<EntryCardSkeleton key={key} />
 				))}

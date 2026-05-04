@@ -39,7 +39,7 @@ function DynamicDrawerContent({
 			<DynamicDrawerOverlay />
 			<Drawer.Content
 				className={cn(
-					"fixed bottom-4 left-4 right-4 z-50 rounded-2xl p-3 max-h-[85vh] outline-none after:hidden",
+					"fixed bottom-4 left-4 right-4 z-50 rounded-sm p-3 max-h-[85vh] outline-none after:hidden",
 					loading
 						? "bg-primary border border-primary"
 						: "bg-background dark:bg-surface border border-surface-raised",

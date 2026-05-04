@@ -66,7 +66,7 @@ export function CreateEntryDrawer({
 					aspectSquare={false}
 					placeholder={placeholder}
 					onChange={setMarkdown}
-					className="bg-transparent text-black dark:text-white h-full flex w-full p-2 create-input-mdx"
+					className="bg-transparent text-black dark:text-white h-full flex w-full p-0! create-input-mdx"
 				/>
 			</div>
 			<div className="mt-2 flex justify-end">
