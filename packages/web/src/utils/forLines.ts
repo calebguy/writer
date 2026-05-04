@@ -235,7 +235,6 @@ const FOR_LINES: string[] = [
 	"for starless nights",
 	"for cloudless skies",
 	"for overcast afternoons",
-	"for fog",
 	"for the eye of the storm",
 	"for the calm after",
 	"for Tuesdays",
@@ -254,6 +253,7 @@ const FOR_LINES: string[] = [
 	"for the shortest",
 	"for leap years",
 	"for the extra second",
+	"for the love of the game",
 
 	// ── people & relationships ──
 	"for former best friends",

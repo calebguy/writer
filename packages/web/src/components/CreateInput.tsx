@@ -135,7 +135,6 @@ export default function CreateInput({
 		});
 	};
 
-
 	return (
 		<div
 			className={cn("group", {
@@ -146,7 +145,7 @@ export default function CreateInput({
 		>
 			{isLoading && (
 				<div className="absolute inset-0 z-30 bg-secondary border border-secondary flex flex-col items-center justify-between h-full">
-					<div className="text-primary w-full text-left break-words p-2 overflow-hidden">
+					<div className="text-primary w-full text-left wrap-break-word p-2 overflow-hidden rounded-xs">
 						<MarkdownRenderer
 							markdown={loadingContent}
 							className="create-input-loading-text"
@@ -159,7 +158,7 @@ export default function CreateInput({
 			)}
 			<div
 				className={cn(
-					"border border-surface h-full flex justify-center items-center text-primary text-2xl bg-background hover:bg-surface hover:cursor-text",
+					"border border-surface h-full flex justify-center items-center text-primary text-2xl bg-background hover:bg-surface hover:cursor-text rounded-xs",
 					{
 						hidden: hasFocus || isExpanded,
 					},
@@ -174,11 +173,10 @@ export default function CreateInput({
 				<span>+</span>
 			</div>
 			<div
-				className={cn("h-full relative min-h-0 overflow-hidden", {
+				className={cn("h-full relative min-h-0 overflow-hidden rounded-xs", {
 					hidden: !hasFocus && !isExpanded,
 					flex: hasFocus || isExpanded,
-					"border border-dashed border-primary w-full":
-						hasFocus || isExpanded,
+					"border border-dashed border-primary w-full": hasFocus || isExpanded,
 				})}
 			>
 				<MDX

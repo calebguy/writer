@@ -31,10 +31,10 @@ import { format } from "date-fns";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Hex } from "viem";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
-import { Lock } from "./icons/Lock";
+import type { Hex } from "viem";
 import { LoadingRelic } from "./LoadingRelic";
+import { Lock } from "./icons/Lock";
 import { Logo } from "./icons/Logo";
 import { Unlock } from "./icons/Unlock";
 import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
@@ -188,8 +188,7 @@ export default function Entry({
 			onMutate: async (vars) => {
 				await queryClient.cancelQueries({ queryKey: writerQueryKey });
 				await queryClient.cancelQueries({ queryKey: entryQueryKey });
-				const previousWriter =
-					queryClient.getQueryData<Writer>(writerQueryKey);
+				const previousWriter = queryClient.getQueryData<Writer>(writerQueryKey);
 				const previousEntry =
 					queryClient.getQueryData<EntryType>(entryQueryKey);
 
@@ -222,10 +221,10 @@ export default function Entry({
 									},
 								],
 					version: vars.content.startsWith("enc:v5:br:")
-					? "enc:v5:br:"
-					: vars.content.startsWith("enc:v4:br:")
-						? "enc:v4:br:"
-						: "br:",
+						? "enc:v5:br:"
+						: vars.content.startsWith("enc:v4:br:")
+							? "enc:v4:br:"
+							: "br:",
 				});
 
 				if (previousWriter) {
@@ -591,7 +590,7 @@ export default function Entry({
 				<MDX
 					markdown={editedContent}
 					onChange={setEditedContent}
-					className="border border-primary border-dashed bg-surface text-black! dark:text-white! flex-col grow flex w-full aspect-auto!"
+					className="border border-primary border-dashed bg-surface text-black! dark:text-white! flex-col grow flex w-full aspect-auto! rounded-xs"
 					autoFocus={isEditing}
 				/>
 				<button

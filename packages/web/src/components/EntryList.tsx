@@ -122,13 +122,13 @@ export default function EntryList({
 						}
 						key={entry.id}
 						className={cn(
-							"relative aspect-square bg-surface flex flex-col px-2 pt-2 pb-0.5 overflow-hidden",
+							"relative aspect-square bg-surface flex flex-col px-2 pt-2 pb-0.5 overflow-hidden rounded-xs",
 							isPending ? "cursor-loading" : "hover:cursor-zoom-in",
 						)}
 						onClick={isPending ? (e) => e.preventDefault() : undefined}
 						onMouseEnter={() => prefetchEntry(entry)}
 					>
-						<div className="overflow-y-auto grow min-h-0">
+						<div className="overflow-y-auto grow min-h-0 rounded-xs">
 							<MarkdownRenderer
 								markdown={entry.decompressed ?? entry.raw}
 								className="text-black dark:text-white"

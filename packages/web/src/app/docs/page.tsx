@@ -437,26 +437,26 @@ export default function DocsPage() {
 						>
 							<span>WriterFactory:</span>
 							<Link
-								href="https://optimistic.etherscan.io/address/0x28c7721ECff2246a9277CAd46ab2124f69Efd88E"
+								href="https://optimistic.etherscan.io/address/0xF532F814a7A7291440Fc27AbB8CC845Ab86709c8"
 								target="_blank"
 								rel="noopener noreferrer"
 								className="font-mono text-primary break-all hover:underline"
 							>
-								0x28c7721ECff2246a9277CAd46ab2124f69Efd88E
+								0xF532F814a7A7291440Fc27AbB8CC845Ab86709c8
 							</Link>
-							<CopyButton value="0x28c7721ECff2246a9277CAd46ab2124f69Efd88E" />
+							<CopyButton value="0xF532F814a7A7291440Fc27AbB8CC845Ab86709c8" />
 						</p>
 						<p className={`${secondaryGray} flex items-center gap-2 flex-wrap`}>
 							<span>ColorRegistry:</span>
 							<Link
-								href="https://optimistic.etherscan.io/address/0x7Bf5B616f5431725bCE61E397173cd6FbFaAC6F1"
+								href="https://optimistic.etherscan.io/address/0xA083Ff0E24F616AfD12755d7169256334669d4DD"
 								target="_blank"
 								rel="noopener noreferrer"
 								className="font-mono text-primary break-all hover:underline"
 							>
-								0x7Bf5B616f5431725bCE61E397173cd6FbFaAC6F1
+								0xA083Ff0E24F616AfD12755d7169256334669d4DD
 							</Link>
-							<CopyButton value="0x7Bf5B616f5431725bCE61E397173cd6FbFaAC6F1" />
+							<CopyButton value="0xA083Ff0E24F616AfD12755d7169256334669d4DD" />
 						</p>
 					</div>
 					<RelicDivider seed="smart-contracts" />

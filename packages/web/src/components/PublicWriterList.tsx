@@ -6,8 +6,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useCallback } from "react";
 import type { Hex } from "viem";
-import { Lock } from "./icons/Lock";
-import { Unlock } from "./icons/Unlock";
 import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
 
 interface PublicWriterListProps {
@@ -37,7 +35,7 @@ export default function PublicWriterList({ writers }: PublicWriterListProps) {
 				<Link
 					href={`/writer/${writer.address}`}
 					key={writer.address}
-					className="aspect-square bg-surface flex flex-col overflow-hidden px-2 pt-2 pb-1.5 hover:cursor-zoom-in"
+					className="aspect-square bg-surface flex flex-col overflow-hidden px-2 pt-2 pb-1.5 hover:cursor-zoom-in rounded-xs"
 					onMouseEnter={() => prefetchWriter(writer.address)}
 				>
 					<div className="grow min-h-0 min-w-0 overflow-y-auto">
@@ -47,9 +45,7 @@ export default function PublicWriterList({ writers }: PublicWriterListProps) {
 						/>
 					</div>
 					<div className="writer-card-meta shrink-0 flex items-center justify-end gap-3 text-sm text-neutral-400 dark:text-neutral-600 leading-3 pt-2">
-						<span className="flex items-end gap-1">
-							{writer.publicCount}
-						</span>
+						<span className="flex items-end gap-1">{writer.publicCount}</span>
 					</div>
 				</Link>
 			))}

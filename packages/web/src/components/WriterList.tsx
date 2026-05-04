@@ -28,7 +28,7 @@ import { ClosedEye } from "./icons/ClosedEye";
 import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 
-const SKELETON_COUNT = 15;
+const SKELETON_COUNT = 12;
 const SKELETON_KEYS = Array.from(
 	{ length: SKELETON_COUNT },
 	(_, i) => `skeleton-${i}`,
@@ -265,7 +265,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 			<Link
 				href={isPendingWriter ? "#" : `/writer/${writer.address}`}
 				key={writer.address}
-				className={`home-writer-card aspect-square bg-surface flex flex-col overflow-hidden px-2 pt-2 pb-1.5 relative w-full ${
+				className={`home-writer-card aspect-square bg-surface flex flex-col overflow-hidden px-2 pt-2 pb-1.5 relative w-full rounded-xs ${
 					isPendingWriter ? "cursor-loading" : "hover:cursor-zoom-in"
 				}`}
 				onClick={isPendingWriter ? (e) => e.preventDefault() : undefined}
