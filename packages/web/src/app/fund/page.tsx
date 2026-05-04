@@ -12,40 +12,54 @@ function truncateAddress(address: string) {
 	return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
-function WalletRow({ wallet }: { wallet: RelayWallet }) {
+const FUND_ADDRESS = "0xCC2011577CaD30e15d8c8d6329d36DeAF85BD2Cc";
+const FUND_ENS = "writetodayforever.eth";
+
+function CopyAddressButton({ address }: { address: string }) {
 	const [copied, setCopied] = useState(false);
-	const balanceNum = Number.parseFloat(wallet.balance);
-	const displayBalance =
-		balanceNum < 0.0001 && balanceNum > 0 ? "< 0.0001" : balanceNum.toFixed(4);
 
 	const handleCopy = async () => {
-		await navigator.clipboard.writeText(wallet.address);
+		await navigator.clipboard.writeText(address);
 		setCopied(true);
 		setTimeout(() => setCopied(false), 1500);
 	};
 
 	return (
-		<div className="flex items-center justify-between p-3 bg-surface">
-			<div className="flex items-center gap-2">
+		<button
+			type="button"
+			onClick={handleCopy}
+			aria-label="Copy address"
+			className="text-neutral-500 hover:text-primary cursor-pointer"
+		>
+			{copied ? (
+				<Check className="text-primary cursor-default" />
+			) : (
+				<Copy className="cursor-pointer" />
+			)}
+		</button>
+	);
+}
+
+function WalletRow({ wallet }: { wallet: RelayWallet }) {
+	const balanceNum = Number.parseFloat(wallet.balance);
+	const displayBalance =
+		balanceNum < 0.0001 && balanceNum > 0 ? "< 0.0001" : balanceNum.toFixed(4);
+
+	return (
+		<div className="flex items-center justify-between bg-surface rounded-xs py-1.5 border-b last:border-b-0 border-neutral-300 dark:border-neutral-700">
+			<div className="flex items-center gap-2 min-w-0">
 				<Link
 					href={`https://optimistic.etherscan.io/address/${wallet.address}`}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="text-sm font-mono hover:text-primary hover:underline"
+					className="text-sm font-mono hover:text-primary hover:underline truncate"
 				>
 					<span className="hidden sm:inline">{wallet.address}</span>
 					<span className="sm:hidden">{truncateAddress(wallet.address)}</span>
 				</Link>
-				<button
-					type="button"
-					onClick={handleCopy}
-					aria-label="Copy address"
-					className="text-neutral-500 hover:text-primary cursor-pointer"
-				>
-					{copied ? <Check /> : <Copy className="cursor-pointer" />}
-				</button>
+				<CopyAddressButton address={wallet.address} />
 			</div>
-			<span className="text-sm font-mono">{displayBalance} ETH</span>
+			<span className="text-sm font-mono shrink-0">{displayBalance} ETH</span>
 		</div>
 	);
 }
@@ -71,36 +85,54 @@ export default function FundPage() {
 			<div className="flex flex-col gap-2">
 				<p className="text-lg leading-relaxed text-center">
 					Writer pays to store user data in permanent datastructures that will
-					outlive us all. If you'd like to support the project, send ETH on{" "}
-					<Link
-						href="https://optimism.io/"
-						className="hover:text-primary transition-colors hover:underline"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						Optimism
-					</Link>{" "}
-					to any relayer address below.
+					outlive us all. <br />
+					If you&apos;d like to support the project, Send tokens on any EVM
+					chain to
 				</p>
 			</div>
-			<div className="flex flex-col gap-2 w-full">
-				{isLoading ? (
-					<div className="flex flex-col gap-2">
-						{Array.from({ length: 3 }).map((_, i) => (
-							<div
-								key={`skeleton-${i}`}
-								className="h-11 animate-pulse bg-surface-raised"
-							/>
-						))}
+
+			<div className="w-full">
+				<div className="w-full bg-surface p-2.5 rounded-xs flex flex-col gap-3">
+					<div className="flex items-center justify-between gap-3">
+						<div className="min-w-0">
+							<Link
+								href={`https://optimistic.etherscan.io/address/${FUND_ADDRESS}`}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="font-mono hover:text-primary hover:underline break-all"
+							>
+								{FUND_ENS}
+							</Link>
+							<p className="font-mono text-sm text-neutral-500 dark:text-neutral-400 break-all">
+								{FUND_ADDRESS}
+							</p>
+						</div>
+						<CopyAddressButton address={FUND_ADDRESS} />
 					</div>
-				) : wallets && wallets.length > 0 ? (
-					wallets.map((wallet) => (
-						<WalletRow key={wallet.address} wallet={wallet} />
-					))
-				) : (
-					<p className="text-neutral-500">No relayer wallets found.</p>
-				)}
+				</div>
 			</div>
+			{/* <div>or</div>
+			<div className="w-full">
+				<span>Send ETH on Optimism directly to a relayer</span>
+				<div className="w-full bg-surface px-2.5 py-1 rounded-xs flex flex-col">
+					{isLoading ? (
+						<div className="flex flex-col gap-2">
+							{Array.from({ length: 3 }).map((_, i) => (
+								<div
+									key={`skeleton-${i}`}
+									className="h-11 animate-pulse bg-surface-raised rounded-xs"
+								/>
+							))}
+						</div>
+					) : wallets && wallets.length > 0 ? (
+						wallets.map((wallet) => (
+							<WalletRow key={wallet.address} wallet={wallet} />
+						))
+					) : (
+						<p className="text-neutral-500">No relayer wallets found.</p>
+					)}
+				</div>
+			</div> */}
 		</div>
 	);
 }
