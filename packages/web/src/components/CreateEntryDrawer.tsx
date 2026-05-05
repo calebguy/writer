@@ -59,7 +59,7 @@ export function CreateEntryDrawer({
 
 	const editorContent = (
 		<>
-			<div className="h-56 flex flex-col">
+			<div className="h-[calc(65vh-6.5rem)] min-h-56 md:h-56 flex flex-col">
 				<MDX
 					markdown={markdown}
 					autoFocus={false}
