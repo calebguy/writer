@@ -63,7 +63,7 @@ export default function EntryPage({
 	// initial cold fetch when the cache hits.
 	const { data: entry, refetch } = useQuery({
 		queryKey: ["entry", address, id],
-		queryFn: () => getEntry(address as Hex, Number(id)),
+		queryFn: ({ signal }) => getEntry(address as Hex, Number(id), signal),
 		initialData: cachedEntry ?? undefined,
 		initialDataUpdatedAt: cachedEntry ? Date.now() : undefined,
 		enabled: cacheChecked,
@@ -83,7 +83,7 @@ export default function EntryPage({
 	// Fetch the writer to get legacyDomain for EIP-712 signing
 	const { data: writer } = useQuery({
 		queryKey: ["writer", address],
-		queryFn: () => getWriter(address as Hex),
+		queryFn: ({ signal }) => getWriter(address as Hex, signal),
 		staleTime: 60 * 1000,
 	});
 

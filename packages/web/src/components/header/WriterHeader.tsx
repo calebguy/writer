@@ -26,7 +26,7 @@ export function WriterHeader({
 
 	const { data: writer } = useQuery({
 		queryKey: ["writer", address],
-		queryFn: () => getWriter(address as Hex),
+		queryFn: ({ signal }) => getWriter(address as Hex, signal),
 		// Use cached data from writers list if available
 		placeholderData: () => {
 			const queries = queryClient.getQueriesData<Writer[]>({

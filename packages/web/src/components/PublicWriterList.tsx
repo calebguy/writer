@@ -22,7 +22,7 @@ export default function PublicWriterList({ writers }: PublicWriterListProps) {
 		(writerAddress: string) => {
 			queryClient.prefetchQuery({
 				queryKey: ["writer", writerAddress],
-				queryFn: () => getWriter(writerAddress as Hex),
+				queryFn: ({ signal }) => getWriter(writerAddress as Hex, signal),
 				staleTime: 30 * 1000,
 			});
 		},

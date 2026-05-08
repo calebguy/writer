@@ -45,7 +45,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 		useIsMutating({ mutationKey: ["create-from-factory"] }) > 0;
 
 	const { data: writers, isLoading } = useQuery({
-		queryFn: () => getWritersByManager(address as Hex),
+		queryFn: ({ signal }) => getWritersByManager(address as Hex, signal),
 		queryKey: ["get-writers", address],
 		enabled: !!address && authenticated,
 		refetchInterval: isPolling && !isCreatingWriter ? POLLING_INTERVAL : false,
@@ -112,7 +112,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 		(writerAddress: string) => {
 			queryClient.prefetchQuery({
 				queryKey: ["writer", writerAddress],
-				queryFn: () => getWriter(writerAddress as Hex),
+				queryFn: ({ signal }) => getWriter(writerAddress as Hex, signal),
 				staleTime: 30 * 1000,
 			});
 		},

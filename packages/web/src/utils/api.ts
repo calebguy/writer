@@ -63,20 +63,30 @@ export async function setColor({
 	return res.json();
 }
 
-export async function getWriter(address: Hex) {
-	const res = await client.writer[":address"].$get({
-		param: { address },
-	});
+export async function getWriter(address: Hex, signal?: AbortSignal) {
+	const res = await client.writer[":address"].$get(
+		{
+			param: { address },
+		},
+		{
+			init: { signal },
+		},
+	);
 	if (!res.ok) {
 		throw new Error(res.statusText);
 	}
 	return (await res.json()).writer;
 }
 
-export async function getEntry(address: Hex, id: number) {
-	const res = await client.writer[":address"].entry[":id"].$get({
-		param: { address, id: String(id) },
-	});
+export async function getEntry(address: Hex, id: number, signal?: AbortSignal) {
+	const res = await client.writer[":address"].entry[":id"].$get(
+		{
+			param: { address, id: String(id) },
+		},
+		{
+			init: { signal },
+		},
+	);
 	if (!res.ok) {
 		throw new Error(res.statusText);
 	}
@@ -146,10 +156,18 @@ export async function deleteEntry({
 	return res.json();
 }
 
-export async function getWritersByManager(address: Hex | string) {
-	const res = await client.manager[":address"].$get({
-		param: { address: getAddress(address) },
-	});
+export async function getWritersByManager(
+	address: Hex | string,
+	signal?: AbortSignal,
+) {
+	const res = await client.manager[":address"].$get(
+		{
+			param: { address: getAddress(address) },
+		},
+		{
+			init: { signal },
+		},
+	);
 	if (!res.ok) {
 		throw new Error(res.statusText);
 	}

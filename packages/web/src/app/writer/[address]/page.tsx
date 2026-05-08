@@ -44,7 +44,7 @@ export default function WriterPage() {
 
 	const { data: writer, isLoading } = useQuery({
 		queryKey: ["writer", address],
-		queryFn: () => getWriter(address as Hex),
+		queryFn: ({ signal }) => getWriter(address as Hex, signal),
 		placeholderData: () => {
 			// Look through all manager query caches to find this writer
 			const queries = queryClient.getQueriesData<Writer[]>({

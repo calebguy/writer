@@ -41,7 +41,7 @@ export function CreateWriterDrawer({
 
 	const editorContent = (
 		<>
-			<div className="h-[calc(65vh-5.75rem)] min-h-56 md:h-64 flex flex-col">
+			<div className="h-[calc(100dvh-9rem)] min-h-56 sm:h-64 flex flex-col">
 				<MDX
 					markdown={markdown}
 					autoFocus={false}

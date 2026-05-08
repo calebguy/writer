@@ -20,7 +20,10 @@ function DynamicDrawerOverlay({
 }: React.ComponentPropsWithoutRef<typeof Drawer.Overlay>) {
 	return (
 		<Drawer.Overlay
-			className={cn("fixed inset-0 z-50 backdrop-blur-xs", className)}
+			className={cn(
+				"fixed inset-0 z-50 bg-black/35 backdrop-blur-xs dark:bg-black/55",
+				className,
+			)}
 			{...props}
 		/>
 	);
@@ -39,14 +42,13 @@ function DynamicDrawerContent({
 			<DynamicDrawerOverlay />
 			<Drawer.Content
 				className={cn(
-					"fixed bottom-4 left-4 right-4 z-50 rounded-sm p-3 max-h-[85vh] outline-none after:hidden",
-					loading
-						? "bg-primary border border-primary"
-						: "bg-background dark:bg-surface border border-surface-raised",
+					"fixed inset-x-0 bottom-0 z-50 h-[calc(100dvh-1rem)] rounded-t-2xl p-3 outline-none after:hidden sm:bottom-4 sm:left-4 sm:right-4 sm:h-auto sm:max-h-[85vh] sm:rounded-sm",
+					loading ? "bg-primary" : "bg-background dark:bg-surface",
 					className,
 				)}
 				{...props}
 			>
+				<Drawer.Handle className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-neutral-300 dark:bg-neutral-700" />
 				{children}
 			</Drawer.Content>
 		</Drawer.Portal>
