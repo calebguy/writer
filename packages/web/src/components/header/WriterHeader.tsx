@@ -24,7 +24,7 @@ export function WriterHeader({
 	const pathname = usePathname();
 	const isEntryPage = pathname.split("/").length > 3;
 
-	const { data: writer } = useQuery({
+	const { data: writer } = useQuery<Writer>({
 		queryKey: ["writer", address],
 		queryFn: ({ signal }) => getWriter(address as Hex, signal),
 		// Use cached data from writers list if available

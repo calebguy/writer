@@ -61,7 +61,7 @@ export default function EntryPage({
 	// enabled once the cache has been checked so that invalidations (from
 	// edit mutations) can refetch; `initialDataUpdatedAt` suppresses the
 	// initial cold fetch when the cache hits.
-	const { data: entry, refetch } = useQuery({
+	const { data: entry, refetch } = useQuery<EntryType>({
 		queryKey: ["entry", address, id],
 		queryFn: ({ signal }) => getEntry(address as Hex, Number(id), signal),
 		initialData: cachedEntry ?? undefined,

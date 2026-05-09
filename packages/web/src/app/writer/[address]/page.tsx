@@ -42,7 +42,7 @@ export default function WriterPage() {
 	const isCreatingEntry =
 		useIsMutating({ mutationKey: ["create-with-chunk", address] }) > 0;
 
-	const { data: writer, isLoading } = useQuery({
+	const { data: writer, isLoading } = useQuery<Writer>({
 		queryKey: ["writer", address],
 		queryFn: ({ signal }) => getWriter(address as Hex, signal),
 		placeholderData: () => {

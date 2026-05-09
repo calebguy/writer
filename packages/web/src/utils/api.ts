@@ -63,7 +63,10 @@ export async function setColor({
 	return res.json();
 }
 
-export async function getWriter(address: Hex, signal?: AbortSignal) {
+export async function getWriter(
+	address: Hex,
+	signal?: AbortSignal,
+): Promise<Writer> {
 	const res = await client.writer[":address"].$get(
 		{
 			param: { address },
@@ -78,7 +81,11 @@ export async function getWriter(address: Hex, signal?: AbortSignal) {
 	return (await res.json()).writer;
 }
 
-export async function getEntry(address: Hex, id: number, signal?: AbortSignal) {
+export async function getEntry(
+	address: Hex,
+	id: number,
+	signal?: AbortSignal,
+): Promise<Entry> {
 	const res = await client.writer[":address"].entry[":id"].$get(
 		{
 			param: { address, id: String(id) },
@@ -159,7 +166,7 @@ export async function deleteEntry({
 export async function getWritersByManager(
 	address: Hex | string,
 	signal?: AbortSignal,
-) {
+): Promise<Writer[]> {
 	const res = await client.manager[":address"].$get(
 		{
 			param: { address: getAddress(address) },
