@@ -71,7 +71,7 @@ export function CreateWriterDrawer({
 			) : (
 				<div className="hidden">{editorContent}</div>
 			)}
-			<DynamicDrawerRoot open={open} onOpenChange={onOpenChange}>
+			<DynamicDrawerRoot open={open} onOpenChange={onOpenChange} handleOnly>
 				<DynamicDrawerContent>
 					<DynamicDrawerTitle className="sr-only">
 						Create Writer

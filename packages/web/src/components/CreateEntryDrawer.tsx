@@ -107,6 +107,7 @@ export function CreateEntryDrawer({
 			)}
 			<DynamicDrawerRoot
 				open={isOpen}
+				handleOnly
 				onOpenChange={(open) => {
 					setOpen(open);
 					if (!open) {
