@@ -1,29 +1,35 @@
 "use client";
 
-import { usePrivy } from "@privy-io/react-auth";
+import { useIsLoggedIn } from "@/hooks/useIsLoggedIn";
+import { NavigationContext } from "@/utils/context";
 import { usePathname, useRouter } from "next/navigation";
+import { useContext } from "react";
 import { FiArrowLeft } from "react-icons/fi";
 
 export function BackButton({ writerAddress }: { writerAddress: string }) {
 	const pathname = usePathname();
 	const router = useRouter();
-	const { authenticated } = usePrivy();
+	const isLoggedIn = useIsLoggedIn();
+	const { writerCameFromExplore } = useContext(NavigationContext);
 	const segments = pathname.split("/").filter(Boolean);
 
-	// Check if we're on an entry page: /writer/:address/:entryId (3 segments)
-	const isEntryPage = segments.length === 3;
+	const isWriterRoute = segments[0] === "writer";
+	const currentWriterAddress = segments[1] ?? writerAddress;
+	const normalizedWriterAddress = currentWriterAddress.toLowerCase();
+	const isEntryPage = isWriterRoute && segments.length === 3;
 
 	const handleBack = () => {
-		// If there's no history to go back to, navigate to the appropriate fallback
-		if (window.history.length <= 1) {
-			if (isEntryPage) {
-				router.push(`/writer/${writerAddress}`);
-			} else {
-				router.push(authenticated ? "/home" : "/explore");
-			}
-		} else {
-			router.back();
+		if (isEntryPage) {
+			router.push(`/writer/${currentWriterAddress}`);
+			return;
 		}
+
+		if (!isLoggedIn || writerCameFromExplore[normalizedWriterAddress]) {
+			router.push("/explore");
+			return;
+		}
+
+		router.push("/home");
 	};
 
 	return (

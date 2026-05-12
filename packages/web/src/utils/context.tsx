@@ -4,6 +4,14 @@ import type { RGB } from "./utils";
 
 export const AuthHintContext = createContext<boolean>(false);
 
+export interface NavigationContextType {
+	writerCameFromExplore: Record<string, boolean>;
+}
+
+export const NavigationContext = createContext<NavigationContextType>({
+	writerCameFromExplore: {},
+});
+
 export interface WriterContextType {
 	writer: Writer | null;
 	setWriter: (content: Writer | null) => void;

@@ -3,6 +3,7 @@
 import { useAuthColor } from "@/hooks/useAuthColor";
 import {
 	AuthHintContext,
+	NavigationContext,
 	WriterContext,
 	type WriterContextType,
 	defaultColor,
@@ -23,10 +24,27 @@ import {
 } from "@/utils/utils";
 import { PrivyProvider } from "@privy-io/react-auth";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { optimism } from "viem/chains";
 
 import { env } from "@/utils/env";
+import { usePathname } from "next/navigation";
+
+function getBaseWriterAddress(pathname: string): string | null {
+	const segments = pathname.split("/").filter(Boolean);
+	if (segments.length !== 2 || segments[0] !== "writer") {
+		return null;
+	}
+	return segments[1]?.toLowerCase() ?? null;
+}
+
+function getEntryWriterAddress(pathname: string): string | null {
+	const segments = pathname.split("/").filter(Boolean);
+	if (segments.length !== 3 || segments[0] !== "writer") {
+		return null;
+	}
+	return segments[1]?.toLowerCase() ?? null;
+}
 
 export const queryClient = new QueryClient({
 	defaultOptions: {
@@ -48,6 +66,11 @@ export function Providers({
 	initialLoggedIn?: boolean;
 }>) {
 	const [writer, setWriter] = useState<WriterContextType["writer"]>(null);
+	const pathname = usePathname();
+	const previousPathnameRef = useRef<string | null>(null);
+	const [writerCameFromExplore, setWriterCameFromExplore] = useState<
+		Record<string, boolean>
+	>({});
 
 	const getInitialColor = () => {
 		if (initialColor) {
@@ -64,6 +87,28 @@ export function Providers({
 		WriterContextType["primaryColor"]
 	>(getInitialColor());
 	const [hasUserColor, setHasUserColor] = useState<boolean>(!!initialColor);
+
+	useEffect(() => {
+		const previousPathname = previousPathnameRef.current;
+		if (previousPathname === pathname) {
+			return;
+		}
+
+		const writerAddress = getBaseWriterAddress(pathname);
+		if (writerAddress) {
+			const cameFromWriterEntry =
+				getEntryWriterAddress(previousPathname ?? "") === writerAddress;
+
+			if (!cameFromWriterEntry) {
+				setWriterCameFromExplore((current) => ({
+					...current,
+					[writerAddress]: previousPathname === "/explore",
+				}));
+			}
+		}
+
+		previousPathnameRef.current = pathname;
+	}, [pathname]);
 
 	// Apply inline CSS variables only when the user has explicitly chosen a color.
 	// When no color is chosen, the stylesheet's --color-*-default values drive
@@ -128,7 +173,8 @@ export function Providers({
 					loginMethods: ["sms", "email", "wallet", "passkey"],
 					defaultChain: optimism,
 					supportedChains: [optimism],
-					walletConnectCloudProjectId: env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID,
+					walletConnectCloudProjectId:
+						env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID,
 					appearance: {
 						theme: "dark",
 						accentColor: RGBToHex(primaryColor),
@@ -152,20 +198,22 @@ export function Providers({
 				}}
 			>
 				<AuthHintContext value={initialLoggedIn}>
-					<WriterContext
-						value={{
-							writer,
-							setWriter,
-							defaultColor,
-							primaryColor,
-							setPrimaryColor: handleSetPrimaryColor,
-							setPrimaryFromLongHex: handleSetPrimaryFromLongHex,
-							resetPrimaryColor: handleResetPrimaryColor,
-						}}
-					>
-						<AuthColorSync />
-						{children}
-					</WriterContext>
+					<NavigationContext value={{ writerCameFromExplore }}>
+						<WriterContext
+							value={{
+								writer,
+								setWriter,
+								defaultColor,
+								primaryColor,
+								setPrimaryColor: handleSetPrimaryColor,
+								setPrimaryFromLongHex: handleSetPrimaryFromLongHex,
+								resetPrimaryColor: handleResetPrimaryColor,
+							}}
+						>
+							<AuthColorSync />
+							{children}
+						</WriterContext>
+					</NavigationContext>
 				</AuthHintContext>
 			</PrivyProvider>
 		</QueryClientProvider>
