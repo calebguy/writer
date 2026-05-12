@@ -21,7 +21,8 @@ function isComposeRoute(pathname: string) {
 	const segments = pathname.split("/").filter(Boolean);
 	return (
 		pathname === "/place/new" ||
-		(segments[0] === "writer" && segments[2] === "new")
+		(segments[0] === "writer" &&
+			(segments[2] === "new" || segments[3] === "edit"))
 	);
 }
 
@@ -176,10 +177,6 @@ export function MobileBottomNav({
 		setStoredThemeMode(mode);
 	};
 
-	if (!shouldShow && !preview) {
-		return null;
-	}
-
 	const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const didLongPress = useRef(false);
 
@@ -207,6 +204,10 @@ export function MobileBottomNav({
 		setShowSubMenu(false);
 		router.push("/home");
 	};
+
+	if (!shouldShow && !preview) {
+		return null;
+	}
 
 	return (
 		<>
