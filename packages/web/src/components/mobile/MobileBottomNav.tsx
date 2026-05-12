@@ -17,6 +17,14 @@ import { queryClient } from "../Providers";
 
 const VISIBLE_PATHS = new Set(["/home", "/explore", "/saved", "/writer"]);
 
+function isComposeRoute(pathname: string) {
+	const segments = pathname.split("/").filter(Boolean);
+	return (
+		pathname === "/place/new" ||
+		(segments[0] === "writer" && segments[2] === "new")
+	);
+}
+
 function isRouteActive(pathname: string, target: string) {
 	return pathname === target || pathname.startsWith(`${target}/`);
 }
@@ -27,7 +35,9 @@ function navIconClass(active: boolean) {
 		: "cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary";
 }
 
-export function MobileBottomNav({ preview = false }: { preview?: boolean } = {}) {
+export function MobileBottomNav({
+	preview = false,
+}: { preview?: boolean } = {}) {
 	const pathname = usePathname();
 	const router = useRouter();
 	const { logout, authenticated, ready } = usePrivy();
@@ -40,6 +50,9 @@ export function MobileBottomNav({ preview = false }: { preview?: boolean } = {})
 	const containerRef = useRef<HTMLDivElement>(null);
 
 	const shouldShow = useMemo(() => {
+		if (isComposeRoute(pathname)) {
+			return false;
+		}
 		for (const path of VISIBLE_PATHS) {
 			if (isRouteActive(pathname, path)) {
 				return true;
