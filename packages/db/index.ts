@@ -426,17 +426,26 @@ class Db {
 	}
 
 	/**
-	 * Returns all in-flight relay_tx rows matching a given function signature.
-	 * Used by the overlay to find pending factory creates when listing writers
-	 * for a manager — we can't key those on target_address because the target
-	 * is a brand-new writer address that hasn't been joined back to any manager
-	 * yet; the managers live inside `args`.
+	 * Returns relay_tx rows matching a function signature that should still be
+	 * overlaid. Used by the manager list to find factory creates where the
+	 * manager is only present inside `args`.
+	 *
+	 * Like getPendingTxsFor(), this includes recently CONFIRMED txs so a newly
+	 * created Place does not disappear between receipt confirmation and ingestor
+	 * indexing.
 	 */
 	async getPendingTxsByFunction(functionSignature: string) {
+		const recentlyConfirmedCutoff = new Date(Date.now() - 10 * 60 * 1000);
 		return this.pg.query.relayTx.findMany({
 			where: and(
 				eq(relayTx.functionSignature, functionSignature),
-				inArray(relayTx.status, ["PENDING", "SUBMITTED"] as const),
+				or(
+					inArray(relayTx.status, ["PENDING", "SUBMITTED"] as const),
+					and(
+						eq(relayTx.status, "CONFIRMED"),
+						gt(relayTx.updatedAt, recentlyConfirmedCutoff),
+					),
+				),
 			),
 			orderBy: (tx, { desc: d }) => [d(tx.createdAt)],
 		});
