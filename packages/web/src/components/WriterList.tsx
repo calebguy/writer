@@ -8,7 +8,7 @@ import {
 	getWritersByManager,
 	hideWriter as hideWriterApi,
 } from "@/utils/api";
-import { POLLING_INTERVAL } from "@/utils/constants";
+import { GRID_SKELETON_COUNT, POLLING_INTERVAL } from "@/utils/constants";
 import { usePrivy } from "@privy-io/react-auth";
 import {
 	useIsMutating,
@@ -28,9 +28,8 @@ import { ClosedEye } from "./icons/ClosedEye";
 import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 
-const SKELETON_COUNT = 12;
 const SKELETON_KEYS = Array.from(
-	{ length: SKELETON_COUNT },
+	{ length: GRID_SKELETON_COUNT },
 	(_, i) => `skeleton-${i}`,
 );
 

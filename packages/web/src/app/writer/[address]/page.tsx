@@ -9,6 +9,7 @@ import {
 	saveWriter,
 	unsaveWriter,
 } from "@/utils/api";
+import { GRID_SKELETON_COUNT } from "@/utils/constants";
 import { useOPWallet, useProcessedEntries } from "@/utils/hooks";
 import { hasCachedDerivedKey } from "@/utils/keyCache";
 import { isEntryPrivate } from "@/utils/utils";
@@ -23,9 +24,8 @@ import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Hex } from "viem";
 
-const LOADING_SKELETON_AMOUNT = 15;
 const LOADING_SKELETON_KEYS = Array.from(
-	{ length: LOADING_SKELETON_AMOUNT },
+	{ length: GRID_SKELETON_COUNT },
 	(_, i) => `writer-entry-skeleton-${i}`,
 );
 
