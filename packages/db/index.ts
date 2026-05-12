@@ -3,6 +3,7 @@ import {
 	arrayContains,
 	desc,
 	eq,
+	gt,
 	inArray,
 	isNull,
 	lt,
@@ -390,20 +391,35 @@ class Db {
 	}
 
 	/**
-	 * Returns all in-flight relay_tx rows targeting the given writer address.
-	 * "In-flight" = PENDING or SUBMITTED (not yet CONFIRMED or ABANDONED).
-	 * Used by the pending overlay to surface optimistic state to the read
-	 * path until the indexer catches up.
+	 * Returns relay_tx rows that should still be overlaid for the given writer.
+	 *
+	 * We include:
+	 *   - PENDING / SUBMITTED txs (not onchain yet)
+	 *   - recently CONFIRMED txs (onchain, but the ingestor may not have written
+	 *     the entry/chunk rows yet)
+	 *
+	 * Keeping recently confirmed txs in the overlay closes the UI gap where a
+	 * pending entry disappears after receipt confirmation and then reappears when
+	 * the ingestor catches up. Once the ingestor writes the matching DB row, the
+	 * overlay code drops the synthesized create because `createdAtTransactionId`
+	 * matches the tx id.
 	 *
 	 * Ordered by createdAt desc so callers can take the most recent pending
 	 * write per (entry, operation) pair in the overlay merge.
 	 */
 	async getPendingTxsFor(targetAddress: string) {
 		const normalized = targetAddress.toLowerCase();
+		const recentlyConfirmedCutoff = new Date(Date.now() - 10 * 60 * 1000);
 		return this.pg.query.relayTx.findMany({
 			where: and(
 				eq(relayTx.targetAddress, normalized),
-				inArray(relayTx.status, ["PENDING", "SUBMITTED"] as const),
+				or(
+					inArray(relayTx.status, ["PENDING", "SUBMITTED"] as const),
+					and(
+						eq(relayTx.status, "CONFIRMED"),
+						gt(relayTx.updatedAt, recentlyConfirmedCutoff),
+					),
+				),
 			),
 			orderBy: (tx, { desc: d }) => [d(tx.createdAt)],
 		});

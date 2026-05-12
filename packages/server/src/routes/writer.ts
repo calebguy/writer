@@ -389,6 +389,7 @@ const writerRoutes = new Hono()
 				nonce: Number(nonce),
 				chunkCount: Number(chunkCount),
 				chunkContent,
+				author,
 			};
 			try {
 				await simulateContractOrThrow({

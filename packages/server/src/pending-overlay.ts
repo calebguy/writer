@@ -346,17 +346,18 @@ function synthesizePendingEntry(
 	const tempId = -Math.abs(new Date(tx.createdAt).getTime());
 	const raw = chunkContent;
 	const { version, decompressed } = processRawContent(raw);
-	const args = tx.args as { nonce?: number } | null;
+	const args = tx.args as { nonce?: number; author?: string } | null;
 	const _nonce = args?.nonce; // nonce isn't surfaced to callers; intentional
 	void _nonce;
 	return {
 		id: tempId,
 		exists: true,
 		onChainId: undefined,
-		// Author is not directly in args (recovered from signature); the UI
-		// can't trust a blank author — leave as empty string here and let the
-		// UI fall back to "you" since the cache-optimistic entry is author-authored.
-		author: "",
+		// The server recovers the author before enqueueing the relay tx and stores
+		// it in relay_tx.args. This is important for private pending entries: the
+		// client filters private entries to the current author, so a blank author
+		// would make the overlay row disappear until the ingestor catches up.
+		author: args?.author?.toLowerCase() ?? "",
 		createdAtHash: null,
 		createdAtBlock: undefined,
 		createdAtBlockDatetime: null,

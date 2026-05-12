@@ -14,7 +14,8 @@ import { relay } from "./relay";
  *   2. Uses publicClient.waitForTransactionReceipt to observe the receipt
  *      the moment the block lands on the RPC we're pointed at.
  *   3. Updates relay_tx to CONFIRMED (success) or ABANDONED (revert / relay
- *      error) so the pending-overlay (Step 4) stops showing stale state.
+ *      error). The pending overlay keeps recent CONFIRMED txs visible until
+ *      the ingestor has written the matching entry rows.
  *
  * Any failure here is swallowed — the 5s poller is the fallback for watchers
  * that die with the server or get stuck.

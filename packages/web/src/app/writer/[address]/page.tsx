@@ -31,6 +31,7 @@ const LOADING_SKELETON_KEYS = Array.from(
 
 export default function WriterPage() {
 	const { address } = useParams<{ address: string }>();
+	const normalizedAddress = address.toLowerCase();
 	const queryClient = useQueryClient();
 	const [wallet] = useOPWallet();
 	const { getAccessToken, authenticated, ready } = usePrivy();
@@ -40,11 +41,12 @@ export default function WriterPage() {
 	const [unlockError, setUnlockError] = useState<string | null>(null);
 
 	const isCreatingEntry =
-		useIsMutating({ mutationKey: ["create-with-chunk", address] }) > 0;
+		useIsMutating({ mutationKey: ["create-with-chunk", normalizedAddress] }) >
+		0;
 
 	const { data: writer, isLoading } = useQuery<Writer>({
-		queryKey: ["writer", address],
-		queryFn: ({ signal }) => getWriter(address as Hex, signal),
+		queryKey: ["writer", normalizedAddress],
+		queryFn: ({ signal }) => getWriter(normalizedAddress as Hex, signal),
 		placeholderData: () => {
 			// Look through all manager query caches to find this writer
 			const queries = queryClient.getQueriesData<Writer[]>({
@@ -52,7 +54,7 @@ export default function WriterPage() {
 			});
 			for (const [, writers] of queries) {
 				const cached = writers?.find(
-					(w) => w.address.toLowerCase() === address.toLowerCase(),
+					(w) => w.address.toLowerCase() === normalizedAddress,
 				);
 				if (cached) return cached;
 			}
@@ -79,7 +81,7 @@ export default function WriterPage() {
 	}, []);
 
 	const { processedEntries, hasLockedPrivateEntries, processedOnce } =
-		useProcessedEntries(writer?.entries, address, {
+		useProcessedEntries(writer?.entries, normalizedAddress, {
 			allowDecryption,
 			onDecryptError: handleDecryptError,
 		});
@@ -95,12 +97,16 @@ export default function WriterPage() {
 	useEffect(() => {
 		if (!wallet || !hasPrivateEntries) return;
 		// Auto-unlock only if a key is already cached (no signature prompt).
-		// For v4 entries the key is per-writer, so we check this writer's
+		// For v4/v5 entries the key is per-writer, so we check this writer's
 		// specific storage_id.
+		const v5Cached = writer?.storageId
+			? hasCachedDerivedKey(wallet, "v5", writer.storageId)
+			: false;
 		const v4Cached = writer?.storageId
 			? hasCachedDerivedKey(wallet, "v4", writer.storageId)
 			: false;
 		if (
+			v5Cached ||
 			v4Cached ||
 			hasCachedDerivedKey(wallet, "v3") ||
 			hasCachedDerivedKey(wallet, "v2")

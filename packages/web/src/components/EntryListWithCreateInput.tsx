@@ -50,14 +50,15 @@ export default function EntryListWithCreateInput({
 	const { getAccessToken } = usePrivy();
 	const router = useRouter();
 	const queryClient = useQueryClient();
+	const normalizedWriterAddress = writerAddress.toLowerCase();
 	// External wallets (MetaMask, WalletConnect, etc.) pop a signature prompt;
 	// Privy's embedded wallet signs silently, so we only show a loader for external.
 	const isExternalWallet = !!wallet && wallet.walletClientType !== "privy";
 
-	const queryKey = ["writer", writerAddress] as const;
+	const queryKey = ["writer", normalizedWriterAddress] as const;
 	const { mutateAsync } = useMutation({
 		mutationFn: createWithChunk,
-		mutationKey: ["create-with-chunk", writerAddress],
+		mutationKey: ["create-with-chunk", normalizedWriterAddress],
 		onMutate: async (vars) => {
 			await queryClient.cancelQueries({ queryKey });
 			const previous = queryClient.getQueryData<Writer>(queryKey);
