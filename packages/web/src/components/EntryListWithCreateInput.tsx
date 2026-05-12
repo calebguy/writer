@@ -11,7 +11,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Hex } from "viem";
-import { CreateEntryDrawer } from "./CreateEntryDrawer";
 import CreateInput, { type CreateInputData } from "./CreateInput";
 import EntryList from "./EntryList";
 
@@ -187,7 +186,7 @@ export default function EntryListWithCreateInput({
 				}`}
 			>
 				{canCreateEntries && (
-					<div className="hidden md:block">
+					<div className="hidden lg:block">
 						<CreateInput
 							placeholder={`Write in ${writerTitle}`}
 							onExpand={setIsExpanded}
@@ -214,12 +213,6 @@ export default function EntryListWithCreateInput({
 					</div>
 				)} */}
 			</div>
-			{canCreateEntries && (
-				<CreateEntryDrawer
-					placeholder={`Write in ${writerTitle}`}
-					onSubmit={handleSubmit}
-				/>
-			)}
 		</>
 	);
 }

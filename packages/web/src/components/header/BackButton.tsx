@@ -5,6 +5,7 @@ import { NavigationContext } from "@/utils/context";
 import { usePathname, useRouter } from "next/navigation";
 import { useContext } from "react";
 import { FiArrowLeft } from "react-icons/fi";
+import { Close } from "../icons/Close";
 
 export function BackButton({ writerAddress }: { writerAddress: string }) {
 	const pathname = usePathname();
@@ -17,6 +18,7 @@ export function BackButton({ writerAddress }: { writerAddress: string }) {
 	const currentWriterAddress = segments[1] ?? writerAddress;
 	const normalizedWriterAddress = currentWriterAddress.toLowerCase();
 	const isEntryPage = isWriterRoute && segments.length === 3;
+	const isCreateEntryPage = isEntryPage && segments[2] === "new";
 
 	const handleBack = () => {
 		if (isEntryPage) {
@@ -34,7 +36,11 @@ export function BackButton({ writerAddress }: { writerAddress: string }) {
 
 	return (
 		<button type="button" onClick={handleBack} className="cursor-pointer">
-			<FiArrowLeft className="w-7 h-7 text-primary hover:text-secondary transition-colors" />
+			{isCreateEntryPage ? (
+				<Close className="w-7 h-7 text-primary hover:text-secondary transition-colors" />
+			) : (
+				<FiArrowLeft className="w-7 h-7 text-primary hover:text-secondary transition-colors" />
+			)}
 		</button>
 	);
 }
