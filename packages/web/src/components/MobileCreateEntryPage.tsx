@@ -3,6 +3,7 @@
 import { Check } from "@/components/icons/Check";
 import { Lock } from "@/components/icons/Lock";
 import { Unlock } from "@/components/icons/Unlock";
+import { useComposeHeaderActions } from "@/components/writer/ComposeHeaderActionsContext";
 import {
 	type Entry,
 	type Writer,
@@ -29,6 +30,7 @@ export function MobileCreateEntryPage({ address }: { address: string }) {
 	const normalizedAddress = address.toLowerCase();
 	const [wallet] = useOPWallet();
 	const { getAccessToken } = usePrivy();
+	const { setActions } = useComposeHeaderActions();
 	const [markdown, setMarkdown] = useState("");
 	const [encrypted, setEncrypted] = useState(false);
 	const [isSigning, setIsSigning] = useState(false);
@@ -185,19 +187,9 @@ export function MobileCreateEntryPage({ address }: { address: string }) {
 		return () => document.removeEventListener("keydown", onKeyDown);
 	}, [markdown, encrypted, writer, wallet?.address, isSubmitting]);
 
-	return (
-		<div className="grow flex flex-col min-h-0">
-			<div className="grow min-h-0 flex flex-col">
-				<MDX
-					markdown={markdown}
-					autoFocus
-					aspectSquare={false}
-					placeholder={writer ? `Write in ${writer.title}` : "Write"}
-					onChange={setMarkdown}
-					className="bg-transparent text-black dark:text-white h-full flex w-full p-0! create-input-mdx"
-				/>
-			</div>
-			<div className="mt-3 flex items-center justify-end gap-4 shrink-0">
+	useEffect(() => {
+		setActions(
+			<>
 				<button
 					type="button"
 					aria-label={encrypted ? "Make public" : "Make private"}
@@ -225,6 +217,30 @@ export function MobileCreateEntryPage({ address }: { address: string }) {
 						<Check className="w-7 h-7" />
 					)}
 				</button>
+			</>,
+		);
+		return () => setActions(null);
+	}, [
+		encrypted,
+		isSigning,
+		isSubmitting,
+		markdown,
+		writer,
+		wallet,
+		setActions,
+	]);
+
+	return (
+		<div className="grow flex flex-col min-h-0">
+			<div className="grow min-h-0 flex flex-col">
+				<MDX
+					markdown={markdown}
+					autoFocus
+					aspectSquare={false}
+					placeholder={writer ? `Write in ${writer.title}` : "Write"}
+					onChange={setMarkdown}
+					className="bg-transparent text-black dark:text-white h-full flex w-full p-0! create-input-mdx"
+				/>
 			</div>
 		</div>
 	);

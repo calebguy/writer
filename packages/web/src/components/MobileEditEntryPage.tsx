@@ -3,6 +3,7 @@
 import { Check } from "@/components/icons/Check";
 import { Lock } from "@/components/icons/Lock";
 import { Unlock } from "@/components/icons/Unlock";
+import { useComposeHeaderActions } from "@/components/writer/ComposeHeaderActionsContext";
 import {
 	type Entry,
 	type Writer,
@@ -75,6 +76,7 @@ export function MobileEditEntryPage({
 	const queryClient = useQueryClient();
 	const [wallet] = useOPWallet();
 	const { getAccessToken } = usePrivy();
+	const { setActions } = useComposeHeaderActions();
 	const [markdown, setMarkdown] = useState("");
 	const [encrypted, setEncrypted] = useState(false);
 	const [isSigning, setIsSigning] = useState(false);
@@ -291,27 +293,9 @@ export function MobileEditEntryPage({
 		wallet?.address,
 	]);
 
-	if (entry && wallet && !isWalletAuthor(wallet, entry)) {
-		return (
-			<div className="grow flex items-center justify-center text-neutral-400 dark:text-neutral-600">
-				Private
-			</div>
-		);
-	}
-
-	return (
-		<div className="grow flex flex-col min-h-0">
-			<div className="grow min-h-0 flex flex-col">
-				<MDX
-					markdown={markdown}
-					autoFocus
-					aspectSquare={false}
-					placeholder="Edit Entry"
-					onChange={setMarkdown}
-					className="bg-transparent text-black dark:text-white h-full flex w-full p-0! create-input-mdx"
-				/>
-			</div>
-			<div className="mt-3 flex items-center justify-end gap-4 shrink-0">
+	useEffect(() => {
+		setActions(
+			<>
 				<button
 					type="button"
 					aria-label={encrypted ? "Make public" : "Make private"}
@@ -340,6 +324,30 @@ export function MobileEditEntryPage({
 						<Check className="w-7 h-7" />
 					)}
 				</button>
+			</>,
+		);
+		return () => setActions(null);
+	}, [canSave, encrypted, entry, isSigning, isSubmitting, setActions]);
+
+	if (entry && wallet && !isWalletAuthor(wallet, entry)) {
+		return (
+			<div className="grow flex items-center justify-center text-neutral-400 dark:text-neutral-600">
+				Private
+			</div>
+		);
+	}
+
+	return (
+		<div className="grow flex flex-col min-h-0">
+			<div className="grow min-h-0 flex flex-col">
+				<MDX
+					markdown={markdown}
+					autoFocus
+					aspectSquare={false}
+					placeholder="Edit Entry"
+					onChange={setMarkdown}
+					className="bg-transparent text-black dark:text-white h-full flex w-full p-0! create-input-mdx"
+				/>
 			</div>
 		</div>
 	);

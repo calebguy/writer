@@ -1,6 +1,7 @@
 import { Footer } from "@/components/Footer";
 import { WriterHeader } from "@/components/header/WriterHeader";
 import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
+import { ComposeHeaderActionsProvider } from "@/components/writer/ComposeHeaderActionsContext";
 import { EntryLoadingProvider } from "@/utils/EntryLoadingContext";
 import { env } from "@/utils/env";
 import type { Metadata } from "next";
@@ -82,16 +83,18 @@ export default function Layout({
 	const { address } = use(params);
 	return (
 		<EntryLoadingProvider>
-			<div className="flex flex-col grow min-h-0">
-				<div className="mb-4 shrink-0">
-					<WriterHeader address={address} />
+			<ComposeHeaderActionsProvider>
+				<div className="flex flex-col grow min-h-0">
+					<div className="mb-4 shrink-0">
+						<WriterHeader address={address} />
+					</div>
+					<div className="grow flex flex-col relative min-h-0 overflow-auto">
+						{children}
+					</div>
 				</div>
-				<div className="grow flex flex-col relative min-h-0 overflow-auto">
-					{children}
-				</div>
-			</div>
-			<Footer />
-			<MobileBottomNav />
+				<Footer />
+				<MobileBottomNav />
+			</ComposeHeaderActionsProvider>
 		</EntryLoadingProvider>
 	);
 }

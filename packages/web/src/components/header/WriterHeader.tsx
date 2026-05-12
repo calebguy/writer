@@ -10,6 +10,7 @@ import { FiPlus } from "react-icons/fi";
 import type { Hex } from "viem";
 import { NavDropdown } from "../NavDropdown";
 import { MarkdownRenderer } from "../markdown/MarkdownRenderer";
+import { useComposeHeaderActions } from "../writer/ComposeHeaderActionsContext";
 import { BackButton } from "./BackButton";
 
 export function WriterHeader({
@@ -20,6 +21,7 @@ export function WriterHeader({
 	const { authenticated } = usePrivy();
 	const queryClient = useQueryClient();
 	const { isEntryLoading } = useEntryLoading();
+	const { actions } = useComposeHeaderActions();
 	const pathname = usePathname();
 	const isEntryPage = pathname.split("/").length > 3;
 
@@ -58,7 +60,9 @@ export function WriterHeader({
 				)}
 			</div>
 
-			{authenticated && !isEntryPage && (
+			{actions ? (
+				<div className="lg:hidden flex items-center gap-4">{actions}</div>
+			) : authenticated && !isEntryPage ? (
 				<Link
 					href={`/writer/${address}/new`}
 					aria-label="Create entry"
@@ -66,7 +70,7 @@ export function WriterHeader({
 				>
 					<FiPlus className="h-6 w-6" />
 				</Link>
-			)}
+			) : null}
 			<div className="hidden lg:block">
 				<NavDropdown />
 			</div>
