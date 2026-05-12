@@ -29,6 +29,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
@@ -663,10 +664,19 @@ export default function Entry({
 					<div className="flex gap-2 justify-between">
 						<div className="flex flex-col gap-1">
 							<div className="flex gap-2">
+								{!isEditing && (
+									<Link
+										href={`/writer/${address}/${id}/edit`}
+										className="lg:hidden text-neutral-400 dark:text-neutral-600 hover:text-secondary cursor-pointer"
+									>
+										edit
+									</Link>
+								)}
 								<button
 									type="button"
 									className={cn(
 										"text-neutral-400 dark:text-neutral-600 hover:text-secondary cursor-pointer",
+										{ "hidden lg:inline": !isEditing },
 									)}
 									onClick={() => {
 										if (isEditing) {

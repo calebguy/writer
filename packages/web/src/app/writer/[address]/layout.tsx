@@ -1,7 +1,7 @@
 import { Footer } from "@/components/Footer";
 import { WriterHeader } from "@/components/header/WriterHeader";
 import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
-import { CreateEntryDrawerProvider } from "@/components/writer/CreateEntryDrawerContext";
+import { ComposeHeaderActionsProvider } from "@/components/writer/ComposeHeaderActionsContext";
 import { EntryLoadingProvider } from "@/utils/EntryLoadingContext";
 import { env } from "@/utils/env";
 import type { Metadata } from "next";
@@ -83,7 +83,7 @@ export default function Layout({
 	const { address } = use(params);
 	return (
 		<EntryLoadingProvider>
-			<CreateEntryDrawerProvider>
+			<ComposeHeaderActionsProvider>
 				<div className="flex flex-col grow min-h-0">
 					<div className="mb-4 shrink-0">
 						<WriterHeader address={address} />
@@ -94,7 +94,7 @@ export default function Layout({
 				</div>
 				<Footer />
 				<MobileBottomNav />
-			</CreateEntryDrawerProvider>
+			</ComposeHeaderActionsProvider>
 		</EntryLoadingProvider>
 	);
 }

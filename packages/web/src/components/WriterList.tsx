@@ -321,7 +321,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 	if (!inOnboardingFlow) {
 		return (
 			<div className="grid gap-2 grid-cols-1 min-[321px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
-				<div className="hidden md:block">
+				<div className="hidden lg:block">
 					<CreateInput placeholder="Create a Place" onSubmit={handleSubmit} />
 				</div>
 				{writers?.map(renderWriterCard)}
@@ -333,7 +333,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 	// three so the central card never shifts position between states.
 	return (
 		<div className="grow flex flex-col items-center justify-center">
-			<div className="hidden md:block w-[234px] h-[234px]">
+			<div className="hidden lg:block w-[234px] h-[234px]">
 				{onboardingMode === "created" && confirmedFirstWriter ? (
 					renderWriterCard(confirmedFirstWriter)
 				) : (
