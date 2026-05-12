@@ -67,7 +67,6 @@ export function MobileCreateWriterPage() {
 	});
 
 	const handleExit = () => {
-		if (markdown.trim() && !window.confirm("Discard this Place?")) return;
 		router.push("/home");
 	};
 
