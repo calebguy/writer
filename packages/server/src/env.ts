@@ -31,7 +31,7 @@ const schema = z.object({
 	PRIVY_APP_ID: minString(),
 	PRIVY_SECRET: minString(),
 	X402_PAY_TO_ADDRESS: z.string().min(1).optional(),
-	X402_NETWORK: z.string().min(1).default("base-mainnet"),
+	X402_NETWORK: z.string().min(1).default("base"),
 	X402_FACILITATOR_URL: z
 		.string()
 		.min(1)

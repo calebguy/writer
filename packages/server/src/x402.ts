@@ -1,5 +1,5 @@
 import type { Context, MiddlewareHandler } from "hono";
-import { getAddress, type Hex } from "viem";
+import { type Hex, getAddress } from "viem";
 import { exact } from "x402/schemes";
 import {
 	findMatchingPaymentRequirements,

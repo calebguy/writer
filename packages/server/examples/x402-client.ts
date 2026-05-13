@@ -1,16 +1,12 @@
-import { createPaymentHeader, selectPaymentRequirements } from "x402/client";
-import {
-	createSigner,
-	type Network,
-	type PaymentRequirements,
-} from "x402/types";
-import { decodeXPaymentResponse } from "x402/shared";
-import { getAddress, type Hex } from "viem";
+import { type Hex, getAddress } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
+import { createPaymentHeader, selectPaymentRequirements } from "x402/client";
+import { decodeXPaymentResponse } from "x402/shared";
+import { type PaymentRequirements, createSigner } from "x402/types";
 
 const BASE_URL = process.env.WRITER_API_URL ?? "http://localhost:3000";
 const PRIVATE_KEY = process.env.PRIVATE_KEY as Hex;
-const X402_NETWORK = (process.env.X402_NETWORK ?? "base-sepolia") as Network;
+const X402_NETWORK = "base";
 const TITLE = process.env.PLACE_TITLE ?? "x402 Place";
 const CONTENT = process.env.ENTRY_CONTENT ?? "Paid hello from an x402 client.";
 
