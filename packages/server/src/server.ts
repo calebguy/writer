@@ -5,6 +5,7 @@ import adminRoutes from "./routes/admin";
 import relayRoutes from "./routes/relay";
 import savedRoutes from "./routes/saved";
 import writerRoutes from "./routes/writer";
+import x402Routes from "./routes/x402";
 
 const app = new Hono();
 
@@ -12,7 +13,13 @@ app.use("*", cors());
 
 app.get("/", (c) => c.text("write today, forever"));
 
-const api = app.basePath("/").route("/", adminRoutes).route("/", relayRoutes).route("/", savedRoutes).route("/", writerRoutes);
+const api = app
+	.basePath("/")
+	.route("/", adminRoutes)
+	.route("/", relayRoutes)
+	.route("/", savedRoutes)
+	.route("/", x402Routes)
+	.route("/", writerRoutes);
 
 startPoller();
 

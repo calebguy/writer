@@ -92,6 +92,7 @@
         "hono": "^4.4.2",
         "utils": "workspace:utils",
         "viem": "^2.21.35",
+        "x402": "^0.7.3",
         "zod": "^3.23.8",
       },
       "devDependencies": {

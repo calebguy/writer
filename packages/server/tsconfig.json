@@ -1,5 +1,9 @@
 {
 	"compilerOptions": {
+		"lib": ["ESNext", "DOM"],
+		"target": "ESNext",
+		"module": "ESNext",
+		"moduleResolution": "bundler",
 		"strict": true,
 		"jsx": "react-jsx",
 		"jsxImportSource": "hono/jsx",
@@ -7,8 +11,8 @@
 		"emitDecoratorMetadata": true,
 		"esModuleInterop": true,
 		"skipLibCheck": true,
-    "noEmit": true,
+		"noEmit": true
 	},
 	"include": ["src/**/*.ts"],
-	"exclude": ["node_modules"],
+	"exclude": ["node_modules"]
 }

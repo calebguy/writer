@@ -150,6 +150,7 @@ export const relayTx = pgTable(
 		blockNumber: bigint({ mode: "bigint" }),
 		hash: text(),
 		status: requestStatus().default("PENDING").notNull(),
+		source: text(),
 		functionSignature: text().notNull(),
 		args: jsonb().notNull(),
 		// Address of the writer this tx targets: the writer contract for

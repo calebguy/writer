@@ -129,6 +129,14 @@ export const factoryCreateJsonValidator = zValidator(
 	}),
 );
 
+export const x402FactoryCreateJsonValidator = zValidator(
+	"json",
+	z.object({
+		address: ethAddress,
+		title: z.string().max(MAX_TITLE_LENGTH).default("Untitled Place"),
+	}),
+);
+
 export const deleteEntryJsonValidator = zValidator(
 	"json",
 	z.object({
