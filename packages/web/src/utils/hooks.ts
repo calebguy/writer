@@ -136,6 +136,9 @@ export function useProcessedEntries(
 		// Immediately show public entries + private entries (unprocessed)
 		// Filter out private entries from other authors
 		const visibleEntries = entries.filter((entry) => {
+			if (entry.deletedAt || entry.deletedAtHash) {
+				return false;
+			}
 			if (isEntryPrivate(entry)) {
 				return wallet && isWalletAuthor(wallet, entry);
 			}

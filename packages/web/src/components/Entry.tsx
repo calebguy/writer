@@ -547,7 +547,9 @@ export default function Entry({
 	// get the optimistic-exit flow in `handleSave`.
 	const isExternalWallet = !!wallet && wallet.walletClientType !== "privy";
 	const showBlockingOverlay =
-		isEditing && (deleteSubmitted || (isExternalWallet && editSubmitted));
+		isEditing &&
+		((isExternalWallet && deleteSubmitted) ||
+			(isExternalWallet && editSubmitted));
 
 	return (
 		<div className="grow flex flex-col">
@@ -721,10 +723,13 @@ export default function Entry({
 										type="button"
 										className="text-red-700 hover:text-red-900 cursor-pointer"
 										onClick={async () => {
-											setDeletedSubmitted(true);
 											if (!wallet) {
-												setDeletedSubmitted(false);
 												return;
+											}
+											const isExternalWallet =
+												wallet.walletClientType !== "privy";
+											if (isExternalWallet) {
+												setDeletedSubmitted(true);
 											}
 											try {
 												const { signature, nonce } = await signRemove(wallet, {
@@ -735,7 +740,9 @@ export default function Entry({
 												const authToken = await getAccessToken();
 												if (!authToken) {
 													console.error("No auth token found");
-													setDeletedSubmitted(false);
+													if (isExternalWallet) {
+														setDeletedSubmitted(false);
+													}
 													return;
 												}
 												await mutateAsyncDelete({
@@ -745,9 +752,13 @@ export default function Entry({
 													nonce,
 													authToken,
 												});
-												setDeletedSubmitted(false);
+												if (isExternalWallet) {
+													setDeletedSubmitted(false);
+												}
 											} catch {
-												setDeletedSubmitted(false);
+												if (isExternalWallet) {
+													setDeletedSubmitted(false);
+												}
 											}
 										}}
 									>
