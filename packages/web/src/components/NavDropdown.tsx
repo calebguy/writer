@@ -100,7 +100,7 @@ export function NavDropdown() {
 					isEntryPrivate(entry) &&
 					isWalletAuthor(wallet, entry) &&
 					isLegacyEncrypted(entry.raw) &&
-					entry.onChainId
+					entry.onChainId != null
 				) {
 					result.push({
 						entry,

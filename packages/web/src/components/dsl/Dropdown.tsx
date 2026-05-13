@@ -55,7 +55,7 @@ export function Dropdown({
 						side={side}
 						align="start"
 						className={cn(
-							"shadow-none min-w-24 bg-background dark:bg-surface p-1.5 border border-surface-raised z-200",
+							"shadow-none min-w-24 bg-background dark:bg-surface p-1.5 border border-surface-raised z-200 rounded-xs",
 						)}
 						sideOffset={10}
 						collisionPadding={28}

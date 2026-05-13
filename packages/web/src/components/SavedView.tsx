@@ -232,7 +232,14 @@ function MixedSavedGrid({
 								: undefined;
 						return [
 							entry.id,
-							await processPrivateEntry(keyV2, entry, keyV1, keyV3, keyV4, keyV5),
+							await processPrivateEntry(
+								keyV2,
+								entry,
+								keyV1,
+								keyV3,
+								keyV4,
+								keyV5,
+							),
 						] as const;
 					}),
 				);
@@ -298,7 +305,7 @@ function MixedSavedGrid({
 				}
 
 				const entry = processedEntries[item.entry.id] ?? item.entry;
-				const isPending = !entry.onChainId;
+				const isPending = entry.onChainId == null;
 				const href = isPending
 					? "#"
 					: `/writer/${item.writer.address}/${entry.onChainId?.toString()}`;

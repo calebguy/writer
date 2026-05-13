@@ -155,7 +155,7 @@ export default function Entry({
 						? {
 								...current,
 								entries: current.entries.map((e) =>
-									e.onChainId === id
+									e.onChainId != null && e.onChainId.toString() === id
 										? { ...e, deletedAt: now, deletedAtBlockDatetime: now }
 										: e,
 								),
@@ -234,7 +234,9 @@ export default function Entry({
 							? {
 									...current,
 									entries: current.entries.map((e) =>
-										e.onChainId === id ? applyEntryPatch(e) : e,
+										e.onChainId != null && e.onChainId.toString() === id
+											? applyEntryPatch(e)
+											: e,
 									),
 								}
 							: current,
@@ -610,7 +612,7 @@ export default function Entry({
 				{showBlockingOverlay && (
 					<div
 						className={cn(
-							"absolute inset-0 flex flex-col items-center justify-between h-full z-20",
+							"absolute inset-0 flex flex-col items-center justify-between h-full z-20 rounded-xs",
 							{ "bg-red-700": deleteSubmitted },
 							{ "bg-secondary": !deleteSubmitted },
 						)}
@@ -625,7 +627,10 @@ export default function Entry({
 							<MarkdownRenderer markdown={editedContent} />
 						</div>
 						<div className="absolute inset-0 flex justify-center items-center">
-							<LoadingRelic size={32} />
+							<LoadingRelic
+								size={32}
+								className={cn({ "bg-red-900": deleteSubmitted })}
+							/>
 						</div>
 					</div>
 				)}

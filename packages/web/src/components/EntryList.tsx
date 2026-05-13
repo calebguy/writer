@@ -111,7 +111,7 @@ export default function EntryList({
 					? format(new Date(entry.createdAtBlockDatetime), dateFmt)
 					: format(new Date(entry.createdAt), dateFmt);
 
-				const isPending = !entry.onChainId;
+				const isPending = entry.onChainId == null;
 
 				return (
 					<Link

@@ -174,7 +174,9 @@ export function MobileEditEntryPage({
 						? {
 								...current,
 								entries: current.entries.map((item) =>
-									item.onChainId === id ? applyEntryPatch(item) : item,
+									item.onChainId != null && item.onChainId.toString() === id
+										? applyEntryPatch(item)
+										: item,
 								),
 							}
 						: current,

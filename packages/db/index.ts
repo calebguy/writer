@@ -104,7 +104,10 @@ class Db {
 		});
 	}
 
-	async getWriter(address: Hex) {
+	async getWriter(
+		address: Hex,
+		options: { includeDeletedEntries?: boolean } = {},
+	) {
 		const data = await this.pg.query.writer.findFirst({
 			where: eq(writer.address, address.toLowerCase()),
 		});
@@ -112,10 +115,12 @@ class Db {
 			return null;
 		}
 		const entries = await this.pg.query.entry.findMany({
-			where: and(
-				eq(entry.storageAddress, data.storageAddress.toLowerCase()),
-				isNull(entry.deletedAt),
-			),
+			where: options.includeDeletedEntries
+				? eq(entry.storageAddress, data.storageAddress.toLowerCase())
+				: and(
+						eq(entry.storageAddress, data.storageAddress.toLowerCase()),
+						isNull(entry.deletedAt),
+					),
 			orderBy: (entry, { desc }) => [desc(entry.createdAt)],
 			with: {
 				chunks: {
@@ -308,21 +313,23 @@ class Db {
 			writerEntryCounts.set(storageAddr, counts);
 		}
 
-		return publicWriters
-			.map((w) => ({
-				...w,
-				...(writerEntryCounts.get(w.storageAddress.toLowerCase()) ?? {
-					publicCount: 0,
-					privateCount: 0,
-				}),
-			}))
-			// Include a writer if either:
-			//   - it has at least one public (non-encrypted) entry, OR
-			//   - it is a public-writable message board (anyone can post),
-			//     even if it currently has zero entries — these need to
-			//     surface in the explore feed so people can find and write
-			//     into them.
-			.filter((w) => w.publicCount > 0 || w.publicWritable);
+		return (
+			publicWriters
+				.map((w) => ({
+					...w,
+					...(writerEntryCounts.get(w.storageAddress.toLowerCase()) ?? {
+						publicCount: 0,
+						privateCount: 0,
+					}),
+				}))
+				// Include a writer if either:
+				//   - it has at least one public (non-encrypted) entry, OR
+				//   - it is a public-writable message board (anyone can post),
+				//     even if it currently has zero entries — these need to
+				//     surface in the explore feed so people can find and write
+				//     into them.
+				.filter((w) => w.publicCount > 0 || w.publicWritable)
+		);
 	}
 
 	createTx(tx: Omit<InsertRelayTransaction, "updatedAt" | "createdAt">) {
@@ -381,10 +388,7 @@ class Db {
 
 	async getPendingTxs(limit = 50) {
 		return this.pg.query.relayTx.findMany({
-			where: and(
-				eq(relayTx.status, "PENDING"),
-				isNull(relayTx.hash),
-			),
+			where: and(eq(relayTx.status, "PENDING"), isNull(relayTx.hash)),
 			orderBy: (tx, { asc }) => [asc(tx.createdAt)],
 			limit,
 		});
@@ -460,7 +464,9 @@ class Db {
 		// storageAddress at creation time. We default to storageAddress here
 		// only as a safety net in case a caller forgets to pass it; the
 		// indexer should always pass it explicitly.
-		const normalizedStorageId = (item.storageId ?? item.storageAddress).toLowerCase();
+		const normalizedStorageId = (
+			item.storageId ?? item.storageAddress
+		).toLowerCase();
 		const normalizedWriter = {
 			...item,
 			address: item.address.toLowerCase(),
@@ -512,7 +518,9 @@ class Db {
 		// entry belongs to. At v1 it equals storageAddress; for migrated
 		// writers it would be the original storageAddress preserved across
 		// the migration. Defaults to storageAddress if the caller forgets.
-		const normalizedStorageId = (item.storageId ?? item.storageAddress).toLowerCase();
+		const normalizedStorageId = (
+			item.storageId ?? item.storageAddress
+		).toLowerCase();
 		const normalizedEntry = {
 			...item,
 			author: item.author.toLowerCase(),
@@ -526,13 +534,14 @@ class Db {
 		// createdAtTransactionId than the original insert. Fall back to
 		// createdAtTransactionId for pending entries (no onChainId yet),
 		// and finally to the DB serial id.
-		const conflictTarget = normalizedEntry.onChainId != null
-			? [entry.storageAddress, entry.onChainId]
-			: normalizedEntry.id
-				? [entry.id]
-				: normalizedEntry.createdAtTransactionId
-					? [entry.createdAtTransactionId]
-					: [entry.storageAddress, entry.onChainId];
+		const conflictTarget =
+			normalizedEntry.onChainId != null
+				? [entry.storageAddress, entry.onChainId]
+				: normalizedEntry.id
+					? [entry.id]
+					: normalizedEntry.createdAtTransactionId
+						? [entry.createdAtTransactionId]
+						: [entry.storageAddress, entry.onChainId];
 
 		// Strip frozen fields and conflict-target columns from the update
 		// set. Conflict target columns can't appear in SET (Postgres
@@ -820,8 +829,7 @@ class Db {
 			// an error instead of being caught, fall back to an explicit
 			// UPDATE.
 			const isEntryIndexViolation =
-				err instanceof Error &&
-				err.message.includes("entry_index_idx");
+				err instanceof Error && err.message.includes("entry_index_idx");
 			if (isEntryIndexViolation) {
 				const { entryId: _eid2, index: _idx2, ...fields } = item;
 				if (item.createdAtTransactionId == null) {
@@ -830,10 +838,7 @@ class Db {
 						.update(chunk)
 						.set(safeFields)
 						.where(
-							and(
-								eq(chunk.entryId, item.entryId),
-								eq(chunk.index, item.index),
-							),
+							and(eq(chunk.entryId, item.entryId), eq(chunk.index, item.index)),
 						)
 						.returning();
 				}
@@ -841,10 +846,7 @@ class Db {
 					.update(chunk)
 					.set(fields)
 					.where(
-						and(
-							eq(chunk.entryId, item.entryId),
-							eq(chunk.index, item.index),
-						),
+						and(eq(chunk.entryId, item.entryId), eq(chunk.index, item.index)),
 					)
 					.returning();
 			}

@@ -14,8 +14,8 @@ import {
 	hexColorToBytes32,
 	setPrimaryAndSecondaryCSSVariables,
 } from "../utils/utils";
-import { Modal, ModalDescription, ModalTitle } from "./dsl/Modal";
 import { LoadingRelic } from "./LoadingRelic";
+import { Modal, ModalDescription, ModalTitle } from "./dsl/Modal";
 import { Save } from "./icons/Save";
 import { Undo } from "./icons/Undo";
 interface ModalProps {
@@ -81,7 +81,7 @@ export function ColorModal({ open, onClose }: ModalProps) {
 			<div className="flex items-center justify-center gap-2 mt-4">
 				<button
 					type="button"
-					className="border border-transparent hover:border-secondary border-dashed text-secondary p-2 w-full bold text-xl disabled:hover:border-transparent disabled:opacity-30 disabled:cursor-not-allowed flex justify-center items-center cursor-pointer"
+					className="border border-transparent hover:border-secondary border-dashed text-secondary p-2 w-full bold text-xl disabled:hover:border-transparent disabled:opacity-30 disabled:cursor-not-allowed flex justify-center items-center cursor-pointer rounded-xs"
 					onClick={() => {
 						setRgbColor({
 							r: primaryColor[0],
@@ -100,7 +100,7 @@ export function ColorModal({ open, onClose }: ModalProps) {
 				</button>
 				<button
 					type="button"
-					className="border border-transparent hover:border-secondary border-dashed text-secondary p-2 w-full bold text-xl disabled:hover:border-transparent disabled:opacity-30 disabled:cursor-not-allowed flex justify-center items-center cursor-pointer"
+					className="border border-transparent hover:border-secondary border-dashed text-secondary p-2 w-full bold text-xl disabled:hover:border-transparent disabled:opacity-30 disabled:cursor-not-allowed flex justify-center items-center cursor-pointer rounded-xs"
 					disabled={
 						rgbColor.r === primaryColor[0] &&
 						rgbColor.g === primaryColor[1] &&

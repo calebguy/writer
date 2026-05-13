@@ -68,7 +68,7 @@ export default function WriterPage() {
 
 	// Update polling state when pending entries change
 	const hasPendingEntries =
-		writer?.entries?.some((entry) => !entry.onChainId) ?? false;
+		writer?.entries?.some((entry) => entry.onChainId == null) ?? false;
 	useEffect(() => {
 		setShouldPoll(hasPendingEntries);
 	}, [hasPendingEntries]);

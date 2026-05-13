@@ -98,7 +98,7 @@ export async function getWriterWithOverlay(
 ): Promise<WriterJson | null> {
 	const normalized = address.toLowerCase();
 	const [dbWriter, pending] = await Promise.all([
-		db.getWriter(address),
+		db.getWriter(address, { includeDeletedEntries: true }),
 		db.getPendingTxsFor(normalized),
 	]);
 
@@ -108,7 +108,9 @@ export async function getWriterWithOverlay(
 
 	if (!writer) return null;
 
-	writer.entries = applyPendingEntryOps(writer.entries, writer, pending);
+	writer.entries = applyPendingEntryOps(writer.entries, writer, pending).filter(
+		(entry) => !entry.deletedAt,
+	);
 	return writer;
 }
 
@@ -161,30 +163,56 @@ export async function applyOverlayToWritersForManager(
 	);
 	const synthesized: WriterJson[] = [];
 
-	console.log("[overlay] manager", normalizedManager, "pendingCreates", pendingCreates.length, "alreadyListed", Array.from(alreadyListed));
+	console.log(
+		"[overlay] manager",
+		normalizedManager,
+		"pendingCreates",
+		pendingCreates.length,
+		"alreadyListed",
+		Array.from(alreadyListed),
+	);
 
 	for (const tx of pendingCreates) {
-		console.log("[overlay] tx", tx.id, "target", tx.targetAddress, "status", tx.status, "args", JSON.stringify(tx.args));
-		if (!tx.targetAddress) { console.log("  skip: no targetAddress"); continue; }
+		console.log(
+			"[overlay] tx",
+			tx.id,
+			"target",
+			tx.targetAddress,
+			"status",
+			tx.status,
+			"args",
+			JSON.stringify(tx.args),
+		);
+		if (!tx.targetAddress) {
+			console.log("  skip: no targetAddress");
+			continue;
+		}
 		const target = tx.targetAddress.toLowerCase();
-		if (alreadyListed.has(target)) { console.log("  skip: already listed"); continue; }
+		if (alreadyListed.has(target)) {
+			console.log("  skip: already listed");
+			continue;
+		}
 
-		const args = tx.args as
-			| {
-					title?: string;
-					admin?: string;
-					managers?: string[];
-					publicWritable?: boolean;
-			  }
-			| null;
-		if (!args) { console.log("  skip: no args"); continue; }
+		const args = tx.args as {
+			title?: string;
+			admin?: string;
+			managers?: string[];
+			publicWritable?: boolean;
+		} | null;
+		if (!args) {
+			console.log("  skip: no args");
+			continue;
+		}
 
 		const managerHit = (args.managers ?? []).some(
 			(m) => m.toLowerCase() === normalizedManager,
 		);
 		const adminHit = (args.admin ?? "").toLowerCase() === normalizedManager;
 		console.log("  managerHit", managerHit, "adminHit", adminHit);
-		if (!managerHit && !adminHit) { console.log("  skip: neither manager nor admin hit"); continue; }
+		if (!managerHit && !adminHit) {
+			console.log("  skip: neither manager nor admin hit");
+			continue;
+		}
 
 		const synth = synthesizePendingWriter(target, [
 			{
@@ -203,13 +231,17 @@ export async function applyOverlayToWritersForManager(
 			console.log("  skip: synth returned null");
 		}
 	}
-	console.log("[overlay] synthesized", synthesized.length, "withEntryOverlay", withEntryOverlay.length);
+	console.log(
+		"[overlay] synthesized",
+		synthesized.length,
+		"withEntryOverlay",
+		withEntryOverlay.length,
+	);
 
 	// Pending creates are the newest rows on the user's list; sort by
 	// createdAt desc to match the user's most-recent-first expectation.
 	synthesized.sort(
-		(a, b) =>
-			new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+		(a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
 	);
 	return [...synthesized, ...withEntryOverlay];
 }
@@ -231,7 +263,7 @@ function applyPendingEntryOps(
 ): EntryJson[] {
 	const byOnChainId = new Map<string, EntryJson>();
 	for (const e of confirmed) {
-		if (e.onChainId) byOnChainId.set(e.onChainId, e);
+		if (e.onChainId != null) byOnChainId.set(e.onChainId, e);
 	}
 	const result = [...confirmed];
 	const appliedUpdate = new Set<string>();
@@ -245,9 +277,7 @@ function applyPendingEntryOps(
 				// Append only if we don't already have a confirmed entry tied to
 				// this same tx. The indexer sets `createdAtTransactionId` when
 				// it writes the row; once that happens we drop the overlay.
-				if (
-					result.some((e) => e.createdAtTransactionId === tx.id)
-				) {
+				if (result.some((e) => e.createdAtTransactionId === tx.id)) {
 					break;
 				}
 				result.push(synthesizePendingEntry(tx, writer, args.chunkContent));
@@ -255,7 +285,7 @@ function applyPendingEntryOps(
 			}
 			case UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE: {
 				const args = tx.args as { id?: number; content?: string } | null;
-				if (!args?.id || typeof args.content !== "string") break;
+				if (args?.id == null || typeof args.content !== "string") break;
 				const onChainId = String(args.id);
 				if (appliedUpdate.has(onChainId)) break;
 				const target = byOnChainId.get(onChainId);
@@ -268,7 +298,7 @@ function applyPendingEntryOps(
 			}
 			case DELETE_ENTRY_FUNCTION_SIGNATURE: {
 				const args = tx.args as { id?: number } | null;
-				if (!args?.id) break;
+				if (args?.id == null) break;
 				const onChainId = String(args.id);
 				if (appliedDelete.has(onChainId)) break;
 				appliedDelete.add(onChainId);
@@ -297,15 +327,13 @@ function synthesizePendingWriter(
 	);
 	if (!createTx) return null;
 
-	const args = createTx.args as
-		| {
-				title?: string;
-				admin?: string;
-				managers?: string[];
-				publicWritable?: boolean;
-				salt?: string;
-		  }
-		| null;
+	const args = createTx.args as {
+		title?: string;
+		admin?: string;
+		managers?: string[];
+		publicWritable?: boolean;
+		salt?: string;
+	} | null;
 	if (!args) return null;
 
 	// We don't know the deterministic storageAddress without re-computing
@@ -314,9 +342,7 @@ function synthesizePendingWriter(
 	// fall back to the writer address itself — a safe placeholder the
 	// indexer will overwrite on WriterCreated.
 	const now = new Date();
-	const createdAt = createTx.createdAt
-		? new Date(createTx.createdAt)
-		: now;
+	const createdAt = createTx.createdAt ? new Date(createTx.createdAt) : now;
 	return {
 		address,
 		storageAddress: address,
