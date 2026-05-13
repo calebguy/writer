@@ -984,7 +984,9 @@ type InsertWriter = Omit<
 type InsertRelayTransaction = Omit<
 	typeof relayTx.$inferInsert,
 	"updatedAt" | "createdAt"
->;
+> & {
+	source?: "ui" | "x402" | null;
+};
 // `storageId` is omitted-and-redeclared as optional so callers can omit it
 // (the upsertEntry helper defaults it to storageAddress). The underlying
 // column is still NOT NULL — the default just happens at the Db boundary.

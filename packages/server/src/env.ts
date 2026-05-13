@@ -30,6 +30,14 @@ const schema = z.object({
 	ADMIN_KEY: z.string().min(1).optional(),
 	PRIVY_APP_ID: minString(),
 	PRIVY_SECRET: minString(),
+	X402_PAY_TO_ADDRESS: z.string().min(1).optional(),
+	X402_NETWORK: z.string().min(1).default("base-mainnet"),
+	X402_FACILITATOR_URL: z
+		.string()
+		.min(1)
+		.default("https://x402.org/facilitator"),
+	X402_PLACE_CREATE_PRICE: z.string().min(1).default("$0.10"),
+	X402_ENTRY_CREATE_PRICE: z.string().min(1).default("$0.10"),
 });
 
 export const env = schema.parse(process.env);

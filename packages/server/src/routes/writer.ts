@@ -186,6 +186,7 @@ const writerRoutes = new Hono()
 					functionSignature: SET_HEX_FUNCTION_SIGNATURE,
 					args,
 					status: "PENDING",
+					source: "ui",
 				});
 				watchRelayReceipt({
 					txId: transactionId,
@@ -275,6 +276,7 @@ const writerRoutes = new Hono()
 					functionSignature: CREATE_FUNCTION_SIGNATURE,
 					args,
 					status: "PENDING",
+					source: "ui",
 					// Pending-overlay lookup key: the deterministic writer
 					// address this tx creates. The overlay synthesizes the
 					// writer row from these args until the indexer writes
@@ -419,6 +421,7 @@ const writerRoutes = new Hono()
 					functionSignature: CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
 					args,
 					status: "PENDING",
+					source: "ui",
 					targetAddress: contractAddress,
 				});
 				watchRelayReceipt({
@@ -548,6 +551,7 @@ const writerRoutes = new Hono()
 				functionSignature: UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE,
 				args,
 				status: "PENDING",
+				source: "ui",
 				targetAddress: contractAddress,
 			});
 			watchRelayReceipt({
@@ -635,6 +639,7 @@ const writerRoutes = new Hono()
 					functionSignature: DELETE_ENTRY_FUNCTION_SIGNATURE,
 					args,
 					status: "PENDING",
+					source: "ui",
 					targetAddress: address,
 				});
 				watchRelayReceipt({
