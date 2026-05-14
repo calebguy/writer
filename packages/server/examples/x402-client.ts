@@ -1,15 +1,16 @@
 import { x402Client, x402HTTPClient } from "@x402/core/client";
-import type { Network } from "@x402/core/types";
 import { ExactEvmScheme } from "@x402/evm/exact/client";
 import { wrapFetchWithPayment } from "@x402/fetch";
 import { type Hex, getAddress } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
-const BASE_URL = process.env.WRITER_API_URL ?? "http://localhost:3000";
+const BASE_URL = "https://api.writer.place";
+const X402_NETWORK = "eip155:8453";
+
 const PRIVATE_KEY = process.env.PRIVATE_KEY as Hex;
-const X402_NETWORK = (process.env.X402_NETWORK ?? "eip155:8453") as Network;
-const TITLE = process.env.PLACE_TITLE ?? "x402 Place";
-const CONTENT = process.env.ENTRY_CONTENT ?? "Paid hello from an x402 client.";
+const TITLE = "# :)";
+const CONTENT =
+	"We're just living on the edge of somebody else's [civilization], like fleas on a dog's back. If the dog drowns, the fleas drown, too.";
 
 if (!PRIVATE_KEY) {
 	throw new Error("Set PRIVATE_KEY to the paying/admin EVM private key.");
