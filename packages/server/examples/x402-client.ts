@@ -11,6 +11,10 @@ const PRIVATE_KEY = process.env.PRIVATE_KEY as Hex;
 const TITLE = "# :)";
 const CONTENT =
 	"We're just living on the edge of somebody else's civilization, like fleas on a dog's back. If the dog drowns, the fleas drown, too.";
+const DELETE_WRITER_ADDRESS = process.env.DELETE_WRITER_ADDRESS as
+	| Hex
+	| undefined;
+const DELETE_ENTRY_ID = process.env.DELETE_ENTRY_ID;
 
 if (!PRIVATE_KEY) {
 	throw new Error("Set PRIVATE_KEY to the paying/admin EVM private key.");
@@ -116,6 +120,30 @@ async function signCreateWithChunk(address: Hex, content: string) {
 	};
 }
 
+async function signRemove(address: Hex, id: bigint) {
+	const nonce = randomNonce();
+	const signature = await account.signTypedData({
+		domain: {
+			name: "Writer",
+			version: "1",
+			verifyingContract: address,
+		},
+		primaryType: "Remove",
+		types: {
+			Remove: [
+				{ name: "nonce", type: "uint256" },
+				{ name: "id", type: "uint256" },
+			],
+		},
+		message: {
+			nonce: BigInt(nonce),
+			id,
+		},
+	});
+
+	return { signature, nonce };
+}
+
 async function waitForIndexedWriter(writerAddress: Hex) {
 	for (let attempt = 0; attempt < 60; attempt++) {
 		const res = await fetch(`${BASE_URL}/manager/${admin}`);
@@ -138,6 +166,20 @@ async function waitForIndexedWriter(writerAddress: Hex) {
 
 async function main() {
 	console.log(`Using payer/admin ${admin}`);
+
+	if (DELETE_WRITER_ADDRESS && DELETE_ENTRY_ID) {
+		const entryId = BigInt(DELETE_ENTRY_ID);
+		const signedDelete = await signRemove(DELETE_WRITER_ADDRESS, entryId);
+		const deleted = await paidJson<{
+			pending: { transactionId: string; signer: Hex };
+		}>(
+			`/x402/writer/${DELETE_WRITER_ADDRESS}/entry/${entryId}/delete`,
+			signedDelete,
+		);
+		console.log("Deleted pending entry:", deleted.data.pending);
+		console.log("Delete payment:", deleted.paymentResponse);
+		return;
+	}
 
 	const create = await paidJson<{
 		writer: { address: Hex; transactionId: string };

@@ -5,17 +5,21 @@ import { type Hex, getAddress, toHex } from "viem";
 import {
 	CREATE_FUNCTION_SIGNATURE,
 	CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
+	DELETE_ENTRY_FUNCTION_SIGNATURE,
 	db,
 } from "../constants";
 import { env } from "../env";
 import {
 	humanizeSimulateError,
 	recoverCreateWithChunkSigner,
+	recoverRemoveEntrySigner,
 	simulateContractOrThrow,
 } from "../helpers";
 import {
+	addressAndIDParamSchema,
 	addressParamSchema,
 	createWithChunkJsonValidator,
+	deleteEntryJsonValidator,
 	x402FactoryCreateJsonValidator,
 } from "../middleware";
 import { makeRelayTxId, relay } from "../relay";
@@ -190,6 +194,91 @@ const x402Routes = new Hono()
 			} catch (err) {
 				console.error("x402 createWithChunk error:", err);
 				return c.json({ error: "error during entry creation" }, 500);
+			}
+		},
+	)
+	.post(
+		"/x402/writer/:address/entry/:id/delete",
+		addressAndIDParamSchema,
+		deleteEntryJsonValidator,
+		async (c) => {
+			const { address, id } = c.req.valid("param");
+			const contractAddress = getAddress(address);
+			const { signature, nonce } = c.req.valid("json");
+
+			const writer = await db.getWriter(contractAddress);
+			if (!writer) {
+				return c.json({ error: "writer not found" }, 404);
+			}
+
+			const entry = await db.getEntryByOnchainId(
+				writer.storageAddress as Hex,
+				id,
+			);
+			if (!entry) {
+				return c.json({ error: "entry not found" }, 404);
+			}
+
+			const signer = await recoverRemoveEntrySigner({
+				signature: signature as Hex,
+				nonce,
+				id,
+				address: contractAddress,
+				legacyDomain: writer.legacyDomain,
+			});
+
+			const payer = getX402Payer(c);
+			if (!payer || getAddress(signer) !== getAddress(payer)) {
+				return c.json({ error: "signer must equal x402 payer" }, 403);
+			}
+			if (entry.author.toLowerCase() !== signer.toLowerCase()) {
+				return c.json({ error: "previous author does not match" }, 400);
+			}
+
+			const args = { signature, nonce: Number(nonce), id: Number(id) };
+			try {
+				await simulateContractOrThrow({
+					to: contractAddress,
+					functionSignature: DELETE_ENTRY_FUNCTION_SIGNATURE,
+					args: [signature, Number(nonce), Number(id)],
+				});
+			} catch (err) {
+				console.error("x402 delete entry simulation failed:", err);
+				return c.json(
+					{ error: `simulation failed: ${humanizeSimulateError(err)}` },
+					400,
+				);
+			}
+			try {
+				const { wallet, nonce: relayNonce } = await relay.sendTransaction({
+					to: contractAddress,
+					abi: DELETE_ENTRY_FUNCTION_SIGNATURE,
+					args: [signature, Number(nonce), Number(id)],
+				});
+				const transactionId = makeRelayTxId(wallet, relayNonce);
+				await db.createTx({
+					id: transactionId,
+					wallet,
+					nonce: relayNonce,
+					chainId: BigInt(env.TARGET_CHAIN_ID),
+					functionSignature: DELETE_ENTRY_FUNCTION_SIGNATURE,
+					args,
+					status: "PENDING",
+					source: "x402",
+					targetAddress: contractAddress,
+				});
+				watchRelayReceipt({
+					txId: transactionId,
+					wallet,
+					nonce: relayNonce,
+					chainId: BigInt(env.TARGET_CHAIN_ID),
+					functionSignature: DELETE_ENTRY_FUNCTION_SIGNATURE,
+					args,
+				});
+				return c.json({ pending: { transactionId, signer } }, 202);
+			} catch (err) {
+				console.error("x402 delete entry error:", err);
+				return c.json({ error: "error during entry deletion" }, 500);
 			}
 		},
 	);

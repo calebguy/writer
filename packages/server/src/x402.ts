@@ -83,6 +83,16 @@ const routes: RoutesConfig = {
 		description: "Create an entry in a Writer place",
 		mimeType: "application/json",
 	},
+	"POST /x402/writer/:address/entry/:id/delete": {
+		accepts: {
+			scheme: "exact",
+			price: env.X402_ENTRY_DELETE_PRICE,
+			network,
+			payTo: x402PayToAddress,
+		},
+		description: "Delete an entry from a Writer place",
+		mimeType: "application/json",
+	},
 };
 
 const resourceServer = new x402ResourceServer(
