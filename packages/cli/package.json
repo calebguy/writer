@@ -1,0 +1,26 @@
+{
+	"name": "cli",
+	"module": "index.ts",
+	"type": "module",
+	"private": true,
+	"bin": {
+		"writer": "./index.ts"
+	},
+	"scripts": {
+		"writer": "bun run index.ts",
+		"start": "bun run index.ts",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@x402/core": "^2.12.0",
+		"@x402/evm": "^2.12.0",
+		"@x402/fetch": "^2.12.0",
+		"viem": "^2.21.35"
+	},
+	"devDependencies": {
+		"@types/bun": "latest"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	}
+}
