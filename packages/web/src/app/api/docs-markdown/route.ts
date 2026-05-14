@@ -1,9 +1,7 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
+import { renderDocsMarkdown } from "@/content/docs";
 
 export async function GET(request: Request) {
-	const docsPath = path.join(process.cwd(), "public", "DOCS.md");
-	const markdown = await readFile(docsPath, "utf8");
+	const markdown = renderDocsMarkdown();
 	const origin = new URL(request.url).origin;
 
 	return new Response(markdown, {

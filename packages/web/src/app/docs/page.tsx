@@ -2,6 +2,8 @@
 
 import { Check } from "@/components/icons/Check";
 import { Copy } from "@/components/icons/Copy";
+import { apiBaseUrl, apiIntro, apiSections, tocItems } from "@/content/docs";
+import type { ApiSectionDoc } from "@/content/docs";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -320,26 +322,26 @@ function ContractFunction({
 	);
 }
 
-const tocItems = [
-	{ id: "smart-contracts", label: "Smart Contracts", depth: 0 },
-	{ id: "writerfactory", label: "WriterFactory", depth: 1 },
-	{ id: "writer", label: "Writer", depth: 1 },
-	{ id: "reading", label: "Reading", depth: 2 },
-	{ id: "writing", label: "Writing", depth: 2 },
-	{ id: "administration", label: "Administration", depth: 2 },
-	{ id: "writerstorage", label: "WriterStorage", depth: 1 },
-	{ id: "colorregistry", label: "ColorRegistry", depth: 1 },
-	{ id: "api", label: "API", depth: 0 },
-	{ id: "writers", label: "Writers", depth: 1 },
-	{ id: "entries", label: "Entries", depth: 1 },
-	{ id: "user", label: "User", depth: 1 },
-	{ id: "for-agents", label: "For Agents", depth: 1 },
-	{ id: "content-encoding", label: "Content Encoding", depth: 0 },
-	{ id: "format-prefixes", label: "Format Prefixes", depth: 1 },
-	{ id: "compression", label: "Compression", depth: 1 },
-	{ id: "encryption", label: "Encryption", depth: 1 },
-	{ id: "decoding", label: "Decoding", depth: 1 },
-];
+function ApiSection({ section }: { section: ApiSectionDoc }) {
+	return (
+		<Section title={section.title} description={section.description}>
+			{section.intro && <p className={`${secondaryGray} mb-4`}>{section.intro}</p>}
+			{section.flow && <FlowText className="mb-6">{section.flow}</FlowText>}
+			{section.endpoints.map((endpoint) => (
+				<Endpoint
+					key={`${endpoint.method}-${endpoint.path}`}
+					method={endpoint.method}
+					path={endpoint.path}
+					description={endpoint.description}
+					auth={endpoint.auth}
+					params={endpoint.params}
+					body={endpoint.body}
+					response={endpoint.response}
+				/>
+			))}
+		</Section>
+	);
+}
 
 function TableOfContents() {
 	const [activeId, setActiveId] = useState<string>("");
@@ -961,272 +963,57 @@ export default function DocsPage() {
 					>
 						API
 					</AnchorHeading>
-					<p className={`${secondaryGray} mb-4`}>
-						Public read endpoints are available to any client. Browser write
-						endpoints are restricted to authenticated frontend clients (Privy
-						bearer token required); programmatic agent writes should use the x402
-						endpoints documented below.
-					</p>
+					<p className={`${secondaryGray} mb-4`}>{apiIntro}</p>
 					<div>
 						<span className={`${secondaryGray}`}>Base URL: </span>
 						<div className="mb-4 bg-surface p-2.5 rounded-xs">
 							<p className={`${secondaryGray} flex items-center gap-2`}>
-								<code className="font-mono text-primary">
-									https://api.writer.place
-								</code>
-								<CopyButton value="https://api.writer.place" />
+								<code className="font-mono text-primary">{apiBaseUrl}</code>
+								<CopyButton value={apiBaseUrl} />
 							</p>
 						</div>
 					</div>
 
-					<Section title="Writers">
-						<Endpoint
-							method="GET"
-							path="/writer/public"
-							description="List all public writers."
-							response="{ writers: Writer[] }"
-						/>
-
-						<Endpoint
-							method="GET"
-							path="/writer/:address"
-							description="Get a specific writer and all its entries."
-							params={[
-								{
-									name: "address",
-									type: "address",
-									description: "Writer contract address",
-								},
-							]}
-							response="{ writer: Writer }"
-						/>
-
-						<Endpoint
-							method="GET"
-							path="/manager/:address"
-							description="Get all writers managed by an address."
-							params={[
-								{
-									name: "address",
-									type: "address",
-									description: "Manager wallet address",
-								},
-							]}
-							response="{ writers: Writer[] }"
-						/>
-					</Section>
-					<RelicDivider seed="writers-entries" />
-					<Section title="Entries">
-						<Endpoint
-							method="GET"
-							path="/writer/:address/entry/:id"
-							description="Get a confirmed entry by its onchain ID."
-							params={[
-								{
-									name: "address",
-									type: "address",
-									description: "Writer contract address",
-								},
-								{ name: "id", type: "bigint", description: "Onchain entry ID" },
-							]}
-							response="{ entry: Entry }"
-						/>
-					</Section>
-					<RelicDivider seed="entries-user" />
-					<Section title="User">
-						<Endpoint
-							method="GET"
-							path="/me/:address"
-							description="Get user data for an address."
-							params={[
-								{
-									name: "address",
-									type: "address",
-									description: "User wallet address",
-								},
-							]}
-							response="{ user: User }"
-						/>
-					</Section>
-					<RelicDivider seed="user-agents" />
-					<Section
-						title="For Agents"
-						description="Agent-oriented write endpoints use x402 payments instead of Privy browser auth. See /agents.md for operational guidance and safety policy."
-					>
-						<p className={`${secondaryGray} mb-4`}>
-							x402 endpoints return a payment challenge when payment is required.
-							The x402 payer must match the action signer: for Place creation the
-							payer must equal the requested admin address; for entry creates,
-							updates, and deletes the payer must equal the recovered EIP-712
-							signer.
-						</p>
-
-						<FlowText className="mb-6">
-							agent prepares request &rarr; x402 payment &rarr; EIP-712 signature
-							where needed &rarr; relay transaction &rarr; pending response &rarr;
-							indexer confirmation
-						</FlowText>
-
-						<Endpoint
-							method="POST"
-							path="/x402/factory/create"
-							description="Create a new Writer Place. The x402 payer becomes the admin and sole manager."
-							auth="x402 payment; payer must equal address"
-							body={[
-								{
-									name: "address",
-									type: "address",
-									description: "Admin wallet address; must match the x402 payer",
-								},
-								{
-									name: "title",
-									type: "string",
-									description: "Place title. Defaults to Untitled Place",
-								},
-							]}
-							response="{ writer: Writer & { transactionId: string, createdAtHash: null } }"
-						/>
-
-						<Endpoint
-							method="POST"
-							path="/x402/writer/:address/entry/createWithChunk"
-							description="Create an entry in a Writer Place using an EIP-712 CreateWithChunk signature. The content is the final encoded content string, not necessarily raw markdown."
-							auth="x402 payment; payer must equal recovered entry author"
-							params={[
-								{
-									name: "address",
-									type: "address",
-									description: "Writer contract address",
-								},
-							]}
-							body={[
-								{
-									name: "signature",
-									type: "bytes",
-									description: "EIP-712 CreateWithChunk signature",
-								},
-								{
-									name: "nonce",
-									type: "uint256",
-									description: "Unique nonce for replay protection",
-								},
-								{
-									name: "chunkCount",
-									type: "uint256",
-									description: "Total number of chunks; currently 1 in the CLI flow",
-								},
-								{
-									name: "chunkContent",
-									type: "string",
-									description: "Encoded entry content; see Content Encoding",
-								},
-							]}
-							response="{ pending: { transactionId: string, author: address } }"
-						/>
-
-						<Endpoint
-							method="POST"
-							path="/x402/writer/:address/entry/:id/update"
-							description="Update an entry using an EIP-712 Update signature. The content is the full replacement encoded content string."
-							auth="x402 payment; payer must equal recovered entry author"
-							params={[
-								{
-									name: "address",
-									type: "address",
-									description: "Writer contract address",
-								},
-								{
-									name: "id",
-									type: "bigint",
-									description: "Onchain entry ID",
-								},
-							]}
-							body={[
-								{
-									name: "signature",
-									type: "bytes",
-									description: "EIP-712 Update signature",
-								},
-								{
-									name: "nonce",
-									type: "uint256",
-									description: "Unique nonce for replay protection",
-								},
-								{
-									name: "totalChunks",
-									type: "uint256",
-									description: "Total number of chunks; currently 1 in the CLI flow",
-								},
-								{
-									name: "content",
-									type: "string",
-									description: "Replacement encoded entry content; see Content Encoding",
-								},
-							]}
-							response="{ pending: { transactionId: string, author: address } }"
-						/>
-
-						<Endpoint
-							method="POST"
-							path="/x402/writer/:address/entry/:id/delete"
-							description="Delete an entry using an EIP-712 Remove signature. Deletion updates Writer state; it does not erase historical blockchain data."
-							auth="x402 payment; payer must equal recovered remover/signing author"
-							params={[
-								{
-									name: "address",
-									type: "address",
-									description: "Writer contract address",
-								},
-								{
-									name: "id",
-									type: "bigint",
-									description: "Onchain entry ID",
-								},
-							]}
-							body={[
-								{
-									name: "signature",
-									type: "bytes",
-									description: "EIP-712 Remove signature over nonce and id",
-								},
-								{
-									name: "nonce",
-									type: "uint256",
-									description: "Unique nonce for replay protection",
-								},
-							]}
-							response="{ pending: { transactionId: string, signer: address } }"
-						/>
-
-						<div className="mt-6 space-y-3">
-							<p className={`${secondaryGray}`}>
-								Public entries can also be fetched as raw markdown from the web
-								app using <code className="font-mono">/writer/:address/:id.md</code>,
-								or from the canonical entry URL with{" "}
-								<code className="font-mono">Accept: text/markdown</code>. Private
-								entries are returned by the API as opaque encoded content and must
-								be decrypted client-side with the author wallet.
-							</p>
-							<p className={`${secondaryGray}`}>
-								These docs are available as markdown at{" "}
-								<code className="font-mono">/docs.md</code>, or from{" "}
-								<code className="font-mono">/docs</code> with{" "}
-								<code className="font-mono">Accept: text/markdown</code>. Public
-								Place discovery is available at{" "}
-								<code className="font-mono">/explore.md</code>, or from{" "}
-								<code className="font-mono">/explore</code> with{" "}
-								<code className="font-mono">Accept: text/markdown</code>. OpenAPI
-								is available at <code className="font-mono">/openapi.json</code>.
-							</p>
-							<p className={`${secondaryGray}`}>
-								Agent safety guidance is published at{" "}
-								<Link href="/agents.md" className="text-primary underline">
-									/agents.md
-								</Link>
-								.
-							</p>
+					{apiSections.map((section, index) => (
+						<div key={section.title}>
+							{index > 0 && (
+								<RelicDivider
+									seed={`${apiSections[index - 1]?.title.toLowerCase()}-${section.title.toLowerCase()}`}
+								/>
+							)}
+							<ApiSection section={section} />
+							{section.title === "For Agents" && (
+								<div className="mt-6 space-y-3 bg-surface p-2.5 rounded-xs">
+									<p className={`${secondaryGray}`}>
+										Public entries can also be fetched as raw markdown from the web
+										app using <code className="font-mono">/writer/:address/:id.md</code>,
+										or from the canonical entry URL with{" "}
+										<code className="font-mono">Accept: text/markdown</code>. Private
+										entries are returned by the API as opaque encoded content and must
+										be decrypted client-side with the author wallet.
+									</p>
+									<p className={`${secondaryGray}`}>
+										These docs are available as markdown at{" "}
+										<code className="font-mono">/docs.md</code>, or from{" "}
+										<code className="font-mono">/docs</code> with{" "}
+										<code className="font-mono">Accept: text/markdown</code>. Public
+										Place discovery is available at{" "}
+										<code className="font-mono">/explore.md</code>, or from{" "}
+										<code className="font-mono">/explore</code> with{" "}
+										<code className="font-mono">Accept: text/markdown</code>. OpenAPI
+										is available at <code className="font-mono">/openapi.json</code>.
+									</p>
+									<p className={`${secondaryGray}`}>
+										Agent safety guidance is published at{" "}
+										<Link href="/agents.md" className="text-primary underline">
+											/agents.md
+										</Link>
+										.
+									</p>
+								</div>
+							)}
 						</div>
-					</Section>
+					))}
 				</div>
 
 				{/* CONTENT ENCODING */}
