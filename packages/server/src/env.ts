@@ -30,6 +30,8 @@ const schema = z.object({
 	ADMIN_KEY: z.string().min(1).optional(),
 	PRIVY_APP_ID: minString(),
 	PRIVY_SECRET: minString(),
+	CDP_API_KEY_ID: z.string().min(1).optional(),
+	CDP_API_KEY_SECRET: z.string().min(1).optional(),
 	X402_PAY_TO_ADDRESS: z.string().min(1).optional(),
 	X402_NETWORK: z.string().min(1).default("eip155:8453"),
 	X402_FACILITATOR_URL: z

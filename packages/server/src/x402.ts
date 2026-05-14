@@ -1,7 +1,9 @@
 import { AsyncLocalStorage } from "node:async_hooks";
+import { generateJwt } from "@coinbase/cdp-sdk/auth";
 import {
 	HTTPFacilitatorClient,
 	type RoutesConfig,
+	type FacilitatorConfig,
 	x402ResourceServer,
 } from "@x402/core/server";
 import type { Network } from "@x402/core/types";
@@ -23,6 +25,41 @@ function x402PayToAddress() {
 		throw new Error("X402_PAY_TO_ADDRESS is not configured");
 	}
 	return getAddress(env.X402_PAY_TO_ADDRESS);
+}
+
+function cdpAuthHeaders(): FacilitatorConfig["createAuthHeaders"] | undefined {
+	if (!env.CDP_API_KEY_ID || !env.CDP_API_KEY_SECRET) {
+		return undefined;
+	}
+
+	const apiKeyId = env.CDP_API_KEY_ID;
+	const apiKeySecret = env.CDP_API_KEY_SECRET;
+	const facilitatorUrl = new URL(env.X402_FACILITATOR_URL);
+	if (facilitatorUrl.host !== "api.cdp.coinbase.com") {
+		return undefined;
+	}
+
+	const requestHost = facilitatorUrl.host;
+	const pathPrefix = facilitatorUrl.pathname.replace(/\/$/, "");
+
+	async function bearer(method: "GET" | "POST", path: string) {
+		const token = await generateJwt({
+			apiKeyId,
+			apiKeySecret,
+			requestMethod: method,
+			requestHost,
+			requestPath: `${pathPrefix}${path}`,
+			expiresIn: 120,
+		});
+
+		return { Authorization: `Bearer ${token}` };
+	}
+
+	return async () => ({
+		supported: await bearer("GET", "/supported"),
+		verify: await bearer("POST", "/verify"),
+		settle: await bearer("POST", "/settle"),
+	});
 }
 
 const routes: RoutesConfig = {
@@ -51,6 +88,7 @@ const routes: RoutesConfig = {
 const resourceServer = new x402ResourceServer(
 	new HTTPFacilitatorClient({
 		url: env.X402_FACILITATOR_URL as `${string}://${string}`,
+		createAuthHeaders: cdpAuthHeaders(),
 	}),
 )
 	.register("eip155:*" as Network, new ExactEvmScheme())
