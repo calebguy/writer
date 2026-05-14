@@ -1,191 +1,76 @@
+import { AsyncLocalStorage } from "node:async_hooks";
+import {
+	HTTPFacilitatorClient,
+	type RoutesConfig,
+	x402ResourceServer,
+} from "@x402/core/server";
+import type { Network } from "@x402/core/types";
+import { ExactEvmScheme } from "@x402/evm/exact/server";
+import { paymentMiddleware } from "@x402/hono";
 import type { Context, MiddlewareHandler } from "hono";
 import { type Hex, getAddress } from "viem";
-import { exact } from "x402/schemes";
-import {
-	findMatchingPaymentRequirements,
-	processPriceToAtomicAmount,
-	toJsonSafe,
-} from "x402/shared";
-import {
-	type Network,
-	type PaymentPayload,
-	type PaymentRequirements,
-	settleResponseHeader,
-} from "x402/types";
-import { useFacilitator } from "x402/verify";
 import { env } from "./env";
 
-const X402_VERSION = 1;
-
-type X402RouteKind = "place" | "entry";
-
-const routePrices: Record<X402RouteKind, string> = {
-	place: env.X402_PLACE_CREATE_PRICE,
-	entry: env.X402_ENTRY_CREATE_PRICE,
+type X402PaymentContext = {
+	payer?: Hex;
 };
 
-function routeKind(path: string): X402RouteKind {
-	return path.includes("/entry/") ? "entry" : "place";
-}
+const paymentContext = new AsyncLocalStorage<X402PaymentContext>();
+const network = env.X402_NETWORK as Network;
 
-function buildPaymentRequirements(c: Context): PaymentRequirements[] {
+function x402PayToAddress() {
 	if (!env.X402_PAY_TO_ADDRESS) {
 		throw new Error("X402_PAY_TO_ADDRESS is not configured");
 	}
-
-	const kind = routeKind(c.req.path);
-	const price = routePrices[kind];
-	const network = env.X402_NETWORK as Network;
-	const parsedPrice = processPriceToAtomicAmount(price, network);
-	if ("error" in parsedPrice) {
-		throw new Error(parsedPrice.error);
-	}
-
-	const { maxAmountRequired, asset } = parsedPrice;
-	if (!("eip712" in asset)) {
-		throw new Error(`Unsupported x402 EVM network: ${network}`);
-	}
-
-	return [
-		{
-			scheme: "exact",
-			network,
-			maxAmountRequired,
-			resource: c.req.url,
-			description:
-				kind === "place"
-					? "Create a Writer place"
-					: "Create an entry in a Writer place",
-			mimeType: "application/json",
-			payTo: getAddress(env.X402_PAY_TO_ADDRESS),
-			maxTimeoutSeconds: 300,
-			asset: getAddress(asset.address as Hex),
-			outputSchema: {
-				input: {
-					type: "http",
-					method: c.req.method.toUpperCase(),
-					discoverable: true,
-				},
-			},
-			extra: asset.eip712,
-		},
-	];
+	return getAddress(env.X402_PAY_TO_ADDRESS);
 }
 
-export function getX402Payer(c: Context): Hex | undefined {
-	return c.get("x402Payer" as never) as Hex | undefined;
+const routes: RoutesConfig = {
+	"POST /x402/factory/create": {
+		accepts: {
+			scheme: "exact",
+			price: env.X402_PLACE_CREATE_PRICE,
+			network,
+			payTo: x402PayToAddress,
+		},
+		description: "Create a Writer place",
+		mimeType: "application/json",
+	},
+	"POST /x402/writer/:address/entry/createWithChunk": {
+		accepts: {
+			scheme: "exact",
+			price: env.X402_ENTRY_CREATE_PRICE,
+			network,
+			payTo: x402PayToAddress,
+		},
+		description: "Create an entry in a Writer place",
+		mimeType: "application/json",
+	},
+};
+
+const resourceServer = new x402ResourceServer(
+	new HTTPFacilitatorClient({
+		url: env.X402_FACILITATOR_URL as `${string}://${string}`,
+	}),
+)
+	.register("eip155:*" as Network, new ExactEvmScheme())
+	.onAfterVerify(async ({ result }) => {
+		if (!result.payer) return;
+		const context = paymentContext.getStore();
+		if (context) {
+			context.payer = getAddress(result.payer) as Hex;
+		}
+	});
+
+export function getX402Payer(_c: Context): Hex | undefined {
+	return paymentContext.getStore()?.payer;
 }
 
 export function x402PaymentMiddleware(): MiddlewareHandler {
-	const { verify, settle } = useFacilitator({
-		url: env.X402_FACILITATOR_URL as `${string}://${string}`,
-	});
+	const middleware = paymentMiddleware(routes, resourceServer);
 
 	return async (c, next) => {
-		let paymentRequirements: PaymentRequirements[];
-		try {
-			paymentRequirements = buildPaymentRequirements(c);
-		} catch (err) {
-			return c.json(
-				{
-					error:
-						err instanceof Error
-							? err.message
-							: "x402 payment is not configured",
-				},
-				503,
-			);
-		}
-
-		const payment = c.req.header("X-PAYMENT");
-		if (!payment) {
-			return c.json(
-				{
-					error: "X-PAYMENT header is required",
-					accepts: toJsonSafe(paymentRequirements),
-					x402Version: X402_VERSION,
-				},
-				402,
-			);
-		}
-
-		let decodedPayment: PaymentPayload;
-		try {
-			decodedPayment = exact.evm.decodePayment(payment);
-			decodedPayment.x402Version = X402_VERSION;
-		} catch (err) {
-			return c.json(
-				{
-					error:
-						err instanceof Error ? err.message : "Invalid or malformed payment",
-					accepts: toJsonSafe(paymentRequirements),
-					x402Version: X402_VERSION,
-				},
-				402,
-			);
-		}
-
-		const selectedPaymentRequirements = findMatchingPaymentRequirements(
-			paymentRequirements,
-			decodedPayment,
-		);
-		if (!selectedPaymentRequirements) {
-			return c.json(
-				{
-					error: "Unable to find matching payment requirements",
-					accepts: toJsonSafe(paymentRequirements),
-					x402Version: X402_VERSION,
-				},
-				402,
-			);
-		}
-
-		const verification = await verify(
-			decodedPayment,
-			selectedPaymentRequirements,
-		);
-		if (!verification.isValid) {
-			return c.json(
-				{
-					error: verification.invalidReason ?? "Payment verification failed",
-					accepts: toJsonSafe(paymentRequirements),
-					payer: verification.payer,
-					x402Version: X402_VERSION,
-				},
-				402,
-			);
-		}
-		if (!verification.payer) {
-			return c.json({ error: "Payment payer missing" }, 402);
-		}
-
-		c.set("x402Payer" as never, getAddress(verification.payer) as never);
-
-		await next();
-
-		let res = c.res;
-		if (res.status >= 400) {
-			return;
-		}
-
-		c.res = undefined;
-		const settlement = await settle(
-			decodedPayment,
-			selectedPaymentRequirements,
-		);
-		if (settlement.success) {
-			res.headers.set("X-PAYMENT-RESPONSE", settleResponseHeader(settlement));
-			c.res = res;
-			return;
-		}
-
-		c.res = c.json(
-			{
-				error: settlement.errorReason ?? "Failed to settle payment",
-				accepts: toJsonSafe(paymentRequirements),
-				x402Version: X402_VERSION,
-			},
-			402,
-		);
+		const context: X402PaymentContext = {};
+		return paymentContext.run(context, () => middleware(c, next));
 	};
 }

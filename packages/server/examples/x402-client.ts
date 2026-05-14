@@ -1,12 +1,13 @@
+import { x402Client, x402HTTPClient } from "@x402/core/client";
+import type { Network } from "@x402/core/types";
+import { ExactEvmScheme } from "@x402/evm/exact/client";
+import { wrapFetchWithPayment } from "@x402/fetch";
 import { type Hex, getAddress } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { createPaymentHeader, selectPaymentRequirements } from "x402/client";
-import { decodeXPaymentResponse } from "x402/shared";
-import { type PaymentRequirements, createSigner } from "x402/types";
 
 const BASE_URL = process.env.WRITER_API_URL ?? "http://localhost:3000";
 const PRIVATE_KEY = process.env.PRIVATE_KEY as Hex;
-const X402_NETWORK = "base";
+const X402_NETWORK = (process.env.X402_NETWORK ?? "eip155:8453") as Network;
 const TITLE = process.env.PLACE_TITLE ?? "x402 Place";
 const CONTENT = process.env.ENTRY_CONTENT ?? "Paid hello from an x402 client.";
 
@@ -16,60 +17,63 @@ if (!PRIVATE_KEY) {
 
 const account = privateKeyToAccount(PRIVATE_KEY);
 const admin = getAddress(account.address);
+const client = new x402Client();
+client.register(X402_NETWORK, new ExactEvmScheme(account));
+const fetchWithPayment = wrapFetchWithPayment(fetch, client);
+const httpClient = new x402HTTPClient(client);
 
 async function paidJson<T>(
 	path: string,
 	body: unknown,
 ): Promise<{ data: T; paymentResponse: unknown }> {
 	const url = `${BASE_URL}${path}`;
-	const first = await fetch(url, {
-		method: "POST",
-		headers: { "content-type": "application/json" },
-		body: JSON.stringify(body),
-	});
-
-	if (first.status !== 402) {
-		throw new Error(`Expected 402 from ${path}, got ${first.status}`);
-	}
-
-	const paymentRequired = (await first.json()) as {
-		accepts: PaymentRequirements[];
-		x402Version: number;
-	};
-	const selected = selectPaymentRequirements(
-		paymentRequired.accepts,
-		X402_NETWORK,
-		"exact",
-	);
-	const signer = await createSigner(selected.network, PRIVATE_KEY);
-	const payment = await createPaymentHeader(
-		signer,
-		paymentRequired.x402Version,
-		selected,
-	);
-
-	const paid = await fetch(url, {
+	const paid = await fetchWithPayment(url, {
 		method: "POST",
 		headers: {
 			"content-type": "application/json",
-			"X-PAYMENT": payment,
 			"Access-Control-Expose-Headers": "X-PAYMENT-RESPONSE",
 		},
 		body: JSON.stringify(body),
 	});
 
-	const data = await paid.json();
+	const data = await readResponseBody(paid);
 	if (!paid.ok) {
-		throw new Error(`${path} failed: ${paid.status} ${JSON.stringify(data)}`);
+		throw new Error(`${path} failed: ${paid.status} ${formatBody(data)}`);
+	}
+	if (typeof data !== "object" || data === null) {
+		throw new Error(
+			`${path} returned ${paid.status} ${
+				paid.headers.get("content-type") ?? "unknown content-type"
+			}: ${formatBody(data)}`,
+		);
 	}
 
-	const responseHeader = paid.headers.get("X-PAYMENT-RESPONSE");
 	return {
-		data,
-		paymentResponse: responseHeader
-			? decodeXPaymentResponse(responseHeader)
-			: null,
+		data: data as T,
+		paymentResponse: httpClient.getPaymentSettleResponse((name) =>
+			paid.headers.get(name),
+		),
 	};
+}
+
+async function readResponseBody(response: Response): Promise<unknown> {
+	const contentType = response.headers.get("content-type") ?? "";
+	const text = await response.text();
+	if (!text) {
+		return "";
+	}
+	if (contentType.includes("application/json")) {
+		try {
+			return JSON.parse(text);
+		} catch {
+			return text;
+		}
+	}
+	return text;
+}
+
+function formatBody(body: unknown) {
+	return typeof body === "string" ? body : JSON.stringify(body);
 }
 
 function randomNonce() {
