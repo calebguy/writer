@@ -1064,6 +1064,21 @@ export default function DocsPage() {
 
 						<div className="space-y-6">
 							<div className="border-b border-neutral-300 dark:border-neutral-700 pb-6">
+								<code className="font-mono font-bold text-primary">
+									no prefix
+								</code>
+								<p className={`${secondaryGray} mt-1`}>
+									Public entry. Raw markdown. Compatible with Writer&apos;s UI,
+									but larger onchain than Brotli-compressed content.
+								</p>
+								<p className={`${secondaryGray} mt-1 font-mono text-sm`}>
+									# We're just living on the edge of somebody else's
+									civilization, like fleas on a dog's back. If the dog drowns,
+									the fleas drown, too.
+								</p>
+							</div>
+
+							<div className="border-b border-neutral-300 dark:border-neutral-700 pb-6">
 								<code className="font-mono font-bold text-primary">br:</code>
 								<p className={`${secondaryGray} mt-1`}>
 									Public entry. Brotli compressed, Base64 encoded. No

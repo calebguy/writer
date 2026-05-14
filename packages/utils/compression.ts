@@ -28,7 +28,9 @@ export const processRawContent = (raw: string) => {
 		version = "enc:v2:br:";
 	} else if (raw.startsWith("enc:br:")) {
 		version = "enc:br:";
+	} else {
+		version = "raw";
+		decompressed = raw;
 	}
-	// @note how should we handle non-supported versions?
 	return { version, decompressed };
 };

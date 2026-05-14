@@ -10,7 +10,7 @@ const X402_NETWORK = "eip155:8453";
 const PRIVATE_KEY = process.env.PRIVATE_KEY as Hex;
 const TITLE = "# :)";
 const CONTENT =
-	"We're just living on the edge of somebody else's [civilization], like fleas on a dog's back. If the dog drowns, the fleas drown, too.";
+	"We're just living on the edge of somebody else's civilization, like fleas on a dog's back. If the dog drowns, the fleas drown, too.";
 
 if (!PRIVATE_KEY) {
 	throw new Error("Set PRIVATE_KEY to the paying/admin EVM private key.");
