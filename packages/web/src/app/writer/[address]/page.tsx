@@ -95,6 +95,24 @@ export default function WriterPage() {
 	const showLockedEntries = !allowDecryption || Boolean(unlockError);
 
 	useEffect(() => {
+		const href = `${window.location.origin}/writer/${normalizedAddress}.md`;
+		const selector = 'link[data-writer-markdown-alternate="place"]';
+		let link = document.head.querySelector<HTMLLinkElement>(selector);
+		if (!link) {
+			link = document.createElement("link");
+			link.rel = "alternate";
+			link.type = "text/markdown";
+			link.dataset.writerMarkdownAlternate = "place";
+			document.head.appendChild(link);
+		}
+		link.href = href;
+
+		return () => {
+			link?.remove();
+		};
+	}, [normalizedAddress]);
+
+	useEffect(() => {
 		if (!wallet || !hasPrivateEntries) return;
 		// Auto-unlock only if a key is already cached (no signature prompt).
 		// For v4/v5 entries the key is per-writer, so we check this writer's

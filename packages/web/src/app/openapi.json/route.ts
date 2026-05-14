@@ -141,6 +141,55 @@ const openApiDocument = {
 				},
 			},
 		},
+		"/.well-known/writer-agent.json": {
+			get: {
+				tags: ["Markdown"],
+				servers: [{ url: "https://writer.place", description: "Writer web app" }],
+				summary: "Get machine-readable Writer agent discovery manifest",
+				responses: {
+					"200": {
+						description: "Agent discovery manifest",
+						content: {
+							"application/json": {
+								schema: { $ref: "#/components/schemas/AgentManifest" },
+							},
+						},
+					},
+				},
+			},
+		},
+		"/writer/{address}.md": {
+			get: {
+				tags: ["Markdown"],
+				servers: [{ url: "https://writer.place", description: "Writer web app" }],
+				summary: "Get a Writer Place as Markdown",
+				description:
+					"Returns a Markdown Place summary with YAML frontmatter, provenance metadata, and links to public entries. The canonical /writer/{address} URL also returns this representation when requested with Accept: text/markdown.",
+				parameters: [{ $ref: "#/components/parameters/Address" }],
+				responses: {
+					"200": { $ref: "#/components/responses/Markdown" },
+					"404": { $ref: "#/components/responses/PlainTextNotFound" },
+				},
+			},
+		},
+		"/writer/{address}/{id}.md": {
+			get: {
+				tags: ["Markdown"],
+				servers: [{ url: "https://writer.place", description: "Writer web app" }],
+				summary: "Get a public Writer entry as Markdown",
+				description:
+					"Returns a public/plaintext entry as Markdown with YAML provenance frontmatter. Encrypted entries return 403 because the server does not have wallet-derived decryption keys. The canonical /writer/{address}/{id} URL also returns this representation when requested with Accept: text/markdown.",
+				parameters: [
+					{ $ref: "#/components/parameters/Address" },
+					{ $ref: "#/components/parameters/EntryId" },
+				],
+				responses: {
+					"200": { $ref: "#/components/responses/Markdown" },
+					"403": { $ref: "#/components/responses/PlainTextForbidden" },
+					"404": { $ref: "#/components/responses/PlainTextNotFound" },
+				},
+			},
+		},
 		"/x402/factory/create": {
 			post: {
 				tags: ["Agents"],
@@ -284,9 +333,46 @@ const openApiDocument = {
 					},
 				},
 			},
+			Markdown: {
+				description: "Markdown representation",
+				content: {
+					"text/markdown; charset=utf-8": {
+						schema: { type: "string" },
+					},
+				},
+			},
+			PlainTextForbidden: {
+				description: "Forbidden plain-text response",
+				content: {
+					"text/plain; charset=utf-8": { schema: { type: "string" } },
+				},
+			},
+			PlainTextNotFound: {
+				description: "Not found plain-text response",
+				content: {
+					"text/plain; charset=utf-8": { schema: { type: "string" } },
+				},
+			},
 		},
 		schemas: {
 			Address: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
+			AgentManifest: {
+				type: "object",
+				required: ["name", "site", "api", "agents", "docs", "explore", "openapi"],
+				properties: {
+					name: { type: "string" },
+					description: { type: "string" },
+					site: { type: "string", format: "uri" },
+					api: { type: "string", format: "uri" },
+					agents: { type: "string", format: "uri" },
+					llms: { type: "string", format: "uri" },
+					docs: { type: "string", format: "uri" },
+					explore: { type: "string", format: "uri" },
+					openapi: { type: "string", format: "uri" },
+					markdown: { type: "object" },
+					x402: { type: "object" },
+				},
+			},
 			Hex: { type: "string", pattern: "^0x[a-fA-F0-9]*$" },
 			Error: {
 				type: "object",

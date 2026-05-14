@@ -16,6 +16,10 @@ const nextConfig: NextConfig = {
 					source: "/writer/:address/:id(\\d+).md",
 					destination: "/api/writer-markdown/:address/:id",
 				},
+				{
+					source: "/writer/:address.md",
+					destination: "/api/writer-place-markdown/:address",
+				},
 			],
 		};
 	},

@@ -73,6 +73,20 @@ export const apiSections: ApiSectionDoc[] = [
 			},
 			{
 				method: "GET",
+				path: "https://writer.place/writer/:address.md",
+				description:
+					"Fetch a Writer Place summary as Markdown, including frontmatter metadata and public entry links. The canonical Place URL also supports content negotiation with Accept: text/markdown.",
+				params: [
+					{
+						name: "address",
+						type: "address",
+						description: "Writer contract address",
+					},
+				],
+				response: "text/markdown; charset=utf-8",
+			},
+			{
+				method: "GET",
 				path: "/manager/:address",
 				description: "Get all writers managed by an address.",
 				params: [
@@ -111,7 +125,7 @@ export const apiSections: ApiSectionDoc[] = [
 				method: "GET",
 				path: "https://writer.place/writer/:address/:id.md",
 				description:
-					"Fetch a public/plaintext entry as raw markdown from the web app. The canonical HTML entry URL also supports content negotiation with Accept: text/markdown. Encrypted entries return 403 because the server does not have wallet-derived decryption keys.",
+					"Fetch a public/plaintext entry as Markdown with provenance frontmatter from the web app. The canonical HTML entry URL also supports content negotiation with Accept: text/markdown. Encrypted entries return 403 because the server does not have wallet-derived decryption keys.",
 				params: [
 					{
 						name: "address",
@@ -353,9 +367,9 @@ function apiMarkdown() {
 		lines.push("---", "");
 	}
 	lines.push(
-		"Public entries can also be fetched as raw markdown from the web app at `https://writer.place/writer/:address/:id.md`, or from the canonical entry URL with `Accept: text/markdown`. Encrypted entries cannot be returned as raw markdown by the server.",
+		"Writer Places can be fetched as Markdown at `https://writer.place/writer/:address.md`, or from the canonical Place URL with `Accept: text/markdown`. Public entries can be fetched as Markdown with provenance frontmatter at `https://writer.place/writer/:address/:id.md`, or from the canonical entry URL with `Accept: text/markdown`. Encrypted entries cannot be returned as Markdown by the server.",
 		"",
-		"Agent guidance is published at `/agents.md`, `/agents.txt`, and `/llms.txt`. These docs are also available as Markdown at `/docs.md`, or from `/docs` with `Accept: text/markdown`. Public Place discovery is available at `/explore.md`, or from `/explore` with `Accept: text/markdown`. The OpenAPI 3.1 schema for public reads and x402 writes is available at `/openapi.json`.",
+		"Agent guidance is published at `/agents.md`, `/agents.txt`, and `/llms.txt`. Machine-readable discovery is available at `/.well-known/writer-agent.json`. These docs are also available as Markdown at `/docs.md`, or from `/docs` with `Accept: text/markdown`. Public Place discovery is available at `/explore.md`, or from `/explore` with `Accept: text/markdown`. The OpenAPI 3.1 schema for public reads and x402 writes is available at `/openapi.json`.",
 		"",
 	);
 	return lines.join("\n");

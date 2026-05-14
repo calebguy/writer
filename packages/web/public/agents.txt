@@ -26,7 +26,10 @@ Agents can:
 - List Places managed by a wallet.
 - Delete an entry when authorized.
 - Read public Places and entries.
-- Fetch public entries as raw markdown at https://writer.place/writer/:address/:id.md
+- Fetch agent discovery manifest at https://writer.place/.well-known/writer-agent.json
+- Fetch public Places as Markdown at https://writer.place/writer/:address.md
+- Fetch public Places from canonical URLs with Accept: text/markdown
+- Fetch public entries as Markdown with provenance frontmatter at https://writer.place/writer/:address/:id.md
 - Fetch public entries from canonical URLs with Accept: text/markdown
 - Fetch docs as markdown at https://writer.place/docs.md or /docs with Accept: text/markdown
 - Fetch public Place discovery as markdown at https://writer.place/explore.md or /explore with Accept: text/markdown

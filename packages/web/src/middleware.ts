@@ -92,6 +92,7 @@ function prefersMarkdown(request: NextRequest) {
 	);
 }
 
+const placePathPattern = /^\/writer\/(0x[a-fA-F0-9]{40})$/;
 const entryPathPattern = /^\/writer\/(0x[a-fA-F0-9]{40})\/(\d+)$/;
 
 export function middleware(request: NextRequest) {
@@ -114,6 +115,14 @@ export function middleware(request: NextRequest) {
 		const [, address, id] = entryMatch;
 		return NextResponse.rewrite(
 			new URL(`/api/writer-markdown/${address}/${id}`, request.url),
+		);
+	}
+
+	const placeMatch = pathname.match(placePathPattern);
+	if (placeMatch) {
+		const [, address] = placeMatch;
+		return NextResponse.rewrite(
+			new URL(`/api/writer-place-markdown/${address}`, request.url),
 		);
 	}
 

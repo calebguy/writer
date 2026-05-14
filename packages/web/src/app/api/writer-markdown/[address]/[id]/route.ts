@@ -7,6 +7,13 @@ type EntryResponse = {
 		raw?: string | null;
 		version?: string | null;
 		deletedAt?: string | Date | null;
+		author?: string | null;
+		createdAt?: string | Date | null;
+		updatedAt?: string | Date | null;
+		createdAtBlock?: string | number | null;
+		updatedAtBlock?: string | number | null;
+		createdAtHash?: string | null;
+		updatedAtHash?: string | null;
 	};
 	error?: string;
 };
@@ -17,6 +24,29 @@ type RouteContext = {
 		id: string;
 	}>;
 };
+
+function yamlString(value: string) {
+	return JSON.stringify(value);
+}
+
+function withFrontmatter(
+	markdown: string,
+	metadata: Record<string, string | number | boolean | null | undefined>,
+) {
+	const lines = ["---"];
+	for (const [key, value] of Object.entries(metadata)) {
+		if (value === null || value === undefined) {
+			continue;
+		}
+		if (typeof value === "string") {
+			lines.push(`${key}: ${yamlString(value)}`);
+		} else {
+			lines.push(`${key}: ${value}`);
+		}
+	}
+	lines.push("---", "");
+	return `${lines.join("\n")}${markdown}`;
+}
 
 function markdownResponse(markdown: string, htmlUrl: string, markdownUrl: string) {
 	return new Response(markdown, {
@@ -75,8 +105,27 @@ export async function GET(request: Request, context: RouteContext) {
 		return textResponse("entry not found", 404);
 	}
 
+	const metadata = {
+		type: "writer-entry",
+		writer: address,
+		entryId,
+		author: entry.author,
+		createdAt: entry.createdAt ? String(entry.createdAt) : undefined,
+		updatedAt: entry.updatedAt ? String(entry.updatedAt) : undefined,
+		createdAtBlock: entry.createdAtBlock ? String(entry.createdAtBlock) : undefined,
+		updatedAtBlock: entry.updatedAtBlock ? String(entry.updatedAtBlock) : undefined,
+		createdAtHash: entry.createdAtHash,
+		updatedAtHash: entry.updatedAtHash,
+		canonical: htmlUrl,
+		markdown: markdownUrl,
+	};
+
 	if (typeof entry.decompressed === "string") {
-		return markdownResponse(entry.decompressed, htmlUrl, markdownUrl);
+		return markdownResponse(
+			withFrontmatter(entry.decompressed, metadata),
+			htmlUrl,
+			markdownUrl,
+		);
 	}
 
 	if (entry.version?.startsWith("enc:") || entry.raw?.startsWith("enc:")) {
@@ -84,7 +133,11 @@ export async function GET(request: Request, context: RouteContext) {
 	}
 
 	if (typeof entry.raw === "string") {
-		return markdownResponse(entry.raw, htmlUrl, markdownUrl);
+		return markdownResponse(
+			withFrontmatter(entry.raw, metadata),
+			htmlUrl,
+			markdownUrl,
+		);
 	}
 
 	return textResponse("raw markdown is unavailable", 404);

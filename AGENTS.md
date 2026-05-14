@@ -141,8 +141,11 @@ Important invariants:
 ### Endpoints
 - `GET /writer/public` - List public writers
 - `GET /writer/:address` - Get writer with entries
-- `GET /writer/:address/:id.md` - Web raw markdown URL for public/plaintext entries (returns 403 for encrypted entries)
-- `GET /writer/:address/:id` with `Accept: text/markdown` - Content-negotiated raw markdown for public/plaintext entries
+- `GET /.well-known/writer-agent.json` - Machine-readable agent discovery manifest
+- `GET /writer/:address.md` - Web Markdown URL for Place summaries and public entry links
+- `GET /writer/:address` with `Accept: text/markdown` - Content-negotiated Place Markdown
+- `GET /writer/:address/:id.md` - Web Markdown URL for public/plaintext entries with provenance frontmatter (returns 403 for encrypted entries)
+- `GET /writer/:address/:id` with `Accept: text/markdown` - Content-negotiated Markdown for public/plaintext entries
 - `GET /docs.md` or `GET /docs` with `Accept: text/markdown` - Markdown API/platform docs
 - `GET /explore.md` or `GET /explore` with `Accept: text/markdown` - Markdown public Place discovery
 - `GET /openapi.json` - OpenAPI 3.1 schema for public reads and x402 agent writes
@@ -159,6 +162,7 @@ Important invariants:
 
 ### Agent Docs
 - Public agent guide: `packages/web/public/agents.md` → `https://writer.place/agents.md`
+- Agent discovery manifest: `packages/web/src/app/.well-known/writer-agent.json/route.ts` → `https://writer.place/.well-known/writer-agent.json`
 - Plain-text agent summary: `packages/web/public/agents.txt` → `https://writer.place/agents.txt`
 - LLM summary: `packages/web/public/llms.txt` → `https://writer.place/llms.txt`
 - Local agent skill: `packages/cli/skills/writer/SKILL.md`
