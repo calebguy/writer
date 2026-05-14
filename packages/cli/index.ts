@@ -8,7 +8,7 @@ import { wrapFetchWithPayment } from "@x402/fetch";
 import { type Hex, getAddress, isAddress } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
-type Command = "list" | "create-entry" | "delete-entry";
+type Command = "list" | "create-place" | "create-entry" | "delete-entry";
 
 type CliOptions = {
 	command?: Command;
@@ -18,6 +18,7 @@ type CliOptions = {
 	writer?: Hex;
 	writerIndex?: number;
 	entryId?: bigint;
+	title?: string;
 	content?: string;
 	contentFile?: string;
 	legacyDomain?: boolean;
@@ -49,6 +50,7 @@ x402 Writer CLI
 
 Usage:
   bun writer list --pk 0x...
+  bun writer create-place --pk 0x... --title "My Place"
   bun writer create-entry --pk 0x... --writer 0x... --content "hello"
   bun writer create-entry --pk 0x... --writer-index 1 --content-file ./entry.md
   bun writer delete-entry --pk 0x... --writer 0x... --entry-id 1
@@ -57,6 +59,7 @@ Options:
   --pk <hex>                Payer/author private key. Can also use PRIVATE_KEY.
   --base-url <url>          API URL. Defaults to WRITER_API_URL or ${DEFAULT_BASE_URL}.
   --network <caip2>         x402 network. Defaults to X402_NETWORK or ${DEFAULT_NETWORK}.
+  --title <title>           Place title for create-place. Defaults to "Untitled Place".
   --writer <address>        Writer/Place contract address.
   --writer-index <number>   1-based index from the loaded manager writer list.
   --entry-id <id>           Onchain entry id to delete.
@@ -93,6 +96,10 @@ function parseArgs(argv: string[]): CliOptions {
 				break;
 			case "--network":
 				options.network = requireValue(arg, next) as Network;
+				i++;
+				break;
+			case "--title":
+				options.title = requireValue(arg, next);
 				i++;
 				break;
 			case "--writer":
@@ -134,7 +141,9 @@ function parseArgs(argv: string[]): CliOptions {
 	}
 
 	if (
-		!["list", "create-entry", "delete-entry"].includes(options.command ?? "")
+		!["list", "create-place", "create-entry", "delete-entry"].includes(
+			options.command ?? "",
+		)
 	) {
 		throw new Error(`Missing or invalid command.\n\n${usage()}`);
 	}
@@ -378,6 +387,22 @@ async function main() {
 			return options.content;
 		}
 		throw new Error("Set --content or --content-file.");
+	}
+
+	if (options.command === "create-place") {
+		const created = await paidJson<{
+			writer: ManagerWriter & {
+				storageAddress?: Hex;
+				transactionId?: string;
+				createdAtHash?: string | null;
+			};
+		}>("/x402/factory/create", {
+			address: payer,
+			title: options.title ?? "Untitled Place",
+		});
+		console.log("Created pending Place:", created.data.writer);
+		console.log("Place payment:", created.paymentResponse);
+		return;
 	}
 
 	const writers = await loadWriters();
