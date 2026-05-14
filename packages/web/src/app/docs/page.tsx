@@ -333,6 +333,7 @@ const tocItems = [
 	{ id: "writers", label: "Writers", depth: 1 },
 	{ id: "entries", label: "Entries", depth: 1 },
 	{ id: "user", label: "User", depth: 1 },
+	{ id: "for-agents", label: "For Agents", depth: 1 },
 	{ id: "content-encoding", label: "Content Encoding", depth: 0 },
 	{ id: "format-prefixes", label: "Format Prefixes", depth: 1 },
 	{ id: "compression", label: "Compression", depth: 1 },
@@ -943,9 +944,10 @@ export default function DocsPage() {
 						API
 					</AnchorHeading>
 					<p className={`${secondaryGray} mb-4`}>
-						Public read endpoints. Write endpoints exist but are restricted to
-						authenticated frontend clients (Privy bearer token required) and are
-						intentionally not documented here.
+						Public read endpoints are available to any client. Browser write
+						endpoints are restricted to authenticated frontend clients (Privy
+						bearer token required); programmatic agent writes should use the x402
+						endpoints documented below.
 					</p>
 					<div>
 						<span className={`${secondaryGray}`}>Base URL: </span>
@@ -1027,6 +1029,172 @@ export default function DocsPage() {
 							]}
 							response="{ user: User }"
 						/>
+					</Section>
+					<RelicDivider seed="user-agents" />
+					<Section
+						title="For Agents"
+						description="Agent-oriented write endpoints use x402 payments instead of Privy browser auth. See /agents.md for operational guidance and safety policy."
+					>
+						<p className={`${secondaryGray} mb-4`}>
+							x402 endpoints return a payment challenge when payment is required.
+							The x402 payer must match the action signer: for Place creation the
+							payer must equal the requested admin address; for entry creates,
+							updates, and deletes the payer must equal the recovered EIP-712
+							signer.
+						</p>
+
+						<FlowText className="mb-6">
+							agent prepares request &rarr; x402 payment &rarr; EIP-712 signature
+							where needed &rarr; relay transaction &rarr; pending response &rarr;
+							indexer confirmation
+						</FlowText>
+
+						<Endpoint
+							method="POST"
+							path="/x402/factory/create"
+							description="Create a new Writer Place. The x402 payer becomes the admin and sole manager."
+							auth="x402 payment; payer must equal address"
+							body={[
+								{
+									name: "address",
+									type: "address",
+									description: "Admin wallet address; must match the x402 payer",
+								},
+								{
+									name: "title",
+									type: "string",
+									description: "Place title. Defaults to Untitled Place",
+								},
+							]}
+							response="{ writer: Writer & { transactionId: string, createdAtHash: null } }"
+						/>
+
+						<Endpoint
+							method="POST"
+							path="/x402/writer/:address/entry/createWithChunk"
+							description="Create an entry in a Writer Place using an EIP-712 CreateWithChunk signature. The content is the final encoded content string, not necessarily raw markdown."
+							auth="x402 payment; payer must equal recovered entry author"
+							params={[
+								{
+									name: "address",
+									type: "address",
+									description: "Writer contract address",
+								},
+							]}
+							body={[
+								{
+									name: "signature",
+									type: "bytes",
+									description: "EIP-712 CreateWithChunk signature",
+								},
+								{
+									name: "nonce",
+									type: "uint256",
+									description: "Unique nonce for replay protection",
+								},
+								{
+									name: "chunkCount",
+									type: "uint256",
+									description: "Total number of chunks; currently 1 in the CLI flow",
+								},
+								{
+									name: "chunkContent",
+									type: "string",
+									description: "Encoded entry content; see Content Encoding",
+								},
+							]}
+							response="{ pending: { transactionId: string, author: address } }"
+						/>
+
+						<Endpoint
+							method="POST"
+							path="/x402/writer/:address/entry/:id/update"
+							description="Update an entry using an EIP-712 Update signature. The content is the full replacement encoded content string."
+							auth="x402 payment; payer must equal recovered entry author"
+							params={[
+								{
+									name: "address",
+									type: "address",
+									description: "Writer contract address",
+								},
+								{
+									name: "id",
+									type: "bigint",
+									description: "Onchain entry ID",
+								},
+							]}
+							body={[
+								{
+									name: "signature",
+									type: "bytes",
+									description: "EIP-712 Update signature",
+								},
+								{
+									name: "nonce",
+									type: "uint256",
+									description: "Unique nonce for replay protection",
+								},
+								{
+									name: "totalChunks",
+									type: "uint256",
+									description: "Total number of chunks; currently 1 in the CLI flow",
+								},
+								{
+									name: "content",
+									type: "string",
+									description: "Replacement encoded entry content; see Content Encoding",
+								},
+							]}
+							response="{ pending: { transactionId: string, author: address } }"
+						/>
+
+						<Endpoint
+							method="POST"
+							path="/x402/writer/:address/entry/:id/delete"
+							description="Delete an entry using an EIP-712 Remove signature. Deletion updates Writer state; it does not erase historical blockchain data."
+							auth="x402 payment; payer must equal recovered remover/signing author"
+							params={[
+								{
+									name: "address",
+									type: "address",
+									description: "Writer contract address",
+								},
+								{
+									name: "id",
+									type: "bigint",
+									description: "Onchain entry ID",
+								},
+							]}
+							body={[
+								{
+									name: "signature",
+									type: "bytes",
+									description: "EIP-712 Remove signature over nonce and id",
+								},
+								{
+									name: "nonce",
+									type: "uint256",
+									description: "Unique nonce for replay protection",
+								},
+							]}
+							response="{ pending: { transactionId: string, signer: address } }"
+						/>
+
+						<div className="mt-6 space-y-3">
+							<p className={`${secondaryGray}`}>
+								Public entries can also be fetched as raw markdown from the web
+								app using <code className="font-mono">/writer/:address/:id.md</code>.
+								Private entries are returned by the API as opaque encoded content
+								and must be decrypted client-side with the author wallet.
+							</p>
+							<p className={`${secondaryGray}`}>
+								Agent safety guidance is published at{" "}
+								<Link href="/agents.md" className="text-primary underline">
+									/agents.md
+								</Link>
+								.
+							</p>
+						</div>
 					</Section>
 				</div>
 

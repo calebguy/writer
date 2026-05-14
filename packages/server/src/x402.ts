@@ -83,6 +83,16 @@ const routes: RoutesConfig = {
 		description: "Create an entry in a Writer place",
 		mimeType: "application/json",
 	},
+	"POST /x402/writer/:address/entry/:id/update": {
+		accepts: {
+			scheme: "exact",
+			price: env.X402_ENTRY_UPDATE_PRICE,
+			network,
+			payTo: x402PayToAddress,
+		},
+		description: "Update an entry in a Writer place",
+		mimeType: "application/json",
+	},
 	"POST /x402/writer/:address/entry/:id/delete": {
 		accepts: {
 			scheme: "exact",

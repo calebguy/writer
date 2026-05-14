@@ -1,6 +1,6 @@
 # Writer CLI
 
-x402-powered command line client for Writer. Use it to list managed Places, create new Places, publish entries, and delete entries from scripts or agent workflows.
+x402-powered command line client for Writer. Use it to list managed Places, create new Places, publish entries, edit entries, and delete entries from scripts or agent workflows.
 
 ## Requirements
 
@@ -44,6 +44,12 @@ Create an entry from a file:
 bun writer create-entry --pk 0x... --writer-index 1 --content-file ./entry.md
 ```
 
+Edit an entry:
+
+```bash
+bun writer edit-entry --pk 0x... --writer 0x... --entry-id 1 --content-file ./entry.md
+```
+
 Delete an entry:
 
 ```bash
@@ -55,4 +61,5 @@ bun writer delete-entry --pk 0x... --writer 0x... --entry-id 1
 - Public onchain content should be treated as permanent.
 - Ask for explicit confirmation before publishing user-provided content publicly.
 - Never publish secrets, credentials, or private user data.
-- x402 endpoints require the x402 payer to match the Writer admin/entry signer.
+- x402 endpoints require the x402 payer to match the Writer admin for Place creation and the entry signer for create/edit/delete.
+- The CLI examples submit raw markdown/plaintext content. Do not use them for secrets or private user data unless encryption is added before submission.

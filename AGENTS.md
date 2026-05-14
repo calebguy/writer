@@ -24,6 +24,7 @@ Writer enables users to create "places" (smart contract-backed writers) where th
 - **Framework:** Hono
 - **Validation:** Zod
 - **Transaction Relay:** Syndicate SDK
+- **Agent Payments:** x402 for programmatic create/update/delete flows
 
 ### Database (packages/db)
 - **Database:** PostgreSQL (Neon serverless)
@@ -37,6 +38,10 @@ Writer enables users to create "places" (smart contract-backed writers) where th
 ### Ingestor (packages/ingestor)
 - **Runtime:** Bun
 - **Purpose:** Syncs onchain events to database via viem (catchup + WebSocket realtime)
+
+### CLI (packages/cli)
+- **Runtime:** Bun
+- **Purpose:** x402-powered command line client for agents/scripts to list Places, create Places, create/edit/delete entries
 
 ## Project Structure
 
@@ -63,6 +68,7 @@ writer/
 │   │       ├── Writer.sol
 │   │       └── WriterStorage.sol
 │   ├── ingestor/            # Onchain event ingestor (viem)
+│   ├── cli/                 # x402 CLI + agent skill docs
 │   └── utils/               # Shared ABIs and utilities
 ```
 
@@ -78,13 +84,14 @@ writer/
 - Writing content stored as "entries" within a writer
 - Supports chunked storage for large content
 - Tracked with both database ID and onChainId
+- Onchain entry IDs may be `0`; do not validate them as positive-only
 - All writes require EIP-712 signatures from the author
 
 ### Privacy & Encryption
 - **Public entries:** Stored as plaintext, discoverable on explore page
 - **Private entries:** AES-GCM encrypted before storage
 - Encryption key derived from wallet signature
-- Format: `enc:v2:br:{base64-data}` (versioned, Brotli compressed)
+- Format: `enc:v5:br:{base64(iv + ciphertext)}` (versioned, Brotli compressed, encrypted)
 
 ### Caching Strategy
 - **Public entries:** IndexedDB (persistent)
@@ -117,13 +124,42 @@ All protected routes check `privy-id-token` cookie via Privy server auth.
 4. Database record created with pending status
 5. Ingestor updates status when confirmed onchain
 
+### Agent / x402 Write Operations
+Programmatic agent writes use x402 endpoints instead of Privy browser auth:
+1. Agent/CLI prepares request and x402 payment using the payer private key
+2. Entry create/update/delete also sign EIP-712 typed data with the same key
+3. Server verifies the x402 payer matches the requested admin or recovered signer
+4. Transaction is simulated, relayed through Syndicate, and recorded as `source: "x402"`
+5. Ingestor confirms the onchain event and updates indexed state
+
+Important invariants:
+- Place creation: x402 payer must equal the requested admin address.
+- Entry create/update/delete: x402 payer must equal the recovered EIP-712 signer.
+- Entry update/delete: recovered signer must match the existing entry author.
+- x402 flows return pending transaction IDs before indexing completes.
+
 ### Endpoints
 - `GET /writer/public` - List public writers
 - `GET /writer/:address` - Get writer with entries
-- `POST /factory/create` - Create new writer
-- `POST /writer/:address/entry/createWithChunk` - Create entry
-- `POST /writer/:address/entry/:id/update` - Update entry
-- `POST /writer/:address/entry/:id/delete` - Delete entry
+- `GET /writer/:address/:id.md` - Web raw markdown URL for public/plaintext entries (returns 403 for encrypted entries)
+- `POST /factory/create` - Create new writer (Privy/frontend auth)
+- `POST /writer/:address/entry/createWithChunk` - Create entry (Privy/frontend auth)
+- `POST /writer/:address/entry/:id/update` - Update entry (Privy/frontend auth)
+- `POST /writer/:address/entry/:id/delete` - Delete entry (Privy/frontend auth)
+
+### Agent / x402 Endpoints
+- `POST /x402/factory/create` - Create Place; payer becomes admin and sole manager
+- `POST /x402/writer/:address/entry/createWithChunk` - Create entry with EIP-712 `CreateWithChunk` signature
+- `POST /x402/writer/:address/entry/:id/update` - Replace entry content with EIP-712 `Update` signature
+- `POST /x402/writer/:address/entry/:id/delete` - Delete entry with EIP-712 `Remove` signature
+
+### Agent Docs
+- Public agent guide: `packages/web/public/agents.md` → `https://writer.place/agents.md`
+- Plain-text agent summary: `packages/web/public/agents.txt` → `https://writer.place/agents.txt`
+- LLM summary: `packages/web/public/llms.txt` → `https://writer.place/llms.txt`
+- Local agent skill: `packages/cli/skills/writer/SKILL.md`
+
+Keep these files synchronized whenever x402 endpoints, CLI commands, payment/signature requirements, content encoding, or safety policy changes.
 
 ## Development
 
@@ -151,6 +187,13 @@ bun run format
 - `DATABASE_URL` - PostgreSQL connection string
 - `SYNDICATE_PROJECT_ID` - Syndicate project ID
 - `FACTORY_ADDRESS` - WriterFactory contract address
+- `X402_PAY_TO_ADDRESS` - Address receiving x402 payments
+- `X402_NETWORK` - CAIP-2 x402 payment network (default `eip155:8453`)
+- `X402_FACILITATOR_URL` - x402 facilitator URL
+- `X402_PLACE_CREATE_PRICE` - Price for `POST /x402/factory/create`
+- `X402_ENTRY_CREATE_PRICE` - Price for x402 entry creation
+- `X402_ENTRY_UPDATE_PRICE` - Price for x402 entry updates
+- `X402_ENTRY_DELETE_PRICE` - Price for x402 entry deletion
 
 ### Ingestor
 - `DATABASE_URL` - PostgreSQL connection string
@@ -233,9 +276,21 @@ signRemove({ storageAddress, id, nonce })
 ### Encryption (Frontend)
 ```typescript
 // packages/web/src/utils/utils.ts
-encryptContent(content, key)  // Returns "enc:v2:br:..."
+encryptContent(content, key)  // Returns "enc:v5:br:..."
 decryptContent(encrypted, key) // Returns plaintext
 ```
+
+### Agent CLI
+```bash
+# packages/cli
+bun writer list --pk 0x...
+bun writer create-place --pk 0x... --title "My Place"
+bun writer create-entry --pk 0x... --writer 0x... --content-file ./entry.md
+bun writer edit-entry --pk 0x... --writer 0x... --entry-id 1 --content-file ./entry.md
+bun writer delete-entry --pk 0x... --writer 0x... --entry-id 1
+```
+
+The CLI submits raw markdown/plaintext unless callers pre-encode or encrypt content. Do not use raw CLI publishing for secrets or private user data.
 
 ### API Calls (Frontend)
 ```typescript

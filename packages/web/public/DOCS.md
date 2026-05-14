@@ -10,7 +10,7 @@ Writer is an onchain writing platform. Content is permanently stored on Optimism
 
 Factory contract that deploys Writer + WriterStorage pairs using CREATE2 for deterministic addresses.
 
-#### `create(title, admin, managers, salt)` → `(address, address)`
+#### `create(title, admin, managers, publicWritable, salt)` → `(address, address)`
 
 Deploy a new Writer and WriterStorage contract pair.
 
@@ -19,17 +19,18 @@ Deploy a new Writer and WriterStorage contract pair.
 | `title` | `string` | Name of the writer/publication |
 | `admin` | `address` | Admin address for the writer |
 | `managers` | `address[]` | Addresses granted the WRITER role |
+| `publicWritable` | `bool` | Whether anyone may write without manager role |
 | `salt` | `bytes32` | Salt for deterministic deployment |
 
 **Returns:** `(address writerAddress, address storeAddress)`
 
-**Events:** `WriterCreated(writerAddress, storeAddress, admin, title, managers)`
+**Events:** `WriterCreated(writerAddress, storeAddress, admin, title, managers, publicWritable)`
 
 #### `computeWriterStorageAddress(salt)` → `address` [view]
 
 Pre-compute the address a WriterStorage would be deployed to with the given salt.
 
-#### `computeWriterAddress(title, admin, managers, salt)` → `address` [view]
+#### `computeWriterAddress(title, admin, managers, publicWritable, salt)` → `address` [view]
 
 Pre-compute the address a Writer would be deployed to with the given parameters.
 
@@ -285,7 +286,7 @@ Get a user's hex color.
 
 ## API
 
-Public read endpoints. Write endpoints exist but are restricted to authenticated frontend clients (Privy bearer token required) and are intentionally not documented here.
+Public read endpoints are available to any client. Browser write endpoints are restricted to authenticated frontend clients (Privy bearer token required). Programmatic agent writes use the x402 endpoints documented below.
 
 ### Writers
 
@@ -330,6 +331,19 @@ Get a confirmed entry by its onchain ID.
 
 **Response:** `{ entry: Entry }`
 
+#### `GET https://writer.place/writer/:address/:id.md`
+
+Fetch a public/plaintext entry as raw markdown from the web app.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `address` | `address` | Writer contract address |
+| `id` | `bigint` | Onchain entry ID, including `0` |
+
+**Response:** `text/markdown; charset=utf-8`
+
+Encrypted entries return `403` because the server does not have wallet-derived decryption keys.
+
 #### `GET /writer/:address/entry/pending/:id`
 
 Get a pending entry before onchain confirmation.
@@ -357,6 +371,84 @@ Get user data for an address.
 
 ---
 
+### For Agents / x402
+
+Agent-oriented write endpoints use x402 payments instead of Privy browser auth. The x402 payer must match the action signer:
+
+- Place creation: payer must equal the requested admin address.
+- Entry create/update/delete: payer must equal the recovered EIP-712 signer.
+- Entry update/delete: recovered signer must match the existing entry author.
+
+#### `POST /x402/factory/create`
+
+Create a new Writer Place. The payer becomes the admin and sole manager.
+
+**Body:**
+
+```json
+{
+  "address": "0xPayerAndAdminAddress",
+  "title": "My Place"
+}
+```
+
+**Response:** `{ writer: Writer & { transactionId: string, createdAtHash: null } }`
+
+#### `POST /x402/writer/:address/entry/createWithChunk`
+
+Create an entry using an EIP-712 `CreateWithChunk` signature.
+
+**Body:**
+
+```json
+{
+  "signature": "0x...",
+  "nonce": 123,
+  "chunkCount": 1,
+  "chunkContent": "Encoded entry content"
+}
+```
+
+**Response:** `{ pending: { transactionId: string, author: address } }`
+
+#### `POST /x402/writer/:address/entry/:id/update`
+
+Replace an entry's content using an EIP-712 `Update` signature.
+
+**Body:**
+
+```json
+{
+  "signature": "0x...",
+  "nonce": 123,
+  "totalChunks": 1,
+  "content": "Replacement encoded entry content"
+}
+```
+
+**Response:** `{ pending: { transactionId: string, author: address } }`
+
+#### `POST /x402/writer/:address/entry/:id/delete`
+
+Delete an entry using an EIP-712 `Remove` signature. This updates Writer state; it does not erase historical blockchain data.
+
+**Body:**
+
+```json
+{
+  "signature": "0x...",
+  "nonce": 123
+}
+```
+
+**Response:** `{ pending: { transactionId: string, signer: address } }`
+
+Public entries can also be fetched as raw markdown from the web app at `https://writer.place/writer/:address/:id.md`. Encrypted entries cannot be returned as raw markdown by the server.
+
+Agent guidance is published at `/agents.md`, `/agents.txt`, and `/llms.txt`.
+
+---
+
 ## Content Encoding
 
 Entry content stored onchain goes through a multi-step encoding pipeline before being passed to the API. The `content` / `chunkContent` fields in create and update requests contain the final encoded string — not raw markdown.
@@ -380,13 +472,15 @@ The version prefix at the start of the stored content string indicates how to de
 | Prefix | Encryption | Compression | Description |
 |--------|------------|-------------|-------------|
 | `br:` | None | Brotli | Public entry, compressed only |
-| `enc:v3:br:` | AES-GCM (v3 key) | Brotli | Private entry, current format |
+| `enc:v5:br:` | AES-256-GCM (v5 per-writer key) | Brotli | Private entry, current format |
+| `enc:v4:br:` | AES-256-GCM (v4 per-writer key) | Brotli | Deprecated |
+| `enc:v3:br:` | AES-GCM (v3 key) | Brotli | Deprecated |
 | `enc:v2:br:` | AES-GCM (v2 key) | Brotli | Deprecated |
 | `enc:br:` | AES-GCM (v1 key) | Brotli | Deprecated |
 
 **Examples:**
 - Public: `br:GxoAAI2pVgqN...` (Brotli-compressed, Base64-encoded markdown)
-- Private: `enc:v3:br:A7f3kQ9x...` (encrypted + compressed)
+- Private: `enc:v5:br:A7f3kQ9x...` (encrypted + compressed)
 
 ### Compression
 
@@ -398,23 +492,23 @@ markdown → UTF-8 encode → brotli compress → base64 encode
 
 ### Encryption
 
-Private entries are encrypted **after** compression using [AES-GCM](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/encrypt#aes-gcm) (128-bit key, 12-byte random IV).
+Private entries are encrypted **after** compression using [AES-GCM](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/encrypt#aes-gcm). Current v5 entries use an AES-256-GCM key derived per writer/place, with a 12-byte random IV.
 
 ```
 compressed content → AES-GCM encrypt → prepend IV → Base64 encode
 ```
 
-The encryption key is deterministically derived from a wallet signature:
+The current v5 encryption key is deterministically derived from a wallet EIP-712 signature:
 
-1. User signs a fixed message with `personal_sign`
-2. Signature is hashed with Keccak-256
-3. First 16 bytes of the hash become the AES key
+1. User signs typed data scoped to writer.place and the WriterStorage address
+2. The signature is used as input keying material for HKDF-SHA256
+3. HKDF outputs a 32-byte AES-256-GCM key
 
 The key never leaves the client. Only the entry author can decrypt their private entries — the server and contract store opaque ciphertext.
 
-**V1, V2, and V3 keys** differ only in the message signed during key derivation. V3 is the current default and includes a security warning to only sign on writer.place. V1 and V2 are supported for backward compatibility with older entries. A migration tool is available in the app to re-encrypt legacy entries with the V3 key.
+**V5** is the current default. **V1, V2, V3, and V4** are supported only for backward compatibility with older entries. A migration tool is available in the app to re-encrypt legacy entries with the V5 key.
 
-**Important:** Because the encryption key is derived from signing a specific message, anyone who tricks you into signing that same message on a different site could derive the same key and decrypt your private entries. The V3 message explicitly states to only sign on `https://writer.place`. Always verify the requesting site before signing.
+**Important:** Because encryption keys are derived from wallet signatures, users should only sign Writer encryption prompts on `https://writer.place`.
 
 ### Decoding
 
@@ -423,6 +517,8 @@ To read an entry, reverse the pipeline based on the prefix:
 | Prefix | Steps |
 |--------|-------|
 | `br:` | Strip prefix → Base64 decode → Brotli decompress |
+| `enc:v5:br:` | Strip prefix → Base64 decode → AES-GCM decrypt (v5 key) → Brotli decompress |
+| `enc:v4:br:` | Strip prefix → Base64 decode → AES-GCM decrypt (v4 key) → Brotli decompress |
 | `enc:v3:br:` | Strip prefix → Base64 decode → AES-GCM decrypt (v3 key) → Brotli decompress |
 | `enc:v2:br:` | Strip prefix → Base64 decode → AES-GCM decrypt (v2 key) → Brotli decompress |
 | `enc:br:` | Strip prefix → Base64 decode → AES-GCM decrypt (v1 key) → Brotli decompress |

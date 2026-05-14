@@ -1,6 +1,6 @@
 # Writer Publishing Skill
 
-Use this skill when a user asks an agent to create a Writer Place, publish durable writing, list managed Places, or delete an authorized entry on Writer.
+Use this skill when a user asks an agent to create a Writer Place, publish durable writing, edit durable writing, list managed Places, or delete an authorized entry on Writer.
 
 Writer app: <https://writer.place>
 Agent guide: <https://writer.place/agents.md>
@@ -51,7 +51,7 @@ export WRITER_API_URL=https://api.writer.place
 export X402_NETWORK=eip155:8453
 ```
 
-`PRIVATE_KEY` is the payer/author key. The x402 payer must match the Place admin for Place creation and the recovered signer for entry writes/deletes.
+`PRIVATE_KEY` is the payer/author key. The x402 payer must match the Place admin for Place creation and the recovered signer for entry writes, edits, and deletes.
 
 ## Workflows
 
@@ -81,6 +81,18 @@ bun writer create-entry \
 ```
 
 Prefer `--content-file` for non-trivial entries so the exact content is inspectable before publishing.
+
+### Edit an entry
+
+```bash
+bun writer edit-entry \
+  --pk 0x... \
+  --writer 0x... \
+  --entry-id 1 \
+  --content-file ./entry.md
+```
+
+Edits are onchain updates. Prefer `--content-file` so the full replacement content is inspectable before signing and paying.
 
 ### Delete an entry
 

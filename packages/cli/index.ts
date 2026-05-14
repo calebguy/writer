@@ -8,7 +8,12 @@ import { wrapFetchWithPayment } from "@x402/fetch";
 import { type Hex, getAddress, isAddress } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
-type Command = "list" | "create-place" | "create-entry" | "delete-entry";
+type Command =
+	| "list"
+	| "create-place"
+	| "create-entry"
+	| "edit-entry"
+	| "delete-entry";
 
 type CliOptions = {
 	command?: Command;
@@ -53,6 +58,7 @@ Usage:
   bun writer create-place --pk 0x... --title "My Place"
   bun writer create-entry --pk 0x... --writer 0x... --content "hello"
   bun writer create-entry --pk 0x... --writer-index 1 --content-file ./entry.md
+  bun writer edit-entry --pk 0x... --writer 0x... --entry-id 1 --content-file ./entry.md
   bun writer delete-entry --pk 0x... --writer 0x... --entry-id 1
 
 Options:
@@ -62,7 +68,7 @@ Options:
   --title <title>           Place title for create-place. Defaults to "Untitled Place".
   --writer <address>        Writer/Place contract address.
   --writer-index <number>   1-based index from the loaded manager writer list.
-  --entry-id <id>           Onchain entry id to delete.
+  --entry-id <id>           Onchain entry id to edit or delete.
   --content <markdown>      Raw markdown entry content.
   --content-file <path>     File containing raw markdown entry content.
   --legacy-domain           Sign with legacy EIP-712 domain including chainId.
@@ -114,7 +120,7 @@ function parseArgs(argv: string[]): CliOptions {
 				i++;
 				break;
 			case "--entry-id":
-				options.entryId = parsePositiveBigInt(
+				options.entryId = parseNonNegativeBigInt(
 					requireValue(arg, next),
 					"--entry-id",
 				);
@@ -141,9 +147,13 @@ function parseArgs(argv: string[]): CliOptions {
 	}
 
 	if (
-		!["list", "create-place", "create-entry", "delete-entry"].includes(
-			options.command ?? "",
-		)
+		![
+			"list",
+			"create-place",
+			"create-entry",
+			"edit-entry",
+			"delete-entry",
+		].includes(options.command ?? "")
 	) {
 		throw new Error(`Missing or invalid command.\n\n${usage()}`);
 	}
@@ -176,10 +186,10 @@ function parsePositiveInteger(value: string, label: string) {
 	return parsed;
 }
 
-function parsePositiveBigInt(value: string, label: string) {
+function parseNonNegativeBigInt(value: string, label: string) {
 	const parsed = BigInt(value);
-	if (parsed <= 0n) {
-		throw new Error(`${label} must be a positive integer.`);
+	if (parsed < 0n) {
+		throw new Error(`${label} must be a non-negative integer.`);
 	}
 	return parsed;
 }
@@ -294,6 +304,39 @@ async function main() {
 			nonce,
 			chunkCount: Number(chunkCount),
 			chunkContent,
+		};
+	}
+
+	async function signUpdate(writer: ManagerWriter, id: bigint, content: string) {
+		const nonce = randomNonce();
+		const totalChunks = 1n;
+		const signature = await account.signTypedData({
+			domain: writerDomain(
+				writer.address,
+				options.legacyDomain ?? writer.legacyDomain,
+			),
+			primaryType: "Update",
+			types: {
+				Update: [
+					{ name: "nonce", type: "uint256" },
+					{ name: "entryId", type: "uint256" },
+					{ name: "totalChunks", type: "uint256" },
+					{ name: "content", type: "string" },
+				],
+			},
+			message: {
+				nonce: BigInt(nonce),
+				entryId: id,
+				totalChunks,
+				content,
+			},
+		});
+
+		return {
+			signature,
+			nonce,
+			totalChunks: Number(totalChunks),
+			content,
 		};
 	}
 
@@ -422,9 +465,20 @@ async function main() {
 		return;
 	}
 
-	if (!options.entryId) {
+	if (options.entryId == null) {
 		throw new Error("Set --entry-id.");
 	}
+
+	if (options.command === "edit-entry") {
+		const signed = await signUpdate(writer, options.entryId, readContent());
+		const updated = await paidJson<{
+			pending: { transactionId: string; author: Hex };
+		}>(`/x402/writer/${writer.address}/entry/${options.entryId}/update`, signed);
+		console.log("Updated pending entry:", updated.data.pending);
+		console.log("Update payment:", updated.paymentResponse);
+		return;
+	}
+
 	const signed = await signRemove(writer, options.entryId);
 	const deleted = await paidJson<{
 		pending: { transactionId: string; signer: Hex };
