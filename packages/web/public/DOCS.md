@@ -335,6 +335,8 @@ Get a confirmed entry by its onchain ID.
 
 Fetch a public/plaintext entry as raw markdown from the web app.
 
+The canonical HTML entry URL also supports content negotiation. Send `Accept: text/markdown` to `https://writer.place/writer/:address/:id` to receive the Markdown representation from the same URL.
+
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `address` | `address` | Writer contract address |
@@ -445,7 +447,7 @@ Delete an entry using an EIP-712 `Remove` signature. This updates Writer state; 
 
 Public entries can also be fetched as raw markdown from the web app at `https://writer.place/writer/:address/:id.md`. Encrypted entries cannot be returned as raw markdown by the server.
 
-Agent guidance is published at `/agents.md`, `/agents.txt`, and `/llms.txt`.
+Agent guidance is published at `/agents.md`, `/agents.txt`, and `/llms.txt`. These docs are also available as Markdown at `/docs.md`, or from `/docs` with `Accept: text/markdown`. Public Place discovery is available at `/explore.md`, or from `/explore` with `Accept: text/markdown`. The OpenAPI 3.1 schema for public reads and x402 writes is available at `/openapi.json`.
 
 ---
 

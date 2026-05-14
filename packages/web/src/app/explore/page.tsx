@@ -4,10 +4,28 @@ import PublicWriterList from "@/components/PublicWriterList";
 import { WriterCardSkeleton } from "@/components/WriterCardSkeleton";
 import { getPublicWriters } from "@/utils/api";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 const LOADING_SKELETON_AMOUNT = 6;
 
 export default function ExplorePage() {
+	useEffect(() => {
+		const href = `${window.location.origin}/explore.md`;
+		const selector = 'link[data-writer-markdown-alternate="explore"]';
+		let link = document.head.querySelector<HTMLLinkElement>(selector);
+		if (!link) {
+			link = document.createElement("link");
+			link.rel = "alternate";
+			link.type = "text/markdown";
+			link.dataset.writerMarkdownAlternate = "explore";
+			document.head.appendChild(link);
+		}
+		link.href = href;
+
+		return () => {
+			link?.remove();
+		};
+	}, []);
 	const { data: writers, isLoading } = useQuery({
 		queryKey: ["public-writers"],
 		queryFn: () => getPublicWriters(),

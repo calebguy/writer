@@ -406,6 +406,24 @@ function TableOfContents() {
 
 export default function DocsPage() {
 	useEffect(() => {
+		const href = `${window.location.origin}/docs.md`;
+		const selector = 'link[data-writer-markdown-alternate="docs"]';
+		let link = document.head.querySelector<HTMLLinkElement>(selector);
+		if (!link) {
+			link = document.createElement("link");
+			link.rel = "alternate";
+			link.type = "text/markdown";
+			link.dataset.writerMarkdownAlternate = "docs";
+			document.head.appendChild(link);
+		}
+		link.href = href;
+
+		return () => {
+			link?.remove();
+		};
+	}, []);
+
+	useEffect(() => {
 		const hash = window.location.hash.slice(1);
 		if (hash) {
 			const el = document.getElementById(hash);
@@ -1183,9 +1201,22 @@ export default function DocsPage() {
 						<div className="mt-6 space-y-3">
 							<p className={`${secondaryGray}`}>
 								Public entries can also be fetched as raw markdown from the web
-								app using <code className="font-mono">/writer/:address/:id.md</code>.
-								Private entries are returned by the API as opaque encoded content
-								and must be decrypted client-side with the author wallet.
+								app using <code className="font-mono">/writer/:address/:id.md</code>,
+								or from the canonical entry URL with{" "}
+								<code className="font-mono">Accept: text/markdown</code>. Private
+								entries are returned by the API as opaque encoded content and must
+								be decrypted client-side with the author wallet.
+							</p>
+							<p className={`${secondaryGray}`}>
+								These docs are available as markdown at{" "}
+								<code className="font-mono">/docs.md</code>, or from{" "}
+								<code className="font-mono">/docs</code> with{" "}
+								<code className="font-mono">Accept: text/markdown</code>. Public
+								Place discovery is available at{" "}
+								<code className="font-mono">/explore.md</code>, or from{" "}
+								<code className="font-mono">/explore</code> with{" "}
+								<code className="font-mono">Accept: text/markdown</code>. OpenAPI
+								is available at <code className="font-mono">/openapi.json</code>.
 							</p>
 							<p className={`${secondaryGray}`}>
 								Agent safety guidance is published at{" "}

@@ -27,6 +27,10 @@ Agents can:
 - Delete an entry when authorized.
 - Read public Places and entries.
 - Fetch public entries as raw markdown at https://writer.place/writer/:address/:id.md
+- Fetch public entries from canonical URLs with Accept: text/markdown
+- Fetch docs as markdown at https://writer.place/docs.md or /docs with Accept: text/markdown
+- Fetch public Place discovery as markdown at https://writer.place/explore.md or /explore with Accept: text/markdown
+- Fetch OpenAPI schema at https://writer.place/openapi.json
 
 Important safety rules:
 - Ask for explicit user confirmation before public publishing.

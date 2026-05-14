@@ -27,6 +27,24 @@ export default function EntryPage({
 		return () => setEntryLoading(false);
 	}, [setEntryLoading]);
 
+	useEffect(() => {
+		const href = `${window.location.origin}/writer/${address}/${id}.md`;
+		const selector = 'link[data-writer-markdown-alternate="entry"]';
+		let link = document.head.querySelector<HTMLLinkElement>(selector);
+		if (!link) {
+			link = document.createElement("link");
+			link.rel = "alternate";
+			link.type = "text/markdown";
+			link.dataset.writerMarkdownAlternate = "entry";
+			document.head.appendChild(link);
+		}
+		link.href = href;
+
+		return () => {
+			link?.remove();
+		};
+	}, [address, id]);
+
 	// Check cache on mount (async for IndexedDB)
 	const [cachedEntry, setCachedEntry] = useState<EntryType | null>(null);
 	const [cacheChecked, setCacheChecked] = useState(false);

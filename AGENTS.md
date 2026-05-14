@@ -142,6 +142,10 @@ Important invariants:
 - `GET /writer/public` - List public writers
 - `GET /writer/:address` - Get writer with entries
 - `GET /writer/:address/:id.md` - Web raw markdown URL for public/plaintext entries (returns 403 for encrypted entries)
+- `GET /writer/:address/:id` with `Accept: text/markdown` - Content-negotiated raw markdown for public/plaintext entries
+- `GET /docs.md` or `GET /docs` with `Accept: text/markdown` - Markdown API/platform docs
+- `GET /explore.md` or `GET /explore` with `Accept: text/markdown` - Markdown public Place discovery
+- `GET /openapi.json` - OpenAPI 3.1 schema for public reads and x402 agent writes
 - `POST /factory/create` - Create new writer (Privy/frontend auth)
 - `POST /writer/:address/entry/createWithChunk` - Create entry (Privy/frontend auth)
 - `POST /writer/:address/entry/:id/update` - Update entry (Privy/frontend auth)
