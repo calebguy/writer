@@ -19,7 +19,7 @@ Writer is an onchain writing platform for durable public or encrypted writing.
 
 ## Agent capabilities
 
-Agents may create Places, publish entries, list managed Places, delete authorized entries, and read public content. Programmatic writes can use x402 payments. Entry writes require EIP-712 signatures.
+Agents may create Places, publish entries, list managed Places, delete authorized entries, read public content, and fetch public entries as raw markdown at `https://writer.place/writer/:address/:id.md`. Programmatic writes can use x402 payments. Entry writes require EIP-712 signatures.
 
 ## Safety
 

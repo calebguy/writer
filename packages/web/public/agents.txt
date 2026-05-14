@@ -25,6 +25,7 @@ Agents can:
 - List Places managed by a wallet.
 - Delete an entry when authorized.
 - Read public Places and entries.
+- Fetch public entries as raw markdown at https://writer.place/writer/:address/:id.md
 
 Important safety rules:
 - Ask for explicit user confirmation before public publishing.
