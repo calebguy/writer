@@ -7,6 +7,7 @@ Writer is an onchain writing platform for durable public or encrypted writing.
 - App: https://writer.place
 - Agent guide: https://writer.place/agents.md
 - Agent discovery manifest: https://writer.place/.well-known/writer-agent.json
+- x402 capabilities/pricing: https://writer.place/.well-known/x402.json or https://api.writer.place/x402/capabilities
 - Plain-text agent summary: https://writer.place/agents.txt
 - API base URL: https://api.writer.place
 

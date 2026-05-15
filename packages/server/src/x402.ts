@@ -62,6 +62,75 @@ function cdpAuthHeaders(): FacilitatorConfig["createAuthHeaders"] | undefined {
 	});
 }
 
+export function getX402Capabilities() {
+	const apiUrl = "https://api.writer.place";
+	const payTo = env.X402_PAY_TO_ADDRESS
+		? getAddress(env.X402_PAY_TO_ADDRESS)
+		: null;
+
+	return {
+		version: "1.0",
+		name: "Writer x402 capabilities",
+		description:
+			"Programmatic Writer Place and entry writes paid with x402. Writes are relayed onchain after payment and signature validation.",
+		network,
+		payTo,
+		facilitator: env.X402_FACILITATOR_URL,
+		contentType: "application/json",
+		capabilities: {
+			createPlace: {
+				method: "POST",
+				endpoint: `${apiUrl}/x402/factory/create`,
+				path: "/x402/factory/create",
+				price: env.X402_PLACE_CREATE_PRICE,
+				description: "Create a Writer Place. The x402 payer becomes admin and sole manager.",
+				requires: ["x402 payer equals requested admin address"],
+			},
+			createEntry: {
+				method: "POST",
+				endpoint: `${apiUrl}/x402/writer/:address/entry/createWithChunk`,
+				path: "/x402/writer/:address/entry/createWithChunk",
+				price: env.X402_ENTRY_CREATE_PRICE,
+				description: "Create an entry in a Writer Place using an EIP-712 CreateWithChunk signature.",
+				requires: [
+					"EIP-712 CreateWithChunk signature",
+					"x402 payer equals recovered signer",
+				],
+			},
+			updateEntry: {
+				method: "POST",
+				endpoint: `${apiUrl}/x402/writer/:address/entry/:id/update`,
+				path: "/x402/writer/:address/entry/:id/update",
+				price: env.X402_ENTRY_UPDATE_PRICE,
+				description: "Replace an existing entry using an EIP-712 Update signature. Content is a full replacement, not a patch.",
+				requires: [
+					"EIP-712 Update signature",
+					"x402 payer equals recovered signer",
+					"recovered signer equals existing entry author",
+					"entry ID may be 0",
+				],
+			},
+			deleteEntry: {
+				method: "POST",
+				endpoint: `${apiUrl}/x402/writer/:address/entry/:id/delete`,
+				path: "/x402/writer/:address/entry/:id/delete",
+				price: env.X402_ENTRY_DELETE_PRICE,
+				description: "Delete an entry using an EIP-712 Remove signature. Deletion updates Writer state and does not erase historical chain data.",
+				requires: [
+					"EIP-712 Remove signature",
+					"x402 payer equals recovered signer",
+					"recovered signer equals existing entry author",
+					"entry ID may be 0",
+				],
+			},
+		},
+		docs: {
+			agents: "https://writer.place/agents.md",
+			openapi: "https://writer.place/openapi.json",
+		},
+	};
+}
+
 const routes: RoutesConfig = {
 	"POST /x402/factory/create": {
 		accepts: {

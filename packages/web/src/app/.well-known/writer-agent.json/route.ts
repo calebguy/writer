@@ -14,6 +14,7 @@ export async function GET() {
 			docs: `${SITE_URL}/docs.md`,
 			explore: `${SITE_URL}/explore.md`,
 			openapi: `${SITE_URL}/openapi.json`,
+			x402Capabilities: `${SITE_URL}/.well-known/x402.json`,
 			markdown: {
 				docs: `${SITE_URL}/docs.md`,
 				explore: `${SITE_URL}/explore.md`,
@@ -23,6 +24,8 @@ export async function GET() {
 					"Send Accept: text/markdown to /docs, /explore, /writer/:address, or /writer/:address/:id.",
 			},
 			x402: {
+				capabilities: `${SITE_URL}/.well-known/x402.json`,
+				apiCapabilities: `${API_URL}/x402/capabilities`,
 				endpoints: [
 					`${API_URL}/x402/factory/create`,
 					`${API_URL}/x402/writer/:address/entry/createWithChunk`,

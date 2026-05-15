@@ -190,6 +190,24 @@ const openApiDocument = {
 				},
 			},
 		},
+		"/x402/capabilities": {
+			get: {
+				tags: ["Agents"],
+				summary: "Discover x402 write capabilities and pricing",
+				description:
+					"Returns current Writer x402 prices, payment network, pay-to address, endpoints, and signer/payer invariants. Also available from https://writer.place/.well-known/x402.json.",
+				responses: {
+					"200": {
+						description: "x402 capabilities",
+						content: {
+							"application/json": {
+								schema: { $ref: "#/components/schemas/X402Capabilities" },
+							},
+						},
+					},
+				},
+			},
+		},
 		"/x402/factory/create": {
 			post: {
 				tags: ["Agents"],
@@ -369,8 +387,39 @@ const openApiDocument = {
 					docs: { type: "string", format: "uri" },
 					explore: { type: "string", format: "uri" },
 					openapi: { type: "string", format: "uri" },
+					x402Capabilities: { type: "string", format: "uri" },
 					markdown: { type: "object" },
 					x402: { type: "object" },
+				},
+			},
+			X402Capabilities: {
+				type: "object",
+				required: ["version", "name", "network", "capabilities"],
+				properties: {
+					version: { type: "string" },
+					name: { type: "string" },
+					description: { type: "string" },
+					network: { type: "string", examples: ["eip155:8453"] },
+					payTo: { anyOf: [{ $ref: "#/components/schemas/Address" }, { type: "null" }] },
+					facilitator: { type: "string", format: "uri" },
+					contentType: { type: "string", examples: ["application/json"] },
+					capabilities: {
+						type: "object",
+						additionalProperties: { $ref: "#/components/schemas/X402Capability" },
+					},
+					docs: { type: "object" },
+				},
+			},
+			X402Capability: {
+				type: "object",
+				required: ["method", "endpoint", "path", "price", "requires"],
+				properties: {
+					method: { type: "string", examples: ["POST"] },
+					endpoint: { type: "string", format: "uri" },
+					path: { type: "string" },
+					price: { type: "string", examples: ["$0.001"] },
+					description: { type: "string" },
+					requires: { type: "array", items: { type: "string" } },
 				},
 			},
 			Hex: { type: "string", pattern: "^0x[a-fA-F0-9]*$" },

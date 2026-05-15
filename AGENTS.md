@@ -142,6 +142,7 @@ Important invariants:
 - `GET /writer/public` - List public writers
 - `GET /writer/:address` - Get writer with entries
 - `GET /.well-known/writer-agent.json` - Machine-readable agent discovery manifest
+- `GET /.well-known/x402.json` / `GET https://api.writer.place/x402/capabilities` - Machine-readable x402 pricing and write capabilities
 - `GET /writer/:address.md` - Web Markdown URL for Place summaries and public entry links
 - `GET /writer/:address` with `Accept: text/markdown` - Content-negotiated Place Markdown
 - `GET /writer/:address/:id.md` - Web Markdown URL for public/plaintext entries with provenance frontmatter (returns 403 for encrypted entries)

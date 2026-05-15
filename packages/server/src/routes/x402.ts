@@ -27,9 +27,14 @@ import {
 } from "../middleware";
 import { makeRelayTxId, relay } from "../relay";
 import { watchRelayReceipt } from "../receipt-watcher";
-import { getX402Payer, x402PaymentMiddleware } from "../x402";
+import { getX402Capabilities, getX402Payer, x402PaymentMiddleware } from "../x402";
 
 const x402Routes = new Hono()
+	.get("/x402/capabilities", (c) =>
+		c.json(getX402Capabilities(), 200, {
+			"cache-control": "public, max-age=300, stale-while-revalidate=3600",
+		}),
+	)
 	.use("/x402/*", x402PaymentMiddleware())
 	.post("/x402/factory/create", x402FactoryCreateJsonValidator, async (c) => {
 		const { address: admin, title } = c.req.valid("json");
