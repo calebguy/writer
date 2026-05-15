@@ -167,6 +167,7 @@ Important invariants:
 - Plain-text agent summary: `packages/web/public/agents.txt` → `https://writer.place/agents.txt`
 - LLM summary: `packages/web/public/llms.txt` → `https://writer.place/llms.txt`
 - Local agent skill: `packages/cli/skills/writer/SKILL.md`
+- TypeScript SDK: `packages/sdk`
 
 Keep these files synchronized whenever x402 endpoints, CLI commands, payment/signature requirements, content encoding, or safety policy changes.
 

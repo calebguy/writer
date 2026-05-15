@@ -82,6 +82,23 @@
         "wrangler": "^4.63.0",
       },
     },
+    "packages/sdk": {
+      "name": "@writer/sdk",
+      "version": "0.1.0",
+      "dependencies": {
+        "@x402/core": "latest",
+        "@x402/evm": "latest",
+        "@x402/fetch": "latest",
+        "brotli-compress": "^1.3.3",
+        "viem": "^2.33.0",
+      },
+      "devDependencies": {
+        "typescript": "^5",
+      },
+      "peerDependencies": {
+        "typescript": "^5.0.0",
+      },
+    },
     "packages/server": {
       "name": "server",
       "version": "0.0.0",
@@ -1138,6 +1155,8 @@
     "@walletconnect/window-getters": ["@walletconnect/window-getters@1.0.1", "", { "dependencies": { "tslib": "1.14.1" } }, "sha512-vHp+HqzGxORPAN8gY03qnbTMnhqIwjeRJNOMOAzePRg4xVEEE2WvYsI9G2NMjOknA8hnuYbU3/hwLcKbjhc8+Q=="],
 
     "@walletconnect/window-metadata": ["@walletconnect/window-metadata@1.0.1", "", { "dependencies": { "@walletconnect/window-getters": "^1.0.1", "tslib": "1.14.1" } }, "sha512-9koTqyGrM2cqFRW517BPY/iEtUDx2r1+Pwwu5m7sJ7ka79wi3EyqhqcICk/yDmv6jAS1rjKgTKXlEhanYjijcA=="],
+
+    "@writer/sdk": ["@writer/sdk@workspace:packages/sdk"],
 
     "@x402/core": ["@x402/core@2.12.0", "", { "dependencies": { "zod": "^3.24.2" } }, "sha512-dLae9AbZRN/W7GsKe9ngqGsflnP+esE72s0GjmqDZbPihM/tlHCA6UnDdgM0qfOiDOf9iL+mmCs1OyLWpwnGLQ=="],
 
