@@ -92,8 +92,7 @@ export default function FundPage() {
 				<p className="text-base md:text-lg leading-relaxed text-center">
 					Writer pays to store user data in permanent datastructures that will
 					outlive us all. <br />
-					If you&apos;d like to support the project, send tokens on any EVM
-					chain to
+					If you&apos;d like to support, send tokens on any EVM chain to
 				</p>
 			</div>
 
