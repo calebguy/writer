@@ -38,9 +38,9 @@ const schema = z.object({
 		.string()
 		.min(1)
 		.default("https://api.cdp.coinbase.com/platform/v2/x402"),
-	X402_PLACE_CREATE_PRICE: z.string().min(1).default("$0.001"),
-	X402_ENTRY_CREATE_PRICE: z.string().min(1).default("$0.001"),
-	X402_ENTRY_UPDATE_PRICE: z.string().min(1).default("$0.001"),
+	X402_PLACE_CREATE_PRICE: z.string().min(1).default("$0.01"),
+	X402_ENTRY_CREATE_PRICE: z.string().min(1).default("$0.002"),
+	X402_ENTRY_UPDATE_PRICE: z.string().min(1).default("$0.002"),
 	X402_ENTRY_DELETE_PRICE: z.string().min(1).default("$0.001"),
 });
 
