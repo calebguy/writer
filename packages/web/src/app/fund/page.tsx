@@ -1,7 +1,6 @@
 "use client";
 
 import { Check } from "@/components/icons/Check";
-import { Copy } from "@/components/icons/Copy";
 import { type RelayWallet, getRelayWallets } from "@/utils/api";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
@@ -21,7 +20,7 @@ function CopyAddressButton({ address }: { address: string }) {
 	const handleCopy = async () => {
 		await navigator.clipboard.writeText(address);
 		setCopied(true);
-		setTimeout(() => setCopied(false), 1500);
+		setTimeout(() => setCopied(false), 1000);
 	};
 
 	return (
@@ -29,12 +28,18 @@ function CopyAddressButton({ address }: { address: string }) {
 			type="button"
 			onClick={handleCopy}
 			aria-label="Copy address"
-			className="text-neutral-500 hover:text-primary cursor-pointer"
+			className="text-neutral-500 hover:text-primary cursor-pointer group w-6 h-6 flex items-center justify-center transition-opacity"
 		>
 			{copied ? (
 				<Check className="text-primary cursor-default" />
 			) : (
-				<Copy className="cursor-pointer" />
+				<Image
+					src="/images/relics/relic-10.png"
+					alt="Copy"
+					width={25}
+					height={25}
+					className="cursor-pointer hover:opacity-70 transition-opacity"
+				/>
 			)}
 		</button>
 	);
@@ -65,6 +70,7 @@ function WalletRow({ wallet }: { wallet: RelayWallet }) {
 }
 
 export default function FundPage() {
+	const [isFundLinkHovered, setIsFundLinkHovered] = useState(false);
 	const { data: wallets, isLoading } = useQuery({
 		queryKey: ["relay-wallets"],
 		queryFn: () => getRelayWallets(),
@@ -76,14 +82,14 @@ export default function FundPage() {
 				<Image
 					src="/images/totem/totem-7.png"
 					alt=""
-					width={100}
-					height={100}
+					width={120}
+					height={120}
 					className="dark:invert"
 					priority
 				/>
 			</div>
 			<div className="flex flex-col gap-2">
-				<p className="text-lg leading-relaxed text-center">
+				<p className="text-base md:text-lg leading-relaxed text-center">
 					Writer pays to store user data in permanent datastructures that will
 					outlive us all. <br />
 					If you&apos;d like to support the project, Send tokens on any EVM
@@ -91,24 +97,26 @@ export default function FundPage() {
 				</p>
 			</div>
 
-			<div className="w-full">
-				<div className="w-full bg-surface p-2.5 rounded-xs flex flex-col gap-3">
-					<div className="flex items-center justify-between gap-3">
-						<div className="min-w-0">
-							<Link
-								href={`https://optimistic.etherscan.io/address/${FUND_ADDRESS}`}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="font-mono hover:text-primary hover:underline break-all"
-							>
-								{FUND_ENS}
-							</Link>
-							<p className="font-mono text-sm text-neutral-500 dark:text-neutral-400 break-all">
-								{FUND_ADDRESS}
-							</p>
-						</div>
-						<CopyAddressButton address={FUND_ADDRESS} />
+			<div className="p-2.5 rounded-xs gap-3">
+				<div
+					className={`${isFundLinkHovered ? "bg-secondary" : "bg-surface"} p-2.5 rounded-xs flex items-center gap-3`}
+				>
+					<CopyAddressButton address={FUND_ADDRESS} />
+					<div className="min-w-0">
+						<Link
+							href={`https://optimistic.etherscan.io/address/${FUND_ADDRESS}`}
+							target="_blank"
+							rel="noopener noreferrer"
+							className="font-mono hover:text-primary hover:underline break-all"
+							onMouseEnter={() => setIsFundLinkHovered(true)}
+							onMouseLeave={() => setIsFundLinkHovered(false)}
+							onFocus={() => setIsFundLinkHovered(true)}
+							onBlur={() => setIsFundLinkHovered(false)}
+						>
+							{FUND_ENS}
+						</Link>
 					</div>
+					<CopyAddressButton address={FUND_ADDRESS} />
 				</div>
 			</div>
 			{/* <div>or</div>
