@@ -33,12 +33,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import { MdModeEdit } from "react-icons/md";
 import type { Hex } from "viem";
 import { LoadingRelic } from "./LoadingRelic";
 import { Lock } from "./icons/Lock";
 import { Logo } from "./icons/Logo";
 import { Unlock } from "./icons/Unlock";
 import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
+import { useComposeHeaderActions } from "./writer/ComposeHeaderActionsContext";
 
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 
@@ -64,6 +66,7 @@ export default function Entry({
 	const router = useRouter();
 	const queryClient = useQueryClient();
 	const { setEntryLoading } = useEntryLoading();
+	const { setActions } = useComposeHeaderActions();
 	const [isEditing, setIsEditing] = useState(false);
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [deleteSubmitted, setDeletedSubmitted] = useState(false);
@@ -397,6 +400,79 @@ export default function Entry({
 		return isPendingDelete || isPendingEdit || deleteSubmitted || editSubmitted;
 	}, [isPendingDelete, isPendingEdit, deleteSubmitted, editSubmitted]);
 
+	const editHref = `/writer/${address}/${id}/edit`;
+	const showHeaderSave = isLoggedIn && !!walletAddress;
+	const showHeaderEdit = canEdit && !isEditing;
+
+	useEffect(() => {
+		if (isEditing || (!showHeaderSave && !showHeaderEdit)) {
+			setActions(null);
+			return;
+		}
+
+		setActions(
+			<>
+				{showHeaderSave && (
+					<button
+						type="button"
+						aria-label={isSavedEntry ? "Unsave entry" : "Save entry"}
+						disabled={isTogglingSaveEntry}
+						onClick={() => toggleSaveEntry()}
+						className="text-primary hover:text-secondary transition-opacity cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+					>
+						<span
+							aria-hidden="true"
+							className={cn("block h-6 w-6 bg-current transition-opacity", {
+								"opacity-25": !isSavedEntry,
+								"opacity-100": isSavedEntry,
+							})}
+							style={{
+								WebkitMaskImage: "url('/images/relics/splat-1.png')",
+								maskImage: "url('/images/relics/splat-1.png')",
+								WebkitMaskRepeat: "no-repeat",
+								maskRepeat: "no-repeat",
+								WebkitMaskPosition: "center",
+								maskPosition: "center",
+								WebkitMaskSize: "contain",
+								maskSize: "contain",
+							}}
+						/>
+					</button>
+				)}
+				{showHeaderEdit && (
+					<Link
+						href={editHref}
+						aria-label="Edit entry"
+						prefetch
+						onTouchStart={() => {
+							router.prefetch(editHref);
+							void import("./markdown/MDX");
+						}}
+						onPointerEnter={() => {
+							router.prefetch(editHref);
+							void import("./markdown/MDX");
+						}}
+						className="text-primary hover:text-secondary transition-colors cursor-pointer"
+					>
+						<MdModeEdit className="h-6 w-6" />
+					</Link>
+				)}
+			</>,
+		);
+
+		return () => setActions(null);
+	}, [
+		editHref,
+		isEditing,
+		isSavedEntry,
+		isTogglingSaveEntry,
+		router,
+		setActions,
+		showHeaderEdit,
+		showHeaderSave,
+		toggleSaveEntry,
+	]);
+
 	const handleSave = async () => {
 		if (!editedContent || !wallet) return;
 
@@ -655,7 +731,7 @@ export default function Entry({
 						</span>
 					)}
 					{isLoggedIn && walletAddress && (
-						<div>
+						<div className="hidden lg:block">
 							<button
 								type="button"
 								className="text-neutral-400 dark:text-neutral-600 hover:text-secondary cursor-pointer"
@@ -671,14 +747,6 @@ export default function Entry({
 					<div className="flex gap-2 justify-between">
 						<div className="flex flex-col gap-1">
 							<div className="flex gap-2">
-								{!isEditing && (
-									<Link
-										href={`/writer/${address}/${id}/edit`}
-										className="lg:hidden text-neutral-400 dark:text-neutral-600 hover:text-secondary cursor-pointer"
-									>
-										edit
-									</Link>
-								)}
 								<button
 									type="button"
 									className={cn(
