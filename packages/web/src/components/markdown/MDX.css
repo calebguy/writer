@@ -384,6 +384,68 @@
       line-height: 1.4!important;
     }
 
+    .mdx--listItemChecked,
+    .mdx--listItemUnchecked {
+      list-style-type: none;
+      position: relative;
+      padding-left: 1.5rem;
+      outline: none;
+      box-shadow: none;
+    }
+
+    .mdx--listItemChecked:focus,
+    .mdx--listItemUnchecked:focus,
+    .mdx--listItemChecked:focus-visible,
+    .mdx--listItemUnchecked:focus-visible {
+      outline: none;
+      box-shadow: none;
+    }
+
+    .mdx--listItemChecked::marker,
+    .mdx--listItemUnchecked::marker {
+      content: "";
+    }
+
+    .mdx--listItemChecked::before,
+    .mdx--listItemUnchecked::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.32em;
+      width: 0.8em;
+      height: 0.8em;
+      border: 1px solid var(--color-neutral-500);
+      border-radius: 2px;
+      box-sizing: border-box;
+      cursor: pointer;
+    }
+
+    .mdx--listItemChecked,
+    .mdx--listItemUnchecked {
+      cursor: text;
+    }
+
+    .mdx--listItemChecked {
+      text-decoration: line-through;
+    }
+
+    .mdx--listItemChecked::before {
+      background-color: rgb(var(--color-primary));
+      border-color: rgb(var(--color-primary));
+    }
+
+    .mdx--listItemChecked::after {
+      content: "";
+      position: absolute;
+      left: 0.27em;
+      top: 0.39em;
+      width: 0.25em;
+      height: 0.48em;
+      border: solid var(--color-white);
+      border-width: 0 1.5px 1.5px 0;
+      transform: rotate(45deg);
+    }
+
 
     ul ul, ol ol, ul ol, ol ul {
       margin: 0.15rem 0!important;
