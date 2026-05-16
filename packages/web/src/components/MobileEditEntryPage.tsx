@@ -30,9 +30,10 @@ import {
 } from "@/utils/utils";
 import { usePrivy } from "@privy-io/react-auth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { MDXEditorMethods } from "@mdxeditor/editor";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Hex } from "viem";
 
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
@@ -74,7 +75,8 @@ export function MobileEditEntryPage({
 }) {
 	const router = useRouter();
 	const queryClient = useQueryClient();
-	const [wallet] = useOPWallet();
+	const [wallet, walletReady] = useOPWallet();
+	const editorRef = useRef<MDXEditorMethods>(null);
 	const { getAccessToken } = usePrivy();
 	const { setActions } = useComposeHeaderActions();
 	const [markdown, setMarkdown] = useState("");
@@ -111,6 +113,7 @@ export function MobileEditEntryPage({
 				}
 			}
 			if (!source) return;
+			if (isEntryPrivate(source) && !source.decompressed && !walletReady) return;
 
 			try {
 				const hydrated = await hydrateEditableEntry(source, wallet);
@@ -118,6 +121,7 @@ export function MobileEditEntryPage({
 				setEntry(hydrated);
 				const content = hydrated.decompressed ?? "";
 				setMarkdown(content);
+				editorRef.current?.setMarkdown(content);
 				setInitialMarkdown(content);
 				setEncrypted(isEntryPrivate(hydrated));
 			} catch (err) {
@@ -128,7 +132,7 @@ export function MobileEditEntryPage({
 		return () => {
 			cancelled = true;
 		};
-	}, [address, id, fetchedEntry, wallet]);
+	}, [address, id, fetchedEntry, wallet, walletReady]);
 
 	const { mutate } = useMutation({
 		mutationFn: editEntry,
@@ -343,6 +347,7 @@ export function MobileEditEntryPage({
 		<div className="grow flex flex-col min-h-0">
 			<div className="grow min-h-0 flex flex-col">
 				<MDX
+					ref={editorRef}
 					markdown={markdown}
 					autoFocus
 					aspectSquare={false}

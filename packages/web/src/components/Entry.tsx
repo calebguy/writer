@@ -401,43 +401,25 @@ export default function Entry({
 	}, [isPendingDelete, isPendingEdit, deleteSubmitted, editSubmitted]);
 
 	const editHref = `/writer/${address}/${id}/edit`;
-	const showHeaderSave = isLoggedIn && !!walletAddress;
+	const showMobileSave = isLoggedIn && !!walletAddress;
 	const showHeaderEdit = canEdit && !isEditing;
+	const showHeaderPrivacyIcon = !!processedEntry && isEntryPrivate(processedEntry);
 
 	useEffect(() => {
-		if (isEditing || (!showHeaderSave && !showHeaderEdit)) {
+		if (isEditing || (!showHeaderPrivacyIcon && !showHeaderEdit)) {
 			setActions(null);
 			return;
 		}
 
 		setActions(
 			<>
-				{showHeaderSave && (
-					<button
-						type="button"
-						aria-label={isSavedEntry ? "Unsave entry" : "Save entry"}
-						disabled={isTogglingSaveEntry}
-						onClick={() => toggleSaveEntry()}
-						className="text-primary hover:text-secondary transition-opacity cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+				{showHeaderPrivacyIcon && (
+					<span
+						aria-label="Private entry"
+						className="inline-flex h-6 w-6 items-center justify-center text-neutral-500 dark:text-neutral-400"
 					>
-						<span
-							aria-hidden="true"
-							className={cn("block h-6 w-6 bg-current transition-opacity", {
-								"opacity-25": !isSavedEntry,
-								"opacity-100": isSavedEntry,
-							})}
-							style={{
-								WebkitMaskImage: "url('/images/relics/splat-1.png')",
-								maskImage: "url('/images/relics/splat-1.png')",
-								WebkitMaskRepeat: "no-repeat",
-								maskRepeat: "no-repeat",
-								WebkitMaskPosition: "center",
-								maskPosition: "center",
-								WebkitMaskSize: "contain",
-								maskSize: "contain",
-							}}
-						/>
-					</button>
+						<Lock className="h-4 w-4" />
+					</span>
 				)}
 				{showHeaderEdit && (
 					<Link
@@ -469,8 +451,7 @@ export default function Entry({
 		router,
 		setActions,
 		showHeaderEdit,
-		showHeaderSave,
-		toggleSaveEntry,
+		showHeaderPrivacyIcon,
 	]);
 
 	const handleSave = async () => {
@@ -650,7 +631,7 @@ export default function Entry({
 						</div>
 					)}
 					{isEntryPrivate(processedEntry) && (
-						<div className="absolute bottom-0 left-0">
+						<div className="absolute bottom-0 left-0 hidden lg:block">
 							<Lock className="w-3.5 h-3.5 text-neutral-400 dark:text-neutral-600" />
 						</div>
 					)}
@@ -743,6 +724,33 @@ export default function Entry({
 						</div>
 					)}
 				</div>
+				{showMobileSave && (
+					<button
+						type="button"
+						aria-label={isSavedEntry ? "Unsave entry" : "Save entry"}
+						disabled={isTogglingSaveEntry}
+						onClick={() => toggleSaveEntry()}
+						className="lg:hidden ml-auto text-neutral-400 dark:text-neutral-600 hover:text-secondary transition-opacity cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+					>
+						<span
+							aria-hidden="true"
+							className={cn("block h-6 w-6 bg-current transition-opacity", {
+								"opacity-25": !isSavedEntry,
+								"opacity-100": isSavedEntry,
+							})}
+							style={{
+								WebkitMaskImage: "url('/images/relics/splat-1.png')",
+								maskImage: "url('/images/relics/splat-1.png')",
+								WebkitMaskRepeat: "no-repeat",
+								maskRepeat: "no-repeat",
+								WebkitMaskPosition: "center",
+								maskPosition: "center",
+								WebkitMaskSize: "contain",
+								maskSize: "contain",
+							}}
+						/>
+					</button>
+				)}
 				{canEdit && (
 					<div className="flex gap-2 justify-between">
 						<div className="flex flex-col gap-1">
