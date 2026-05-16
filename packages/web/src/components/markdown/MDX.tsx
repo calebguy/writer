@@ -4,7 +4,13 @@ import { customLinkDialogPlugin } from "@/plugins/customLinkDialogPlugin";
 import { pasteLinkPlugin } from "@/plugins/pasteLinkPlugin";
 import { cn } from "@/utils/cn";
 import { STRIKETHROUGH } from "@lexical/markdown";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
+import {
+	COMMAND_PRIORITY_LOW,
+	FORMAT_TEXT_COMMAND,
+	KEY_DOWN_COMMAND,
+} from "lexical";
 import {
 	MDXEditor,
 	type MDXEditorMethods,
@@ -36,9 +42,30 @@ interface EditorProps {
 
 const strikethroughShortcutPlugin = realmPlugin({
 	init(realm) {
-		const Shortcut = () => (
-			<MarkdownShortcutPlugin transformers={[STRIKETHROUGH]} />
-		);
+		const Shortcut = () => {
+			const [editor] = useLexicalComposerContext();
+
+			useEffect(() => {
+				return editor.registerCommand(
+					KEY_DOWN_COMMAND,
+					(event) => {
+						if (
+							event.key.toLowerCase() === "x" &&
+							event.shiftKey &&
+							(event.metaKey || event.ctrlKey)
+						) {
+							event.preventDefault();
+							editor.dispatchCommand(FORMAT_TEXT_COMMAND, "strikethrough");
+							return true;
+						}
+						return false;
+					},
+					COMMAND_PRIORITY_LOW,
+				);
+			}, [editor]);
+
+			return <MarkdownShortcutPlugin transformers={[STRIKETHROUGH]} />;
+		};
 
 		realm.pubIn({
 			[addComposerChild$]: Shortcut,
