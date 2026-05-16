@@ -618,7 +618,7 @@ export default function Entry({
 					{canView && (
 						<MarkdownRenderer
 							markdown={processedEntry.decompressed ?? ""}
-							className="border border-transparent"
+							className="border border-transparent md:p-2"
 						/>
 					)}
 					{!canView && (
