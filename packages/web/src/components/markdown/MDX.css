@@ -383,6 +383,17 @@
       padding-left: 1.5rem;
     }
 
+    /*
+      MDXEditor represents an indented empty bullet as an empty parent <li>
+      containing a nested <ul>. Without this override both the wrapper <li>
+      marker and the nested <li> marker render, which shows duplicate dots
+      when tabbing into nested list levels.
+    */
+    li:has(> ul:first-child)::marker,
+    li:has(> ol:first-child)::marker {
+      content: "";
+    }
+
     ul li::marker {
       color: var(--color-neutral-600);;
     }

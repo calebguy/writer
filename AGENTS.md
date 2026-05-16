@@ -200,10 +200,10 @@ bun run format
 - `X402_PAY_TO_ADDRESS` - Address receiving x402 payments
 - `X402_NETWORK` - CAIP-2 x402 payment network (default `eip155:8453`)
 - `X402_FACILITATOR_URL` - x402 facilitator URL
-- `X402_PLACE_CREATE_PRICE` - Price for `POST /x402/factory/create`
-- `X402_ENTRY_CREATE_PRICE` - Price for x402 entry creation
-- `X402_ENTRY_UPDATE_PRICE` - Price for x402 entry updates
-- `X402_ENTRY_DELETE_PRICE` - Price for x402 entry deletion
+- `X402_PLACE_CREATE_PRICE` - Price for `POST /x402/factory/create` (default `$0.01`)
+- `X402_ENTRY_CREATE_PRICE` - Price for x402 entry creation (default `$0.002`)
+- `X402_ENTRY_UPDATE_PRICE` - Price for x402 entry updates (default `$0.002`)
+- `X402_ENTRY_DELETE_PRICE` - Price for x402 entry deletion (default `$0.001`)
 
 ### Ingestor
 - `DATABASE_URL` - PostgreSQL connection string
