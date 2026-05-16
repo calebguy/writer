@@ -384,11 +384,63 @@
       line-height: 1.4!important;
     }
 
+    .prose ul.contains-task-list,
+    .prose ul:has(> .mdx--listItemChecked),
+    .prose ul:has(> .mdx--listItemUnchecked) {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .prose .task-list-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      list-style-type: none;
+    }
+
+    .prose .task-list-item::marker {
+      content: "";
+    }
+
+    .prose .task-list-item:has(input[type="checkbox"]:checked) {
+      text-decoration: line-through;
+    }
+
+    .prose input[type="checkbox"] {
+      all: unset;
+      appearance: none;
+      flex: none;
+      position: relative;
+      width: 0.9rem;
+      height: 0.9rem;
+      margin: 0.2em 0 0;
+      border: 1px solid var(--color-neutral-500);
+      border-radius: 2px;
+      box-sizing: border-box;
+    }
+
+    .prose input[type="checkbox"]:checked {
+      background-color: rgb(var(--color-primary));
+      border-color: rgb(var(--color-primary));
+    }
+
+    .prose input[type="checkbox"]:checked::after {
+      content: "";
+      position: absolute;
+      left: 0.28em;
+      top: 0.13em;
+      width: 0.25em;
+      height: 0.48em;
+      border: solid var(--color-white);
+      border-width: 0 1.5px 1.5px 0;
+      transform: rotate(45deg);
+    }
+
     .mdx--listItemChecked,
     .mdx--listItemUnchecked {
       list-style-type: none;
       position: relative;
-      padding-left: 1.5rem;
+      padding-left: 1.4rem;
       outline: none;
       box-shadow: none;
     }
@@ -411,9 +463,9 @@
       content: "";
       position: absolute;
       left: 0;
-      top: 0.32em;
-      width: 0.8em;
-      height: 0.8em;
+      top: 0.2em;
+      width: 0.9em;
+      height: 0.9em;
       border: 1px solid var(--color-neutral-500);
       border-radius: 2px;
       box-sizing: border-box;
@@ -437,8 +489,8 @@
     .mdx--listItemChecked::after {
       content: "";
       position: absolute;
-      left: 0.27em;
-      top: 0.39em;
+      left: 0.28em;
+      top: 0.33em;
       width: 0.25em;
       height: 0.48em;
       border: solid var(--color-white);

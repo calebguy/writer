@@ -23,7 +23,8 @@ export function MarkdownRenderer({
 						remarkPlugins={[remarkGfm]}
 						rehypePlugins={[rehypeHighlight]}
 						components={{
-							// Remove custom classes since CSS targets elements directly under .prose
+							// Preserve GFM-generated class names (for example task lists)
+							// while keeping styling controlled by MDX.css.
 							h1: ({ children }) => <h1>{children}</h1>,
 							h2: ({ children }) => <h2>{children}</h2>,
 							h3: ({ children }) => <h3>{children}</h3>,
@@ -32,9 +33,21 @@ export function MarkdownRenderer({
 							h6: ({ children }) => <h6>{children}</h6>,
 							p: ({ children }) => <p>{children}</p>,
 							blockquote: ({ children }) => <blockquote>{children}</blockquote>,
-							ul: ({ children }) => <ul>{children}</ul>,
-							ol: ({ children }) => <ol>{children}</ol>,
-							li: ({ children }) => <li>{children}</li>,
+							ul: ({ children, className }) => (
+								<ul className={className}>{children}</ul>
+							),
+							ol: ({ children, className }) => (
+								<ol className={className}>{children}</ol>
+							),
+							li: ({ children, className }) => (
+								<li className={className}>{children}</li>
+							),
+							input: ({ type, checked }) =>
+								type === "checkbox" ? (
+									<input type="checkbox" checked={checked} readOnly />
+								) : (
+									<input type={type} readOnly />
+								),
 							a: ({ children, href }) =>
 								links ? (
 									<a href={href} target="_blank" rel="noreferrer noopener">

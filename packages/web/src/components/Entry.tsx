@@ -403,7 +403,8 @@ export default function Entry({
 	const editHref = `/writer/${address}/${id}/edit`;
 	const showMobileSave = isLoggedIn && !!walletAddress;
 	const showHeaderEdit = canEdit && !isEditing;
-	const showHeaderPrivacyIcon = !!processedEntry && isEntryPrivate(processedEntry);
+	const showHeaderPrivacyIcon =
+		!!processedEntry && isEntryPrivate(processedEntry);
 
 	useEffect(() => {
 		if (isEditing || (!showHeaderPrivacyIcon && !showHeaderEdit)) {
@@ -617,7 +618,7 @@ export default function Entry({
 					{canView && (
 						<MarkdownRenderer
 							markdown={processedEntry.decompressed ?? ""}
-							className="border border-transparent p-2"
+							className="border border-transparent"
 						/>
 					)}
 					{!canView && (
