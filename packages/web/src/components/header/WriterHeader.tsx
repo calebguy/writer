@@ -5,7 +5,8 @@ import { type Writer, getWriter } from "@/utils/api";
 import { usePrivy } from "@privy-io/react-auth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { FiPlus } from "react-icons/fi";
 import type { Hex } from "viem";
 import { NavDropdown } from "../NavDropdown";
@@ -23,7 +24,15 @@ export function WriterHeader({
 	const { isEntryLoading } = useEntryLoading();
 	const { actions } = useComposeHeaderActions();
 	const pathname = usePathname();
+	const router = useRouter();
 	const isEntryPage = pathname.split("/").length > 3;
+	const newEntryHref = `/writer/${address}/new`;
+
+	useEffect(() => {
+		if (!authenticated || isEntryPage) return;
+		router.prefetch(newEntryHref);
+		void import("../markdown/MDX");
+	}, [authenticated, isEntryPage, newEntryHref, router]);
 
 	const { data: writer } = useQuery<Writer>({
 		queryKey: ["writer", address],
@@ -64,8 +73,17 @@ export function WriterHeader({
 				<div className="lg:hidden flex items-center gap-4">{actions}</div>
 			) : authenticated && !isEntryPage ? (
 				<Link
-					href={`/writer/${address}/new`}
+					href={newEntryHref}
 					aria-label="Create entry"
+					prefetch
+					onTouchStart={() => {
+						router.prefetch(newEntryHref);
+						void import("../markdown/MDX");
+					}}
+					onPointerEnter={() => {
+						router.prefetch(newEntryHref);
+						void import("../markdown/MDX");
+					}}
 					className="lg:hidden text-primary hover:opacity-80 transition-opacity cursor-pointer"
 				>
 					<FiPlus className="h-6 w-6" />
