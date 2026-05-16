@@ -127,6 +127,14 @@
     border-color: var(--color-neutral-700)!important;
   }
 
+  .mdx--textStrikethrough {
+    text-decoration: line-through;
+  }
+
+  .mdx--textUnderlineStrikethrough {
+    text-decoration: underline line-through;
+  }
+
   .mdxeditor {
     display: flex!important;
     flex-direction: column;
