@@ -3,9 +3,13 @@
 import { customLinkDialogPlugin } from "@/plugins/customLinkDialogPlugin";
 import { pasteLinkPlugin } from "@/plugins/pasteLinkPlugin";
 import { cn } from "@/utils/cn";
+import { STRIKETHROUGH } from "@lexical/markdown";
+import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
 import {
 	MDXEditor,
 	type MDXEditorMethods,
+	addComposerChild$,
+	addNestedEditorChild$,
 	codeBlockPlugin,
 	codeMirrorPlugin,
 	headingsPlugin,
@@ -13,6 +17,7 @@ import {
 	listsPlugin,
 	markdownShortcutPlugin,
 	quotePlugin,
+	realmPlugin,
 } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
 import { type FC, useEffect, useRef, useState } from "react";
@@ -28,6 +33,19 @@ interface EditorProps {
 	autoFocus?: boolean;
 	aspectSquare?: boolean;
 }
+
+const strikethroughShortcutPlugin = realmPlugin({
+	init(realm) {
+		const Shortcut = () => (
+			<MarkdownShortcutPlugin transformers={[STRIKETHROUGH]} />
+		);
+
+		realm.pubIn({
+			[addComposerChild$]: Shortcut,
+			[addNestedEditorChild$]: Shortcut,
+		});
+	},
+});
 
 const exampleTheme = {
 	paragraph: "mdx--paragraph",
@@ -156,6 +174,7 @@ const MDX: FC<EditorProps> = ({
 						autoLoadLanguageSupport: true,
 					}),
 					markdownShortcutPlugin(),
+					strikethroughShortcutPlugin(),
 					customLinkDialogPlugin(),
 				]}
 				onChange={onChange}

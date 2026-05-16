@@ -1,6 +1,7 @@
 import { cn } from "@/utils/cn";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
+import remarkGfm from "remark-gfm";
 import "./MDX.css";
 
 interface MarkdownRendererProps {
@@ -19,6 +20,7 @@ export function MarkdownRenderer({
 			<div className={cn("mdxeditor", "grow min-w-24 relative", className)}>
 				<div className="prose">
 					<ReactMarkdown
+						remarkPlugins={[remarkGfm]}
 						rehypePlugins={[rehypeHighlight]}
 						components={{
 							// Remove custom classes since CSS targets elements directly under .prose
