@@ -1,10 +1,9 @@
 "use client";
 
 import { Check } from "@/components/icons/Check";
-import { Close } from "@/components/icons/Close";
 import { Lock } from "@/components/icons/Lock";
 import { Unlock } from "@/components/icons/Unlock";
-import { Modal, ModalTitle } from "@/components/dsl/Modal";
+import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
 import { useComposeHeaderActions } from "@/components/writer/ComposeHeaderActionsContext";
 import {
 	type Entry,
@@ -469,34 +468,12 @@ export function MobileEditEntryPage({
 				</div>
 			</div>
 
-			<Modal
+			<DeleteConfirmModal
 				open={showDeleteConfirm}
 				onClose={() => setShowDeleteConfirm(false)}
-				className="w-auto min-w-48 max-w-[260px] p-4 bg-surface"
-			>
-				<div className="flex flex-col gap-4 text-center">
-					<ModalTitle>delete?</ModalTitle>
-					<div className="flex items-center justify-center gap-2">
-						<button
-							type="button"
-							aria-label="Cancel delete"
-							onClick={() => setShowDeleteConfirm(false)}
-							className="px-4 py-1 text-neutral-500 dark:text-neutral-400 hover:text-primary cursor-pointer"
-						>
-							<Close className="w-5 h-5" />
-						</button>
-						<button
-							type="button"
-							aria-label="Confirm delete"
-							onClick={() => void handleDelete()}
-							disabled={isDeleting}
-							className="px-4 py-1 text-neutral-500 dark:text-neutral-400 hover:text-primary cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-						>
-							<Check className="w-5 h-5" />
-						</button>
-					</div>
-				</div>
-			</Modal>
+				onConfirm={handleDelete}
+				isDeleting={isDeleting}
+			/>
 		</>
 	);
 }

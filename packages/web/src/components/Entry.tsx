@@ -29,10 +29,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { MdModeEdit } from "react-icons/md";
 import type { Hex } from "viem";
+import { DeleteConfirmModal } from "./DeleteConfirmModal";
 import { LoadingRelic } from "./LoadingRelic";
-import { Modal, ModalTitle } from "./dsl/Modal";
-import { Check } from "./icons/Check";
-import { Close } from "./icons/Close";
 import { Lock } from "./icons/Lock";
 import { Logo } from "./icons/Logo";
 import { Unlock } from "./icons/Unlock";
@@ -755,72 +753,50 @@ export default function Entry({
 				)}
 			</div>
 
-			<Modal
+			<DeleteConfirmModal
 				open={isDeleting}
 				onClose={() => setIsDeleting(false)}
-				className="w-auto min-w-48 max-w-[260px] p-4 bg-surface"
-			>
-				<div className="flex flex-col gap-4 text-center">
-					<ModalTitle>Delete</ModalTitle>
-					<div className="flex items-center justify-center gap-2">
-						<button
-							type="button"
-							aria-label="Cancel delete"
-							onClick={() => setIsDeleting(false)}
-							className="px-4 py-1 text-neutral-500 dark:text-neutral-400 hover:text-primary cursor-pointer bg-surface rounded-lg w-full flex items-center justify-center"
-						>
-							<Close className="w-5 h-5" />
-						</button>
-						<button
-							type="button"
-							aria-label="Confirm delete"
-							disabled={deleteSubmitted || isPendingDelete}
-							onClick={async () => {
-								if (!wallet) {
-									return;
-								}
-								setIsDeleting(false);
-								const isExternalWallet = wallet.walletClientType !== "privy";
-								if (isExternalWallet) {
-									setDeletedSubmitted(true);
-								}
-								try {
-									const { signature, nonce } = await signRemove(wallet, {
-										id: Number(id),
-										address: address as Hex,
-										legacyDomain,
-									});
-									const authToken = await getAccessToken();
-									if (!authToken) {
-										console.error("No auth token found");
-										if (isExternalWallet) {
-											setDeletedSubmitted(false);
-										}
-										return;
-									}
-									await mutateAsyncDelete({
-										address: address as Hex,
-										id: Number(id),
-										signature,
-										nonce,
-										authToken,
-									});
-									if (isExternalWallet) {
-										setDeletedSubmitted(false);
-									}
-								} catch {
-									if (isExternalWallet) {
-										setDeletedSubmitted(false);
-									}
-								}
-							}}
-							className="px-4 py-1 text-neutral-500 dark:text-neutral-400 hover:text-primary cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-surface rounded-lg w-full flex items-center justify-center"
-						>
-							<Check className="w-5 h-5" />
-						</button>
-					</div>
-				</div>
-			</Modal>
+				isDeleting={deleteSubmitted || isPendingDelete}
+				onConfirm={async () => {
+					if (!wallet) {
+						return;
+					}
+					setIsDeleting(false);
+					const isExternalWallet = wallet.walletClientType !== "privy";
+					if (isExternalWallet) {
+						setDeletedSubmitted(true);
+					}
+					try {
+						const { signature, nonce } = await signRemove(wallet, {
+							id: Number(id),
+							address: address as Hex,
+							legacyDomain,
+						});
+						const authToken = await getAccessToken();
+						if (!authToken) {
+							console.error("No auth token found");
+							if (isExternalWallet) {
+								setDeletedSubmitted(false);
+							}
+							return;
+						}
+						await mutateAsyncDelete({
+							address: address as Hex,
+							id: Number(id),
+							signature,
+							nonce,
+							authToken,
+						});
+						if (isExternalWallet) {
+							setDeletedSubmitted(false);
+						}
+					} catch {
+						if (isExternalWallet) {
+							setDeletedSubmitted(false);
+						}
+					}
+				}}
+			/>
 		</div>
 	);
 }
