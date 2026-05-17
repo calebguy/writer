@@ -20,6 +20,7 @@ export interface CreateInputData {
 
 interface CreateInputProps {
 	placeholder?: string;
+	placeholderMarkdown?: string;
 	onExpand?: (isExpanded: boolean) => void;
 	canExpand?: boolean;
 	onSubmit: (data: CreateInputData) => Promise<void> | void;
@@ -30,6 +31,7 @@ interface CreateInputProps {
 
 export default function CreateInput({
 	placeholder,
+	placeholderMarkdown,
 	onExpand,
 	onSubmit,
 	canExpand = false,
@@ -186,7 +188,8 @@ export default function CreateInput({
 					className={cn(
 						"bg-surface text-black dark:text-white flex-col placeholder:text-green-300 h-full flex w-full p-2 create-input-mdx",
 					)}
-					placeholder={placeholder}
+					placeholder={placeholderMarkdown ?? placeholder}
+					renderPlaceholderAsMarkdown={!!placeholderMarkdown}
 					onChange={setMarkdown}
 				/>
 				{showHint && (

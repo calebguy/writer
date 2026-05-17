@@ -12,7 +12,6 @@ import {
 } from "@/utils/api";
 import { cn } from "@/utils/cn";
 import { useOPWallet } from "@/utils/hooks";
-import { markdownToPlainText } from "@/utils/markdownText";
 import { getCachedDerivedKey } from "@/utils/keyCache";
 import { signCreateWithChunk } from "@/utils/signer";
 import { compress, encrypt } from "@/utils/utils";
@@ -238,11 +237,8 @@ export function MobileCreateEntryPage({ address }: { address: string }) {
 					markdown={markdown}
 					autoFocus
 					aspectSquare={false}
-					placeholder={
-						writer
-							? `Write in ${markdownToPlainText(writer.title) || "this place"}`
-							: "Write"
-					}
+					placeholder={writer ? `Write in ${writer.title}` : "Write"}
+					renderPlaceholderAsMarkdown={!!writer}
 					onChange={setMarkdown}
 					className="bg-transparent text-black dark:text-white h-full flex w-full p-0! create-input-mdx"
 				/>

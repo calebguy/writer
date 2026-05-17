@@ -3,7 +3,6 @@
 import type { Entry, Writer } from "@/utils/api";
 import { createWithChunk } from "@/utils/api";
 import { useOPWallet } from "@/utils/hooks";
-import { markdownToPlainText } from "@/utils/markdownText";
 import { getCachedDerivedKey } from "@/utils/keyCache";
 import { signCreateWithChunk } from "@/utils/signer";
 import { compress, encrypt } from "@/utils/utils";
@@ -189,7 +188,7 @@ export default function EntryListWithCreateInput({
 				{canCreateEntries && (
 					<div className="hidden lg:block">
 						<CreateInput
-							placeholder={`Write in ${markdownToPlainText(writerTitle) || "this place"}`}
+							placeholderMarkdown={`Write in Place:\n ${writerTitle}`}
 							onExpand={setIsExpanded}
 							canExpand={true}
 							onSubmit={handleSubmit}

@@ -27,6 +27,8 @@ import {
 } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
 import { type FC, useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import "./MDX.css";
 
 interface EditorProps {
@@ -36,6 +38,7 @@ interface EditorProps {
 	className?: string;
 	readOnly?: boolean;
 	placeholder?: string;
+	renderPlaceholderAsMarkdown?: boolean;
 	autoFocus?: boolean;
 	aspectSquare?: boolean;
 }
@@ -154,12 +157,15 @@ const MDX: FC<EditorProps> = ({
 	className,
 	readOnly,
 	placeholder,
+	renderPlaceholderAsMarkdown = false,
 	autoFocus = false,
 	aspectSquare = true,
 }) => {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [overlayContainer, setOverlayContainer] =
 		useState<HTMLDivElement | null>(null);
+	const showMarkdownPlaceholder =
+		renderPlaceholderAsMarkdown && !!placeholder && markdown.trim() === "";
 
 	useEffect(() => {
 		setOverlayContainer(containerRef.current);
@@ -209,7 +215,7 @@ const MDX: FC<EditorProps> = ({
 				markdown={markdown}
 				overlayContainer={overlayContainer}
 				readOnly={readOnly}
-				placeholder={placeholder}
+				placeholder={renderPlaceholderAsMarkdown ? undefined : placeholder}
 				autoFocus={autoFocus}
 				onError={(error) => {
 					console.error(error);
@@ -224,6 +230,11 @@ const MDX: FC<EditorProps> = ({
 					className,
 				)}
 			/>
+			{showMarkdownPlaceholder && (
+				<div className="mdx-markdown-placeholder prose" aria-hidden="true">
+					<ReactMarkdown remarkPlugins={[remarkGfm]}>{placeholder}</ReactMarkdown>
+				</div>
+			)}
 		</div>
 	);
 };

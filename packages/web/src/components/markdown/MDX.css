@@ -135,6 +135,34 @@
     text-decoration: underline line-through;
   }
 
+  .mdx-markdown-placeholder {
+    position: absolute;
+    inset: 0;
+    padding: 0.5rem;
+    pointer-events: none;
+    color: rgb(142 142 136);
+    font-family: "LTRemark";
+    overflow: hidden;
+  }
+
+  :root:not([data-theme="light"]) & .mdx-markdown-placeholder {
+    color: rgb(112 112 108);
+  }
+
+  .mdx-markdown-placeholder * {
+    color: inherit !important;
+  }
+
+  .mdx-markdown-placeholder p,
+  .mdx-markdown-placeholder h1,
+  .mdx-markdown-placeholder h2,
+  .mdx-markdown-placeholder h3,
+  .mdx-markdown-placeholder h4,
+  .mdx-markdown-placeholder h5,
+  .mdx-markdown-placeholder h6 {
+    margin: 0;
+  }
+
   .mdxeditor {
     display: flex!important;
     flex-direction: column;
