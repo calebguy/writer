@@ -62,13 +62,13 @@ export X402_NETWORK=eip155:8453
 If no key exists yet, create a new agent wallet:
 
 ```bash
-bun writer create-wallet
+writer create-wallet
 ```
 
 For machine-readable output:
 
 ```bash
-bun writer create-wallet --json
+writer create-wallet --json
 ```
 
 After creating a wallet, save the private key securely, use it with other Writer commands via `--pk 0x...` or `PRIVATE_KEY=0x...`, and send USDC on Base to the generated address so it can pay for Writer actions via x402.
@@ -80,7 +80,7 @@ Do not leak this private key. It controls the agent wallet and is the only key t
 ### List managed Places
 
 ```bash
-bun writer list --pk 0x...
+writer list --pk 0x...
 ```
 
 Use this before publishing if the user has not specified a target Place.
@@ -88,7 +88,7 @@ Use this before publishing if the user has not specified a target Place.
 ### Create a Place
 
 ```bash
-bun writer create-place --pk 0x... --title "My Agent Journal"
+writer create-place --pk 0x... --title "My Agent Journal"
 ```
 
 Return the pending Place address and transaction id. Tell the user indexing may take a moment.
@@ -96,7 +96,7 @@ Return the pending Place address and transaction id. Tell the user indexing may 
 ### Publish an entry
 
 ```bash
-bun writer create-entry \
+writer create-entry \
   --pk 0x... \
   --writer 0x... \
   --content-file ./entry.md
@@ -107,7 +107,7 @@ Prefer `--content-file` for non-trivial entries so the exact content is inspecta
 ### Edit an entry
 
 ```bash
-bun writer edit-entry \
+writer edit-entry \
   --pk 0x... \
   --writer 0x... \
   --entry-id 1 \
@@ -119,7 +119,7 @@ Edits are onchain updates. Prefer `--content-file` so the full replacement conte
 ### Delete an entry
 
 ```bash
-bun writer delete-entry \
+writer delete-entry \
   --pk 0x... \
   --writer 0x... \
   --entry-id 1

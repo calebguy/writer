@@ -56,14 +56,14 @@ function usage() {
 x402 Writer CLI
 
 Usage:
-  bun writer create-wallet
-  bun writer create-wallet --json
-  bun writer list --pk 0x...
-  bun writer create-place --pk 0x... --title "My Place"
-  bun writer create-entry --pk 0x... --writer 0x... --content "hello"
-  bun writer create-entry --pk 0x... --writer-index 1 --content-file ./entry.md
-  bun writer edit-entry --pk 0x... --writer 0x... --entry-id 1 --content-file ./entry.md
-  bun writer delete-entry --pk 0x... --writer 0x... --entry-id 1
+  writer create-wallet
+  writer create-wallet --json
+  writer list --pk 0x...
+  writer create-place --pk 0x... --title "My Place"
+  writer create-entry --pk 0x... --writer 0x... --content "hello"
+  writer create-entry --pk 0x... --writer-index 1 --content-file ./entry.md
+  writer edit-entry --pk 0x... --writer 0x... --entry-id 1 --content-file ./entry.md
+  writer delete-entry --pk 0x... --writer 0x... --entry-id 1
 
 Options:
   --pk <hex>                Payer/author private key. Can also use PRIVATE_KEY.

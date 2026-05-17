@@ -9,6 +9,7 @@
 	"scripts": {
 		"writer": "bun run index.ts",
 		"start": "bun run index.ts",
+		"build:release": "./scripts/build-release.sh",
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
