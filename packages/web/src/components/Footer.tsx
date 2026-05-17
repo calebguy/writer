@@ -10,6 +10,11 @@ const links = [
 
 export function Footer() {
 	const pathname = usePathname();
+	const isWriterEntryPage = /^\/writer\/[^/]+\/\d+$/.test(pathname);
+
+	if (isWriterEntryPage) {
+		return null;
+	}
 
 	return (
 		<footer className="flex justify-between items-end w-full font-serif text-base dark:text-neutral-500 text-neutral-400 pt-4">
