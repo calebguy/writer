@@ -137,14 +137,14 @@ export function MobileCreateWriterPage() {
 					<Check className="w-7 h-7" />
 				</button>
 			</div>
-			<div className="grow min-h-0 flex flex-col">
+			<div className="grow min-h-0 flex flex-col rounded-xs border border-dashed border-primary bg-surface overflow-hidden">
 				<MDX
 					markdown={markdown}
 					autoFocus
 					aspectSquare={false}
 					placeholder="Create a Place"
 					onChange={setMarkdown}
-					className="bg-transparent text-black dark:text-white h-full flex w-full p-0! create-input-mdx"
+					className="bg-transparent text-black dark:text-white h-full flex w-full p-2! create-input-mdx"
 				/>
 			</div>
 		</div>

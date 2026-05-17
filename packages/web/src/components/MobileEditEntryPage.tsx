@@ -346,7 +346,7 @@ export function MobileEditEntryPage({
 
 	return (
 		<div className="grow flex flex-col min-h-0">
-			<div className="grow min-h-0 flex flex-col">
+			<div className="grow min-h-0 flex flex-col rounded-xs border border-dashed border-primary bg-surface overflow-hidden">
 				<MDX
 					ref={editorRef}
 					markdown={markdown}
@@ -354,7 +354,7 @@ export function MobileEditEntryPage({
 					aspectSquare={false}
 					placeholder="Edit Entry"
 					onChange={setMarkdown}
-					className="bg-transparent text-black dark:text-white h-full flex w-full p-0! create-input-mdx"
+					className="bg-transparent text-black dark:text-white h-full flex w-full p-2! create-input-mdx"
 				/>
 			</div>
 		</div>

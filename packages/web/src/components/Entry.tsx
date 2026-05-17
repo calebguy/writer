@@ -549,7 +549,9 @@ export default function Entry({
 
 			if (!isEditing && canEdit && isCommandShortcut && key === "e") {
 				e.preventDefault();
-				const shouldUseEditPage = window.matchMedia("(max-width: 1023px)").matches;
+				const shouldUseEditPage = window.matchMedia(
+					"(max-width: 1023px)",
+				).matches;
 
 				if (shouldUseEditPage) {
 					router.push(editHref);
@@ -652,7 +654,7 @@ export default function Entry({
 					{canView && (
 						<MarkdownRenderer
 							markdown={processedEntry.decompressed ?? ""}
-							className="border border-transparent md:p-2"
+							className="border border-transparent p-2"
 						/>
 					)}
 					{!canView && (
