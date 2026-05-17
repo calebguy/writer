@@ -646,7 +646,7 @@ export default function Entry({
 				<button
 					type="button"
 					onClick={() => setEncrypted?.(!encrypted)}
-					className="hover:text-primary text-neutral-400 dark:text-neutral-600 absolute bottom-3 left-2 z-20"
+					className="hover:text-primary text-neutral-400 dark:text-neutral-600 absolute bottom-3 left-2 z-20 cursor-pointer"
 				>
 					{encrypted ? (
 						<Lock className="h-3.5 w-3.5" />
