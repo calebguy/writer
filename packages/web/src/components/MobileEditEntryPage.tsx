@@ -28,9 +28,9 @@ import {
 	isWalletAuthor,
 	processPrivateEntry,
 } from "@/utils/utils";
+import type { MDXEditorMethods } from "@mdxeditor/editor";
 import { usePrivy } from "@privy-io/react-auth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { MDXEditorMethods } from "@mdxeditor/editor";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -113,7 +113,8 @@ export function MobileEditEntryPage({
 				}
 			}
 			if (!source) return;
-			if (isEntryPrivate(source) && !source.decompressed && !walletReady) return;
+			if (isEntryPrivate(source) && !source.decompressed && !walletReady)
+				return;
 
 			try {
 				const hydrated = await hydrateEditableEntry(source, wallet);
