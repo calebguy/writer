@@ -150,8 +150,8 @@ export default function Entry({
 			mutationKey: ["delete-entry", address, id],
 			onMutate: async () => {
 				await queryClient.cancelQueries({ queryKey: writerQueryKey });
+				await queryClient.cancelQueries({ queryKey: entryQueryKey });
 				const previous = queryClient.getQueryData<Writer>(writerQueryKey);
-				if (!previous) return { previous: undefined };
 				const now = new Date().toISOString();
 				queryClient.setQueryData<Writer>(writerQueryKey, (current) =>
 					current
@@ -165,6 +165,8 @@ export default function Entry({
 							}
 						: current,
 				);
+				queryClient.removeQueries({ queryKey: entryQueryKey });
+				router.push(`/writer/${address}`);
 				return { previous };
 			},
 			onError: (_err, _vars, ctx) => {
@@ -177,8 +179,6 @@ export default function Entry({
 				if (wallet?.address) {
 					clearPrivateCachedEntry(wallet.address, address, id);
 				}
-				queryClient.removeQueries({ queryKey: entryQueryKey });
-				router.push(`/writer/${address}`);
 			},
 			onSettled: () => {
 				queryClient.invalidateQueries({ queryKey: writerQueryKey });

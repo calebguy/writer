@@ -12,7 +12,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ColorDrawer } from "../ColorDrawer";
+import { ColorModal } from "../ColorModal";
 import { queryClient } from "../Providers";
 
 const VISIBLE_PATHS = new Set(["/home", "/explore", "/saved", "/writer"]);
@@ -44,7 +44,7 @@ export function MobileBottomNav({
 	const { logout, authenticated, ready } = usePrivy();
 	const isLoggedIn = !ready || authenticated;
 	const [showSubMenu, setShowSubMenu] = useState(false);
-	const [showColorDrawer, setShowColorDrawer] = useState(false);
+	const [showColorModal, setShowColorModal] = useState(false);
 	const [themeMode, setThemeMode] = useState<ThemeMode>("system");
 	const [hidden, setHidden] = useState(false);
 	const lastScrollY = useRef(0);
@@ -64,6 +64,7 @@ export function MobileBottomNav({
 
 	useEffect(() => {
 		setShowSubMenu(false);
+		setShowColorModal(false);
 	}, [pathname]);
 
 	useEffect(() => {
@@ -236,7 +237,7 @@ export function MobileBottomNav({
 									className="p-1.5 rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
 									onClick={() => {
 										setShowSubMenu(false);
-										setShowColorDrawer(true);
+										setShowColorModal(true);
 									}}
 								>
 									<span className="block w-5 h-5 bg-primary rounded-sm" />
@@ -390,7 +391,7 @@ export function MobileBottomNav({
 				</div>
 			</div>
 
-			<ColorDrawer open={showColorDrawer} onOpenChange={setShowColorDrawer} />
+			<ColorModal open={showColorModal} onClose={() => setShowColorModal(false)} />
 		</>
 	);
 }
