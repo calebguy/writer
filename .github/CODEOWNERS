@@ -1,0 +1,5 @@
+# Require Caleb's review for security-sensitive release and CLI publishing files.
+.github/workflows/cli-release.yml @calebguy
+.github/CODEOWNERS @calebguy
+packages/cli/ @calebguy
+packages/web/public/install.sh @calebguy
