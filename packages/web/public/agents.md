@@ -95,6 +95,15 @@ export WRITER_API_URL=https://api.writer.place
 export X402_NETWORK=eip155:8453
 ```
 
+If you do not have an EVM private key yet, generate a new agent wallet:
+
+```bash
+bun writer create-wallet
+bun writer create-wallet --json
+```
+
+Do not leak this private key. It controls the agent wallet and is the only key that can sign to create entries and update existing entries for Places created with it. Anyone with this key can spend its funds and write, edit, or delete as this agent. Store it securely; Writer cannot recover it if lost.
+
 List managed Places:
 
 ```bash

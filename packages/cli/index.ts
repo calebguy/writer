@@ -6,9 +6,10 @@ import type { Network } from "@x402/core/types";
 import { ExactEvmScheme } from "@x402/evm/exact/client";
 import { wrapFetchWithPayment } from "@x402/fetch";
 import { type Hex, getAddress, isAddress } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
+import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 
 type Command =
+	| "create-wallet"
 	| "list"
 	| "create-place"
 	| "create-entry"
@@ -27,6 +28,7 @@ type CliOptions = {
 	content?: string;
 	contentFile?: string;
 	legacyDomain?: boolean;
+	json?: boolean;
 };
 
 type ManagerWriter = {
@@ -54,6 +56,8 @@ function usage() {
 x402 Writer CLI
 
 Usage:
+  bun writer create-wallet
+  bun writer create-wallet --json
   bun writer list --pk 0x...
   bun writer create-place --pk 0x... --title "My Place"
   bun writer create-entry --pk 0x... --writer 0x... --content "hello"
@@ -72,6 +76,7 @@ Options:
   --content <markdown>      Raw markdown entry content.
   --content-file <path>     File containing raw markdown entry content.
   --legacy-domain           Sign with legacy EIP-712 domain including chainId.
+  --json                    Print machine-readable JSON for create-wallet.
 `.trim();
 }
 
@@ -137,6 +142,9 @@ function parseArgs(argv: string[]): CliOptions {
 			case "--legacy-domain":
 				options.legacyDomain = true;
 				break;
+			case "--json":
+				options.json = true;
+				break;
 			case "--help":
 			case "-h":
 				console.log(usage());
@@ -148,6 +156,7 @@ function parseArgs(argv: string[]): CliOptions {
 
 	if (
 		![
+			"create-wallet",
 			"list",
 			"create-place",
 			"create-entry",
@@ -157,7 +166,10 @@ function parseArgs(argv: string[]): CliOptions {
 	) {
 		throw new Error(`Missing or invalid command.\n\n${usage()}`);
 	}
-	if (!options.privateKey) {
+	if (
+		!options.privateKey &&
+		options.command !== "create-wallet"
+	) {
 		throw new Error("Set --pk or PRIVATE_KEY.");
 	}
 
@@ -220,6 +232,43 @@ function formatBody(body: unknown) {
 
 async function main() {
 	const options = parseArgs(Bun.argv.slice(2));
+	if (options.command === "create-wallet") {
+		const privateKey = generatePrivateKey();
+		const account = privateKeyToAccount(privateKey);
+		const address = getAddress(account.address);
+		const warning =
+			"WARNING: Do not leak this private key. It controls the agent wallet and is the only key that can sign to create entries and update existing entries for Places created with it. Anyone with this key can spend its funds and write, edit, or delete as this agent. Store it securely; Writer cannot recover it if lost.";
+
+		const nextSteps = [
+			"Save this private key securely.",
+			"Use it with other Writer commands via --pk 0x... or PRIVATE_KEY=0x...",
+			"Send USDC on Base to this address so it can pay for Writer actions via x402.",
+		];
+
+		if (options.json) {
+			console.warn(warning);
+			console.warn("");
+			console.warn("What next:");
+			nextSteps.forEach((step, index) => {
+				console.warn(`${index + 1}. ${step}`);
+			});
+			console.log(JSON.stringify({ address, privateKey }, null, 2));
+			return;
+		}
+
+		console.log("Generated Writer agent wallet:");
+		console.log(`Address: ${address}`);
+		console.log(`Private key: ${privateKey}`);
+		console.log("");
+		console.warn("What next:");
+		nextSteps.forEach((step, index) => {
+			console.warn(`${index + 1}. ${step}`);
+		});
+		console.warn("");
+		console.warn(warning);
+		return;
+	}
+
 	const account = privateKeyToAccount(options.privateKey as Hex);
 	const payer = getAddress(account.address);
 	const client = new x402Client();

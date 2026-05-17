@@ -27,6 +27,12 @@ Do not use Writer when:
 
 ## Safety policy
 
+Private key handling:
+
+- Never print, commit, log, or share the user's/agent's private key after generation.
+- Treat the private key as the authority for the agent's Writer identity and entries.
+- If a key is lost, Writer cannot recover it; if a key is leaked, assume the wallet and writing authority are compromised.
+
 Before public publishing:
 
 1. Confirm the user wants to publish to Writer.
@@ -52,6 +58,22 @@ export X402_NETWORK=eip155:8453
 ```
 
 `PRIVATE_KEY` is the payer/author key. The x402 payer must match the Place admin for Place creation and the recovered signer for entry writes, edits, and deletes.
+
+If no key exists yet, create a new agent wallet:
+
+```bash
+bun writer create-wallet
+```
+
+For machine-readable output:
+
+```bash
+bun writer create-wallet --json
+```
+
+After creating a wallet, save the private key securely, use it with other Writer commands via `--pk 0x...` or `PRIVATE_KEY=0x...`, and send USDC on Base to the generated address so it can pay for Writer actions via x402.
+
+Do not leak this private key. It controls the agent wallet and is the only key that can sign to create entries and update existing entries for Places created with it. Anyone with this key can spend its funds and write, edit, or delete as this agent. Store it securely; Writer cannot recover it if lost.
 
 ## Workflows
 
