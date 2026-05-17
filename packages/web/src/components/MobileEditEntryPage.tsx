@@ -1,12 +1,15 @@
 "use client";
 
 import { Check } from "@/components/icons/Check";
+import { Close } from "@/components/icons/Close";
 import { Lock } from "@/components/icons/Lock";
 import { Unlock } from "@/components/icons/Unlock";
+import { Modal, ModalTitle } from "@/components/dsl/Modal";
 import { useComposeHeaderActions } from "@/components/writer/ComposeHeaderActionsContext";
 import {
 	type Entry,
 	type Writer,
+	deleteEntry,
 	editEntry,
 	getEntry,
 	getWriter,
@@ -20,7 +23,7 @@ import {
 } from "@/utils/entryCache";
 import { useOPWallet } from "@/utils/hooks";
 import { getCachedDerivedKey } from "@/utils/keyCache";
-import { signUpdate } from "@/utils/signer";
+import { signRemove, signUpdate } from "@/utils/signer";
 import {
 	compress,
 	encrypt,
@@ -34,6 +37,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { MdDelete } from "react-icons/md";
 import type { Hex } from "viem";
 
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
@@ -82,6 +86,8 @@ export function MobileEditEntryPage({
 	const [markdown, setMarkdown] = useState("");
 	const [encrypted, setEncrypted] = useState(false);
 	const [isSigning, setIsSigning] = useState(false);
+	const [isDeleting, setIsDeleting] = useState(false);
+	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [initialMarkdown, setInitialMarkdown] = useState("");
 	const [entry, setEntry] = useState<Entry | null>(null);
@@ -134,6 +140,50 @@ export function MobileEditEntryPage({
 			cancelled = true;
 		};
 	}, [address, id, fetchedEntry, wallet, walletReady]);
+
+	const { mutateAsync: mutateAsyncDelete } = useMutation({
+		mutationFn: deleteEntry,
+		mutationKey: ["delete-entry", address, id],
+		onMutate: async () => {
+			await queryClient.cancelQueries({ queryKey: writerQueryKey });
+			await queryClient.cancelQueries({ queryKey: entryQueryKey });
+			const previousWriter = queryClient.getQueryData<Writer>(writerQueryKey);
+			const previousEntry = queryClient.getQueryData<Entry>(entryQueryKey);
+			const now = new Date().toISOString();
+			queryClient.setQueryData<Writer>(writerQueryKey, (current) =>
+				current
+					? {
+							...current,
+							entries: current.entries.map((item) =>
+								item.onChainId != null && item.onChainId.toString() === id
+									? { ...item, deletedAt: now, deletedAtBlockDatetime: now }
+									: item,
+							),
+						}
+					: current,
+			);
+			queryClient.removeQueries({ queryKey: entryQueryKey });
+			router.push(`/writer/${address}`);
+			return { previousWriter, previousEntry };
+		},
+		onError: (_err, _vars, ctx) => {
+			if (ctx?.previousWriter) {
+				queryClient.setQueryData(writerQueryKey, ctx.previousWriter);
+			}
+			if (ctx?.previousEntry) {
+				queryClient.setQueryData(entryQueryKey, ctx.previousEntry);
+			}
+		},
+		onSuccess: async () => {
+			await clearPublicCachedEntry(address, id);
+			if (wallet?.address) {
+				clearPrivateCachedEntry(wallet.address, address, id);
+			}
+		},
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: writerQueryKey });
+		},
+	});
 
 	const { mutate } = useMutation({
 		mutationFn: editEntry,
@@ -215,6 +265,10 @@ export function MobileEditEntryPage({
 		},
 	});
 
+	const canDelete = useMemo(() => {
+		return !!entry && !!wallet && !!writer && isWalletAuthor(wallet, entry);
+	}, [entry, wallet, writer]);
+
 	const canSave = useMemo(() => {
 		if (!entry || !wallet || !isWalletAuthor(wallet, entry)) return false;
 		return markdown !== initialMarkdown || encrypted !== isEntryPrivate(entry);
@@ -225,8 +279,38 @@ export function MobileEditEntryPage({
 		router.push(`/writer/${address}/${id}`);
 	};
 
+	const handleDelete = async () => {
+		if (!entry || !wallet || !writer || isSubmitting || isDeleting) return;
+		if (!isWalletAuthor(wallet, entry)) return;
+
+		setShowDeleteConfirm(false);
+		setIsDeleting(true);
+		try {
+			const { signature, nonce } = await signRemove(wallet, {
+				id: Number(id),
+				address: address as Hex,
+				legacyDomain: writer.legacyDomain,
+			});
+			const authToken = await getAccessToken();
+			if (!authToken) {
+				throw new Error("No auth token found");
+			}
+			await mutateAsyncDelete({
+				address: address as Hex,
+				id: Number(id),
+				signature,
+				nonce,
+				authToken,
+			});
+		} catch (err) {
+			console.error("Delete entry failed:", err);
+			setIsDeleting(false);
+		}
+	};
+
 	const handleSave = async () => {
-		if (!entry || !wallet || !writer || !canSave || isSubmitting) return;
+		if (!entry || !wallet || !writer || !canSave || isSubmitting || isDeleting)
+			return;
 		setIsSubmitting(true);
 		try {
 			if (isExternalWallet) setIsSigning(true);
@@ -292,6 +376,7 @@ export function MobileEditEntryPage({
 		return () => document.removeEventListener("keydown", onKeyDown);
 	}, [
 		canSave,
+		isDeleting,
 		isSubmitting,
 		markdown,
 		encrypted,
@@ -305,9 +390,22 @@ export function MobileEditEntryPage({
 			<>
 				<button
 					type="button"
+					aria-label="Delete Entry"
+					onClick={() => setShowDeleteConfirm(true)}
+					disabled={!canDelete || isSubmitting || isDeleting}
+					className="p-1 text-neutral-500 dark:text-neutral-400 hover:text-red-700 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+				>
+					{isDeleting ? (
+						<span className="font-mono text-sm">del</span>
+					) : (
+						<MdDelete className="h-5 w-5" />
+					)}
+				</button>
+				<button
+					type="button"
 					aria-label={encrypted ? "Make public" : "Make private"}
 					onClick={() => setEncrypted(!encrypted)}
-					disabled={!entry || isSubmitting}
+					disabled={!entry || isSubmitting || isDeleting}
 					className="p-1 text-neutral-500 dark:text-neutral-400 hover:text-primary cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
 				>
 					{encrypted ? (
@@ -320,7 +418,7 @@ export function MobileEditEntryPage({
 					type="button"
 					aria-label="Save Entry"
 					onClick={() => void handleSave()}
-					disabled={!canSave || isSubmitting}
+					disabled={!canSave || isSubmitting || isDeleting}
 					className={cn(
 						"text-primary hover:text-secondary transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed",
 					)}
@@ -334,7 +432,18 @@ export function MobileEditEntryPage({
 			</>,
 		);
 		return () => setActions(null);
-	}, [canSave, encrypted, entry, isSigning, isSubmitting, setActions]);
+	}, [
+		canDelete,
+		canSave,
+		encrypted,
+		entry,
+		isDeleting,
+		isSigning,
+		isSubmitting,
+		setActions,
+		wallet?.address,
+		writer,
+	]);
 
 	if (entry && wallet && !isWalletAuthor(wallet, entry)) {
 		return (
@@ -345,18 +454,49 @@ export function MobileEditEntryPage({
 	}
 
 	return (
-		<div className="grow flex flex-col min-h-0">
-			<div className="grow min-h-0 flex flex-col rounded-xs border border-dashed border-primary bg-surface overflow-hidden">
-				<MDX
-					ref={editorRef}
-					markdown={markdown}
-					autoFocus
-					aspectSquare={false}
-					placeholder="Edit Entry"
-					onChange={setMarkdown}
-					className="bg-transparent text-black dark:text-white h-full flex w-full p-2! create-input-mdx"
-				/>
+		<>
+			<div className="grow flex flex-col min-h-0">
+				<div className="grow min-h-0 flex flex-col rounded-xs border border-dashed border-primary bg-surface overflow-hidden">
+					<MDX
+						ref={editorRef}
+						markdown={markdown}
+						autoFocus
+						aspectSquare={false}
+						placeholder="Edit Entry"
+						onChange={setMarkdown}
+						className="bg-transparent text-black dark:text-white h-full flex w-full p-2! create-input-mdx"
+					/>
+				</div>
 			</div>
-		</div>
+
+			<Modal
+				open={showDeleteConfirm}
+				onClose={() => setShowDeleteConfirm(false)}
+				className="w-auto min-w-48 max-w-[260px] p-4 bg-surface"
+			>
+				<div className="flex flex-col gap-4 text-center">
+					<ModalTitle>delete?</ModalTitle>
+					<div className="flex items-center justify-center gap-2">
+						<button
+							type="button"
+							aria-label="Cancel delete"
+							onClick={() => setShowDeleteConfirm(false)}
+							className="px-4 py-1 text-neutral-500 dark:text-neutral-400 hover:text-primary cursor-pointer"
+						>
+							<Close className="w-5 h-5" />
+						</button>
+						<button
+							type="button"
+							aria-label="Confirm delete"
+							onClick={() => void handleDelete()}
+							disabled={isDeleting}
+							className="px-4 py-1 text-neutral-500 dark:text-neutral-400 hover:text-primary cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+						>
+							<Check className="w-5 h-5" />
+						</button>
+					</div>
+				</div>
+			</Modal>
+		</>
 	);
 }
