@@ -2,26 +2,15 @@
 
 import { EntryCardSkeleton } from "@/components/EntryCardSkeleton";
 import EntryListWithCreateInput from "@/components/EntryListWithCreateInput";
-import {
-	type Writer,
-	getSaved,
-	getWriter,
-	saveWriter,
-	unsaveWriter,
-} from "@/utils/api";
+import { type Writer, getWriter } from "@/utils/api";
 import { GRID_SKELETON_COUNT } from "@/utils/constants";
 import { useOPWallet, useProcessedEntries } from "@/utils/hooks";
 import { hasCachedDerivedKey } from "@/utils/keyCache";
 import { isEntryPrivate } from "@/utils/utils";
 import { usePrivy } from "@privy-io/react-auth";
-import {
-	useIsMutating,
-	useMutation,
-	useQuery,
-	useQueryClient,
-} from "@tanstack/react-query";
+import { useIsMutating, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Hex } from "viem";
 
 const LOADING_SKELETON_KEYS = Array.from(
@@ -34,7 +23,7 @@ export default function WriterPage() {
 	const normalizedAddress = address.toLowerCase();
 	const queryClient = useQueryClient();
 	const [wallet] = useOPWallet();
-	const { getAccessToken, authenticated, ready } = usePrivy();
+	const { authenticated, ready } = usePrivy();
 	const isLoggedIn = ready && authenticated;
 	const [shouldPoll, setShouldPoll] = useState(false);
 	const [allowDecryption, setAllowDecryption] = useState(false);
@@ -137,46 +126,6 @@ export default function WriterPage() {
 	const isEntriesProcessing =
 		writer?.entries?.length && processedEntries.length === 0 && !processedOnce;
 	const walletAddress = wallet?.address?.toLowerCase();
-	const { data: savedData } = useQuery({
-		queryKey: ["saved", walletAddress],
-		queryFn: () => getSaved(walletAddress as Hex),
-		enabled: !!walletAddress,
-	});
-	const isSavedWriter = useMemo(
-		() =>
-			Boolean(
-				savedData?.writers?.some(
-					(item) =>
-						item.writer.address.toLowerCase() === writer?.address.toLowerCase(),
-				),
-			),
-		[savedData?.writers, writer?.address],
-	);
-	const { mutate: toggleSaveWriter, isPending: isTogglingSaveWriter } =
-		useMutation({
-			mutationKey: ["toggle-save-writer", walletAddress, writer?.address],
-			mutationFn: async () => {
-				if (!walletAddress || !writer?.address) return;
-				const authToken = await getAccessToken();
-				if (!authToken) return;
-				if (isSavedWriter) {
-					await unsaveWriter({
-						userAddress: walletAddress,
-						writerAddress: writer.address,
-						authToken,
-					});
-					return;
-				}
-				await saveWriter({
-					userAddress: walletAddress,
-					writerAddress: writer.address,
-					authToken,
-				});
-			},
-			onSuccess: () => {
-				queryClient.invalidateQueries({ queryKey: ["saved", walletAddress] });
-			},
-		});
 	// Anyone signed in can create entries on a public-writable Writer.
 	// Otherwise, only addresses in the writer's managers list can. Edit
 	// and delete are still restricted to the original author of each
@@ -224,18 +173,6 @@ export default function WriterPage() {
 					setAllowDecryption(true);
 				}}
 			/>
-			{isLoggedIn && walletAddress && processedEntries.length > 0 && (
-				<div className="sticky bottom-0 left-0 pt-2">
-					<button
-						type="button"
-						className="text-neutral-400 dark:text-neutral-600 hover:text-secondary cursor-pointer"
-						disabled={isTogglingSaveWriter}
-						onClick={() => toggleSaveWriter()}
-					>
-						{isSavedWriter ? "unsave" : "save"}
-					</button>
-				</div>
-			)}
 		</div>
 	);
 }

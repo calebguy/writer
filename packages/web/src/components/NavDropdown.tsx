@@ -77,7 +77,6 @@ export function NavDropdown() {
 	const navItems = [
 		{ label: "Home", href: "/home" },
 		{ label: "Explore", href: "/explore" },
-		...(authenticated ? [{ label: "Saved", href: "/saved" }] : []),
 	].filter((item) => item.href !== pathname);
 	const [open, setOpen] = useState(false);
 	const [migrateOpen, setMigrateOpen] = useState(false);

@@ -2,13 +2,7 @@
 
 import { useEntryLoading } from "@/utils/EntryLoadingContext";
 import type { Entry as EntryType, Writer } from "@/utils/api";
-import {
-	deleteEntry,
-	editEntry,
-	getSaved,
-	saveEntry,
-	unsaveEntry,
-} from "@/utils/api";
+import { deleteEntry, editEntry } from "@/utils/api";
 import { cn } from "@/utils/cn";
 import {
 	clearPrivateCachedEntry,
@@ -26,7 +20,7 @@ import {
 	sleep,
 } from "@/utils/utils";
 import { usePrivy } from "@privy-io/react-auth";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -61,8 +55,7 @@ export default function Entry({
 	legacyDomain?: boolean;
 }) {
 	const [wallet] = useOPWallet();
-	const { getAccessToken, authenticated, ready } = usePrivy();
-	const isLoggedIn = ready && authenticated;
+	const { getAccessToken } = usePrivy();
 	const router = useRouter();
 	const queryClient = useQueryClient();
 	const { setEntryLoading } = useEntryLoading();
@@ -94,45 +87,6 @@ export default function Entry({
 	//      chunks under a confirmed `updatedAtHash` once the pending
 	//      overlay has dropped off.
 	const pendingSavedContentRef = useRef<string | null>(null);
-	const walletAddress = wallet?.address?.toLowerCase();
-	const { data: savedData } = useQuery({
-		queryKey: ["saved", walletAddress],
-		queryFn: () => getSaved(walletAddress as Hex),
-		enabled: !!walletAddress,
-	});
-	const isSavedEntry = useMemo(
-		() =>
-			Boolean(
-				savedData?.entries?.some((item) => item.entry.id === initialEntry.id),
-			),
-		[savedData?.entries, initialEntry.id],
-	);
-	const { mutate: toggleSaveEntry, isPending: isTogglingSaveEntry } =
-		useMutation({
-			mutationKey: ["toggle-save-entry", walletAddress, initialEntry.id],
-			mutationFn: async () => {
-				if (!walletAddress) return;
-				const authToken = await getAccessToken();
-				if (!authToken) return;
-				if (isSavedEntry) {
-					await unsaveEntry({
-						userAddress: walletAddress,
-						entryId: initialEntry.id,
-						authToken,
-					});
-					return;
-				}
-				await saveEntry({
-					userAddress: walletAddress,
-					entryId: initialEntry.id,
-					authToken,
-				});
-			},
-			onSuccess: () => {
-				queryClient.invalidateQueries({ queryKey: ["saved", walletAddress] });
-			},
-		});
-
 	// Signal to header that entry is ready to display
 	useEffect(() => {
 		if (processedEntry) {
@@ -401,7 +355,6 @@ export default function Entry({
 	}, [isPendingDelete, isPendingEdit, deleteSubmitted, editSubmitted]);
 
 	const editHref = `/writer/${address}/${id}/edit`;
-	const showMobileSave = isLoggedIn && !!walletAddress;
 	const showHeaderEdit = canEdit && !isEditing;
 	const showHeaderPrivacyIcon =
 		!!processedEntry && isEntryPrivate(processedEntry);
@@ -447,8 +400,6 @@ export default function Entry({
 	}, [
 		editHref,
 		isEditing,
-		isSavedEntry,
-		isTogglingSaveEntry,
 		router,
 		setActions,
 		showHeaderEdit,
@@ -748,46 +699,7 @@ export default function Entry({
 							{createdAt}
 						</span>
 					)}
-					{isLoggedIn && walletAddress && (
-						<div className="hidden lg:block">
-							<button
-								type="button"
-								className="text-neutral-400 dark:text-neutral-600 hover:text-secondary cursor-pointer"
-								disabled={isTogglingSaveEntry}
-								onClick={() => toggleSaveEntry()}
-							>
-								{isSavedEntry ? "unsave" : "save"}
-							</button>
-						</div>
-					)}
 				</div>
-				{showMobileSave && (
-					<button
-						type="button"
-						aria-label={isSavedEntry ? "Unsave entry" : "Save entry"}
-						disabled={isTogglingSaveEntry}
-						onClick={() => toggleSaveEntry()}
-						className="lg:hidden ml-auto text-neutral-400 dark:text-neutral-600 hover:text-secondary transition-opacity cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
-					>
-						<span
-							aria-hidden="true"
-							className={cn("block h-6 w-6 bg-current transition-opacity", {
-								"opacity-25": !isSavedEntry,
-								"opacity-100": isSavedEntry,
-							})}
-							style={{
-								WebkitMaskImage: "url('/images/relics/splat-1.png')",
-								maskImage: "url('/images/relics/splat-1.png')",
-								WebkitMaskRepeat: "no-repeat",
-								maskRepeat: "no-repeat",
-								WebkitMaskPosition: "center",
-								maskPosition: "center",
-								WebkitMaskSize: "contain",
-								maskSize: "contain",
-							}}
-						/>
-					</button>
-				)}
 				{canEdit && (
 					<div className="flex gap-2 justify-between">
 						<div className="flex flex-col gap-1">

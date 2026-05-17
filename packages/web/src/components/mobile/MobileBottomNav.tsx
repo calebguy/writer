@@ -15,7 +15,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ColorModal } from "../ColorModal";
 import { queryClient } from "../Providers";
 
-const VISIBLE_PATHS = new Set(["/home", "/explore", "/saved", "/writer"]);
+const VISIBLE_PATHS = new Set(["/home", "/explore", "/writer"]);
 
 function isComposeRoute(pathname: string) {
 	const segments = pathname.split("/").filter(Boolean);
@@ -365,33 +365,14 @@ export function MobileBottomNav({
 								priority
 							/>
 						</button>
-						{isLoggedIn && (
-							<button
-								type="button"
-								title="Saved"
-								className={`p-1.5 rounded-full transition-colors ${navIconClass(
-									isRouteActive(pathname, "/saved"),
-								)}`}
-								onClick={() => {
-									setShowSubMenu(false);
-									router.push("/saved");
-								}}
-							>
-								<Image
-									src="/images/relics/splat-1.png"
-									alt="Saved"
-									width={100}
-									height={100}
-									className="w-8 h-8 dark:invert"
-									priority
-								/>
-							</button>
-						)}
 					</div>
 				</div>
 			</div>
 
-			<ColorModal open={showColorModal} onClose={() => setShowColorModal(false)} />
+			<ColorModal
+				open={showColorModal}
+				onClose={() => setShowColorModal(false)}
+			/>
 		</>
 	);
 }
