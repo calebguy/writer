@@ -439,6 +439,7 @@ export function MobileEditEntryPage({
 		isDeleting,
 		isSigning,
 		isSubmitting,
+		markdown,
 		setActions,
 		wallet?.address,
 		writer,
