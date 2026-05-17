@@ -544,7 +544,32 @@ export default function Entry({
 
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
-			if (isEditing && (e.metaKey || e.ctrlKey) && e.key === "Enter") {
+			const isCommandShortcut = e.metaKey || e.ctrlKey;
+			const key = e.key.toLowerCase();
+
+			if (!isEditing && canEdit && isCommandShortcut && key === "e") {
+				e.preventDefault();
+				const shouldUseEditPage = window.matchMedia("(max-width: 1023px)").matches;
+
+				if (shouldUseEditPage) {
+					router.push(editHref);
+					return;
+				}
+
+				void import("./markdown/MDX");
+				setIsEditing(true);
+				return;
+			}
+
+			if (isEditing && key === "escape") {
+				e.preventDefault();
+				setEditedContent(processedEntry?.decompressed ?? "");
+				setIsEditing(false);
+				setIsDeleting(false);
+				return;
+			}
+
+			if (isEditing && isCommandShortcut && e.key === "Enter") {
 				e.preventDefault();
 				if (isContentChanged && !isEditPending) {
 					handleSave();
@@ -554,7 +579,16 @@ export default function Entry({
 
 		window.addEventListener("keydown", handleKeyDown);
 		return () => window.removeEventListener("keydown", handleKeyDown);
-	}, [isEditing, isContentChanged, isEditPending, handleSave]);
+	}, [
+		canEdit,
+		isEditing,
+		isContentChanged,
+		isEditPending,
+		handleSave,
+		processedEntry,
+		router,
+		editHref,
+	]);
 
 	const canView = useMemo(() => {
 		if (processedEntry) {
