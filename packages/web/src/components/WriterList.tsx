@@ -463,6 +463,26 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 						className="text-black dark:text-white writer-title home-writer-content"
 					/>
 				</div>
+				{!isPendingWriter && (
+					<>
+						<button
+							type="button"
+							aria-label="Hide Place"
+							title="Hide Place"
+							className="peer/hide absolute bottom-0.5 left-5.5 z-20 flex h-6 w-6 items-center justify-center rounded-xs text-neutral-400 opacity-0 transition-opacity group-hover/card:opacity-40 hover:text-primary hover:opacity-100 focus-visible:text-primary focus-visible:opacity-100 cursor-pointer"
+							onClick={(e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								hideWriter(writer.address as Hex);
+							}}
+						>
+							<ClosedEye className="w-4 h-4" />
+						</button>
+						<div className="absolute left-0 top-0 z-10 hidden h-full w-full items-center justify-center bg-surface-overlay/90 pointer-events-none peer-hover/hide:flex peer-focus/hide:flex">
+							<span className="text-primary italic">Hide?</span>
+						</div>
+					</>
+				)}
 				{canReorderWriter && (
 					<button
 						type="button"
@@ -488,38 +508,14 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 					</button>
 				)}
 				<div className="writer-card-meta shrink-0 text-right text-sm text-neutral-400 dark:text-neutral-600 leading-3 pt-2">
-					<div
-						className={
-							isPendingWriter
-								? "inline-block"
-								: "group home-hide-group inline-block"
-						}
-					>
+					<div className="inline-block">
 						{isPendingWriter ? (
 							<span className="pending-entry-spinner inline-flex ml-auto">
 								<span className="pending-entry-spinner-track" />
 								<AiOutlineLoading3Quarters className="pending-entry-spinner-icon w-3 h-3 rotating" />
 							</span>
 						) : (
-							<>
-								<span className="group-hover:hidden block">
-									{writer.entries.length.toString()}
-								</span>
-								<button
-									type="button"
-									className="group-hover:block hidden ml-auto absolute bottom-1.5 right-2 z-10 text-primary hover:text-primary cursor-pointer"
-									onClick={(e) => {
-										e.preventDefault();
-										e.stopPropagation();
-										hideWriter(writer.address as Hex);
-									}}
-								>
-									<ClosedEye className="w-4 h-4" />
-								</button>
-								<div className="absolute left-0 top-0 w-full h-full bg-surface-overlay/90 hidden group-hover:flex items-center justify-center pointer-events-none">
-									<span className="text-primary italic">Hide?</span>
-								</div>
-							</>
+							<span className="block">{writer.entries.length.toString()}</span>
 						)}
 					</div>
 				</div>
