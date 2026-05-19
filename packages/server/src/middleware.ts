@@ -129,6 +129,13 @@ export const factoryCreateJsonValidator = zValidator(
 	}),
 );
 
+export const writerOrderJsonValidator = zValidator(
+	"json",
+	z.object({
+		addresses: z.array(ethAddress).max(500),
+	}),
+);
+
 export const x402FactoryCreateJsonValidator = zValidator(
 	"json",
 	z.object({

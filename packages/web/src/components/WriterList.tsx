@@ -7,8 +7,13 @@ import {
 	getWriter,
 	getWritersByManager,
 	hideWriter as hideWriterApi,
+	reorderWriters,
 } from "@/utils/api";
 import { GRID_SKELETON_COUNT, POLLING_INTERVAL } from "@/utils/constants";
+import {
+	applyWriterAddressOrder,
+	swappedPersistedWriterOrder,
+} from "@/utils/writerOrder";
 import { usePrivy } from "@privy-io/react-auth";
 import {
 	useIsMutating,
@@ -16,9 +21,15 @@ import {
 	useQuery,
 	useQueryClient,
 } from "@tanstack/react-query";
-import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+	type PointerEvent,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import type { Hex } from "viem";
 import CreateInput, { type CreateInputData } from "./CreateInput";
@@ -26,18 +37,36 @@ import { LoginPrompt } from "./LoginPrompt";
 import { WriterCardSkeleton } from "./WriterCardSkeleton";
 import { ClosedEye } from "./icons/ClosedEye";
 import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
-const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 
 const SKELETON_KEYS = Array.from(
 	{ length: GRID_SKELETON_COUNT },
 	(_, i) => `skeleton-${i}`,
 );
 
+type DragState = {
+	pointerId: number;
+	fromAddress: string;
+	overAddress: string | null;
+	x: number;
+	y: number;
+	offsetX: number;
+	offsetY: number;
+	width: number;
+	height: number;
+	title: string;
+};
+
 export function WriterList({ loginLogo }: { loginLogo: number }) {
 	const { ready, authenticated, user, getAccessToken } = usePrivy();
 	const isLoggedIn = useIsLoggedIn();
 	const [isPolling, setIsPolling] = useState(false);
 	const queryClient = useQueryClient();
+	const [dragState, setDragState] = useState<DragState | null>(null);
+	const dragStateRef = useRef<DragState | null>(null);
+	const setActiveDrag = useCallback((next: DragState | null) => {
+		dragStateRef.current = next;
+		setDragState(next);
+	}, []);
 
 	const address = user?.wallet?.address;
 	const isCreatingWriter =
@@ -149,6 +178,40 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 			queryClient.invalidateQueries({ queryKey: ["get-writers", address] });
 		},
 	});
+
+	const { mutate: persistWriterOrder } = useMutation({
+		mutationFn: async (orderedAddresses: string[]) => {
+			if (!address) throw new Error("No wallet address");
+			const authToken = await getAccessToken();
+			if (!authToken) throw new Error("Not authenticated");
+			return reorderWriters({
+				userAddress: address,
+				addresses: orderedAddresses,
+				authToken,
+			});
+		},
+		mutationKey: ["reorder-writers", address],
+		onMutate: async (orderedAddresses: string[]) => {
+			if (!address) return { previousWriters: undefined as undefined };
+			const queryKey = ["get-writers", address] as const;
+			await queryClient.cancelQueries({ queryKey });
+			const previousWriters = queryClient.getQueryData<Writer[]>(queryKey);
+
+			queryClient.setQueryData<Writer[]>(queryKey, (current) =>
+				applyWriterAddressOrder(current, orderedAddresses),
+			);
+
+			return { previousWriters, queryKey };
+		},
+		onError: (_error, _orderedAddresses, context) => {
+			if (!context?.queryKey) return;
+			queryClient.setQueryData(context.queryKey, context.previousWriters);
+		},
+		onSettled: () => {
+			if (!address) return;
+			queryClient.invalidateQueries({ queryKey: ["get-writers", address] });
+		},
+	});
 	const { mutateAsync: createWriter } = useMutation({
 		mutationFn: factoryCreate,
 		mutationKey: ["create-from-factory"],
@@ -244,6 +307,116 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 		}
 	}, [isPolling, writers, hasPendingWriters]);
 
+	const reorderableWriterCount =
+		writers?.reduce(
+			(count, writer) => count + (writer.createdAtHash ? 1 : 0),
+			0,
+		) ?? 0;
+	const canReorderWriters = reorderableWriterCount > 1;
+
+	const getDropAddressAtPoint = useCallback(
+		(x: number, y: number, fromAddress: string) => {
+			const target = document
+				.elementFromPoint(x, y)
+				?.closest<HTMLElement>(
+					'[data-home-writer-address][data-reorderable="true"]',
+				);
+			const targetAddress = target?.dataset.homeWriterAddress;
+			if (
+				!targetAddress ||
+				targetAddress.toLowerCase() === fromAddress.toLowerCase()
+			) {
+				return null;
+			}
+			return targetAddress;
+		},
+		[],
+	);
+
+	const handleReorderPointerDown = useCallback(
+		(event: PointerEvent<HTMLButtonElement>, writer: Writer) => {
+			if (!writer.createdAtHash || !canReorderWriters) {
+				return;
+			}
+			const card = event.currentTarget.closest<HTMLElement>(
+				"[data-home-writer-address]",
+			);
+			if (!card) {
+				return;
+			}
+
+			event.preventDefault();
+			event.stopPropagation();
+			event.currentTarget.setPointerCapture(event.pointerId);
+
+			const rect = card.getBoundingClientRect();
+			setActiveDrag({
+				pointerId: event.pointerId,
+				fromAddress: writer.address,
+				overAddress: null,
+				x: event.clientX,
+				y: event.clientY,
+				offsetX: event.clientX - rect.left,
+				offsetY: event.clientY - rect.top,
+				width: rect.width,
+				height: rect.height,
+				title: writer.title,
+			});
+		},
+		[canReorderWriters, setActiveDrag],
+	);
+
+	const handleReorderPointerMove = useCallback(
+		(event: PointerEvent<HTMLButtonElement>) => {
+			const current = dragStateRef.current;
+			if (!current || current.pointerId !== event.pointerId) {
+				return;
+			}
+			event.preventDefault();
+			event.stopPropagation();
+
+			setActiveDrag({
+				...current,
+				x: event.clientX,
+				y: event.clientY,
+				overAddress: getDropAddressAtPoint(
+					event.clientX,
+					event.clientY,
+					current.fromAddress,
+				),
+			});
+		},
+		[getDropAddressAtPoint, setActiveDrag],
+	);
+
+	const finishReorderDrag = useCallback(
+		(event: PointerEvent<HTMLButtonElement>) => {
+			const current = dragStateRef.current;
+			if (!current || current.pointerId !== event.pointerId) {
+				return;
+			}
+			event.preventDefault();
+			event.stopPropagation();
+			if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+				event.currentTarget.releasePointerCapture(event.pointerId);
+			}
+			setActiveDrag(null);
+
+			if (!current.overAddress) {
+				return;
+			}
+			const orderedAddresses = swappedPersistedWriterOrder(
+				writers,
+				current.fromAddress,
+				current.overAddress,
+			);
+			if (orderedAddresses) {
+				persistWriterOrder(orderedAddresses);
+			}
+		},
+		[persistWriterOrder, setActiveDrag, writers],
+	);
+
 	if (!isLoggedIn) {
 		return <LoginPrompt toWhat="write" logo={loginLogo} />;
 	}
@@ -260,12 +433,24 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 
 	const renderWriterCard = (writer: Writer) => {
 		const isPendingWriter = !writer.createdAtHash;
+		const canReorderWriter = !isPendingWriter && canReorderWriters;
+		const isDragging =
+			dragState?.fromAddress.toLowerCase() === writer.address.toLowerCase();
+		const isDropTarget =
+			dragState?.overAddress?.toLowerCase() === writer.address.toLowerCase();
+
 		return (
 			<Link
 				href={isPendingWriter ? "#" : `/writer/${writer.address}`}
 				key={writer.address}
-				className={`home-writer-card aspect-square bg-surface flex flex-col overflow-hidden px-2 pt-2 pb-1.5 relative w-full rounded-xs ${
+				data-home-writer-address={writer.address}
+				data-reorderable={canReorderWriter ? "true" : undefined}
+				className={`home-writer-card aspect-square bg-surface flex flex-col overflow-hidden px-2 pt-2 pb-1.5 relative w-full rounded-xs transition-[opacity,transform,box-shadow] ${
 					isPendingWriter ? "cursor-loading" : "hover:cursor-zoom-in"
+				} ${isDragging ? "opacity-30" : ""} ${
+					isDropTarget
+						? "scale-[0.98] shadow-[0_0_0_2px_rgb(var(--color-primary))]"
+						: ""
 				}`}
 				onClick={isPendingWriter ? (e) => e.preventDefault() : undefined}
 				onMouseEnter={
@@ -278,6 +463,30 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 						className="text-black dark:text-white writer-title home-writer-content"
 					/>
 				</div>
+				{canReorderWriter && (
+					<button
+						type="button"
+						aria-label="Drag to rearrange Place"
+						title="Drag to rearrange"
+						className="absolute bottom-0.5 left-0.5 z-20 flex h-6 w-6 touch-none cursor-grab items-center justify-center rounded-xs text-neutral-400 opacity-70 hover:text-primary hover:opacity-100 active:cursor-grabbing"
+						draggable={false}
+						onClick={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+						}}
+						onPointerDown={(e) => handleReorderPointerDown(e, writer)}
+						onPointerMove={handleReorderPointerMove}
+						onPointerUp={finishReorderDrag}
+						onPointerCancel={finishReorderDrag}
+					>
+						<span aria-hidden="true" className="grid grid-cols-2 gap-0.5">
+							<span className="h-1 w-1 rounded-full bg-current" />
+							<span className="h-1 w-1 rounded-full bg-current" />
+							<span className="h-1 w-1 rounded-full bg-current" />
+							<span className="h-1 w-1 rounded-full bg-current" />
+						</span>
+					</button>
+				)}
 				<div className="writer-card-meta shrink-0 text-right text-sm text-neutral-400 dark:text-neutral-600 leading-3 pt-2">
 					<div
 						className={
@@ -318,14 +527,40 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 		);
 	};
 
+	const renderDragPreview = () => {
+		if (!dragState) {
+			return null;
+		}
+
+		return (
+			<div
+				className="pointer-events-none fixed z-50 aspect-square overflow-hidden rounded-xs bg-surface px-2 pt-2 pb-1.5 shadow-[0_8px_32px_rgb(0_0_0/0.18),0_0_0_2px_rgb(var(--color-primary))]"
+				style={{
+					left: dragState.x - dragState.offsetX,
+					top: dragState.y - dragState.offsetY,
+					width: dragState.width,
+					height: dragState.height,
+				}}
+			>
+				<MarkdownRenderer
+					markdown={dragState.title}
+					className="text-black dark:text-white writer-title home-writer-content"
+				/>
+			</div>
+		);
+	};
+
 	if (!inOnboardingFlow) {
 		return (
-			<div className="grid gap-2 grid-cols-1 min-[321px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
-				<div className="hidden lg:block">
-					<CreateInput placeholder="Create a Place" onSubmit={handleSubmit} />
+			<>
+				<div className="grid gap-2 grid-cols-1 min-[321px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
+					<div className="hidden lg:block">
+						<CreateInput placeholder="Create a Place" onSubmit={handleSubmit} />
+					</div>
+					{writers?.map(renderWriterCard)}
 				</div>
-				{writers?.map(renderWriterCard)}
-			</div>
+				{renderDragPreview()}
+			</>
 		);
 	}
 

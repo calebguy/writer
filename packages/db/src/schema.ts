@@ -180,6 +180,9 @@ export const ingestorCursor = pgTable("ingestor_cursor", {
 export const user = pgTable("user", {
 	address: varchar({ length: 42 }).primaryKey(),
 	color: text(),
+	// User-specific ordering for the manager's /home Place grid. Null means
+	// "use the default newest-first order"; routes compact stale addresses out.
+	homeWriterOrder: text().array(),
 	createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
 	updatedAt: timestamp({ withTimezone: true }).notNull(),
 });

@@ -32,6 +32,35 @@ import {
 	writer,
 } from "./src/schema";
 
+function applyHomeWriterOrder<T extends { address: string }>(
+	writers: T[],
+	homeWriterOrder: string[] | null | undefined,
+) {
+	if (!homeWriterOrder || homeWriterOrder.length === 0) {
+		return writers;
+	}
+
+	const rankByAddress = new Map<string, number>();
+	for (let i = 0; i < homeWriterOrder.length; i++) {
+		rankByAddress.set(homeWriterOrder[i].toLowerCase(), i);
+	}
+
+	writers.sort((a, b) => {
+		const aRank = rankByAddress.get(a.address.toLowerCase());
+		const bRank = rankByAddress.get(b.address.toLowerCase());
+
+		if (aRank === undefined) {
+			return bRank === undefined ? 0 : -1;
+		}
+		if (bRank === undefined) {
+			return 1;
+		}
+		return aRank - bRank;
+	});
+
+	return writers;
+}
+
 class Db {
 	private pg;
 
@@ -59,13 +88,25 @@ class Db {
 	}
 
 	async getWritersByManager(managerAddress: Hex) {
-		const writers = await this.pg.query.writer.findMany({
-			where: and(
-				arrayContains(writer.managers, [managerAddress.toLowerCase()]),
-				isNull(writer.deletedAt),
-			),
-			orderBy: (writer, { desc }) => [desc(writer.createdAt)],
-		});
+		const normalizedManager = managerAddress.toLowerCase();
+		const [writers, userPreferences] = await Promise.all([
+			this.pg.query.writer.findMany({
+				where: and(
+					arrayContains(writer.managers, [normalizedManager]),
+					isNull(writer.deletedAt),
+				),
+				orderBy: (writer, { desc }) => [desc(writer.createdAt)],
+			}),
+			this.pg.query.user.findFirst({
+				columns: { homeWriterOrder: true },
+				where: eq(user.address, normalizedManager),
+			}),
+		]);
+		if (writers.length === 0) {
+			return [];
+		}
+
+		applyHomeWriterOrder(writers, userPreferences?.homeWriterOrder);
 		const storageAddresses = writers
 			.filter((w) => w.storageAddress !== null)
 			.map((w) => w.storageAddress) as string[];
@@ -626,6 +667,57 @@ class Db {
 			where: eq(user.address, normalizedAddress),
 		});
 		return data;
+	}
+
+	async setHomeWriterOrder(
+		userAddress: Hex,
+		writerAddresses: readonly string[],
+	) {
+		const normalizedUser = userAddress.toLowerCase();
+		const currentWriters = await this.pg.query.writer.findMany({
+			columns: { address: true },
+			where: and(
+				arrayContains(writer.managers, [normalizedUser]),
+				isNull(writer.deletedAt),
+			),
+			orderBy: (writer, { desc }) => [desc(writer.createdAt)],
+		});
+		const visibleWriters = new Set(currentWriters.map((w) => w.address));
+		const seen = new Set<string>();
+		const homeWriterOrder: string[] = [];
+
+		for (const address of writerAddresses) {
+			const normalizedAddress = address.toLowerCase();
+			if (
+				!visibleWriters.has(normalizedAddress) ||
+				seen.has(normalizedAddress)
+			) {
+				continue;
+			}
+			seen.add(normalizedAddress);
+			homeWriterOrder.push(normalizedAddress);
+		}
+
+		for (const writer of currentWriters) {
+			if (seen.has(writer.address)) {
+				continue;
+			}
+			homeWriterOrder.push(writer.address);
+		}
+
+		const now = new Date();
+		return this.pg
+			.insert(user)
+			.values({
+				address: normalizedUser,
+				homeWriterOrder,
+				updatedAt: now,
+			})
+			.onConflictDoUpdate({
+				target: [user.address],
+				set: { homeWriterOrder, updatedAt: now },
+			})
+			.returning();
 	}
 
 	saveWriter(userAddress: Hex, writerAddress: Hex) {

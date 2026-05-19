@@ -33,6 +33,7 @@ import {
 	factoryCreateJsonValidator,
 	updateEntryJsonValidator,
 	userAddressParamSchema,
+	writerOrderJsonValidator,
 } from "../middleware";
 import {
 	requireSavedAuth,
@@ -119,6 +120,24 @@ const writerRoutes = new Hono()
 				summary,
 				results: { writers: writerResults, entries: entryResults },
 			});
+		},
+	)
+	.post(
+		"/manager/:userAddress/order",
+		userAddressParamSchema,
+		requireSavedAuth,
+		writerOrderJsonValidator,
+		async (c) => {
+			const { userAddress } = c.req.valid("param");
+			const { addresses } = c.req.valid("json");
+
+			try {
+				const [user] = await db.setHomeWriterOrder(userAddress, addresses);
+				return c.json({ order: user?.homeWriterOrder ?? [] });
+			} catch (err) {
+				console.error("manager/order db error:", err);
+				return c.json({ error: "database error during writer reorder" }, 500);
+			}
 		},
 	)
 	.get("/me/:address", addressParamSchema, async (c) => {

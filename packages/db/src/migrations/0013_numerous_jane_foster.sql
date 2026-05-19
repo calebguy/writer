@@ -1,0 +1,1 @@
+ALTER TABLE "user" ADD COLUMN "home_writer_order" text[];

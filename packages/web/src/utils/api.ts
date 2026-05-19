@@ -202,6 +202,30 @@ export async function reconcileManager({
 	return res.json();
 }
 
+export async function reorderWriters({
+	userAddress,
+	addresses,
+	authToken,
+}: {
+	userAddress: Hex | string;
+	addresses: Array<Hex | string>;
+	authToken: string;
+}) {
+	const res = await client.manager[":userAddress"].order.$post(
+		{
+			param: { userAddress: getAddress(userAddress) },
+			json: { addresses: addresses.map((address) => getAddress(address)) },
+		},
+		{
+			headers: { Authorization: `Bearer ${authToken}` },
+		},
+	);
+	if (!res.ok) {
+		throw new Error(res.statusText);
+	}
+	return res.json();
+}
+
 export async function getRelayWallets() {
 	const res = await client.relay.wallets.$get();
 	if (!res.ok) {
