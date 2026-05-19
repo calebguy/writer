@@ -469,7 +469,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 							type="button"
 							aria-label="Hide Place"
 							title="Hide Place"
-							className="peer/hide absolute bottom-0.5 left-5.5 z-20 flex h-6 w-6 items-center justify-center rounded-xs text-neutral-400 opacity-0 transition-opacity group-hover/card:opacity-40 hover:text-primary hover:opacity-100 focus-visible:text-primary focus-visible:opacity-100 cursor-pointer"
+							className="peer/hide absolute bottom-0.25 right-1 z-20 flex h-6 w-6 items-center justify-center rounded-xs text-neutral-400 opacity-0 transition-opacity group-hover/card:opacity-40 hover:text-primary hover:opacity-100 focus-visible:text-primary focus-visible:opacity-100 cursor-pointer"
 							onClick={(e) => {
 								e.preventDefault();
 								e.stopPropagation();
@@ -515,7 +515,9 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 								<AiOutlineLoading3Quarters className="pending-entry-spinner-icon w-3 h-3 rotating" />
 							</span>
 						) : (
-							<span className="block">{writer.entries.length.toString()}</span>
+							<span className="block group-hover/card:hidden">
+								{writer.entries.length.toString()}
+							</span>
 						)}
 					</div>
 				</div>
