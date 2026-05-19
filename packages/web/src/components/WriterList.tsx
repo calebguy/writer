@@ -445,7 +445,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 				key={writer.address}
 				data-home-writer-address={writer.address}
 				data-reorderable={canReorderWriter ? "true" : undefined}
-				className={`home-writer-card aspect-square bg-surface flex flex-col overflow-hidden px-2 pt-2 pb-1.5 relative w-full rounded-xs transition-[opacity,transform,box-shadow] ${
+				className={`group/card home-writer-card aspect-square bg-surface flex flex-col overflow-hidden px-2 pt-2 pb-1.5 relative w-full rounded-xs transition-[opacity,transform,box-shadow] ${
 					isPendingWriter ? "cursor-loading" : "hover:cursor-zoom-in"
 				} ${isDragging ? "opacity-30" : ""} ${
 					isDropTarget
@@ -468,7 +468,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 						type="button"
 						aria-label="Drag to rearrange Place"
 						title="Drag to rearrange"
-						className="absolute bottom-0.5 left-0.5 z-20 flex h-6 w-6 touch-none cursor-grab items-center justify-center rounded-xs text-neutral-400 opacity-70 hover:text-primary hover:opacity-100 active:cursor-grabbing"
+						className="absolute bottom-0.5 left-0.5 z-20 flex h-6 w-6 touch-none cursor-grab items-center justify-center rounded-xs text-neutral-400 opacity-0 transition-opacity group-hover/card:opacity-40 hover:text-primary hover:opacity-100 focus-visible:text-primary focus-visible:opacity-100 active:cursor-grabbing"
 						draggable={false}
 						onClick={(e) => {
 							e.preventDefault();
