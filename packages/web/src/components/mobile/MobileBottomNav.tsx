@@ -217,7 +217,7 @@ export function MobileBottomNav({
 				className={
 					preview
 						? "relative flex justify-center"
-						: `md:hidden fixed left-1/2 -translate-x-1/2 z-40 transition-transform duration-300 ease-in-out ${
+						: `lg:hidden fixed left-1/2 -translate-x-1/2 z-40 transition-transform duration-300 ease-in-out ${
 								hidden ? "translate-y-[calc(100%+60px)]" : ""
 							}`
 				}
