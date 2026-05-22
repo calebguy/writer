@@ -42,7 +42,7 @@ export function MobileBottomNav({
 	const pathname = usePathname();
 	const router = useRouter();
 	const { logout, authenticated, ready } = usePrivy();
-	const isLoggedIn = !ready || authenticated;
+	const isLoggedIn = ready && authenticated;
 	const [showSubMenu, setShowSubMenu] = useState(false);
 	const [showColorModal, setShowColorModal] = useState(false);
 	const [themeMode, setThemeMode] = useState<ThemeMode>("system");
@@ -51,7 +51,7 @@ export function MobileBottomNav({
 	const containerRef = useRef<HTMLDivElement>(null);
 
 	const shouldShow = useMemo(() => {
-		if (isComposeRoute(pathname)) {
+		if (!isLoggedIn || isComposeRoute(pathname)) {
 			return false;
 		}
 		for (const path of VISIBLE_PATHS) {
@@ -60,7 +60,7 @@ export function MobileBottomNav({
 			}
 		}
 		return false;
-	}, [pathname]);
+	}, [isLoggedIn, pathname]);
 
 	useEffect(() => {
 		setShowSubMenu(false);
@@ -206,7 +206,7 @@ export function MobileBottomNav({
 		router.push("/home");
 	};
 
-	if (!shouldShow && !preview) {
+	if ((!shouldShow && !preview) || (!isLoggedIn && !preview)) {
 		return null;
 	}
 
