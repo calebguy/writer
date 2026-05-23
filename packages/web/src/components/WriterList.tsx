@@ -2,7 +2,10 @@
 
 import { useHomeChrome } from "@/components/home/HomeChromeContext";
 import { useIsLoggedIn } from "@/hooks/useIsLoggedIn";
-import { hiddenWritersQueryKey } from "@/hooks/useHiddenWriters";
+import {
+	hiddenWritersQueryKey,
+	useHiddenWriters,
+} from "@/hooks/useHiddenWriters";
 import {
 	type Writer,
 	factoryCreate,
@@ -12,7 +15,10 @@ import {
 	reorderWriters,
 } from "@/utils/api";
 import { GRID_SKELETON_COUNT, POLLING_INTERVAL } from "@/utils/constants";
-import { getHomeOnboardingMode } from "@/utils/homeOnboarding";
+import {
+	getHomeOnboardingMode,
+	shouldStartHomeOnboarding,
+} from "@/utils/homeOnboarding";
 import {
 	applyWriterAddressOrder,
 	swappedPersistedWriterOrder,
@@ -83,29 +89,69 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 		enabled: !!address && authenticated,
 		refetchInterval: isPolling && !isCreatingWriter ? POLLING_INTERVAL : false,
 	});
+	const { data: hiddenWriters, isLoading: isLoadingHiddenWriters } =
+		useHiddenWriters();
 
-	// Client-only onboarding flow for first-time (or back-to-zero) users.
-	// Turns on whenever writers.length === 0, holds the centered hero layout
-	// across empty → creating → created (so the CreateInput never visibly
-	// relocates), and only turns off when the user clicks "Create More" or
-	// navigates / reloads. Deleting every writer re-triggers onboarding.
+	// Client-only onboarding flow for true first-time users.
+	// Turns on whenever the user has no visible writers and no hidden writers,
+	// holds the centered hero layout across empty → creating → created (so the
+	// CreateInput never visibly relocates), and only turns off when the user
+	// clicks "Create More" or navigates / reloads. Hiding every writer must not
+	// re-trigger onboarding, because those Places are recoverable from Hidden.
 	const [inOnboardingFlow, setInOnboardingFlow] = useState(false);
 	const inOnboardingRef = useRef(false);
+	// Sticky "creating" flag to avoid a flash of the empty state in the gap
+	// between `/create` returning 201 and the writers query refetching the
+	// new pending row. Set on submit (in onboarding), cleared on mutation
+	// error or when the user exits onboarding. `confirmedFirstWriter` moves
+	// us to "created" regardless, so we don't need to clear on success.
+	const [hasSubmittedInOnboarding, setHasSubmittedInOnboarding] =
+		useState(false);
+	const shouldStartOnboardingNow =
+		!!writers &&
+		!!hiddenWriters &&
+		shouldStartHomeOnboarding({
+			hasVisibleWriters: writers.length > 0,
+			hasHiddenWriters: hiddenWriters.length > 0,
+		});
+	const shouldExitOnboardingForHiddenWriters =
+		!!writers &&
+		!!hiddenWriters &&
+		writers.length === 0 &&
+		hiddenWriters.length > 0;
+	const isInOnboardingFlow =
+		!shouldExitOnboardingForHiddenWriters &&
+		(inOnboardingFlow || shouldStartOnboardingNow);
 	useEffect(() => {
-		inOnboardingRef.current = inOnboardingFlow;
-	}, [inOnboardingFlow]);
+		inOnboardingRef.current = isInOnboardingFlow;
+	}, [isInOnboardingFlow]);
 	useEffect(() => {
-		if (!ready || isLoading) return;
-		// `writers` is undefined both while the query is disabled (Privy not
-		// fully hydrated yet) and while it's loading. Only trigger onboarding
-		// once the query has actually resolved to an empty array — otherwise
-		// users with existing writers get flashed into the centered layout
-		// during the Privy-hydrating gap and the flag goes sticky there.
-		if (!writers) return;
-		if (writers.length === 0 && !inOnboardingFlow) {
+		if (!ready || isLoading || isLoadingHiddenWriters) return;
+		// `writers` and `hiddenWriters` are undefined while their queries are
+		// disabled or loading. Only trigger onboarding once both have resolved
+		// so users with only hidden Places do not get first-time UI.
+		if (!writers || !hiddenWriters) return;
+
+		if (shouldStartOnboardingNow && !inOnboardingFlow) {
 			setInOnboardingFlow(true);
+			return;
 		}
-	}, [ready, isLoading, writers, inOnboardingFlow]);
+
+		if (shouldExitOnboardingForHiddenWriters && inOnboardingFlow) {
+			setInOnboardingFlow(false);
+			inOnboardingRef.current = false;
+			setHasSubmittedInOnboarding(false);
+		}
+	}, [
+		ready,
+		isLoading,
+		isLoadingHiddenWriters,
+		writers,
+		hiddenWriters,
+		shouldStartOnboardingNow,
+		shouldExitOnboardingForHiddenWriters,
+		inOnboardingFlow,
+	]);
 
 	// During onboarding we intentionally wait for the on-chain confirmation
 	// (createdAtHash) before switching to "created" — the CreateInput stays
@@ -115,13 +161,6 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 		[writers],
 	);
 
-	// Sticky "creating" flag to avoid a flash of the empty state in the gap
-	// between `/create` returning 201 and the writers query refetching the
-	// new pending row. Set on submit (in onboarding), cleared on mutation
-	// error or when the user exits onboarding. `confirmedFirstWriter` moves
-	// us to "created" regardless, so we don't need to clear on success.
-	const [hasSubmittedInOnboarding, setHasSubmittedInOnboarding] =
-		useState(false);
 
 	const onboardingMode = getHomeOnboardingMode({
 		hasConfirmedWriter: !!confirmedFirstWriter,
@@ -129,7 +168,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 		isCreatingWriter,
 		hasSubmittedInOnboarding,
 	});
-	const showMobileEmptyCreate = inOnboardingFlow && onboardingMode === "empty";
+	const showMobileEmptyCreate = isInOnboardingFlow && onboardingMode === "empty";
 	const setHomeIsEmpty = homeChrome?.setIsEmptyHome;
 
 	useEffect(() => {
@@ -167,21 +206,52 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 		onMutate: async (writerAddress: Hex | string) => {
 			if (!address) return { previousWriters: undefined as undefined };
 			const queryKey = ["get-writers", address] as const;
+			const hiddenQueryKey = hiddenWritersQueryKey(address);
+			const normalizedWriterAddress = writerAddress.toLowerCase();
 			await queryClient.cancelQueries({ queryKey });
+			await queryClient.cancelQueries({ queryKey: hiddenQueryKey });
 			const previousWriters = queryClient.getQueryData<Writer[]>(queryKey);
+			const previousHiddenWriters =
+				queryClient.getQueryData<Writer[]>(hiddenQueryKey);
+			const hiddenWriter = previousWriters?.find(
+				(writer) => writer.address.toLowerCase() === normalizedWriterAddress,
+			);
 
 			queryClient.setQueryData<Writer[]>(queryKey, (current) =>
 				(current ?? []).filter(
 					(writer) =>
-						writer.address.toLowerCase() !== writerAddress.toLowerCase(),
+						writer.address.toLowerCase() !== normalizedWriterAddress,
 				),
 			);
 
-			return { previousWriters, queryKey };
+			if (hiddenWriter) {
+				queryClient.setQueryData<Writer[]>(hiddenQueryKey, (current) => {
+					if (
+						current?.some(
+							(writer) =>
+								writer.address.toLowerCase() === normalizedWriterAddress,
+						)
+					) {
+						return current;
+					}
+					return [hiddenWriter, ...(current ?? [])];
+				});
+			}
+
+			return {
+				previousWriters,
+				previousHiddenWriters,
+				queryKey,
+				hiddenQueryKey,
+			};
 		},
 		onError: (_error, _writerAddress, context) => {
 			if (!context?.queryKey) return;
 			queryClient.setQueryData(context.queryKey, context.previousWriters);
+			queryClient.setQueryData(
+				context.hiddenQueryKey,
+				context.previousHiddenWriters,
+			);
 		},
 		onSettled: () => {
 			if (!address) return;
@@ -286,7 +356,8 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 			console.error("No auth token found");
 			return;
 		}
-		if (inOnboardingRef.current) {
+		if (isInOnboardingFlow) {
+			inOnboardingRef.current = true;
 			setHasSubmittedInOnboarding(true);
 		}
 		await createWriter({
@@ -433,8 +504,11 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 	if (!isLoggedIn) {
 		return <LoginPrompt toWhat="write" logo={loginLogo} />;
 	}
+	const isCheckingHiddenWritersForEmptyHome =
+		!isLoading && writers?.length === 0 && isLoadingHiddenWriters;
 
-	if (!ready || isLoading) {
+
+	if (!ready || isLoading || isCheckingHiddenWritersForEmptyHome) {
 		return (
 			<div className="grid gap-2 grid-cols-1 min-[321px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
 				{SKELETON_KEYS.map((key) => (
@@ -567,7 +641,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 		);
 	};
 
-	if (!inOnboardingFlow) {
+	if (!isInOnboardingFlow) {
 		return (
 			<>
 				<div className="grid gap-2 grid-cols-1 min-[321px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">

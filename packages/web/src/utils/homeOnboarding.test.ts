@@ -1,5 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { getHomeOnboardingMode } from "./homeOnboarding";
+import {
+	getHomeOnboardingMode,
+	shouldStartHomeOnboarding,
+} from "./homeOnboarding";
 
 describe("getHomeOnboardingMode", () => {
 	test("shows empty create state when no visible writers remain", () => {
@@ -33,5 +36,25 @@ describe("getHomeOnboardingMode", () => {
 				hasSubmittedInOnboarding: false,
 			}),
 		).toBe("created");
+	});
+});
+
+describe("shouldStartHomeOnboarding", () => {
+	test("starts only when the user has no visible and no hidden writers", () => {
+		expect(
+			shouldStartHomeOnboarding({
+				hasVisibleWriters: false,
+				hasHiddenWriters: false,
+			}),
+		).toBe(true);
+	});
+
+	test("does not start when all writers are hidden", () => {
+		expect(
+			shouldStartHomeOnboarding({
+				hasVisibleWriters: false,
+				hasHiddenWriters: true,
+			}),
+		).toBe(false);
 	});
 });

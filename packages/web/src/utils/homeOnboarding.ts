@@ -1,4 +1,13 @@
 export type HomeOnboardingMode = "empty" | "creating" | "created";
+export function shouldStartHomeOnboarding({
+	hasVisibleWriters,
+	hasHiddenWriters,
+}: {
+	hasVisibleWriters: boolean;
+	hasHiddenWriters: boolean;
+}): boolean {
+	return !hasVisibleWriters && !hasHiddenWriters;
+}
 
 export function getHomeOnboardingMode({
 	hasConfirmedWriter,
