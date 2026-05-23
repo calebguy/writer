@@ -14,6 +14,8 @@ import {
 	OLD_WRITER_CREATED,
 	TOPIC0,
 } from "./events";
+import { WriterAbi } from "utils";
+import { httpClient } from "./client";
 import { confirmRelayTx } from "./relay";
 
 export interface TxData {
@@ -56,6 +58,8 @@ export async function processLog(
 			return handleEntryRemoved(log, tx, block, db);
 		case TOPIC0.LOGIC_SET:
 			return handleLogicSet(log, db);
+		case TOPIC0.TITLE_SET:
+			return handleTitleSet(log, tx, block, db);
 		case TOPIC0.HEX_SET:
 			return handleHexSet(log, db);
 	}
@@ -171,6 +175,7 @@ async function upsertWriterCreated(args: {
 	});
 
 	args.registry.addStorageAddress(args.storeAddress);
+	args.registry.addWriterAddress(args.writerAddress);
 
 	await args.db.upsertWriter({
 		address: args.writerAddress,
@@ -421,6 +426,39 @@ async function handleLogicSet(log: Log, db: Db): Promise<void> {
 		storageAddress,
 		newLogic,
 		updated,
+	});
+}
+
+async function handleTitleSet(
+	log: Log,
+	tx: TxData,
+	block: BlockData,
+	db: Db,
+): Promise<void> {
+	const transactionId = await confirmRelayTx({
+		txFrom: tx.from,
+		txNonce: tx.nonce,
+		blockNumber: block.number,
+		txHash: tx.hash,
+		db,
+	});
+	const relayTx = transactionId ? await db.getTxById(transactionId) : null;
+	const relayArgs = relayTx?.args as { title?: string } | null;
+	const title =
+		typeof relayArgs?.title === "string"
+			? relayArgs.title
+			: await httpClient.readContract({
+					address: log.address as Hex,
+					abi: WriterAbi,
+					functionName: "title",
+					blockNumber: block.number,
+				});
+
+	await db.updateWriterTitle(log.address as Hex, title);
+	console.log("TitleSet", {
+		writer: log.address,
+		title,
+		transactionId,
 	});
 }
 

@@ -8,6 +8,7 @@ import { useIsMac } from "@/utils/hooks";
 import type { MDXEditorMethods } from "@mdxeditor/editor";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { MAX_TITLE_LENGTH } from "utils/constants";
 import { LoadingRelic } from "./LoadingRelic";
 import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
 
@@ -27,6 +28,12 @@ interface CreateInputProps {
 	// Only shown while waiting on an external-wallet signature prompt.
 	// Embedded-wallet flows should leave this false so submission feels instant.
 	isLoading?: boolean;
+	initialMarkdown?: string;
+	forceOpen?: boolean;
+	submitLabel?: string;
+	maxLength?: number;
+	onCancel?: () => void;
+	hidePrivacyControls?: boolean;
 }
 
 export default function CreateInput({
@@ -36,6 +43,12 @@ export default function CreateInput({
 	onSubmit,
 	canExpand = false,
 	isLoading = false,
+	initialMarkdown,
+	forceOpen = false,
+	submitLabel,
+	maxLength,
+	onCancel,
+	hidePrivacyControls = false,
 }: CreateInputProps) {
 	const isMac = useIsMac();
 	const [hasFocus, setHasFocus] = useState(false);
@@ -49,6 +62,8 @@ export default function CreateInput({
 	const [loadingContent, setLoadingContent] = useState<string>("");
 	const [encrypted, setEncrypted] = useState(false);
 
+	const submitVerb = submitLabel ?? "create";
+	const lengthLimit = maxLength ?? MAX_TITLE_LENGTH;
 	// Handle clicks inside or outside the container
 	useEffect(() => {
 		const handleClick = (event: MouseEvent) => {
@@ -69,6 +84,14 @@ export default function CreateInput({
 		};
 	}, [markdown, onExpand]);
 
+	useEffect(() => {
+		if (!forceOpen) return;
+		setMarkdown(initialMarkdown ?? "");
+		editorRef.current?.setMarkdown(initialMarkdown ?? "");
+		setHasFocus(true);
+		setIsExpanded(false);
+	}, [forceOpen, initialMarkdown]);
+
 	// Focus the editor when hasFocus changes to true
 	useEffect(() => {
 		if (hasFocus && editorRef.current) {
@@ -82,6 +105,8 @@ export default function CreateInput({
 	// Handle keyboard shortcuts
 	useEffect(() => {
 		const handleKeyDown = (event: KeyboardEvent) => {
+			if (!hasFocus && !isExpanded && !forceOpen) return;
+
 			// Submit on cmd/ctrl + enter
 			if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
 				event.preventDefault();
@@ -89,6 +114,7 @@ export default function CreateInput({
 					handleSubmit();
 				}
 			} else if (event.key === "Escape") {
+				event.preventDefault();
 				handleReset();
 			}
 		};
@@ -97,7 +123,15 @@ export default function CreateInput({
 		return () => {
 			document.removeEventListener("keydown", handleKeyDown);
 		};
-	}, [markdown, encrypted, onSubmit, onExpand]);
+	}, [
+		markdown,
+		encrypted,
+		onSubmit,
+		onExpand,
+		hasFocus,
+		isExpanded,
+		forceOpen,
+	]);
 
 	const updateHintVisibility = useCallback(() => {
 		if (!markdown.trim()) {
@@ -157,25 +191,27 @@ export default function CreateInput({
 	}, [hasFocus, isExpanded, updateHintVisibility]);
 
 	const handleReset = () => {
-		editorRef.current?.setMarkdown("");
-		setMarkdown("");
-		setHasFocus(false);
+		const resetMarkdown = forceOpen ? initialMarkdown ?? "" : "";
+		editorRef.current?.setMarkdown(resetMarkdown);
+		setMarkdown(resetMarkdown);
+		setHasFocus(Boolean(forceOpen));
 		setIsExpanded(false);
 		setEncrypted(false);
 		onExpand?.(false);
+		onCancel?.();
 	};
 
 	const handleSubmit = () => {
-		if (markdown.trim() === "") return;
+		if (markdown.trim() === "" || markdown.length > lengthLimit) return;
 		if (isLoading) return;
 		const data = { markdown, encrypted };
 		// Optimistically clear the editor — restore on failure.
 		const prevMarkdown = markdown;
 		const prevEncrypted = encrypted;
 		setLoadingContent(markdown);
-		editorRef.current?.setMarkdown("");
-		setMarkdown("");
-		setHasFocus(false);
+		editorRef.current?.setMarkdown(forceOpen ? prevMarkdown : "");
+		setMarkdown(forceOpen ? prevMarkdown : "");
+		setHasFocus(Boolean(forceOpen));
 		setIsExpanded(false);
 		setEncrypted(false);
 		onExpand?.(false);
@@ -214,7 +250,7 @@ export default function CreateInput({
 				className={cn(
 					"border border-surface h-full flex justify-center items-center text-primary text-2xl bg-background hover:bg-surface hover:cursor-text rounded-xs",
 					{
-						hidden: hasFocus || isExpanded,
+						hidden: forceOpen || hasFocus || isExpanded,
 					},
 				)}
 				onClick={() => setHasFocus(true)}
@@ -229,9 +265,10 @@ export default function CreateInput({
 			<div
 				ref={editorShellRef}
 				className={cn("h-full relative min-h-0 overflow-hidden rounded-xs", {
-					hidden: !hasFocus && !isExpanded,
-					flex: hasFocus || isExpanded,
-					"border border-dashed border-primary w-full": hasFocus || isExpanded,
+					hidden: !forceOpen && !hasFocus && !isExpanded,
+					flex: forceOpen || hasFocus || isExpanded,
+					"border border-dashed border-primary w-full":
+						forceOpen || hasFocus || isExpanded,
 				})}
 			>
 				<MDX
@@ -244,6 +281,7 @@ export default function CreateInput({
 					placeholder={placeholderMarkdown ?? placeholder}
 					renderPlaceholderAsMarkdown={!!placeholderMarkdown}
 					onChange={setMarkdown}
+					maxLength={lengthLimit}
 				/>
 				<div
 					ref={hintRef}
@@ -254,9 +292,9 @@ export default function CreateInput({
 					)}
 				>
 					<div>{isMac ? "⌘" : "ctrl"} + ↵</div>
-					<div>to create</div>
+					<div>to {submitVerb}</div>
 				</div>
-				{hasFocus && canExpand && (
+				{hasFocus && canExpand && !hidePrivacyControls && (
 					<div className="absolute bottom-1 flex justify-between w-full z-20 px-2 pb-0.5">
 						<button
 							type="button"

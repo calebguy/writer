@@ -5,6 +5,7 @@ export class AddressRegistry {
 	private factoryAddresses: Set<string>;
 	private colorRegistryAddress: string;
 	private storageAddresses: Set<string>;
+	private writerAddresses: Set<string>;
 	private newlyDiscovered: string[] = [];
 
 	constructor(config: { factories: string[]; colorRegistry: string }) {
@@ -13,12 +14,19 @@ export class AddressRegistry {
 		);
 		this.colorRegistryAddress = config.colorRegistry.toLowerCase();
 		this.storageAddresses = new Set();
+		this.writerAddresses = new Set();
 	}
 
 	async seedFromDb(db: Db): Promise<void> {
-		const addresses = await db.getAllStorageAddresses();
-		for (const addr of addresses) {
+		const [storageAddresses, writerAddresses] = await Promise.all([
+			db.getAllStorageAddresses(),
+			db.getAllWriterAddresses(),
+		]);
+		for (const addr of storageAddresses) {
 			this.storageAddresses.add(addr.toLowerCase());
+		}
+		for (const addr of writerAddresses) {
+			this.writerAddresses.add(addr.toLowerCase());
 		}
 	}
 
@@ -26,6 +34,14 @@ export class AddressRegistry {
 		const normalized = addr.toLowerCase();
 		if (!this.storageAddresses.has(normalized)) {
 			this.storageAddresses.add(normalized);
+			this.newlyDiscovered.push(normalized);
+		}
+	}
+
+	addWriterAddress(addr: string): void {
+		const normalized = addr.toLowerCase();
+		if (!this.writerAddresses.has(normalized)) {
+			this.writerAddresses.add(normalized);
 			this.newlyDiscovered.push(normalized);
 		}
 	}
@@ -41,6 +57,7 @@ export class AddressRegistry {
 			...this.factoryAddresses,
 			this.colorRegistryAddress,
 			...this.storageAddresses,
+			...this.writerAddresses,
 		] as Hex[];
 	}
 
@@ -54,6 +71,10 @@ export class AddressRegistry {
 
 	isStorage(addr: string): boolean {
 		return this.storageAddresses.has(addr.toLowerCase());
+	}
+
+	isWriter(addr: string): boolean {
+		return this.writerAddresses.has(addr.toLowerCase());
 	}
 
 	get storageCount(): number {

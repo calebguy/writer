@@ -8,6 +8,7 @@ import {
 	CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
 	DELETE_ENTRY_FUNCTION_SIGNATURE,
 	SET_HEX_FUNCTION_SIGNATURE,
+	SET_TITLE_WITH_SIG_FUNCTION_SIGNATURE,
 	UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE,
 	db,
 } from "../constants";
@@ -21,6 +22,7 @@ import {
 	recoverCreateWithChunkSigner,
 	recoverRemoveEntrySigner,
 	recoverSetColorSigner,
+	recoverSetTitleSigner,
 	recoverUpdateEntryWithChunkSigner,
 	simulateContractOrThrow,
 } from "../helpers";
@@ -33,6 +35,7 @@ import {
 	factoryCreateJsonValidator,
 	updateEntryJsonValidator,
 	userAddressParamSchema,
+	setTitleJsonValidator,
 	writerOrderJsonValidator,
 } from "../middleware";
 import {
@@ -360,6 +363,90 @@ const writerRoutes = new Hono()
 			} catch (err) {
 				console.error("factory/create error:", err);
 				return c.json({ error: "error during writer creation" }, 500);
+			}
+		},
+	)
+	.post(
+		"/writer/:address/title",
+		requireWalletAuth,
+		addressParamSchema,
+		setTitleJsonValidator,
+		async (c) => {
+			const { address } = c.req.valid("param");
+			const contractAddress = getAddress(address);
+			const writer = await db.getWriter(contractAddress);
+			if (!writer) {
+				return c.json({ error: "writer not found" }, 404);
+			}
+
+			const { signature, nonce, title } = c.req.valid("json");
+			const signer = await recoverSetTitleSigner({
+				signature: signature as Hex,
+				nonce,
+				title,
+				address: contractAddress,
+				legacyDomain: writer.legacyDomain,
+			});
+			const normalizedSigner = getAddress(signer);
+			if (!c.var.walletAddresses.has(normalizedSigner)) {
+				return c.json(
+					{ error: "signer does not match authenticated wallet" },
+					403,
+				);
+			}
+			if (normalizedSigner !== getAddress(writer.admin)) {
+				return c.json({ error: "signer must be writer admin" }, 403);
+			}
+
+			const args = {
+				signature,
+				nonce: Number(nonce),
+				title,
+			};
+			try {
+				await simulateContractOrThrow({
+					to: contractAddress,
+					functionSignature: SET_TITLE_WITH_SIG_FUNCTION_SIGNATURE,
+					args: [signature, Number(nonce), title],
+				});
+			} catch (err) {
+				console.error("setTitle simulation failed:", err);
+				return c.json(
+					{ error: `simulation failed: ${humanizeSimulateError(err)}` },
+					400,
+				);
+			}
+
+			try {
+				const { wallet, nonce: relayNonce } = await relay.sendTransaction({
+					to: contractAddress,
+					abi: SET_TITLE_WITH_SIG_FUNCTION_SIGNATURE,
+					args: [signature, Number(nonce), title],
+				});
+				const transactionId = makeRelayTxId(wallet, relayNonce);
+				await db.createTx({
+					id: transactionId,
+					wallet,
+					nonce: relayNonce,
+					chainId: BigInt(env.TARGET_CHAIN_ID),
+					functionSignature: SET_TITLE_WITH_SIG_FUNCTION_SIGNATURE,
+					args,
+					status: "PENDING",
+					source: "ui",
+					targetAddress: contractAddress,
+				});
+				watchRelayReceipt({
+					txId: transactionId,
+					wallet,
+					nonce: relayNonce,
+					chainId: BigInt(env.TARGET_CHAIN_ID),
+					functionSignature: SET_TITLE_WITH_SIG_FUNCTION_SIGNATURE,
+					args,
+				});
+				return c.json({ transactionId, title });
+			} catch (err) {
+				console.error("writer/title error:", err);
+				return c.json({ error: "error during writer title update" }, 500);
 			}
 		},
 	)

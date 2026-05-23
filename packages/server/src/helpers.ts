@@ -266,6 +266,37 @@ export function recoverSetColorSigner({
 	});
 }
 
+export function recoverSetTitleSigner({
+	signature,
+	nonce,
+	title,
+	address,
+	legacyDomain,
+}: {
+	signature: Hex;
+	nonce: bigint;
+	title: string;
+	address: Hex;
+	legacyDomain?: boolean;
+}) {
+	assertLowS(signature);
+	return recoverTypedDataAddress({
+		domain: getDomain(address, legacyDomain),
+		message: {
+			nonce,
+			title,
+		},
+		primaryType: "SetTitle",
+		types: {
+			SetTitle: [
+				{ name: "nonce", type: "uint256" },
+				{ name: "title", type: "string" },
+			],
+		},
+		signature,
+	});
+}
+
 const WRITER_STORAGE_ENTRY_CREATED_TOPIC =
 	"0xacb3b3e38034857e82db5b66f66ba2dcaa615a3e197a0f2ad7643c030659d1a3";
 const WRITER_STORAGE_ENTRY_CREATED_EVENT = parseAbiItem(

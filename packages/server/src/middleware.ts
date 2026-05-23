@@ -129,6 +129,15 @@ export const factoryCreateJsonValidator = zValidator(
 	}),
 );
 
+export const setTitleJsonValidator = zValidator(
+	"json",
+	z.object({
+		signature: z.string(),
+		nonce: bigIntSafe,
+		title: z.string().max(MAX_TITLE_LENGTH),
+	}),
+);
+
 export const writerOrderJsonValidator = zValidator(
 	"json",
 	z.object({

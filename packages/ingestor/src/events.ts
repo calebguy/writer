@@ -32,6 +32,7 @@ export const ENTRY_REMOVED = parseAbiItem(
 export const LOGIC_SET = parseAbiItem(
 	"event LogicSet(address indexed logicAddress)",
 );
+export const TITLE_SET = parseAbiItem("event TitleSet(string indexed title)");
 
 // ColorRegistry events
 export const HEX_SET = parseAbiItem(
@@ -52,6 +53,7 @@ export const TOPIC0 = {
 	ENTRY_REMOVED: toEventSelector(ENTRY_REMOVED),
 	LOGIC_SET: toEventSelector(LOGIC_SET),
 	HEX_SET: toEventSelector(HEX_SET),
+	TITLE_SET: toEventSelector(TITLE_SET),
 } as const;
 
 // All event ABIs as a flat array for use with decodeEventLog
@@ -66,4 +68,5 @@ export const ALL_EVENTS = [
 	ENTRY_REMOVED,
 	LOGIC_SET,
 	HEX_SET,
+	TITLE_SET,
 ] as const;

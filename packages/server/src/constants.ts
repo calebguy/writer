@@ -10,6 +10,8 @@ export const CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE =
 	"createWithChunkWithSig(bytes signature, uint256 nonce, uint256 chunkCount, string chunkContent)";
 export const UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE =
 	"updateWithSig(bytes signature, uint256 nonce, uint256 id, uint256 totalChunks, string content)";
+export const SET_TITLE_WITH_SIG_FUNCTION_SIGNATURE =
+	"setTitleWithSig(bytes signature, uint256 nonce, string newTitle)";
 export const DELETE_ENTRY_FUNCTION_SIGNATURE =
 	"removeWithSig(bytes signature, uint256 nonce, uint256 id)";
 export const SET_HEX_FUNCTION_SIGNATURE =

@@ -6,6 +6,7 @@ import {
 	hiddenWritersQueryKey,
 	useHiddenWriters,
 } from "@/hooks/useHiddenWriters";
+import { useUpdateWriterTitle } from "@/hooks/useUpdateWriterTitle";
 import {
 	type Writer,
 	factoryCreate,
@@ -41,6 +42,7 @@ import {
 } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { FiPlus } from "react-icons/fi";
+import { MdModeEdit } from "react-icons/md";
 import type { Hex } from "viem";
 import CreateInput, { type CreateInputData } from "./CreateInput";
 import { LoginPrompt } from "./LoginPrompt";
@@ -73,6 +75,11 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 	const queryClient = useQueryClient();
 	const [dragState, setDragState] = useState<DragState | null>(null);
 	const homeChrome = useHomeChrome();
+	const [editingWriterAddress, setEditingWriterAddress] = useState<string | null>(
+		null,
+	);
+	const { mutateAsync: updateWriterTitle, isSigning: isUpdatingWriterTitle } =
+		useUpdateWriterTitle();
 	const dragStateRef = useRef<DragState | null>(null);
 	const setActiveDrag = useCallback((next: DragState | null) => {
 		dragStateRef.current = next;
@@ -368,6 +375,20 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 		});
 	};
 
+	const handleTitleSubmit = async (
+		writer: Writer,
+		{ markdown }: CreateInputData,
+	) => {
+		const title = markdown.trim();
+		if (!title || title === writer.title) {
+			setEditingWriterAddress(null);
+			return;
+		}
+
+		await updateWriterTitle({ writer, title });
+		setEditingWriterAddress(null);
+	};
+
 	const hasPendingWriters =
 		writers?.some((writer) => !writer.createdAtHash) ?? false;
 
@@ -531,6 +552,32 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 			dragState?.fromAddress.toLowerCase() === writer.address.toLowerCase();
 		const isDropTarget =
 			dragState?.overAddress?.toLowerCase() === writer.address.toLowerCase();
+		const canEditWriter =
+			!isPendingWriter &&
+			!!address &&
+			writer.admin.toLowerCase() === address.toLowerCase();
+		const isEditingWriter =
+			editingWriterAddress?.toLowerCase() === writer.address.toLowerCase();
+
+		if (isEditingWriter) {
+			return (
+				<div
+					key={writer.address}
+					className="home-writer-card aspect-square bg-surface overflow-hidden relative w-full rounded-xs"
+				>
+					<CreateInput
+						initialMarkdown={writer.title}
+						forceOpen
+						submitLabel="update"
+						hidePrivacyControls
+						onCancel={() => setEditingWriterAddress(null)}
+						onSubmit={(data) => handleTitleSubmit(writer, data)}
+						isLoading={isUpdatingWriterTitle}
+					/>
+				</div>
+			);
+		}
+
 
 		return (
 			<Link
@@ -571,6 +618,21 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 						>
 							<ClosedEye className="w-4 h-4" />
 						</button>
+						{canEditWriter && (
+							<button
+								type="button"
+								aria-label="Edit Place title"
+								title="Edit Place title"
+								className="absolute bottom-0.25 right-7 z-20 flex h-6 w-6 items-center justify-center rounded-xs text-neutral-400 opacity-0 transition-opacity group-hover/card:opacity-40 hover:text-primary hover:opacity-100 focus-visible:text-primary focus-visible:opacity-100 cursor-pointer"
+								onClick={(e) => {
+									e.preventDefault();
+									e.stopPropagation();
+									setEditingWriterAddress(writer.address);
+								}}
+							>
+								<MdModeEdit className="w-4 h-4" />
+							</button>
+						)}
 						<div className="absolute left-0 top-0 z-10 hidden h-full w-full items-center justify-center bg-surface-overlay/90 pointer-events-none peer-hover/hide:flex peer-focus/hide:flex">
 							<span className="text-primary italic">Hide?</span>
 						</div>

@@ -86,6 +86,46 @@ export async function signSetColor(
 	};
 }
 
+export async function signSetTitle(
+	wallet: ConnectedWallet,
+	{
+		title,
+		address,
+		legacyDomain = false,
+	}: { title: string; address: string; legacyDomain?: boolean },
+) {
+	const provider = await wallet.getEthereumProvider();
+	const method = "eth_signTypedData_v4";
+	const nonce = getRandomNonce();
+	const { domain, domainTypes } = writerDomain(address, legacyDomain);
+	const payload = {
+		domain,
+		message: {
+			nonce,
+			title,
+		},
+		primaryType: "SetTitle",
+		types: {
+			EIP712Domain: domainTypes,
+			SetTitle: [
+				{ name: "nonce", type: "uint256" },
+				{ name: "title", type: "string" },
+			],
+		},
+	};
+
+	const signature = await provider.request({
+		method,
+		params: [wallet.address, JSON.stringify(payload)],
+	});
+
+	return {
+		signature,
+		nonce,
+		title,
+	};
+}
+
 export async function signRemove(
 	wallet: ConnectedWallet,
 	{

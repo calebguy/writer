@@ -3,6 +3,7 @@ import {
 	CREATE_FUNCTION_SIGNATURE,
 	CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
 	DELETE_ENTRY_FUNCTION_SIGNATURE,
+	SET_TITLE_WITH_SIG_FUNCTION_SIGNATURE,
 	UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE,
 	db,
 } from "./constants";
@@ -108,6 +109,7 @@ export async function getWriterWithOverlay(
 
 	if (!writer) return null;
 
+	applyPendingTitleOps(writer, pending);
 	writer.entries = applyPendingEntryOps(writer.entries, writer, pending).filter(
 		(entry) => !entry.deletedAt,
 	);
@@ -131,10 +133,10 @@ export async function applyOverlayToWriters(
 	);
 	return writers.map((w) => {
 		const pending = pendingByAddress.get(w.address.toLowerCase()) ?? [];
-		return {
-			...w,
-			entries: applyPendingEntryOps(w.entries, w, pending),
-		};
+		const next = { ...w };
+		applyPendingTitleOps(next, pending);
+		next.entries = applyPendingEntryOps(next.entries, next, pending);
+		return next;
 	});
 }
 
@@ -325,6 +327,19 @@ function applyPendingEntryOps(
 	}
 
 	return result;
+}
+
+function applyPendingTitleOps(writer: WriterJson, pending: PendingTx[]): void {
+	const titleTx = pending.find(
+		(tx) => tx.functionSignature === SET_TITLE_WITH_SIG_FUNCTION_SIGNATURE,
+	);
+	if (!titleTx) return;
+
+	const args = titleTx.args as { title?: string } | null;
+	if (typeof args?.title !== "string") return;
+
+	writer.title = args.title;
+	writer.updatedAt = titleTx.createdAt;
 }
 
 function synthesizePendingWriter(

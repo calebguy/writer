@@ -1025,6 +1025,15 @@ class Db {
 			.where(eq(writer.address, address.toLowerCase()));
 	}
 
+	updateWriterTitle(address: Hex, title: string) {
+		return this.pg
+			.update(writer)
+			.set({ title, updatedAt: new Date() })
+			.where(eq(writer.address, address.toLowerCase()))
+			.returning();
+	}
+
+
 	/**
 	 * Re-point a writer row at a new logic-contract address. Driven by the
 	 * `WriterStorage.LogicSet` event in the indexer when a Writer is migrated
@@ -1070,6 +1079,11 @@ class Db {
 			.selectDistinct({ storageAddress: writer.storageAddress })
 			.from(writer);
 		return rows.map((r) => r.storageAddress);
+	}
+
+	async getAllWriterAddresses(): Promise<string[]> {
+		const rows = await this.pg.selectDistinct({ address: writer.address }).from(writer);
+		return rows.map((r) => r.address);
 	}
 
 	async getCursor(): Promise<bigint | null> {

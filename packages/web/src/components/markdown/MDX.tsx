@@ -37,7 +37,7 @@ import {
 	realmPlugin,
 } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
-import { type FC, useEffect, useRef, useState } from "react";
+import { type FC, useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./MDX.css";
@@ -52,6 +52,7 @@ interface EditorProps {
 	renderPlaceholderAsMarkdown?: boolean;
 	autoFocus?: boolean;
 	aspectSquare?: boolean;
+	maxLength?: number;
 }
 
 const strikethroughShortcutPlugin = realmPlugin({
@@ -287,6 +288,7 @@ const MDX: FC<EditorProps> = ({
 	renderPlaceholderAsMarkdown = false,
 	autoFocus = false,
 	aspectSquare = true,
+	maxLength,
 }) => {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [overlayContainer, setOverlayContainer] =
@@ -297,6 +299,21 @@ const MDX: FC<EditorProps> = ({
 	useEffect(() => {
 		setOverlayContainer(containerRef.current);
 	}, []);
+
+	const handleChange = useCallback(
+		(nextMarkdown: string) => {
+			if (maxLength == null || nextMarkdown.length <= maxLength) {
+				onChange?.(nextMarkdown);
+				return;
+			}
+
+			const truncated = nextMarkdown.slice(0, maxLength);
+			ref?.current?.setMarkdown(truncated);
+			onChange?.(truncated);
+		},
+		[maxLength, onChange, ref],
+	);
+
 
 	return (
 		<div
@@ -339,7 +356,7 @@ const MDX: FC<EditorProps> = ({
 					strikethroughShortcutPlugin(),
 					customLinkDialogPlugin(),
 				]}
-				onChange={onChange}
+				onChange={handleChange}
 				ref={ref}
 				markdown={markdown}
 				overlayContainer={overlayContainer}

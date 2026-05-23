@@ -49,6 +49,34 @@ export async function unhideWriter({
 	return res.json();
 }
 
+export async function updateWriterTitle({
+	address,
+	signature,
+	nonce,
+	title,
+	authToken,
+}: {
+	address: Hex | string;
+	signature: string;
+	nonce: number;
+	title: string;
+	authToken: string;
+}) {
+	const res = await client.writer[":address"].title.$post(
+		{
+			param: { address: getAddress(address) },
+			json: { signature, nonce, title },
+		},
+		{
+			headers: { Authorization: `Bearer ${authToken}` },
+		},
+	);
+	if (!res.ok) {
+		throw new Error(res.statusText);
+	}
+	return res.json();
+}
+
 
 export async function getMe(address: Hex) {
 	const res = await client.me[":address"].$get({
