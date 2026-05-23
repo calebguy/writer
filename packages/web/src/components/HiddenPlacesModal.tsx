@@ -99,52 +99,40 @@ export function HiddenPlacesModal({ open, onClose }: HiddenPlacesModalProps) {
 								isUnhiding &&
 								pendingAddress?.toLowerCase() === writer.address.toLowerCase();
 							return (
-								<button
-									type="button"
-									aria-label="Unhide"
-									title="Unhide"
+								<div
 									key={writer.address}
-									className="flex items-center gap-3 rounded-xs bg-surface dark:bg-background px-2 py-2 cursor-pointer md:hover:bg-secondary group w-full h-full text-left"
-									onClick={() => unhideWriter(writer.address as Hex)}
-									onKeyDown={(e) => {
-										if (e.key === "Enter") {
-											unhideWriter(writer.address as Hex);
-										}
-									}}
-									onKeyUp={(e) => {
-										if (e.key === "Enter") {
-											unhideWriter(writer.address as Hex);
-										}
-									}}
-									onKeyPress={(e) => {
-										if (e.key === "Enter") {
-											unhideWriter(writer.address as Hex);
-										}
-									}}
-									tabIndex={0}
+									className="group relative flex h-full w-full items-center gap-3 rounded-xs bg-surface px-2 py-2 text-left dark:bg-background md:hover:bg-secondary"
 								>
-									<div className="min-w-0 flex-1 relative w-full h-full flex justify-between items-end">
+									<button
+										type="button"
+										aria-label="Unhide"
+										title="Unhide"
+										className="absolute inset-0 z-10 hidden cursor-pointer rounded-xs disabled:cursor-not-allowed disabled:opacity-40 md:block"
+										disabled={isPending}
+										onClick={() => unhideWriter(writer.address as Hex)}
+									/>
+									<div className="relative min-w-0 flex-1 w-full h-full flex justify-between items-end">
 										<MarkdownRenderer
 											markdown={writer.title}
-											className="text-black dark:text-white writer-title group-hover:text-primary"
+											className="text-black dark:text-white writer-title md:group-hover:text-primary"
 										/>
-										<div className="items-center justify-center absolute w-full h-full top-0 right-0 text-lg text-neutral-500 dark:text-neutral-400 group-hover:text-primary bg-secondary/90 hidden group-hover:flex">
+										<div className="pointer-events-none absolute top-0 right-0 hidden h-full w-full items-center justify-center bg-secondary/90 text-lg text-neutral-500 group-hover:text-primary dark:text-neutral-400 md:group-hover:flex">
 											<span>Show?</span>
 										</div>
-										<div className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400 text-right group-hover:text-primary">
+										<div className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400 text-right md:group-hover:text-primary">
 											{writer.entries.length}
 										</div>
 									</div>
 									<button
 										type="button"
 										aria-label="Unhide"
-										className="md:hidden outline-none shrink-0 cursor-pointer rounded-xs px-2 py-1 font-serif italic text-primary transition-opacity hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-40"
+										className="relative z-20 shrink-0 cursor-pointer rounded-xs px-2 py-1 font-serif italic text-primary outline-none transition-opacity hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-40 md:hidden"
 										disabled={isPending}
 										onClick={() => unhideWriter(writer.address as Hex)}
 									>
 										{isPending ? "Restoring" : "Unhide"}
 									</button>
-								</button>
+								</div>
 							);
 						})}
 					</div>
