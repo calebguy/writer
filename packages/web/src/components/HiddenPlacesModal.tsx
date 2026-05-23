@@ -4,7 +4,10 @@ import {
 	hiddenWritersQueryKey,
 	useHiddenWriters,
 } from "@/hooks/useHiddenWriters";
-import { type HiddenWriter, unhideWriter as unhideWriterApi } from "@/utils/api";
+import {
+	type HiddenWriter,
+	unhideWriter as unhideWriterApi,
+} from "@/utils/api";
 import { usePrivy } from "@privy-io/react-auth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { VisuallyHidden } from "radix-ui";
@@ -24,7 +27,9 @@ export function HiddenPlacesModal({ open, onClose }: HiddenPlacesModalProps) {
 	const address = user?.wallet?.address;
 	const queryKey = hiddenWritersQueryKey(address);
 
-	const { data: hiddenWriters, isLoading } = useHiddenWriters({ enabled: open });
+	const { data: hiddenWriters, isLoading } = useHiddenWriters({
+		enabled: open,
+	});
 
 	const {
 		mutate: unhideWriter,
@@ -65,7 +70,7 @@ export function HiddenPlacesModal({ open, onClose }: HiddenPlacesModalProps) {
 		<Modal
 			open={open}
 			onClose={onClose}
-			className="bg-background dark:bg-surface w-full h-full max-w-[400px] max-h-[600px]"
+			className="bg-background dark:bg-surface w-full max-w-[400px] max-h-[600px]"
 		>
 			<VisuallyHidden.Root>
 				<ModalTitle>Hidden Places</ModalTitle>

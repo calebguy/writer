@@ -444,7 +444,13 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 		);
 	}
 
-	const renderWriterCard = (writer: Writer) => {
+	type WriterCardOptions = {
+		showHideAction?: boolean;
+	};
+	const renderWriterCard = (
+		writer: Writer,
+		{ showHideAction = true }: WriterCardOptions = {},
+	) => {
 		const isPendingWriter = !writer.createdAtHash;
 		const canReorderWriter = !isPendingWriter && canReorderWriters;
 		const isDragging =
@@ -476,7 +482,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 						className="text-black dark:text-white writer-title home-writer-content"
 					/>
 				</div>
-				{!isPendingWriter && (
+				{showHideAction && !isPendingWriter && (
 					<>
 						<button
 							type="button"
@@ -568,7 +574,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 					<div className="hidden lg:block">
 						<CreateInput placeholder="Create a Place" onSubmit={handleSubmit} />
 					</div>
-					{writers?.map(renderWriterCard)}
+					{writers?.map((writer) => renderWriterCard(writer))}
 				</div>
 				{renderDragPreview()}
 			</>
@@ -581,7 +587,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 		<div className="grow flex flex-col items-center justify-center">
 			<div className="hidden lg:block w-[234px] h-[234px]">
 				{onboardingMode === "created" && confirmedFirstWriter ? (
-					renderWriterCard(confirmedFirstWriter)
+					renderWriterCard(confirmedFirstWriter, { showHideAction: false })
 				) : (
 					<CreateInput
 						placeholder="Create a Place"
