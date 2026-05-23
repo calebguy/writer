@@ -17,6 +17,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ColorModal } from "./ColorModal";
+import { HiddenPlacesModal } from "./HiddenPlacesModal";
 import { type MigrateEntry, MigrateModal } from "./MigrateModal";
 import { queryClient as globalQueryClient } from "./Providers";
 import { Dropdown, DropdownItem } from "./dsl/Dropdown";
@@ -80,6 +81,7 @@ export function NavDropdown() {
 	].filter((item) => item.href !== pathname);
 	const [open, setOpen] = useState(false);
 	const [migrateOpen, setMigrateOpen] = useState(false);
+	const [hiddenPlacesOpen, setHiddenPlacesOpen] = useState(false);
 	const [dropdownOpen, setDropdownOpen] = useState(false);
 	const [themeMode, setThemeMode] = useState<ThemeMode>("system");
 
@@ -174,6 +176,11 @@ export function NavDropdown() {
 						</div>
 					</DropdownItem>
 				)}
+				{authenticated && (
+					<DropdownItem onClick={() => setHiddenPlacesOpen(true)}>
+						Hidden Places
+					</DropdownItem>
+				)}
 				{authenticated && hasLegacyEntries && (
 					<DropdownItem onClick={() => setMigrateOpen(true)}>
 						<div className="flex items-center justify-between gap-2 w-full">
@@ -220,6 +227,10 @@ export function NavDropdown() {
 				</div>
 			</Dropdown>
 			<ColorModal open={open} onClose={() => setOpen(false)} />
+			<HiddenPlacesModal
+				open={hiddenPlacesOpen}
+				onClose={() => setHiddenPlacesOpen(false)}
+			/>
 			<MigrateModal
 				open={migrateOpen}
 				onClose={() => setMigrateOpen(false)}

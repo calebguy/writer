@@ -140,6 +140,21 @@ const writerRoutes = new Hono()
 			}
 		},
 	)
+	.get(
+		"/manager/:userAddress/hidden",
+		userAddressParamSchema,
+		requireSavedAuth,
+		async (c) => {
+			const { userAddress } = c.req.valid("param");
+			const writers = await db.getHiddenWritersByManager(userAddress);
+			return c.json({
+				writers: writers.map((w) => ({
+					...writerToJsonSafe(w),
+					entries: w.entries.map(entryToJsonSafe),
+				})),
+			});
+		},
+	)
 	.get("/me/:address", addressParamSchema, async (c) => {
 		const { address } = c.req.valid("param");
 		const user = await db.getUser(address);
@@ -367,6 +382,37 @@ const writerRoutes = new Hono()
 			} catch (err) {
 				console.error("writer/hide db error:", err);
 				return c.json({ error: "database error during writer hide" }, 500);
+			}
+		},
+	)
+	.post(
+		"/writer/:address/unhide",
+		addressParamSchema,
+		requireWriterAdminAuth,
+		async (c) => {
+			const { address } = c.req.valid("param");
+			const writer = await db.getWriter(address);
+			if (!writer) {
+				return c.json({ error: "writer not found" }, 404);
+			}
+			try {
+				await db.restoreWriter(address);
+				const restored = await db.getWriter(address);
+				if (!restored) {
+					return c.json({ error: "writer not found" }, 404);
+				}
+				return c.json(
+					{
+						writer: {
+							...writerToJsonSafe(restored),
+							entries: restored.entries.map(entryToJsonSafe),
+						},
+					},
+					200,
+				);
+			} catch (err) {
+				console.error("writer/unhide db error:", err);
+				return c.json({ error: "database error during writer unhide" }, 500);
 			}
 		},
 	)

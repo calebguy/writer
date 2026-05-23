@@ -28,6 +28,28 @@ export async function hideWriter({
 	return res.json();
 }
 
+export async function unhideWriter({
+	address,
+	authToken,
+}: {
+	address: Hex | string;
+	authToken: string;
+}) {
+	const res = await client.writer[":address"].unhide.$post(
+		{
+			param: { address: getAddress(address) },
+		},
+		{
+			headers: { Authorization: `Bearer ${authToken}` },
+		},
+	);
+	if (!res.ok) {
+		throw new Error(res.statusText);
+	}
+	return res.json();
+}
+
+
 export async function getMe(address: Hex) {
 	const res = await client.me[":address"].$get({
 		param: { address },
@@ -180,6 +202,31 @@ export async function getWritersByManager(
 	}
 	return (await res.json()).writers;
 }
+
+export async function getHiddenWritersByManager({
+	userAddress,
+	authToken,
+	signal,
+}: {
+	userAddress: Hex | string;
+	authToken: string;
+	signal?: AbortSignal;
+}): Promise<HiddenWriter[]> {
+	const res = await client.manager[":userAddress"].hidden.$get(
+		{
+			param: { userAddress: getAddress(userAddress) },
+		},
+		{
+			headers: { Authorization: `Bearer ${authToken}` },
+			init: { signal },
+		},
+	);
+	if (!res.ok) {
+		throw new Error(res.statusText);
+	}
+	return (await res.json()).writers;
+}
+
 
 export async function reconcileManager({
 	userAddress,
@@ -428,6 +475,7 @@ export type GetWritersResponse = InferResponseType<
 >;
 export type Writer = GetWritersResponse["writers"][number];
 export type Entry = Writer["entries"][number];
+export type HiddenWriter = Writer;
 
 export type GetPublicWritersResponse = InferResponseType<
 	(typeof client.writer)["public"]["$get"]

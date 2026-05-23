@@ -6,6 +6,7 @@ import {
 	gt,
 	inArray,
 	isNull,
+	isNotNull,
 	lt,
 	notLike,
 	or,
@@ -125,6 +126,42 @@ class Db {
 				},
 			},
 		});
+		return writers.map((w) => ({
+			...w,
+			entries: entries.filter((e) => e.storageAddress === w.storageAddress),
+		}));
+	}
+
+	async getHiddenWritersByManager(managerAddress: Hex) {
+		const normalizedManager = managerAddress.toLowerCase();
+		const writers = await this.pg.query.writer.findMany({
+			where: and(
+				arrayContains(writer.managers, [normalizedManager]),
+				isNotNull(writer.deletedAt),
+			),
+			orderBy: (writer, { desc }) => [desc(writer.deletedAt)],
+		});
+		if (writers.length === 0) {
+			return [];
+		}
+
+		const storageAddresses = writers.map((w) => w.storageAddress);
+		const entries = await this.pg.query.entry.findMany({
+			where: and(
+				inArray(
+					entry.storageAddress,
+					storageAddresses.map((s) => s.toLowerCase()),
+				),
+				isNull(entry.deletedAt),
+			),
+			orderBy: (entry, { desc }) => [desc(entry.createdAt)],
+			with: {
+				chunks: {
+					orderBy: (chunk, { desc }) => [desc(chunk.index)],
+				},
+			},
+		});
+
 		return writers.map((w) => ({
 			...w,
 			entries: entries.filter((e) => e.storageAddress === w.storageAddress),
@@ -966,6 +1003,13 @@ class Db {
 		return this.pg
 			.update(writer)
 			.set({ deletedAt: new Date() })
+			.where(eq(writer.address, address.toLowerCase()));
+	}
+
+	restoreWriter(address: Hex) {
+		return this.pg
+			.update(writer)
+			.set({ deletedAt: null, updatedAt: new Date() })
 			.where(eq(writer.address, address.toLowerCase()));
 	}
 

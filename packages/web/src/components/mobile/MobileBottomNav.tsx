@@ -13,7 +13,9 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ColorModal } from "../ColorModal";
+import { HiddenPlacesModal } from "../HiddenPlacesModal";
 import { queryClient } from "../Providers";
+import { ClosedEye } from "../icons/ClosedEye";
 
 const VISIBLE_PATHS = new Set(["/home", "/explore", "/writer"]);
 
@@ -45,6 +47,7 @@ export function MobileBottomNav({
 	const isLoggedIn = ready && authenticated;
 	const [showSubMenu, setShowSubMenu] = useState(false);
 	const [showColorModal, setShowColorModal] = useState(false);
+	const [showHiddenPlacesModal, setShowHiddenPlacesModal] = useState(false);
 	const [themeMode, setThemeMode] = useState<ThemeMode>("system");
 	const [hidden, setHidden] = useState(false);
 	const lastScrollY = useRef(0);
@@ -65,6 +68,7 @@ export function MobileBottomNav({
 	useEffect(() => {
 		setShowSubMenu(false);
 		setShowColorModal(false);
+		setShowHiddenPlacesModal(false);
 	}, [pathname]);
 
 	useEffect(() => {
@@ -243,6 +247,19 @@ export function MobileBottomNav({
 									<span className="block w-5 h-5 bg-primary rounded-sm" />
 								</button>
 							)}
+							{isLoggedIn && (
+								<button
+									type="button"
+									title="Hidden Places"
+									className="p-1.5 rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
+									onClick={() => {
+										setShowSubMenu(false);
+										setShowHiddenPlacesModal(true);
+									}}
+								>
+									<ClosedEye className="w-5 h-5" />
+								</button>
+							)}
 							<button
 								type="button"
 								title="Light"
@@ -372,6 +389,10 @@ export function MobileBottomNav({
 			<ColorModal
 				open={showColorModal}
 				onClose={() => setShowColorModal(false)}
+			/>
+			<HiddenPlacesModal
+				open={showHiddenPlacesModal}
+				onClose={() => setShowHiddenPlacesModal(false)}
 			/>
 		</>
 	);
