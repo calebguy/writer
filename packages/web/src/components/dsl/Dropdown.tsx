@@ -74,7 +74,7 @@ export function DropdownItem(props: DropdownMenu.DropdownMenuItemProps) {
 		<DropdownMenu.Item
 			{...props}
 			className={cn(
-				"text-black dark:text-white flex relative user-select-none outline-none text-base py-1 px-1.5 hover:bg-surface dark:hover:bg-surface-raised cursor-pointer",
+				"text-black dark:text-white flex relative user-select-none outline-none text-base py-1 px-1.5 hover:bg-surface dark:hover:bg-surface-raised cursor-pointer rounded-xs",
 			)}
 		/>
 	);

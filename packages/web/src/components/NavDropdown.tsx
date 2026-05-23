@@ -38,7 +38,7 @@ function ThemeButton({
 			type="button"
 			aria-label={`Use ${label.toLowerCase()} theme`}
 			title={label}
-			className="p-1 inline-flex items-center justify-center cursor-pointer border border-transparent dark:text-secondary transition-colors duration-120 hover:bg-surface dark:hover:bg-surface-raised data-[active=true]:bg-surface-raised"
+			className="p-1 inline-flex items-center justify-center cursor-pointer border border-transparent dark:text-secondary transition-colors duration-120 hover:bg-surface dark:hover:bg-surface-raised data-[active=true]:bg-surface-raised rounded-xs"
 			data-active={active}
 			onClick={onClick}
 		>
@@ -169,16 +169,16 @@ export function NavDropdown() {
 					</DropdownItem>
 				))}
 				{authenticated && (
-					<DropdownItem onClick={() => setOpen(true)}>
-						<div className="flex items-center justify-between gap-2 w-full">
-							<span>Color</span>
-							<span className="w-2 h-2 bg-primary" />
-						</div>
+					<DropdownItem onClick={() => setHiddenPlacesOpen(true)}>
+						Hidden
 					</DropdownItem>
 				)}
 				{authenticated && (
-					<DropdownItem onClick={() => setHiddenPlacesOpen(true)}>
-						Hidden
+					<DropdownItem onClick={() => setOpen(true)}>
+						<div className="flex items-center justify-between gap-2 w-full">
+							<span>Color</span>
+							<span className="w-2 h-2 bg-primary rounded-[1px]" />
+						</div>
 					</DropdownItem>
 				)}
 				{authenticated && hasLegacyEntries && (
