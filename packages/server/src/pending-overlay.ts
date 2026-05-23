@@ -151,6 +151,7 @@ export async function applyOverlayToWriters(
 export async function applyOverlayToWritersForManager(
 	managerAddress: string,
 	writers: WriterJson[],
+	options: { excludeAddresses?: Iterable<string> } = {},
 ): Promise<WriterJson[]> {
 	const normalizedManager = managerAddress.toLowerCase();
 	const [withEntryOverlay, pendingCreates] = await Promise.all([
@@ -161,6 +162,10 @@ export async function applyOverlayToWritersForManager(
 	const alreadyListed = new Set(
 		withEntryOverlay.map((w) => w.address.toLowerCase()),
 	);
+	const excluded = new Set<string>();
+	for (const address of options.excludeAddresses ?? []) {
+		excluded.add(address.toLowerCase());
+	}
 	const synthesized: WriterJson[] = [];
 
 	console.log(
@@ -188,6 +193,10 @@ export async function applyOverlayToWritersForManager(
 			continue;
 		}
 		const target = tx.targetAddress.toLowerCase();
+		if (excluded.has(target)) {
+			console.log("  skip: excluded");
+			continue;
+		}
 		if (alreadyListed.has(target)) {
 			console.log("  skip: already listed");
 			continue;

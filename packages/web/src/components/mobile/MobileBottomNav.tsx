@@ -1,5 +1,6 @@
 "use client";
 
+import { useHiddenWriters } from "@/hooks/useHiddenWriters";
 import { clearAllCachedKeys } from "@/utils/keyCache";
 import {
 	type ThemeMode,
@@ -53,6 +54,8 @@ export function MobileBottomNav({
 	const lastScrollY = useRef(0);
 	const containerRef = useRef<HTMLDivElement>(null);
 
+	const { data: hiddenWriters } = useHiddenWriters();
+	const hasHiddenWriters = (hiddenWriters?.length ?? 0) > 0;
 	const shouldShow = useMemo(() => {
 		if (!isLoggedIn || isComposeRoute(pathname)) {
 			return false;
@@ -247,7 +250,7 @@ export function MobileBottomNav({
 									<span className="block w-5 h-5 bg-primary rounded-sm" />
 								</button>
 							)}
-							{isLoggedIn && (
+							{isLoggedIn && hasHiddenWriters && (
 								<button
 									type="button"
 									title="Hidden Places"

@@ -168,6 +168,18 @@ class Db {
 		}));
 	}
 
+	async getDeletedWriterAddressesByManager(managerAddress: Hex | string) {
+		const normalizedManager = managerAddress.toLowerCase();
+		const writers = await this.pg.query.writer.findMany({
+			columns: { address: true },
+			where: and(
+				arrayContains(writer.managers, [normalizedManager]),
+				isNotNull(writer.deletedAt),
+			),
+		});
+		return writers.map((w) => w.address.toLowerCase());
+	}
+
 	/**
 	 * Look up a writer row by its storage contract address. Used by the
 	 * indexer's EntryCreated handler to denormalize the writer's frozen

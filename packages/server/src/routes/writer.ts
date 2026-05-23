@@ -51,6 +51,9 @@ const writerRoutes = new Hono()
 	.get("/manager/:address", async (c) => {
 		const address = getAddress(c.req.param("address"));
 		const data = await db.getWritersByManager(address);
+		const hiddenWriterAddresses = await db.getDeletedWriterAddressesByManager(
+			address,
+		);
 		const confirmed = data.map((w) => ({
 			...writerToJsonSafe(w),
 			entries: w.entries.map(entryToJsonSafe),
@@ -63,6 +66,7 @@ const writerRoutes = new Hono()
 		const writers = await applyOverlayToWritersForManager(
 			address,
 			confirmed as Parameters<typeof applyOverlayToWritersForManager>[1],
+			{ excludeAddresses: hiddenWriterAddresses },
 		);
 		return c.json({ writers });
 	})

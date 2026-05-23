@@ -2,6 +2,7 @@
 
 import { useHomeChrome } from "@/components/home/HomeChromeContext";
 import { useIsLoggedIn } from "@/hooks/useIsLoggedIn";
+import { hiddenWritersQueryKey } from "@/hooks/useHiddenWriters";
 import {
 	type Writer,
 	factoryCreate,
@@ -11,6 +12,7 @@ import {
 	reorderWriters,
 } from "@/utils/api";
 import { GRID_SKELETON_COUNT, POLLING_INTERVAL } from "@/utils/constants";
+import { getHomeOnboardingMode } from "@/utils/homeOnboarding";
 import {
 	applyWriterAddressOrder,
 	swappedPersistedWriterOrder,
@@ -121,16 +123,12 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 	const [hasSubmittedInOnboarding, setHasSubmittedInOnboarding] =
 		useState(false);
 
-	type OnboardingMode = "empty" | "creating" | "created";
-	const hasServerPendingFirstWriter =
-		(writers?.length ?? 0) > 0 && !confirmedFirstWriter;
-	const onboardingMode: OnboardingMode = confirmedFirstWriter
-		? "created"
-		: isCreatingWriter ||
-				hasServerPendingFirstWriter ||
-				hasSubmittedInOnboarding
-			? "creating"
-			: "empty";
+	const onboardingMode = getHomeOnboardingMode({
+		hasConfirmedWriter: !!confirmedFirstWriter,
+		hasVisibleWriters: (writers?.length ?? 0) > 0,
+		isCreatingWriter,
+		hasSubmittedInOnboarding,
+	});
 	const showMobileEmptyCreate = inOnboardingFlow && onboardingMode === "empty";
 	const setHomeIsEmpty = homeChrome?.setIsEmptyHome;
 
@@ -188,6 +186,9 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 		onSettled: () => {
 			if (!address) return;
 			queryClient.invalidateQueries({ queryKey: ["get-writers", address] });
+			queryClient.invalidateQueries({
+				queryKey: hiddenWritersQueryKey(address),
+			});
 		},
 	});
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useHiddenWriters } from "@/hooks/useHiddenWriters";
 import type { Writer } from "@/utils/api";
 import { useOPWallet } from "@/utils/hooks";
 import { clearAllCachedKeys } from "@/utils/keyCache";
@@ -115,6 +116,8 @@ export function NavDropdown() {
 		return result;
 	}, [writersData, wallet]);
 
+	const { data: hiddenWriters } = useHiddenWriters();
+	const hasHiddenWriters = (hiddenWriters?.length ?? 0) > 0;
 	const hasLegacyEntries = entriesToMigrate.length > 0;
 
 	useEffect(() => {
@@ -168,7 +171,7 @@ export function NavDropdown() {
 						{item.label}
 					</DropdownItem>
 				))}
-				{authenticated && (
+				{authenticated && hasHiddenWriters && (
 					<DropdownItem onClick={() => setHiddenPlacesOpen(true)}>
 						Hidden
 					</DropdownItem>

@@ -1,12 +1,12 @@
 "use client";
 
 import {
-	type HiddenWriter,
-	getHiddenWritersByManager,
-	unhideWriter as unhideWriterApi,
-} from "@/utils/api";
+	hiddenWritersQueryKey,
+	useHiddenWriters,
+} from "@/hooks/useHiddenWriters";
+import { type HiddenWriter, unhideWriter as unhideWriterApi } from "@/utils/api";
 import { usePrivy } from "@privy-io/react-auth";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { VisuallyHidden } from "radix-ui";
 import type { Hex } from "viem";
 import { LoadingRelic } from "./LoadingRelic";
@@ -22,22 +22,9 @@ export function HiddenPlacesModal({ open, onClose }: HiddenPlacesModalProps) {
 	const { user, getAccessToken } = usePrivy();
 	const queryClient = useQueryClient();
 	const address = user?.wallet?.address;
-	const queryKey = ["hidden-writers", address] as const;
+	const queryKey = hiddenWritersQueryKey(address);
 
-	const { data: hiddenWriters, isLoading } = useQuery({
-		queryKey,
-		enabled: open && !!address,
-		queryFn: async ({ signal }) => {
-			if (!address) return [] as HiddenWriter[];
-			const authToken = await getAccessToken();
-			if (!authToken) throw new Error("Not authenticated");
-			return getHiddenWritersByManager({
-				userAddress: address,
-				authToken,
-				signal,
-			});
-		},
-	});
+	const { data: hiddenWriters, isLoading } = useHiddenWriters({ enabled: open });
 
 	const {
 		mutate: unhideWriter,
