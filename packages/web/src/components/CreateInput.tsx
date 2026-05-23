@@ -7,7 +7,7 @@ import { cn } from "@/utils/cn";
 import { useIsMac } from "@/utils/hooks";
 import type { MDXEditorMethods } from "@mdxeditor/editor";
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { LoadingRelic } from "./LoadingRelic";
 import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
 
@@ -43,6 +43,8 @@ export default function CreateInput({
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [markdown, setMarkdown] = useState<string>("");
 	const editorRef = useRef<MDXEditorMethods>(null);
+	const editorShellRef = useRef<HTMLDivElement>(null);
+	const hintRef = useRef<HTMLDivElement>(null);
 	const [showHint, setShowHint] = useState(true);
 	const [loadingContent, setLoadingContent] = useState<string>("");
 	const [encrypted, setEncrypted] = useState(false);
@@ -97,12 +99,62 @@ export default function CreateInput({
 		};
 	}, [markdown, encrypted, onSubmit, onExpand]);
 
-	// Hide hint when text would overlap (based on character count as a heuristic)
-	useEffect(() => {
-		const lineCount = markdown.split("\n").length;
-		const hasSignificantContent = markdown.length > 50 || lineCount > 5;
-		setShowHint(!hasSignificantContent);
+	const updateHintVisibility = useCallback(() => {
+		if (!markdown.trim()) {
+			setShowHint(true);
+			return;
+		}
+
+		const shell = editorShellRef.current;
+		const hint = hintRef.current;
+		if (!shell || !hint) {
+			setShowHint(true);
+			return;
+		}
+
+		const content = shell.querySelector<HTMLElement>(".prose");
+		if (!content) {
+			setShowHint(true);
+			return;
+		}
+
+		const hintRect = hint.getBoundingClientRect();
+		const textRects: DOMRect[] = [];
+		const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
+		let node = walker.nextNode();
+		while (node) {
+			if (node.textContent?.trim()) {
+				const range = document.createRange();
+				range.selectNodeContents(node);
+				for (const rect of Array.from(range.getClientRects())) {
+					if (rect.width > 0 && rect.height > 0) {
+						textRects.push(rect);
+					}
+				}
+				range.detach();
+			}
+			node = walker.nextNode();
+		}
+		const overlapsHint = textRects.some(
+			(rect) =>
+				rect.left < hintRect.right &&
+				rect.right > hintRect.left &&
+				rect.top < hintRect.bottom &&
+				rect.bottom > hintRect.top,
+		);
+		setShowHint(!overlapsHint);
 	}, [markdown]);
+
+	useEffect(() => {
+		const frame = requestAnimationFrame(updateHintVisibility);
+		return () => cancelAnimationFrame(frame);
+	}, [updateHintVisibility]);
+
+	useEffect(() => {
+		if (!hasFocus && !isExpanded) return;
+		window.addEventListener("resize", updateHintVisibility);
+		return () => window.removeEventListener("resize", updateHintVisibility);
+	}, [hasFocus, isExpanded, updateHintVisibility]);
 
 	const handleReset = () => {
 		editorRef.current?.setMarkdown("");
@@ -175,6 +227,7 @@ export default function CreateInput({
 				<span>+</span>
 			</div>
 			<div
+				ref={editorShellRef}
 				className={cn("h-full relative min-h-0 overflow-hidden rounded-xs", {
 					hidden: !hasFocus && !isExpanded,
 					flex: hasFocus || isExpanded,
@@ -192,12 +245,17 @@ export default function CreateInput({
 					renderPlaceholderAsMarkdown={!!placeholderMarkdown}
 					onChange={setMarkdown}
 				/>
-				{showHint && (
-					<div className="create-input-hint text-neutral-700 text-base leading-[16px] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-						<div>{isMac ? "⌘" : "ctrl"} + ↵</div>
-						<div>to create</div>
-					</div>
-				)}
+				<div
+					ref={hintRef}
+					aria-hidden="true"
+					className={cn(
+						"create-input-hint text-neutral-700 text-base leading-[16px] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-opacity",
+						showHint ? "opacity-100" : "opacity-0",
+					)}
+				>
+					<div>{isMac ? "⌘" : "ctrl"} + ↵</div>
+					<div>to create</div>
+				</div>
 				{hasFocus && canExpand && (
 					<div className="absolute bottom-1 flex justify-between w-full z-20 px-2 pb-0.5">
 						<button
