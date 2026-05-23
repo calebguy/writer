@@ -1,5 +1,6 @@
 "use client";
 
+import { useHomeChrome } from "@/components/home/HomeChromeContext";
 import { useIsLoggedIn } from "@/hooks/useIsLoggedIn";
 import {
 	type Writer,
@@ -31,6 +32,7 @@ import {
 	useState,
 } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import { FiPlus } from "react-icons/fi";
 import type { Hex } from "viem";
 import CreateInput, { type CreateInputData } from "./CreateInput";
 import { LoginPrompt } from "./LoginPrompt";
@@ -62,6 +64,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 	const [isPolling, setIsPolling] = useState(false);
 	const queryClient = useQueryClient();
 	const [dragState, setDragState] = useState<DragState | null>(null);
+	const homeChrome = useHomeChrome();
 	const dragStateRef = useRef<DragState | null>(null);
 	const setActiveDrag = useCallback((next: DragState | null) => {
 		dragStateRef.current = next;
@@ -128,6 +131,15 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 				hasSubmittedInOnboarding
 			? "creating"
 			: "empty";
+	const showMobileEmptyCreate = inOnboardingFlow && onboardingMode === "empty";
+	const setHomeIsEmpty = homeChrome?.setIsEmptyHome;
+
+	useEffect(() => {
+		if (!setHomeIsEmpty) return;
+		setHomeIsEmpty(showMobileEmptyCreate);
+		return () => setHomeIsEmpty(false);
+	}, [setHomeIsEmpty, showMobileEmptyCreate]);
+
 
 	const handleCreateMore = useCallback(() => {
 		setInOnboardingFlow(false);
@@ -579,9 +591,28 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 			</div>
 			<div className="mt-4 flex flex-col items-center gap-1 font-serif italic text-base">
 				{onboardingMode === "empty" && (
-					<span className="text-neutral-500 dark:text-neutral-400">
-						Create your first Place
-					</span>
+					<>
+						<Link
+							href="/place/new"
+							aria-label="Create your first Place"
+							prefetch
+							onTouchStart={() => {
+								void import("./markdown/MDX");
+							}}
+							onPointerEnter={() => {
+								void import("./markdown/MDX");
+							}}
+							className="lg:hidden flex flex-col items-center gap-3 text-neutral-500 transition-colors hover:text-primary dark:text-neutral-400"
+						>
+							<span className="flex h-14 w-14 items-center justify-center rounded-full text-primary">
+								<FiPlus className="h-10 w-10" />
+							</span>
+							<span>Create your first Place</span>
+						</Link>
+						<span className="hidden lg:inline text-neutral-500 dark:text-neutral-400">
+							Create your first Place
+						</span>
+					</>
 				)}
 				{onboardingMode === "creating" && (
 					<span className="text-neutral-500 dark:text-neutral-400">

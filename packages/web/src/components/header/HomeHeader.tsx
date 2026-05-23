@@ -1,5 +1,6 @@
 "use client";
 
+import { useHomeChrome } from "@/components/home/HomeChromeContext";
 import { usePrivy } from "@privy-io/react-auth";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -12,6 +13,7 @@ export function HomeHeader() {
 	const pathname = usePathname();
 	const router = useRouter();
 	const isCreatePlacePage = pathname === "/place/new";
+	const homeChrome = useHomeChrome();
 
 	useEffect(() => {
 		if (!authenticated || isCreatePlacePage) return;
@@ -34,7 +36,7 @@ export function HomeHeader() {
 				</Link>
 			)}
 			<div className="flex items-center gap-2">
-				{authenticated && !isCreatePlacePage && (
+				{authenticated && !isCreatePlacePage && !homeChrome?.isEmptyHome && (
 					<Link
 						href="/place/new"
 						aria-label="Create writer"
