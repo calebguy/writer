@@ -58,8 +58,12 @@ export function MarkdownRenderer({
 								),
 							strong: ({ children }) => <strong>{children}</strong>,
 							em: ({ children }) => <em>{children}</em>,
-							code: ({ children }) => <code>{children}</code>,
-							pre: ({ children }) => <pre>{children}</pre>,
+							code: ({ children, className }) => (
+								<code className={className}>{children}</code>
+							),
+							pre: ({ children, className }) => (
+								<pre className={className}>{children}</pre>
+							),
 						}}
 					>
 						{markdown}
