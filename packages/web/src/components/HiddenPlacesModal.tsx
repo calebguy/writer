@@ -12,7 +12,6 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { VisuallyHidden } from "radix-ui";
 import type { Hex } from "viem";
-import { LoadingRelic } from "./LoadingRelic";
 import { Modal, ModalTitle } from "./dsl/Modal";
 import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
 
@@ -27,9 +26,7 @@ export function HiddenPlacesModal({ open, onClose }: HiddenPlacesModalProps) {
 	const address = user?.wallet?.address;
 	const queryKey = hiddenWritersQueryKey(address);
 
-	const { data: hiddenWriters, isLoading } = useHiddenWriters({
-		enabled: open,
-	});
+	const { data: hiddenWriters } = useHiddenWriters();
 
 	const {
 		mutate: unhideWriter,
@@ -76,11 +73,7 @@ export function HiddenPlacesModal({ open, onClose }: HiddenPlacesModalProps) {
 				<ModalTitle>Hidden Places</ModalTitle>
 			</VisuallyHidden.Root>
 			<div className="space-y-4 h-full">
-				{isLoading ? (
-					<div className="flex items-center justify-center py-8 text-primary w-full h-full">
-						<LoadingRelic size={32} className="rotating" />
-					</div>
-				) : writers.length === 0 ? (
+				{writers.length === 0 ? (
 					<p className="py-8 text-center font-serif italic text-neutral-500 dark:text-neutral-400">
 						No hidden Places
 					</p>
@@ -99,7 +92,7 @@ export function HiddenPlacesModal({ open, onClose }: HiddenPlacesModalProps) {
 										type="button"
 										aria-label="Unhide"
 										title="Unhide"
-										className="absolute inset-0 z-10 hidden cursor-pointer rounded-xs disabled:cursor-not-allowed disabled:opacity-40 md:block"
+										className="absolute inset-0 z-10 hidden cursor-pointer rounded-xs disabled:cursor-not-allowed disabled:opacity-40 md:block outline-none"
 										disabled={isPending}
 										onClick={() => unhideWriter(writer.address as Hex)}
 									/>

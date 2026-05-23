@@ -16,6 +16,7 @@ export function useHiddenWriters({ enabled = true }: { enabled?: boolean } = {})
 	return useQuery({
 		queryKey: hiddenWritersQueryKey(address),
 		enabled: enabled && ready && authenticated && !!address,
+		staleTime: 30 * 1000,
 		queryFn: async ({ signal }) => {
 			if (!address) return [] as HiddenWriter[];
 			const authToken = await getAccessToken();
