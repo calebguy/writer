@@ -92,11 +92,11 @@ export async function processBlockRange(
 		});
 		if (supplementalLogs.length > 0) {
 			const supTxCache = await fetchTransactions(client, supplementalLogs);
-			// Reuse block cache — same block range
+			const supBlockCache = await fetchBlocks(client, supplementalLogs);
 			for (const log of supplementalLogs) {
 				const txData = supTxCache.get(log.transactionHash!);
 				if (!txData) continue;
-				const blockData = blockCache.get(log.blockNumber!);
+				const blockData = supBlockCache.get(log.blockNumber!);
 				if (!blockData) continue;
 				try {
 					await processLog(log, txData, blockData, db, registry);

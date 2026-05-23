@@ -94,7 +94,8 @@ const writerRoutes = new Hono()
 
 				const pendingEntries = refreshed.entries.filter(
 					(entry) =>
-						!entry.deletedAt && (!entry.onChainId || !entry.createdAtHash),
+						!entry.deletedAt &&
+						(entry.onChainId == null || !entry.createdAtHash),
 				);
 				for (const entry of pendingEntries) {
 					entryResults.push(await reconcileEntryByDbId(entry.id));

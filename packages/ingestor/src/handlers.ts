@@ -7,6 +7,8 @@ import {
 	ENTRY_REMOVED,
 	ENTRY_UPDATED,
 	HEX_SET,
+	LEGACY_CHUNK_RECEIVED,
+	LEGACY_WRITER_CREATED_WITH_ID,
 	LOGIC_SET,
 	NEW_WRITER_CREATED,
 	OLD_WRITER_CREATED,
@@ -40,10 +42,14 @@ export async function processLog(
 			return handleWriterCreated(log, tx, block, db, registry, true);
 		case TOPIC0.OLD_WRITER_CREATED:
 			return handleWriterCreated(log, tx, block, db, registry, false);
+		case TOPIC0.LEGACY_WRITER_CREATED_WITH_ID:
+			return handleLegacyWriterCreatedWithId(log, tx, block, db, registry);
 		case TOPIC0.ENTRY_CREATED:
 			return handleEntryCreated(log, tx, block, db);
 		case TOPIC0.CHUNK_RECEIVED:
 			return handleChunkReceived(log, tx, block, db);
+		case TOPIC0.LEGACY_CHUNK_RECEIVED:
+			return handleChunkReceived(log, tx, block, db, true);
 		case TOPIC0.ENTRY_UPDATED:
 			return handleEntryUpdated(log, tx, block, db);
 		case TOPIC0.ENTRY_REMOVED:
@@ -78,35 +84,106 @@ async function handleWriterCreated(
 		publicWritable?: boolean;
 	};
 
+	return upsertWriterCreated({
+		log,
+		tx,
+		block,
+		db,
+		registry,
+		writerAddress: args.writerAddress,
+		storeAddress: args.storeAddress,
+		admin: args.admin,
+		title: args.title,
+		managers: args.managers,
+		publicWritable: isNewFactory ? Boolean(args.publicWritable) : false,
+		legacyDomain: !isNewFactory,
+	});
+}
+
+async function handleLegacyWriterCreatedWithId(
+	log: Log,
+	tx: TxData,
+	block: BlockData,
+	db: Db,
+	registry: AddressRegistry,
+): Promise<void> {
+	const decoded = decodeEventLog({
+		abi: [LEGACY_WRITER_CREATED_WITH_ID],
+		data: log.data,
+		topics: log.topics,
+	});
+	const args = decoded.args as {
+		id: bigint;
+		writerAddress: string;
+		admin: string;
+		title: string;
+		storeAddress: string;
+		managers: readonly string[];
+	};
+
+	return upsertWriterCreated({
+		log,
+		tx,
+		block,
+		db,
+		registry,
+		writerAddress: args.writerAddress,
+		storeAddress: args.storeAddress,
+		admin: args.admin,
+		title: args.title,
+		managers: args.managers,
+		publicWritable: false,
+		legacyDomain: true,
+		legacyFactoryId: args.id,
+	});
+}
+
+async function upsertWriterCreated(args: {
+	log: Log;
+	tx: TxData;
+	block: BlockData;
+	db: Db;
+	registry: AddressRegistry;
+	writerAddress: string;
+	storeAddress: string;
+	admin: string;
+	title: string;
+	managers: readonly string[];
+	publicWritable: boolean;
+	legacyDomain: boolean;
+	legacyFactoryId?: bigint;
+}): Promise<void> {
 	console.log("WriterCreated", {
 		writer: args.writerAddress,
 		store: args.storeAddress,
 		title: args.title,
-		publicWritable: isNewFactory ? args.publicWritable : false,
+		publicWritable: args.publicWritable,
+		legacyDomain: args.legacyDomain,
+		legacyFactoryId: args.legacyFactoryId?.toString(),
 	});
 
 	const transactionId = await confirmRelayTx({
-		txFrom: tx.from,
-		txNonce: tx.nonce,
-		blockNumber: block.number,
-		txHash: tx.hash,
-		db,
+		txFrom: args.tx.from,
+		txNonce: args.tx.nonce,
+		blockNumber: args.block.number,
+		txHash: args.tx.hash,
+		db: args.db,
 	});
 
-	registry.addStorageAddress(args.storeAddress);
+	args.registry.addStorageAddress(args.storeAddress);
 
-	await db.upsertWriter({
+	await args.db.upsertWriter({
 		address: args.writerAddress,
 		storageAddress: args.storeAddress,
 		storageId: args.storeAddress,
-		publicWritable: isNewFactory ? Boolean(args.publicWritable) : false,
-		legacyDomain: !isNewFactory,
+		publicWritable: args.publicWritable,
+		legacyDomain: args.legacyDomain,
 		title: args.title,
 		admin: args.admin,
 		managers: args.managers.map((m) => m.toString()),
-		createdAtHash: tx.hash,
-		createdAtBlock: block.number,
-		createdAtBlockDatetime: new Date(Number(block.timestamp) * 1000),
+		createdAtHash: args.tx.hash,
+		createdAtBlock: args.block.number,
+		createdAtBlockDatetime: new Date(Number(args.block.timestamp) * 1000),
 		transactionId,
 	});
 }
@@ -160,9 +237,10 @@ async function handleChunkReceived(
 	tx: TxData,
 	block: BlockData,
 	db: Db,
+	legacy = false,
 ): Promise<void> {
 	const decoded = decodeEventLog({
-		abi: [CHUNK_RECEIVED],
+		abi: [legacy ? LEGACY_CHUNK_RECEIVED : CHUNK_RECEIVED],
 		data: log.data,
 		topics: log.topics,
 	});

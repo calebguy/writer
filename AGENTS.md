@@ -211,7 +211,7 @@ bun run format
 - `WS_RPC_URL` - Optimism WebSocket RPC endpoint
 - `TARGET_CHAIN_ID` - Chain ID to sync
 - `FACTORY_ADDRESS` - WriterFactory contract address
-- `OLD_FACTORY_ADDRESS` - (optional) Legacy WriterFactory address
+- `OLD_FACTORY_ADDRESS` - (optional) Legacy WriterFactory address list. Accepts one address, comma/whitespace-separated addresses, or a JSON string array.
 - `COLOR_REGISTRY_ADDRESS` - ColorRegistry contract address
 - `START_BLOCK` - Initial block to sync from when no cursor exists
 - `HEALTH_PORT` - (optional) Port for health check server (default 3001)

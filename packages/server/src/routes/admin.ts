@@ -41,7 +41,8 @@ const adminRoutes = new Hono()
 			writer.address as `0x${string}`,
 		);
 		const pendingEntries = writer.entries.filter(
-			(entry) => !entry.deletedAt && (!entry.onChainId || !entry.createdAtHash),
+			(entry) =>
+				!entry.deletedAt && (entry.onChainId == null || !entry.createdAtHash),
 		);
 		const results: ReconcileEntryResult[] = [];
 		for (const entry of pendingEntries) {

@@ -10,8 +10,7 @@ async function main() {
 	const db = new Db(env.DATABASE_URL);
 
 	// Build address registry
-	const factories = [env.FACTORY_ADDRESS];
-	if (env.OLD_FACTORY_ADDRESS) factories.push(env.OLD_FACTORY_ADDRESS);
+	const factories = [env.FACTORY_ADDRESS, ...env.OLD_FACTORY_ADDRESS];
 	const registry = new AddressRegistry({
 		factories,
 		colorRegistry: env.COLOR_REGISTRY_ADDRESS,

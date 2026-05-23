@@ -491,7 +491,7 @@ export async function reconcileEntryByDbId(
 	};
 	const warnings: string[] = [];
 
-	if (entry.onChainId && entry.createdAtHash) {
+	if (entry.onChainId != null && entry.createdAtHash) {
 		return {
 			entryId,
 			ok: true,
@@ -630,7 +630,7 @@ export async function reconcileEntryByDbId(
 
 	return {
 		entryId,
-		ok: Boolean(updated?.onChainId && updated?.createdAtHash),
+		ok: updated?.onChainId != null && Boolean(updated.createdAtHash),
 		action: "updated",
 		warnings,
 		before,
