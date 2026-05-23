@@ -3,6 +3,9 @@
 import { customLinkDialogPlugin } from "@/plugins/customLinkDialogPlugin";
 import { pasteLinkPlugin } from "@/plugins/pasteLinkPlugin";
 import { cn } from "@/utils/cn";
+import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
+import { Prec } from "@codemirror/state";
+import { tags } from "@lezer/highlight";
 import { STRIKETHROUGH } from "@lexical/markdown";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
@@ -76,6 +79,80 @@ const strikethroughShortcutPlugin = realmPlugin({
 		});
 	},
 });
+
+const codeViewerHighlightStyle = HighlightStyle.define([
+	{
+		tag: [tags.comment, tags.lineComment, tags.blockComment],
+		color: "var(--color-neutral-500)",
+		fontStyle: "italic",
+	},
+	{
+		tag: [
+			tags.keyword,
+			tags.operatorKeyword,
+			tags.modifier,
+			tags.standard(tags.name),
+			tags.definitionKeyword,
+			tags.propertyName,
+			tags.attributeName,
+			tags.tagName,
+			tags.bool,
+			tags.atom,
+		],
+		color: "rgb(var(--color-primary))",
+	},
+	{
+		tag: [
+			tags.function(tags.variableName),
+			tags.function(tags.propertyName),
+			tags.definition(tags.function(tags.variableName)),
+			tags.className,
+			tags.typeName,
+			tags.definition(tags.name),
+		],
+		color: "#2563eb",
+	},
+	{
+		tag: [
+			tags.string,
+			tags.special(tags.string),
+			tags.regexp,
+			tags.character,
+			tags.escape,
+			tags.content,
+		],
+		color: "#15803d",
+	},
+	{
+		tag: [tags.number, tags.integer, tags.float, tags.literal],
+		color: "#b45309",
+	},
+	{
+		tag: [
+			tags.variableName,
+			tags.operator,
+			tags.derefOperator,
+			tags.arithmeticOperator,
+			tags.logicOperator,
+			tags.compareOperator,
+			tags.updateOperator,
+			tags.definitionOperator,
+			tags.punctuation,
+			tags.separator,
+			tags.brace,
+			tags.squareBracket,
+			tags.paren,
+			tags.angleBracket,
+			tags.meta,
+			tags.processingInstruction,
+		],
+		color: "var(--color-neutral-700)",
+	},
+]);
+const codeMirrorViewerSyntaxTheme = Prec.highest(
+	syntaxHighlighting(codeViewerHighlightStyle),
+);
+
 
 const exampleTheme = {
 	paragraph: "mdx--paragraph",
@@ -204,6 +281,7 @@ const MDX: FC<EditorProps> = ({
 							yaml: "YAML",
 							xml: "XML",
 						},
+						codeMirrorExtensions: [codeMirrorViewerSyntaxTheme],
 						autoLoadLanguageSupport: true,
 					}),
 					markdownShortcutPlugin(),
