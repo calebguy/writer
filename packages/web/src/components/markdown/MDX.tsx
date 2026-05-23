@@ -3,7 +3,15 @@
 import { customLinkDialogPlugin } from "@/plugins/customLinkDialogPlugin";
 import { pasteLinkPlugin } from "@/plugins/pasteLinkPlugin";
 import { cn } from "@/utils/cn";
-import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
+import {
+	HighlightStyle,
+	LanguageDescription,
+	LanguageSupport,
+	StreamLanguage,
+	syntaxHighlighting,
+} from "@codemirror/language";
+import { languages } from "@codemirror/language-data";
+import { clike } from "@codemirror/legacy-modes/mode/clike";
 import { Prec } from "@codemirror/state";
 import { tags } from "@lezer/highlight";
 import { STRIKETHROUGH } from "@lexical/markdown";
@@ -153,6 +161,48 @@ const codeMirrorViewerSyntaxTheme = Prec.highest(
 	syntaxHighlighting(codeViewerHighlightStyle),
 );
 
+const mapWords = (words: string) =>
+	Object.fromEntries(words.split(" ").map((word) => [word, true]));
+
+const solidityLanguageSupport = new LanguageSupport(
+	StreamLanguage.define(
+		clike({
+			name: "solidity",
+			keywords: mapWords(
+				"abstract anonymous as assembly break case catch constant continue contract default delete do else emit enum error event external fallback for function hex if immutable import indexed interface internal is library mapping memory modifier new override payable pragma private public pure receive return returns revert storage struct super switch this throw try type unchecked using view virtual while",
+			),
+			types: mapWords(
+				"address bool byte bytes bytes1 bytes2 bytes3 bytes4 bytes5 bytes6 bytes7 bytes8 bytes9 bytes10 bytes11 bytes12 bytes13 bytes14 bytes15 bytes16 bytes17 bytes18 bytes19 bytes20 bytes21 bytes22 bytes23 bytes24 bytes25 bytes26 bytes27 bytes28 bytes29 bytes30 bytes31 bytes32 fixed int int8 int16 int24 int32 int40 int48 int56 int64 int72 int80 int88 int96 int104 int112 int120 int128 int136 int144 int152 int160 int168 int176 int184 int192 int200 int208 int216 int224 int232 int240 int248 int256 string ufixed uint uint8 uint16 uint24 uint32 uint40 uint48 uint56 uint64 uint72 uint80 uint88 uint96 uint104 uint112 uint120 uint128 uint136 uint144 uint152 uint160 uint168 uint176 uint184 uint192 uint200 uint208 uint216 uint224 uint232 uint240 uint248 uint256",
+			),
+			builtin: mapWords(
+				"abi addmod assert block blockhash call callcode delegatecall ecrecover gasleft keccak256 log0 log1 log2 log3 log4 msg mulmod now require selfdestruct sha256 staticcall suicide super tx type",
+			),
+			blockKeywords: mapWords(
+				"catch contract do else finally for function if interface library struct switch try while",
+			),
+			atoms: mapWords("false null true wei gwei ether seconds minutes hours days weeks"),
+			number:
+				/^(?:0x[a-f\d_]+|0b[01_]+|(?:\d[\d_]*\.?[\d_]*|\.\d[\d_]*)(?:e[-+]?\d+)?)(?:wei|gwei|ether|seconds|minutes|hours|days|weeks)?/i,
+		}),
+	),
+);
+
+if (
+	!languages.some(
+		(language) =>
+			language.name === "Solidity" || language.alias.includes("solidity"),
+	)
+) {
+	languages.push(
+		LanguageDescription.of({
+			name: "Solidity",
+			alias: ["solidity", "sol"],
+			extensions: ["sol"],
+			support: solidityLanguageSupport,
+		}),
+	);
+}
+
 
 const exampleTheme = {
 	paragraph: "mdx--paragraph",
@@ -273,6 +323,7 @@ const MDX: FC<EditorProps> = ({
 							json: "JSON",
 							md: "Markdown",
 							sql: "SQL",
+							solidity: "Solidity",
 							python: "Python",
 							go: "Go",
 							rust: "Rust",

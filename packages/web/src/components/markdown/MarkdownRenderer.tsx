@@ -1,6 +1,7 @@
 import { cn } from "@/utils/cn";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
+import solidity from "./language/solidity";
 import remarkGfm from "remark-gfm";
 import "./MDX.css";
 
@@ -21,7 +22,7 @@ export function MarkdownRenderer({
 				<div className="prose">
 					<ReactMarkdown
 						remarkPlugins={[remarkGfm]}
-						rehypePlugins={[rehypeHighlight]}
+						rehypePlugins={[[rehypeHighlight, { languages: { solidity } }]]}
 						components={{
 							// Preserve GFM-generated class names (for example task lists)
 							// while keeping styling controlled by MDX.css.
