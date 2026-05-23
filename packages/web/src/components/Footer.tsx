@@ -23,17 +23,15 @@ export function Footer() {
 				write today, forever
 			</span>
 			<span className="flex-1 text-right flex justify-end gap-3">
-				{links
-					.filter((link) => !pathname.startsWith(link.href))
-					.map((link) => (
-						<a
-							key={link.href}
-							href={link.href}
-							className="no-underline hover:text-primary"
-						>
-							{link.label}
-						</a>
-					))}
+				{links.map((link) => (
+					<a
+						key={link.href}
+						href={link.href}
+						className="no-underline hover:text-primary"
+					>
+						{link.label}
+					</a>
+				))}
 			</span>
 		</footer>
 	);

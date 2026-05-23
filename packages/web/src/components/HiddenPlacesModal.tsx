@@ -117,7 +117,7 @@ export function HiddenPlacesModal({ open, onClose }: HiddenPlacesModalProps) {
 											className="text-black dark:text-white writer-title md:group-hover:text-primary"
 										/>
 										<div className="pointer-events-none absolute top-0 right-0 hidden h-full w-full items-center justify-center bg-secondary/90 text-lg text-neutral-500 group-hover:text-primary dark:text-neutral-400 md:group-hover:flex">
-											<span>Show?</span>
+											<span className="italic">Show?</span>
 										</div>
 										<div className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400 text-right md:group-hover:text-primary">
 											{writer.entries.length}
