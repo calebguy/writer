@@ -178,7 +178,7 @@ export function NavDropdown() {
 				)}
 				{authenticated && (
 					<DropdownItem onClick={() => setHiddenPlacesOpen(true)}>
-						Hidden Places
+						Hidden
 					</DropdownItem>
 				)}
 				{authenticated && hasLegacyEntries && (
