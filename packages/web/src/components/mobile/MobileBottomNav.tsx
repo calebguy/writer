@@ -16,7 +16,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ColorModal } from "../ColorModal";
 import { HiddenPlacesModal } from "../HiddenPlacesModal";
 import { queryClient } from "../Providers";
-import { ClosedEye } from "../icons/ClosedEye";
+
 
 const VISIBLE_PATHS = new Set(["/home", "/explore", "/writer"]);
 
@@ -39,6 +39,51 @@ function navIconClass(active: boolean) {
 		: "cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary";
 }
 
+const THEME_OPTIONS = [
+	{
+		mode: "light",
+		title: "Light",
+		src: "/images/relics/relic-10.png",
+		width: 100,
+		height: 100,
+		className: "h-7 w-7 shrink-0 object-contain dark:invert",
+	},
+	{
+		mode: "dark",
+		title: "Dark",
+		src: "/images/relics/moon-3.png",
+		width: 96.4,
+		height: 100,
+		className: "h-7 w-7 shrink-0 object-contain dark:invert",
+	},
+	{
+		mode: "system",
+		title: "System",
+		src: "/images/relics/computer-1.png",
+		width: 100,
+		height: 100,
+		className: "h-7 w-7 shrink-0 object-contain dark:invert",
+	},
+] satisfies readonly {
+	mode: ThemeMode;
+	title: string;
+	src: string;
+	width: number;
+	height: number;
+	className: string;
+}[];
+
+function getThemeOption(mode: ThemeMode) {
+	switch (mode) {
+		case "light":
+			return THEME_OPTIONS[0];
+		case "dark":
+			return THEME_OPTIONS[1];
+		case "system":
+			return THEME_OPTIONS[2];
+	}
+}
+
 export function MobileBottomNav({
 	preview = false,
 }: { preview?: boolean } = {}) {
@@ -47,6 +92,7 @@ export function MobileBottomNav({
 	const { logout, authenticated, ready } = usePrivy();
 	const isLoggedIn = ready && authenticated;
 	const [showSubMenu, setShowSubMenu] = useState(false);
+	const [showThemeMenu, setShowThemeMenu] = useState(false);
 	const [showColorModal, setShowColorModal] = useState(false);
 	const [showHiddenPlacesModal, setShowHiddenPlacesModal] = useState(false);
 	const [themeMode, setThemeMode] = useState<ThemeMode>("system");
@@ -70,6 +116,7 @@ export function MobileBottomNav({
 
 	useEffect(() => {
 		setShowSubMenu(false);
+		setShowThemeMenu(false);
 		setShowColorModal(false);
 		setShowHiddenPlacesModal(false);
 	}, [pathname]);
@@ -94,6 +141,7 @@ export function MobileBottomNav({
 			if (!containerRef.current) return;
 			if (!containerRef.current.contains(event.target as Node)) {
 				setShowSubMenu(false);
+				setShowThemeMenu(false);
 			}
 		};
 		document.addEventListener("mousedown", handleClickOutside);
@@ -127,6 +175,7 @@ export function MobileBottomNav({
 			if (dir === "down" && currentY > 50) {
 				setHidden(true);
 				setShowSubMenu(false);
+				setShowThemeMenu(false);
 			} else if (dir === "up") {
 				const atBottom =
 					window.innerHeight + window.scrollY >=
@@ -147,6 +196,7 @@ export function MobileBottomNav({
 			if (delta > threshold) {
 				setHidden(true);
 				setShowSubMenu(false);
+				setShowThemeMenu(false);
 			} else if (delta < -threshold) {
 				// Don't show on overscroll bounce at the bottom
 				const atBottom =
@@ -184,6 +234,7 @@ export function MobileBottomNav({
 		applyThemeMode(mode);
 		setStoredThemeMode(mode);
 	};
+	const activeThemeOption = getThemeOption(themeMode);
 
 	const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const didLongPress = useRef(false);
@@ -193,6 +244,7 @@ export function MobileBottomNav({
 		longPressTimer.current = setTimeout(() => {
 			didLongPress.current = true;
 			setShowSubMenu(true);
+			setShowThemeMenu(false);
 		}, 500);
 	}, []);
 
@@ -206,10 +258,12 @@ export function MobileBottomNav({
 	const onHomeTap = () => {
 		if (didLongPress.current) return;
 		if (isRouteActive(pathname, "/home")) {
+			setShowThemeMenu(false);
 			setShowSubMenu((prev) => !prev);
 			return;
 		}
 		setShowSubMenu(false);
+		setShowThemeMenu(false);
 		router.push("/home");
 	};
 
@@ -235,90 +289,92 @@ export function MobileBottomNav({
 				}
 			>
 				<div className="relative flex items-center justify-center">
+					{showSubMenu && showThemeMenu && (
+						<div className="absolute bottom-[calc(100%+72px)] flex items-center gap-1.5 rounded-full bg-background/85 backdrop-blur-[2px] px-3 py-1.5">
+							{THEME_OPTIONS.map((option) => (
+								<button
+									key={option.mode}
+									type="button"
+									title={option.title}
+									className={`h-10 w-10 inline-flex items-center justify-center rounded-full transition-colors ${navIconClass(
+										themeMode === option.mode,
+									)}`}
+									onClick={() => setTheme(option.mode)}
+								>
+									<Image
+										src={option.src}
+										alt={option.title}
+										width={option.width}
+										height={option.height}
+										className={option.className}
+										priority
+									/>
+								</button>
+							))}
+						</div>
+					)}
 					{showSubMenu && (
 						<div className="absolute bottom-[calc(100%+10px)] flex items-center gap-1.5 rounded-full bg-background/85 backdrop-blur-[2px] px-3 py-1.5">
 							{isLoggedIn && (
 								<button
 									type="button"
 									title="Color"
-									className="p-1.5 rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
+									className="h-10 w-10 inline-flex items-center justify-center rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
 									onClick={() => {
 										setShowSubMenu(false);
+										setShowThemeMenu(false);
 										setShowColorModal(true);
 									}}
 								>
-									<span className="block w-5 h-5 bg-primary rounded-sm" />
+									<span className="block h-5 w-5 rounded-sm bg-primary" />
 								</button>
 							)}
+							<button
+								type="button"
+								title="Theme"
+								aria-expanded={showThemeMenu}
+								className={`h-10 w-10 inline-flex items-center justify-center rounded-full transition-colors ${navIconClass(
+									showThemeMenu,
+								)}`}
+								onClick={() => setShowThemeMenu((prev) => !prev)}
+							>
+								<Image
+									src={activeThemeOption.src}
+									alt={`Theme: ${activeThemeOption.title.toLowerCase()}`}
+									width={activeThemeOption.width}
+									height={activeThemeOption.height}
+									className={`${activeThemeOption.className} transition-transform duration-300 ${
+										showThemeMenu ? "rotate-24" : ""
+									}`}
+									priority
+								/>
+							</button>
 							{isLoggedIn && hasHiddenWriters && (
 								<button
 									type="button"
 									title="Hidden Places"
-									className="p-1.5 rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
+									className="h-10 w-10 inline-flex items-center justify-center rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
 									onClick={() => {
 										setShowSubMenu(false);
+										setShowThemeMenu(false);
 										setShowHiddenPlacesModal(true);
 									}}
 								>
-									<ClosedEye className="w-5 h-5" />
+									<Image
+										src="/images/relics/face.png"
+										alt="Hidden Places"
+										width={100}
+										height={100}
+										className="h-7 w-7 shrink-0 object-contain dark:invert"
+										priority
+									/>
 								</button>
 							)}
-							<button
-								type="button"
-								title="Light"
-								className={`p-1.5 rounded-full transition-colors ${navIconClass(
-									themeMode === "light",
-								)}`}
-								onClick={() => setTheme("light")}
-							>
-								<Image
-									src="/images/relics/relic-10.png"
-									alt="Light"
-									width={100}
-									height={100}
-									className="w-7 h-7 min-w-7 shrink-0 dark:invert"
-									priority
-								/>
-							</button>
-							<button
-								type="button"
-								title="Dark"
-								className={`p-1.5 rounded-full transition-colors ${navIconClass(
-									themeMode === "dark",
-								)}`}
-								onClick={() => setTheme("dark")}
-							>
-								<Image
-									src="/images/relics/moon-3.png"
-									alt="Dark"
-									width={96.4}
-									height={100}
-									className="h-7 w-full min-w-7 shrink-0 dark:invert"
-									priority
-								/>
-							</button>
-							<button
-								type="button"
-								title="System"
-								className={`p-1.5 rounded-full transition-colors ${navIconClass(
-									themeMode === "system",
-								)}`}
-								onClick={() => setTheme("system")}
-							>
-								<Image
-									src="/images/relics/computer-1.png"
-									alt="System"
-									width={100}
-									height={100}
-									className="w-7 h-7 min-w-7 shrink-0 dark:invert"
-									priority
-								/>
-							</button>
 							{isLoggedIn && (
 								<button
 									type="button"
 									title="Leave"
-									className="p-1.5 rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
+									className="h-10 w-10 inline-flex items-center justify-center rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
 									onClick={() =>
 										logout().then(() => {
 											clearAllCachedKeys();
@@ -331,7 +387,7 @@ export function MobileBottomNav({
 										alt="Leave"
 										width={100}
 										height={100}
-										className="w-7 h-7 min-w-7 shrink-0 dark:invert"
+										className="h-7 w-7 shrink-0 object-contain dark:invert"
 										priority
 									/>
 								</button>
