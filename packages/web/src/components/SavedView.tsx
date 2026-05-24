@@ -357,10 +357,10 @@ function MixedSavedGrid({
 										<Unlock className="h-4 w-4 text-primary" />
 									</span>
 								</>
-								<span className="text-sm">Private entry</span>
+								{/* <span className="text-sm">Private entry</span>
 								<span className="text-xs">
 									{canUnlock ? "Unlock to view" : "Private"}
-								</span>
+								</span> */}
 								{/* {unlockError && canUnlock && (
 									<span className="text-[10px] text-red-500">
 										Signature rejected

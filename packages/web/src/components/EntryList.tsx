@@ -89,10 +89,10 @@ export default function EntryList({
 										</span>
 									</>
 								)}
-								<span className="text-sm">Private entry</span>
+								{/* <span className="text-sm">Private entry</span>
 								<span className="text-xs">
 									{isUnlocking ? "Unlocking..." : "Unlock to view"}
-								</span>
+								</span> */}
 								{/* {unlockError && (
 									<span className="text-[10px] text-red-500">
 										Signature rejected
