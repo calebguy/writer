@@ -235,6 +235,7 @@ export function MobileBottomNav({
 		setStoredThemeMode(mode);
 	};
 	const activeThemeOption = getThemeOption(themeMode);
+	const themeMenuVisible = showSubMenu && showThemeMenu;
 
 	const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const didLongPress = useRef(false);
@@ -289,111 +290,126 @@ export function MobileBottomNav({
 				}
 			>
 				<div className="relative flex items-center justify-center">
-					{showSubMenu && showThemeMenu && (
-						<div className="absolute bottom-[calc(100%+72px)] flex items-center gap-1.5 rounded-full bg-background/85 backdrop-blur-[2px] px-3 py-1.5">
-							{THEME_OPTIONS.map((option) => (
-								<button
-									key={option.mode}
-									type="button"
-									title={option.title}
-									className={`h-10 w-10 inline-flex items-center justify-center rounded-full transition-colors ${navIconClass(
-										themeMode === option.mode,
-									)}`}
-									onClick={() => setTheme(option.mode)}
-								>
-									<Image
-										src={option.src}
-										alt={option.title}
-										width={option.width}
-										height={option.height}
-										className={option.className}
-										priority
-									/>
-								</button>
-							))}
-						</div>
-					)}
-					{showSubMenu && (
-						<div className="absolute bottom-[calc(100%+10px)] flex items-center gap-1.5 rounded-full bg-background/85 backdrop-blur-[2px] px-3 py-1.5">
-							{isLoggedIn && (
-								<button
-									type="button"
-									title="Color"
-									className="h-10 w-10 inline-flex items-center justify-center rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
-									onClick={() => {
-										setShowSubMenu(false);
-										setShowThemeMenu(false);
-										setShowColorModal(true);
-									}}
-								>
-									<span className="block h-5 w-5 rounded-sm bg-primary" />
-								</button>
-							)}
+					<div
+						aria-hidden={!themeMenuVisible}
+						className={`absolute bottom-[calc(100%+72px)] flex items-center gap-1.5 rounded-full bg-background/85 backdrop-blur-[2px] px-3 py-1.5 transition-[opacity,transform] duration-200 ${
+							themeMenuVisible
+								? "pointer-events-auto translate-y-0 scale-100 opacity-100"
+								: "pointer-events-none translate-y-2 scale-95 opacity-0"
+						}`}
+					>
+						{THEME_OPTIONS.map((option) => (
 							<button
+								key={option.mode}
 								type="button"
-								title="Theme"
-								aria-expanded={showThemeMenu}
+								title={option.title}
+								tabIndex={themeMenuVisible ? 0 : -1}
 								className={`h-10 w-10 inline-flex items-center justify-center rounded-full transition-colors ${navIconClass(
-									showThemeMenu,
+									themeMode === option.mode,
 								)}`}
-								onClick={() => setShowThemeMenu((prev) => !prev)}
+								onClick={() => setTheme(option.mode)}
 							>
 								<Image
-									src={activeThemeOption.src}
-									alt={`Theme: ${activeThemeOption.title.toLowerCase()}`}
-									width={activeThemeOption.width}
-									height={activeThemeOption.height}
-									className={`${activeThemeOption.className} transition-transform duration-300 ${
-										showThemeMenu ? "rotate-24" : ""
-									}`}
+									src={option.src}
+									alt={option.title}
+									width={option.width}
+									height={option.height}
+									className={option.className}
 									priority
 								/>
 							</button>
-							{isLoggedIn && hasHiddenWriters && (
-								<button
-									type="button"
-									title="Hidden Places"
-									className="h-10 w-10 inline-flex items-center justify-center rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
-									onClick={() => {
-										setShowSubMenu(false);
-										setShowThemeMenu(false);
-										setShowHiddenPlacesModal(true);
-									}}
-								>
-									<Image
-										src="/images/relics/face.png"
-										alt="Hidden Places"
-										width={100}
-										height={100}
-										className="h-7 w-7 shrink-0 object-contain dark:invert"
-										priority
-									/>
-								</button>
-							)}
-							{isLoggedIn && (
-								<button
-									type="button"
-									title="Leave"
-									className="h-10 w-10 inline-flex items-center justify-center rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
-									onClick={() =>
-										logout().then(() => {
-											clearAllCachedKeys();
-											queryClient.clear();
-										})
-									}
-								>
-									<Image
-										src="/images/relics/arrow-1.png"
-										alt="Leave"
-										width={100}
-										height={100}
-										className="h-7 w-7 shrink-0 object-contain dark:invert"
-										priority
-									/>
-								</button>
-							)}
-						</div>
-					)}
+						))}
+					</div>
+					<div
+						aria-hidden={!showSubMenu}
+						className={`absolute bottom-[calc(100%+10px)] flex items-center gap-1.5 rounded-full bg-background/85 backdrop-blur-[2px] px-3 py-1.5 transition-[opacity,transform] duration-200 ${
+							showSubMenu
+								? "pointer-events-auto translate-y-0 scale-100 opacity-100"
+								: "pointer-events-none translate-y-2 scale-95 opacity-0"
+						}`}
+					>
+						{isLoggedIn && (
+							<button
+								type="button"
+								title="Color"
+								tabIndex={showSubMenu ? 0 : -1}
+								className="h-10 w-10 inline-flex items-center justify-center rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
+								onClick={() => {
+									setShowSubMenu(false);
+									setShowThemeMenu(false);
+									setShowColorModal(true);
+								}}
+							>
+								<span className="block h-5 w-5 rounded-sm bg-primary" />
+							</button>
+						)}
+						<button
+							type="button"
+							title="Theme"
+							tabIndex={showSubMenu ? 0 : -1}
+							aria-expanded={showThemeMenu}
+							className={`h-10 w-10 inline-flex items-center justify-center rounded-full transition-colors ${navIconClass(
+								showThemeMenu,
+							)}`}
+							onClick={() => setShowThemeMenu((prev) => !prev)}
+						>
+							<Image
+								src={activeThemeOption.src}
+								alt={`Theme: ${activeThemeOption.title.toLowerCase()}`}
+								width={activeThemeOption.width}
+								height={activeThemeOption.height}
+								className={`${activeThemeOption.className} transition-transform duration-300 ${
+									showThemeMenu ? "rotate-24" : ""
+								}`}
+								priority
+							/>
+						</button>
+						{isLoggedIn && hasHiddenWriters && (
+							<button
+								type="button"
+								title="Hidden Places"
+								tabIndex={showSubMenu ? 0 : -1}
+								className="h-10 w-10 inline-flex items-center justify-center rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
+								onClick={() => {
+									setShowSubMenu(false);
+									setShowThemeMenu(false);
+									setShowHiddenPlacesModal(true);
+								}}
+							>
+								<Image
+									src="/images/relics/face.png"
+									alt="Hidden Places"
+									width={100}
+									height={100}
+									className="h-7 w-7 shrink-0 object-contain dark:invert"
+									priority
+								/>
+							</button>
+						)}
+						{isLoggedIn && (
+							<button
+								type="button"
+								title="Leave"
+								tabIndex={showSubMenu ? 0 : -1}
+								className="h-10 w-10 inline-flex items-center justify-center rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
+								onClick={() =>
+									logout().then(() => {
+										clearAllCachedKeys();
+										queryClient.clear();
+									})
+								}
+							>
+								<Image
+									src="/images/relics/doorway.png"
+									alt="Leave"
+									width={100}
+									height={100}
+									className="h-7 w-7 shrink-0 object-contain dark:invert"
+									priority
+								/>
+							</button>
+						)}
+					</div>
 
 					<div className="flex items-center gap-2.5 rounded-full bg-background/85 backdrop-blur-[2px] px-3 py-1.5">
 						<button
