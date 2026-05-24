@@ -16,7 +16,8 @@ import {
 } from "../utils/utils";
 import { LoadingRelic } from "./LoadingRelic";
 import { Modal, ModalDescription, ModalTitle } from "./dsl/Modal";
-import { Save } from "./icons/Save";
+import { Check } from "./icons/Check";
+import { Close } from "./icons/Close";
 import { Undo } from "./icons/Undo";
 interface ModalProps {
 	open: boolean;
@@ -51,17 +52,24 @@ export function ColorModal({ open, onClose }: ModalProps) {
 
 	const isSaving = isPending || saveClicked;
 
+	const resetColor = () => {
+		setRgbColor({
+			r: primaryColor[0],
+			g: primaryColor[1],
+			b: primaryColor[2],
+		});
+		setPrimaryAndSecondaryCSSVariables(primaryColor);
+	};
+	const hasColorChanged =
+		rgbColor.r !== primaryColor[0] ||
+		rgbColor.g !== primaryColor[1] ||
+		rgbColor.b !== primaryColor[2];
 	return (
 		<Modal
 			open={open}
 			className="bg-primary!"
 			onClose={() => {
-				setRgbColor({
-					r: primaryColor[0],
-					g: primaryColor[1],
-					b: primaryColor[2],
-				});
-				setPrimaryAndSecondaryCSSVariables(primaryColor);
+				resetColor();
 				onClose();
 			}}
 		>
@@ -81,31 +89,29 @@ export function ColorModal({ open, onClose }: ModalProps) {
 			<div className="flex items-center justify-center gap-2 mt-4">
 				<button
 					type="button"
-					className="border border-transparent hover:border-secondary text-secondary p-2 w-full bold text-xl disabled:hover:border-transparent disabled:opacity-30 disabled:cursor-not-allowed flex justify-center items-center cursor-pointer rounded-xs"
+					aria-label="Cancel color change"
 					onClick={() => {
-						setRgbColor({
-							r: primaryColor[0],
-							g: primaryColor[1],
-							b: primaryColor[2],
-						});
-						setPrimaryAndSecondaryCSSVariables(primaryColor);
+						resetColor();
+						onClose();
 					}}
-					disabled={
-						rgbColor.r === primaryColor[0] &&
-						rgbColor.g === primaryColor[1] &&
-						rgbColor.b === primaryColor[2]
-					}
+					className="px-4 py-1 text-secondary hover:text-primary cursor-pointer bg-primary rounded-lg w-full flex items-center justify-center border border-secondary/50 hover:border-secondary transition-colors"
+				>
+					<Close className="w-5 h-5" />
+				</button>
+				<button
+					type="button"
+					aria-label="Reset color"
+					className="px-4 py-1 text-secondary hover:text-primary cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed bg-primary rounded-lg w-full flex items-center justify-center border border-secondary/50 hover:border-secondary disabled:hover:border-secondary/50 transition-colors"
+					onClick={resetColor}
+					disabled={!hasColorChanged}
 				>
 					<Undo className="w-5 h-5" />
 				</button>
 				<button
 					type="button"
-					className="border border-transparent hover:border-secondary text-secondary p-2 w-full bold text-xl disabled:hover:border-transparent disabled:opacity-30 disabled:cursor-not-allowed flex justify-center items-center cursor-pointer rounded-xs"
-					disabled={
-						rgbColor.r === primaryColor[0] &&
-						rgbColor.g === primaryColor[1] &&
-						rgbColor.b === primaryColor[2]
-					}
+					aria-label="Save color"
+					className="px-4 py-1 text-secondary hover:text-primary cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed bg-primary rounded-lg w-full flex items-center justify-center border border-secondary/50 hover:border-secondary disabled:hover:border-secondary/50 transition-colors"
+					disabled={!hasColorChanged || isSaving}
 					onClick={async () => {
 						setSaveClicked(true);
 						if (!wallet) {
@@ -131,7 +137,7 @@ export function ColorModal({ open, onClose }: ModalProps) {
 						onClose();
 					}}
 				>
-					<Save className="w-5 h-5" />
+					<Check className="w-5 h-5" />
 				</button>
 			</div>
 			{isSaving && (

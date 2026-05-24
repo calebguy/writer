@@ -243,7 +243,7 @@ export function WriterHeader({
 				className="w-auto min-w-48 max-w-[260px] p-4 bg-surface"
 			>
 				<div className="flex flex-col gap-4 text-center">
-					<ModalTitle>Hide?</ModalTitle>
+					<ModalTitle>Hide</ModalTitle>
 					<div className="flex items-center justify-center gap-2">
 						<button
 							type="button"
