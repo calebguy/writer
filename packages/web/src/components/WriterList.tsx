@@ -118,6 +118,26 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 		}px, 0)`;
 	}, []);
 
+	useEffect(() => {
+		if (!dragState) {
+			return;
+		}
+
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.key !== "Escape") {
+				return;
+			}
+
+			event.preventDefault();
+			dragStateRef.current = null;
+			dragLayoutRef.current = null;
+			setDragState(null);
+		};
+
+		window.addEventListener("keydown", handleKeyDown);
+		return () => window.removeEventListener("keydown", handleKeyDown);
+	}, [dragState]);
+
 	const address = user?.wallet?.address;
 	const isCreatingWriter =
 		useIsMutating({ mutationKey: ["create-from-factory"] }) > 0;
