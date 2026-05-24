@@ -292,10 +292,10 @@ export function MobileBottomNav({
 				<div className="relative flex items-center justify-center">
 					<div
 						aria-hidden={!themeMenuVisible}
-						className={`absolute bottom-[calc(100%+72px)] flex items-center gap-1.5 rounded-full bg-background/85 backdrop-blur-[2px] px-3 py-1.5 transition-[opacity,transform] duration-200 ${
+						className={`absolute bottom-[calc(100%+72px)] flex origin-bottom items-center gap-1.5 rounded-full bg-background/85 backdrop-blur-[2px] px-3 py-1.5 transition-[opacity,transform] duration-150 ${
 							themeMenuVisible
 								? "pointer-events-auto translate-y-0 scale-100 opacity-100"
-								: "pointer-events-none translate-y-2 scale-95 opacity-0"
+								: "pointer-events-none translate-y-0 scale-100 opacity-0"
 						}`}
 					>
 						{THEME_OPTIONS.map((option) => (
@@ -322,10 +322,10 @@ export function MobileBottomNav({
 					</div>
 					<div
 						aria-hidden={!showSubMenu}
-						className={`absolute bottom-[calc(100%+10px)] flex items-center gap-1.5 rounded-full bg-background/85 backdrop-blur-[2px] px-3 py-1.5 transition-[opacity,transform] duration-200 ${
+						className={`absolute bottom-[calc(100%+10px)] flex origin-bottom items-center gap-1.5 rounded-full bg-background/85 backdrop-blur-[2px] px-3 py-1.5 transition-[opacity,transform] duration-150 ${
 							showSubMenu
 								? "pointer-events-auto translate-y-0 scale-100 opacity-100"
-								: "pointer-events-none translate-y-2 scale-95 opacity-0"
+								: "pointer-events-none translate-y-0 scale-100 opacity-0"
 						}`}
 					>
 						{isLoggedIn && (
