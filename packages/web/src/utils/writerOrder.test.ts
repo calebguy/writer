@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
 	applyWriterAddressOrder,
-	swappedPersistedWriterOrder,
+	insertedPersistedWriterOrder,
 } from "./writerOrder";
 
 const A = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
@@ -13,26 +13,54 @@ function writer(address: string, createdAtHash: string | null = "0xhash") {
 	return { address, createdAtHash };
 }
 
-describe("swappedPersistedWriterOrder", () => {
-	test("swaps two confirmed writers and returns the persisted order", () => {
+describe("insertedPersistedWriterOrder", () => {
+	test("moves a writer before the target and shifts intervening writers", () => {
 		expect(
-			swappedPersistedWriterOrder([writer(A), writer(B), writer(C)], A, C),
-		).toEqual([C, B, A]);
+			insertedPersistedWriterOrder(
+				[writer(A), writer(B), writer(C)],
+				A,
+				C,
+				"before",
+			),
+		).toEqual([B, A, C]);
+	});
+
+	test("moves a writer after the target and supports dropping at the end", () => {
+		expect(
+			insertedPersistedWriterOrder(
+				[writer(A), writer(B), writer(C)],
+				A,
+				C,
+				"after",
+			),
+		).toEqual([B, C, A]);
+	});
+
+	test("returns null when insertion would not change order", () => {
+		expect(
+			insertedPersistedWriterOrder(
+				[writer(A), writer(B), writer(C)],
+				B,
+				A,
+				"after",
+			),
+		).toBeNull();
 	});
 
 	test("does not persist pending writers", () => {
 		expect(
-			swappedPersistedWriterOrder(
+			insertedPersistedWriterOrder(
 				[writer(A), writer(PENDING, null), writer(B)],
 				PENDING,
 				B,
+				"before",
 			),
 		).toBeNull();
 	});
 
 	test("returns null when source and target match", () => {
 		expect(
-			swappedPersistedWriterOrder([writer(A), writer(B)], A, A),
+			insertedPersistedWriterOrder([writer(A), writer(B)], A, A, "before"),
 		).toBeNull();
 	});
 });

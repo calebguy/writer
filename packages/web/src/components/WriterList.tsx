@@ -22,7 +22,7 @@ import {
 } from "@/utils/homeOnboarding";
 import {
 	applyWriterAddressOrder,
-	swappedPersistedWriterOrder,
+	insertedPersistedWriterOrder,
 } from "@/utils/writerOrder";
 import { usePrivy } from "@privy-io/react-auth";
 import {
@@ -55,10 +55,12 @@ const SKELETON_KEYS = Array.from(
 	(_, i) => `skeleton-${i}`,
 );
 
+type InsertionEdge = "right" | "left";
 type DragState = {
 	pointerId: number;
 	fromAddress: string;
 	overAddress: string | null;
+	overEdge: InsertionEdge;
 	x: number;
 	y: number;
 	offsetX: number;
@@ -67,6 +69,24 @@ type DragState = {
 	height: number;
 	title: string;
 };
+
+type DragLayout = {
+	grid: DOMRect;
+	cards: Array<{
+		address: string;
+		rect: DOMRect;
+	}>;
+};
+
+function getInsertionEdge(rect: DOMRect, x: number): InsertionEdge {
+	return x < rect.left + rect.width / 2 ? "left" : "right";
+}
+
+function insertionPositionForEdge(edge: InsertionEdge) {
+	return edge === "left" ? "before" : "after";
+}
+
+
 
 export function WriterList({ loginLogo }: { loginLogo: number }) {
 	const { ready, authenticated, user, getAccessToken } = usePrivy();
@@ -81,9 +101,21 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 	const { mutateAsync: updateWriterTitle, isSigning: isUpdatingWriterTitle } =
 		useUpdateWriterTitle();
 	const dragStateRef = useRef<DragState | null>(null);
+	const dragLayoutRef = useRef<DragLayout | null>(null);
+	const dragPreviewRef = useRef<HTMLDivElement | null>(null);
 	const setActiveDrag = useCallback((next: DragState | null) => {
 		dragStateRef.current = next;
 		setDragState(next);
+	}, []);
+	const positionDragPreview = useCallback((next: DragState) => {
+		const preview = dragPreviewRef.current;
+		if (!preview) {
+			return;
+		}
+
+		preview.style.transform = `translate3d(${next.x - next.offsetX}px, ${
+			next.y - next.offsetY
+		}px, 0)`;
 	}, []);
 
 	const address = user?.wallet?.address;
@@ -419,21 +451,68 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 		) ?? 0;
 	const canReorderWriters = reorderableWriterCount > 1;
 
-	const getDropAddressAtPoint = useCallback(
+	const getDropTargetAtPoint = useCallback(
 		(x: number, y: number, fromAddress: string) => {
-			const target = document
-				.elementFromPoint(x, y)
-				?.closest<HTMLElement>(
-					'[data-home-writer-address][data-reorderable="true"]',
-				);
-			const targetAddress = target?.dataset.homeWriterAddress;
+			const layout = dragLayoutRef.current;
+			if (!layout) {
+				return null;
+			}
+
 			if (
-				!targetAddress ||
-				targetAddress.toLowerCase() === fromAddress.toLowerCase()
+				x < layout.grid.left ||
+				x > layout.grid.right ||
+				y < layout.grid.top ||
+				y > layout.grid.bottom
 			) {
 				return null;
 			}
-			return targetAddress;
+
+			let containing:
+				| { address: string; rect: DOMRect; distanceSquared: number }
+				| null = null;
+			let nearest:
+				| { address: string; rect: DOMRect; distanceSquared: number }
+				| null = null;
+			const normalizedFromAddress = fromAddress.toLowerCase();
+
+			for (const card of layout.cards) {
+				if (card.address.toLowerCase() === normalizedFromAddress) {
+					continue;
+				}
+
+				const centerX = card.rect.left + card.rect.width / 2;
+				const centerY = card.rect.top + card.rect.height / 2;
+				const distanceSquared = (x - centerX) ** 2 + (y - centerY) ** 2;
+				const candidate = {
+					address: card.address,
+					rect: card.rect,
+					distanceSquared,
+				};
+
+				if (
+					x >= card.rect.left &&
+					x <= card.rect.right &&
+					y >= card.rect.top &&
+					y <= card.rect.bottom &&
+					(!containing || distanceSquared < containing.distanceSquared)
+				) {
+					containing = candidate;
+				}
+
+				if (!nearest || distanceSquared < nearest.distanceSquared) {
+					nearest = candidate;
+				}
+			}
+
+			const target = containing ?? nearest;
+			if (!target) {
+				return null;
+			}
+
+			return {
+				overAddress: target.address,
+				overEdge: getInsertionEdge(target.rect, x),
+			};
 		},
 		[],
 	);
@@ -450,6 +529,33 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 				return;
 			}
 
+			const grid = card.closest<HTMLElement>('[data-home-writer-grid="true"]');
+			if (!grid) {
+				return;
+			}
+
+			const cards = Array.from(
+				grid.querySelectorAll<HTMLElement>(
+					'[data-home-writer-address][data-reorderable="true"]',
+				),
+			).flatMap((writerCard) => {
+				const writerAddress = writerCard.dataset.homeWriterAddress;
+				if (!writerAddress) {
+					return [];
+				}
+
+				return [
+					{
+						address: writerAddress,
+						rect: writerCard.getBoundingClientRect(),
+					},
+				];
+			});
+			dragLayoutRef.current = {
+				grid: grid.getBoundingClientRect(),
+				cards,
+			};
+
 			event.preventDefault();
 			event.stopPropagation();
 			event.currentTarget.setPointerCapture(event.pointerId);
@@ -459,6 +565,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 				pointerId: event.pointerId,
 				fromAddress: writer.address,
 				overAddress: null,
+				overEdge: "left",
 				x: event.clientX,
 				y: event.clientY,
 				offsetX: event.clientX - rect.left,
@@ -480,18 +587,29 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 			event.preventDefault();
 			event.stopPropagation();
 
-			setActiveDrag({
+			const dropTarget = getDropTargetAtPoint(
+				event.clientX,
+				event.clientY,
+				current.fromAddress,
+			);
+			const next = {
 				...current,
 				x: event.clientX,
 				y: event.clientY,
-				overAddress: getDropAddressAtPoint(
-					event.clientX,
-					event.clientY,
-					current.fromAddress,
-				),
-			});
+				overAddress: dropTarget?.overAddress ?? null,
+				overEdge: dropTarget?.overEdge ?? current.overEdge,
+			};
+			dragStateRef.current = next;
+			positionDragPreview(next);
+
+			if (
+				next.overAddress !== current.overAddress ||
+				next.overEdge !== current.overEdge
+			) {
+				setDragState(next);
+			}
 		},
-		[getDropAddressAtPoint, setActiveDrag],
+		[getDropTargetAtPoint, positionDragPreview],
 	);
 
 	const finishReorderDrag = useCallback(
@@ -502,25 +620,93 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 			}
 			event.preventDefault();
 			event.stopPropagation();
+			dragStateRef.current = null;
 			if (event.currentTarget.hasPointerCapture(event.pointerId)) {
 				event.currentTarget.releasePointerCapture(event.pointerId);
 			}
-			setActiveDrag(null);
+			setDragState(null);
+			dragLayoutRef.current = null;
 
 			if (!current.overAddress) {
 				return;
 			}
-			const orderedAddresses = swappedPersistedWriterOrder(
+			const orderedAddresses = insertedPersistedWriterOrder(
 				writers,
 				current.fromAddress,
 				current.overAddress,
+				insertionPositionForEdge(current.overEdge),
 			);
 			if (orderedAddresses) {
 				persistWriterOrder(orderedAddresses);
 			}
 		},
-		[persistWriterOrder, setActiveDrag, writers],
+		[persistWriterOrder, writers],
 	);
+
+	const renderInsertionIndicator = () => {
+		if (!dragState?.overAddress) {
+			return null;
+		}
+
+		const layout = dragLayoutRef.current;
+		if (!layout) {
+			return null;
+		}
+
+		const targetIndex = layout.cards.findIndex(
+			(card) =>
+				card.address.toLowerCase() === dragState.overAddress?.toLowerCase(),
+		);
+		if (targetIndex === -1) {
+			return null;
+		}
+
+		const target = layout.cards[targetIndex];
+		const normalizedFromAddress = dragState.fromAddress.toLowerCase();
+		let adjacent: (typeof layout.cards)[number] | undefined;
+
+		if (dragState.overEdge === "left") {
+			for (let i = targetIndex - 1; i >= 0; i--) {
+				if (layout.cards[i].address.toLowerCase() !== normalizedFromAddress) {
+					adjacent = layout.cards[i];
+					break;
+				}
+			}
+		} else {
+			for (let i = targetIndex + 1; i < layout.cards.length; i++) {
+				if (layout.cards[i].address.toLowerCase() !== normalizedFromAddress) {
+					adjacent = layout.cards[i];
+					break;
+				}
+			}
+		}
+
+		const sameRow =
+			!!adjacent &&
+			Math.max(target.rect.top, adjacent.rect.top) <
+				Math.min(target.rect.bottom, adjacent.rect.bottom);
+		const left =
+			dragState.overEdge === "left"
+				? sameRow && adjacent
+					? (adjacent.rect.right + target.rect.left) / 2
+					: target.rect.left - 6
+				: sameRow && adjacent
+					? (target.rect.right + adjacent.rect.left) / 2
+					: target.rect.right + 6;
+
+		return (
+			<div
+				className="pointer-events-none fixed z-40 w-[2px] rounded-full bg-primary"
+				style={{
+					left: left - 1,
+					top: target.rect.top,
+					height: target.rect.height,
+				}}
+			/>
+		);
+	};
+
+
 
 	if (!isLoggedIn) {
 		return <LoginPrompt toWhat="write" logo={loginLogo} />;
@@ -550,8 +736,6 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 		const canReorderWriter = !isPendingWriter && canReorderWriters;
 		const isDragging =
 			dragState?.fromAddress.toLowerCase() === writer.address.toLowerCase();
-		const isDropTarget =
-			dragState?.overAddress?.toLowerCase() === writer.address.toLowerCase();
 		const canEditWriter =
 			!isPendingWriter &&
 			!!address &&
@@ -585,13 +769,9 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 				key={writer.address}
 				data-home-writer-address={writer.address}
 				data-reorderable={canReorderWriter ? "true" : undefined}
-				className={`group/card home-writer-card aspect-square bg-surface flex flex-col overflow-hidden px-2 pt-2 pb-1.5 relative w-full rounded-xs transition-[opacity,transform,box-shadow] ${
+				className={`group/card home-writer-card aspect-square bg-surface flex flex-col overflow-hidden px-2 pt-2 pb-1.5 relative w-full rounded-xs transition-opacity ${
 					isPendingWriter ? "cursor-loading" : "hover:cursor-zoom-in"
-				} ${isDragging ? "opacity-30" : ""} ${
-					isDropTarget
-						? "scale-[0.98] shadow-[0_0_0_2px_rgb(var(--color-primary))]"
-						: ""
-				}`}
+				} ${isDragging ? "opacity-30" : ""}`}
 				onClick={isPendingWriter ? (e) => e.preventDefault() : undefined}
 				onMouseEnter={
 					isPendingWriter ? undefined : () => prefetchWriter(writer.address)
@@ -653,6 +833,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 						onPointerMove={handleReorderPointerMove}
 						onPointerUp={finishReorderDrag}
 						onPointerCancel={finishReorderDrag}
+						onLostPointerCapture={finishReorderDrag}
 					>
 						<span aria-hidden="true" className="grid grid-cols-2 gap-0.5">
 							<span className="h-1 w-1 rounded-full bg-current" />
@@ -687,10 +868,14 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 
 		return (
 			<div
+				ref={dragPreviewRef}
 				className="pointer-events-none fixed z-50 aspect-square overflow-hidden rounded-xs bg-surface px-2 pt-2 pb-1.5 shadow-[0_8px_32px_rgb(0_0_0/0.18),0_0_0_2px_rgb(var(--color-primary))]"
 				style={{
-					left: dragState.x - dragState.offsetX,
-					top: dragState.y - dragState.offsetY,
+					left: 0,
+					top: 0,
+					transform: `translate3d(${dragState.x - dragState.offsetX}px, ${
+						dragState.y - dragState.offsetY
+					}px, 0)`,
 					width: dragState.width,
 					height: dragState.height,
 				}}
@@ -706,12 +891,16 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 	if (!isInOnboardingFlow) {
 		return (
 			<>
-				<div className="grid gap-2 grid-cols-1 min-[321px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
+				<div
+					data-home-writer-grid="true"
+					className="grid gap-2 grid-cols-1 min-[321px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]"
+				>
 					<div className="hidden lg:block">
 						<CreateInput placeholder="Create a Place" onSubmit={handleSubmit} />
 					</div>
 					{writers?.map((writer) => renderWriterCard(writer))}
 				</div>
+				{renderInsertionIndicator()}
 				{renderDragPreview()}
 			</>
 		);

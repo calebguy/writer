@@ -55,30 +55,52 @@ export function applyWriterAddressOrder<T extends Addressed>(
 	});
 }
 
-export function swappedPersistedWriterOrder<T extends MaybePending>(
+export type WriterInsertionPosition = "before" | "after";
+
+export function insertedPersistedWriterOrder<T extends MaybePending>(
 	writers: readonly T[] | undefined,
 	fromAddress: string,
 	toAddress: string,
+	position: WriterInsertionPosition,
 ) {
 	if (!writers || writers.length < 2 || sameAddress(fromAddress, toAddress)) {
 		return null;
 	}
 
-	const fromIndex = writers.findIndex(
-		(writer) =>
-			isPersistableWriter(writer) && sameAddress(writer.address, fromAddress),
+	const persistableWriters = writers.filter(isPersistableWriter);
+	const fromIndex = persistableWriters.findIndex((writer) =>
+		sameAddress(writer.address, fromAddress),
 	);
-	const toIndex = writers.findIndex(
-		(writer) =>
-			isPersistableWriter(writer) && sameAddress(writer.address, toAddress),
+	const toIndex = persistableWriters.findIndex((writer) =>
+		sameAddress(writer.address, toAddress),
 	);
 	if (fromIndex === -1 || toIndex === -1) {
 		return null;
 	}
 
-	const next = writers.slice();
-	[next[fromIndex], next[toIndex]] = [next[toIndex], next[fromIndex]];
-	return next
-		.filter(isPersistableWriter)
-		.map((writer) => normalizeAddress(writer.address));
+	const movingWriter = persistableWriters[fromIndex];
+	const next = persistableWriters.filter((_, index) => index !== fromIndex);
+	let insertIndex = next.findIndex((writer) =>
+		sameAddress(writer.address, toAddress),
+	);
+	if (insertIndex === -1) {
+		return null;
+	}
+	if (position === "after") {
+		insertIndex += 1;
+	}
+
+	next.splice(insertIndex, 0, movingWriter);
+
+	const currentOrder = persistableWriters.map((writer) =>
+		normalizeAddress(writer.address),
+	);
+	const nextOrder = next.map((writer) => normalizeAddress(writer.address));
+	for (let i = 0; i < nextOrder.length; i++) {
+		if (nextOrder[i] !== currentOrder[i]) {
+			return nextOrder;
+		}
+	}
+
+	return null;
 }
