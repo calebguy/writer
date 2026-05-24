@@ -661,6 +661,17 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 			return null;
 		}
 
+		if (
+			!insertedPersistedWriterOrder(
+				writers,
+				dragState.fromAddress,
+				dragState.overAddress,
+				insertionPositionForEdge(dragState.overEdge),
+			)
+		) {
+			return null;
+		}
+
 		const target = layout.cards[targetIndex];
 		const normalizedFromAddress = dragState.fromAddress.toLowerCase();
 		let adjacent: (typeof layout.cards)[number] | undefined;
