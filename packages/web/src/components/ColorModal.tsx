@@ -94,14 +94,14 @@ export function ColorModal({ open, onClose }: ModalProps) {
 						resetColor();
 						onClose();
 					}}
-					className="px-4 py-1 text-secondary hover:text-primary cursor-pointer bg-primary rounded-lg w-full flex items-center justify-center border border-secondary/50 hover:border-secondary transition-colors"
+					className="px-4 py-1 rounded-lg w-full flex items-center justify-center bg-background/75 text-primary backdrop-blur-[1px] hover:bg-background disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
 				>
 					<Close className="w-5 h-5" />
 				</button>
 				<button
 					type="button"
 					aria-label="Reset color"
-					className="px-4 py-1 text-secondary hover:text-primary cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed bg-primary rounded-lg w-full flex items-center justify-center border border-secondary/50 hover:border-secondary disabled:hover:border-secondary/50 transition-colors"
+					className="px-4 py-1 rounded-lg w-full flex items-center justify-center bg-background/75 text-primary backdrop-blur-[1px] hover:bg-background disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
 					onClick={resetColor}
 					disabled={!hasColorChanged}
 				>
@@ -110,7 +110,7 @@ export function ColorModal({ open, onClose }: ModalProps) {
 				<button
 					type="button"
 					aria-label="Save color"
-					className="px-4 py-1 text-secondary hover:text-primary cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed bg-primary rounded-lg w-full flex items-center justify-center border border-secondary/50 hover:border-secondary disabled:hover:border-secondary/50 transition-colors"
+					className="px-4 py-1 rounded-lg w-full flex items-center justify-center bg-background/75 text-primary backdrop-blur-[1px] hover:bg-background disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
 					disabled={!hasColorChanged || isSaving}
 					onClick={async () => {
 						setSaveClicked(true);

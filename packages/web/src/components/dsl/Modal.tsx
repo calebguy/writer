@@ -18,7 +18,7 @@ export function Modal({ open, onClose, children, className }: ModalProps) {
 					// }}
 					className={cn(
 						"DialogContent",
-						"fixed top-1/2 left-1/2 z-[101] transform -translate-x-1/2 -translate-y-1/2 w-80vw max-w-[450px] max-h-85vh p-[25px] bg-white dark:bg-neutral-800 rounded-lg outline-none",
+						"fixed top-1/2 left-1/2 z-[101] transform -translate-x-1/2 -translate-y-1/2 w-80vw max-w-[450px] max-h-85vh p-[18px] bg-white dark:bg-neutral-800 rounded-lg outline-none",
 						className,
 					)}
 				>
