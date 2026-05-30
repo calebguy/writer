@@ -1,11 +1,11 @@
 "use client";
 
 import { useHomeChrome } from "@/components/home/HomeChromeContext";
-import { useIsLoggedIn } from "@/hooks/useIsLoggedIn";
 import {
 	hiddenWritersQueryKey,
 	useHiddenWriters,
 } from "@/hooks/useHiddenWriters";
+import { useIsLoggedIn } from "@/hooks/useIsLoggedIn";
 import { useUpdateWriterTitle } from "@/hooks/useUpdateWriterTitle";
 import {
 	type Writer,
@@ -86,8 +86,6 @@ function insertionPositionForEdge(edge: InsertionEdge) {
 	return edge === "left" ? "before" : "after";
 }
 
-
-
 export function WriterList({ loginLogo }: { loginLogo: number }) {
 	const { ready, authenticated, user, getAccessToken } = usePrivy();
 	const isLoggedIn = useIsLoggedIn();
@@ -95,9 +93,9 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 	const queryClient = useQueryClient();
 	const [dragState, setDragState] = useState<DragState | null>(null);
 	const homeChrome = useHomeChrome();
-	const [editingWriterAddress, setEditingWriterAddress] = useState<string | null>(
-		null,
-	);
+	const [editingWriterAddress, setEditingWriterAddress] = useState<
+		string | null
+	>(null);
 	const { mutateAsync: updateWriterTitle, isSigning: isUpdatingWriterTitle } =
 		useUpdateWriterTitle();
 	const dragStateRef = useRef<DragState | null>(null);
@@ -220,14 +218,14 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 		[writers],
 	);
 
-
 	const onboardingMode = getHomeOnboardingMode({
 		hasConfirmedWriter: !!confirmedFirstWriter,
 		hasVisibleWriters: (writers?.length ?? 0) > 0,
 		isCreatingWriter,
 		hasSubmittedInOnboarding,
 	});
-	const showMobileEmptyCreate = isInOnboardingFlow && onboardingMode === "empty";
+	const showMobileEmptyCreate =
+		isInOnboardingFlow && onboardingMode === "empty";
 	const setHomeIsEmpty = homeChrome?.setIsEmptyHome;
 
 	useEffect(() => {
@@ -235,7 +233,6 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 		setHomeIsEmpty(showMobileEmptyCreate);
 		return () => setHomeIsEmpty(false);
 	}, [setHomeIsEmpty, showMobileEmptyCreate]);
-
 
 	const handleCreateMore = useCallback(() => {
 		setInOnboardingFlow(false);
@@ -278,8 +275,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 
 			queryClient.setQueryData<Writer[]>(queryKey, (current) =>
 				(current ?? []).filter(
-					(writer) =>
-						writer.address.toLowerCase() !== normalizedWriterAddress,
+					(writer) => writer.address.toLowerCase() !== normalizedWriterAddress,
 				),
 			);
 
@@ -487,12 +483,16 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 				return null;
 			}
 
-			let containing:
-				| { address: string; rect: DOMRect; distanceSquared: number }
-				| null = null;
-			let nearest:
-				| { address: string; rect: DOMRect; distanceSquared: number }
-				| null = null;
+			let containing: {
+				address: string;
+				rect: DOMRect;
+				distanceSquared: number;
+			} | null = null;
+			let nearest: {
+				address: string;
+				rect: DOMRect;
+				distanceSquared: number;
+			} | null = null;
 			const normalizedFromAddress = fromAddress.toLowerCase();
 
 			for (const card of layout.cards) {
@@ -737,14 +737,11 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 		);
 	};
 
-
-
 	if (!isLoggedIn) {
 		return <LoginPrompt toWhat="write" logo={loginLogo} />;
 	}
 	const isCheckingHiddenWritersForEmptyHome =
 		!isLoading && writers?.length === 0 && isLoadingHiddenWriters;
-
 
 	if (!ready || isLoading || isCheckingHiddenWritersForEmptyHome) {
 		return (
@@ -793,7 +790,6 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 			);
 		}
 
-
 		return (
 			<Link
 				href={isPendingWriter ? "#" : `/writer/${writer.address}`}
@@ -834,7 +830,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 								type="button"
 								aria-label="Edit Place title"
 								title="Edit Place title"
-								className="absolute bottom-0.25 right-7 z-20 hidden h-6 w-6 items-center justify-center rounded-xs text-neutral-400 opacity-0 transition-opacity lg:flex group-hover/card:opacity-40 hover:text-primary hover:opacity-100 focus-visible:text-primary focus-visible:opacity-100 cursor-pointer"
+								className="absolute bottom-0.25 right-6 z-20 hidden h-6 w-6 items-center justify-center rounded-xs text-neutral-400 opacity-0 transition-opacity lg:flex group-hover/card:opacity-40 hover:text-primary hover:opacity-100 focus-visible:text-primary focus-visible:opacity-100 cursor-pointer"
 								onClick={(e) => {
 									e.preventDefault();
 									e.stopPropagation();
