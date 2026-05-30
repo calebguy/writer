@@ -10,6 +10,11 @@ import {
 } from "@/utils/entryCache";
 import { useOPWallet } from "@/utils/hooks";
 import { getCachedDerivedKey } from "@/utils/keyCache";
+import {
+	isEscapeKey,
+	isPrimaryEditShortcut,
+	isPrimaryEnterShortcut,
+} from "@/utils/keyboardShortcuts";
 import { signRemove, signUpdate } from "@/utils/signer";
 import {
 	compress,
@@ -495,11 +500,18 @@ export default function Entry({
 	};
 
 	useEffect(() => {
-		const handleKeyDown = (e: KeyboardEvent) => {
-			const isCommandShortcut = e.metaKey || e.ctrlKey;
-			const key = e.key.toLowerCase();
+		const handleSubmitShortcut = (e: KeyboardEvent) => {
+			if (!isEditing || !isPrimaryEnterShortcut(e)) return;
 
-			if (!isEditing && canEdit && isCommandShortcut && key === "e") {
+			e.preventDefault();
+			e.stopPropagation();
+			if (isContentChanged && !isEditPending) {
+				handleSave();
+			}
+		};
+
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (!isEditing && canEdit && isPrimaryEditShortcut(e)) {
 				e.preventDefault();
 				const shouldUseEditPage = window.matchMedia(
 					"(max-width: 1023px)",
@@ -515,24 +527,22 @@ export default function Entry({
 				return;
 			}
 
-			if (isEditing && key === "escape") {
+			if (isEditing && isEscapeKey(e)) {
 				e.preventDefault();
 				setEditedContent(processedEntry?.decompressed ?? "");
 				setIsEditing(false);
 				setIsDeleting(false);
-				return;
-			}
-
-			if (isEditing && isCommandShortcut && e.key === "Enter") {
-				e.preventDefault();
-				if (isContentChanged && !isEditPending) {
-					handleSave();
-				}
 			}
 		};
 
+		window.addEventListener("keydown", handleSubmitShortcut, { capture: true });
 		window.addEventListener("keydown", handleKeyDown);
-		return () => window.removeEventListener("keydown", handleKeyDown);
+		return () => {
+			window.removeEventListener("keydown", handleSubmitShortcut, {
+				capture: true,
+			});
+			window.removeEventListener("keydown", handleKeyDown);
+		};
 	}, [
 		canEdit,
 		isEditing,

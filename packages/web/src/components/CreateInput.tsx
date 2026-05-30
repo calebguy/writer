@@ -5,6 +5,7 @@ import { Lock } from "@/components/icons/Lock";
 import { Unlock } from "@/components/icons/Unlock";
 import { cn } from "@/utils/cn";
 import { useIsMac } from "@/utils/hooks";
+import { isEscapeKey, isPrimaryEnterShortcut } from "@/utils/keyboardShortcuts";
 import type { MDXEditorMethods } from "@mdxeditor/editor";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -102,26 +103,27 @@ export default function CreateInput({
 		}
 	}, [hasFocus]);
 
-	// Handle keyboard shortcuts
+	// Handle keyboard shortcuts. The submit shortcut runs in capture phase so
+	// Lexical never sees Cmd/Ctrl+Enter as a plain Enter and inserts a newline.
 	useEffect(() => {
-		const handleKeyDown = (event: KeyboardEvent) => {
+		const handleSubmitShortcut = (event: KeyboardEvent) => {
 			if (!hasFocus && !isExpanded && !forceOpen) return;
+			if (!isPrimaryEnterShortcut(event)) return;
 
-			// Submit on cmd/ctrl + enter
-			if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
-				event.preventDefault();
-				if (markdown.trim() !== "") {
-					handleSubmit();
-				}
-			} else if (event.key === "Escape") {
-				event.preventDefault();
-				handleReset();
+			event.preventDefault();
+			event.stopPropagation();
+			if (markdown.trim() !== "") {
+				handleSubmit();
 			}
 		};
 
-		document.addEventListener("keydown", handleKeyDown);
+		document.addEventListener("keydown", handleSubmitShortcut, {
+			capture: true,
+		});
 		return () => {
-			document.removeEventListener("keydown", handleKeyDown);
+			document.removeEventListener("keydown", handleSubmitShortcut, {
+				capture: true,
+			});
 		};
 	}, [
 		markdown,
@@ -131,6 +133,32 @@ export default function CreateInput({
 		hasFocus,
 		isExpanded,
 		forceOpen,
+		isLoading,
+		initialMarkdown,
+		lengthLimit,
+	]);
+
+	useEffect(() => {
+		const handleEscapeKeyDown = (event: KeyboardEvent) => {
+			if (!hasFocus && !isExpanded && !forceOpen) return;
+			if (!isEscapeKey(event)) return;
+
+			event.preventDefault();
+			handleReset();
+		};
+
+		document.addEventListener("keydown", handleEscapeKeyDown);
+		return () => {
+			document.removeEventListener("keydown", handleEscapeKeyDown);
+		};
+	}, [
+		markdown,
+		onExpand,
+		onCancel,
+		hasFocus,
+		isExpanded,
+		forceOpen,
+		initialMarkdown,
 	]);
 
 	const updateHintVisibility = useCallback(() => {
