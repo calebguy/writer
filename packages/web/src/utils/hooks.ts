@@ -6,7 +6,7 @@ import {
 	usePrivy,
 	useWallets,
 } from "@privy-io/react-auth";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { type Entry, reconcileManager } from "./api";
 import { getCachedEntry, setCachedEntry } from "./entryCache";
 import { getCachedDerivedKey } from "./keyCache";
@@ -127,15 +127,11 @@ export function useProcessedEntries(
 	const [processedOnce, setProcessedOnce] = useState(false);
 	const allowDecryption = options?.allowDecryption ?? false;
 	const onDecryptError = options?.onDecryptError;
+	const visibleEntries = useMemo(() => {
+		if (!entries || !walletReady) return [];
 
-	useEffect(() => {
-		if (!entries || !walletReady) {
-			return;
-		}
-
-		// Immediately show public entries + private entries (unprocessed)
-		// Filter out private entries from other authors
-		const visibleEntries = entries.filter((entry) => {
+		// Immediately expose public entries + private entries owned by this wallet.
+		return entries.filter((entry) => {
 			if (entry.deletedAt || entry.deletedAtHash) {
 				return false;
 			}
@@ -144,7 +140,32 @@ export function useProcessedEntries(
 			}
 			return true;
 		});
-		setProcessedEntries(visibleEntries);
+	}, [entries, wallet, walletReady]);
+
+	const mergedProcessedEntries = useMemo(() => {
+		if (visibleEntries.length === 0) return [];
+
+		const processedById = new Map(
+			processedEntries.map((entry) => [entry.id, entry]),
+		);
+		return visibleEntries.map((entry) => processedById.get(entry.id) ?? entry);
+	}, [processedEntries, visibleEntries]);
+
+
+	useEffect(() => {
+		if (!entries || !walletReady) {
+			return;
+		}
+
+		setProcessedEntries((previousEntries) => {
+			const previousById = new Map(
+				previousEntries.map((entry) => [entry.id, entry]),
+			);
+			return visibleEntries.map((entry) => {
+				const previous = previousById.get(entry.id);
+				return previous?.raw === entry.raw ? previous : entry;
+			});
+		});
 		setProcessedOnce(true);
 
 		// Process private entries in background (non-blocking)
@@ -290,11 +311,16 @@ export function useProcessedEntries(
 		writerAddress,
 		allowDecryption,
 		onDecryptError,
+		visibleEntries,
 	]);
 
-	const hasLockedPrivateEntries = processedEntries.some(
+	const hasLockedPrivateEntries = mergedProcessedEntries.some(
 		(entry) => isEntryPrivate(entry) && !entry.decompressed,
 	);
 
-	return { processedEntries, hasLockedPrivateEntries, processedOnce };
+	return {
+		processedEntries: mergedProcessedEntries,
+		hasLockedPrivateEntries,
+		processedOnce,
+	};
 }

@@ -6,10 +6,18 @@ import { useOPWallet } from "@/utils/hooks";
 import { getCachedDerivedKey } from "@/utils/keyCache";
 import { signCreateWithChunk } from "@/utils/signer";
 import { compress, encrypt } from "@/utils/utils";
+import {
+	PENDING_PRIVATE_ENTRY_RAW,
+	PENDING_PUBLIC_ENTRY_RAW,
+	buildOptimisticEntry,
+	prependOptimisticEntry,
+	removeOptimisticEntry,
+	replaceOptimisticEntryRaw,
+} from "@/utils/optimisticEntry";
 import { usePrivy } from "@privy-io/react-auth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { Hex } from "viem";
 import CreateInput, { type CreateInputData } from "./CreateInput";
 import EntryList from "./EntryList";
@@ -45,6 +53,7 @@ export default function EntryListWithCreateInput({
 }) {
 	const [isExpanded, setIsExpanded] = useState(false);
 	const [isSigning, setIsSigning] = useState(false);
+	const nextOptimisticEntryIdRef = useRef(-1);
 	const [wallet] = useOPWallet();
 	const { getAccessToken } = usePrivy();
 	const router = useRouter();
@@ -58,66 +67,6 @@ export default function EntryListWithCreateInput({
 	const { mutateAsync } = useMutation({
 		mutationFn: createWithChunk,
 		mutationKey: ["create-with-chunk", normalizedWriterAddress],
-		onMutate: async (vars) => {
-			await queryClient.cancelQueries({ queryKey });
-			const previous = queryClient.getQueryData<Writer>(queryKey);
-			if (!previous) return { previous };
-
-			const now = new Date().toISOString();
-			const tempId = -Date.now();
-			const optimisticEntry = {
-				id: tempId,
-				exists: true,
-				onChainId: null,
-				author: vars.author ?? "",
-				createdAtHash: null,
-				createdAtBlock: null,
-				createdAtBlockDatetime: null,
-				deletedAtHash: null,
-				deletedAtBlock: null,
-				deletedAtBlockDatetime: null,
-				updatedAtHash: null,
-				updatedAtBlock: null,
-				updatedAtBlockDatetime: null,
-				createdAt: now,
-				updatedAt: now,
-				deletedAt: null,
-				storageAddress: previous.storageAddress,
-				storageId: previous.storageId,
-				createdAtTransactionId: null,
-				deletedAtTransactionId: null,
-				updatedAtTransactionId: null,
-				chunks: [
-					{
-						id: tempId,
-						entryId: tempId,
-						index: 0,
-						content: vars.chunkContent,
-						createdAt: now,
-						createdAtTransactionId: null,
-					},
-				],
-				raw: vars.chunkContent,
-				version: vars.chunkContent.startsWith("enc:v5:br:")
-					? "enc:v5:br:"
-					: vars.chunkContent.startsWith("enc:v4:br:")
-						? "enc:v4:br:"
-						: "br:",
-				decompressed: vars.decompressed ?? "",
-			} as unknown as Entry;
-
-			queryClient.setQueryData<Writer>(queryKey, (current) =>
-				current
-					? { ...current, entries: [optimisticEntry, ...current.entries] }
-					: current,
-			);
-			return { previous };
-		},
-		onError: (_err, _vars, ctx) => {
-			if (ctx?.previous) {
-				queryClient.setQueryData(queryKey, ctx.previous);
-			}
-		},
 		onSuccess: () => {
 			router.refresh();
 		},
@@ -135,6 +84,45 @@ export default function EntryListWithCreateInput({
 		if (!wallet) {
 			console.error("No wallet found");
 			return;
+		}
+
+		const optimisticEntryId = nextOptimisticEntryIdRef.current--;
+		let insertedOptimisticEntry = false;
+
+		const insertOptimisticEntry = (raw: string) => {
+			const writer = queryClient.getQueryData<Writer>(queryKey);
+			if (!writer) return;
+
+			const optimisticEntry = buildOptimisticEntry(writer, {
+				id: optimisticEntryId,
+				markdown,
+				raw,
+				author: wallet.address,
+			});
+
+			queryClient.setQueryData<Writer>(queryKey, (current) =>
+				current ? prependOptimisticEntry(current, optimisticEntry) : current,
+			);
+			insertedOptimisticEntry = true;
+		};
+
+		const removePendingEntry = () => {
+			if (!insertedOptimisticEntry) return;
+			queryClient.setQueryData<Writer>(queryKey, (current) =>
+				current ? removeOptimisticEntry(current, optimisticEntryId) : current,
+			);
+			insertedOptimisticEntry = false;
+		};
+
+		// Embedded wallets sign silently; put their card in the grid immediately,
+		// before compression/signing/auth can create a visible empty-frame flash.
+		// External wallets keep the existing signing loader until the user acts on
+		// the wallet prompt, then the card moves into the grid before POSTing.
+		void queryClient.cancelQueries({ queryKey });
+		if (!isExternalWallet) {
+			insertOptimisticEntry(
+				encrypted ? PENDING_PRIVATE_ENTRY_RAW : PENDING_PUBLIC_ENTRY_RAW,
+			);
 		}
 
 		if (isExternalWallet) setIsSigning(true);
@@ -155,25 +143,47 @@ export default function EntryListWithCreateInput({
 				address: writerAddress,
 				legacyDomain: writerLegacyDomain,
 			});
+		} catch (error) {
+			removePendingEntry();
+			throw error;
 		} finally {
 			if (isExternalWallet) setIsSigning(false);
 		}
 
-		const authToken = await getAccessToken();
-		if (!authToken) {
-			console.error("No auth token found");
-			return;
+		if (!insertedOptimisticEntry) {
+			insertOptimisticEntry(signed.chunkContent);
+		} else {
+			queryClient.setQueryData<Writer>(queryKey, (current) =>
+				current
+					? replaceOptimisticEntryRaw(
+							current,
+							optimisticEntryId,
+							signed.chunkContent,
+						)
+					: current,
+			);
 		}
-		await mutateAsync({
-			address: writerAddress as Hex,
-			signature: signed.signature,
-			nonce: signed.nonce,
-			chunkCount: signed.chunkCount,
-			chunkContent: signed.chunkContent,
-			authToken,
-			decompressed: markdown,
-			author: wallet.address,
-		});
+
+		try {
+			const authToken = await getAccessToken();
+			if (!authToken) {
+				throw new Error("No auth token found");
+			}
+
+			await mutateAsync({
+				address: writerAddress as Hex,
+				signature: signed.signature,
+				nonce: signed.nonce,
+				chunkCount: signed.chunkCount,
+				chunkContent: signed.chunkContent,
+				authToken,
+				decompressed: markdown,
+				author: wallet.address,
+			});
+		} catch (error) {
+			removePendingEntry();
+			throw error;
+		}
 	};
 
 	return (
