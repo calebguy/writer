@@ -138,6 +138,7 @@ function buildContentSecurityPolicy(nonce: string) {
 			"script-src",
 			"'self'",
 			`'nonce-${nonce}'`,
+			"'wasm-unsafe-eval'",
 			"https://challenges.cloudflare.com",
 			"https://hcaptcha.com",
 			"https://*.hcaptcha.com",
@@ -217,10 +218,22 @@ function responseWithSecurityHeaders(
 	return response;
 }
 
+function redirectWwwToApex(request: NextRequest) {
+	if (request.headers.get("host") !== "www.writer.place") return null;
+
+	const url = request.nextUrl.clone();
+	url.hostname = "writer.place";
+	return NextResponse.redirect(url, 308);
+}
+
 const placePathPattern = /^\/writer\/(0x[a-fA-F0-9]{40})$/;
 const entryPathPattern = /^\/writer\/(0x[a-fA-F0-9]{40})\/(\d+)$/;
 
 export function middleware(request: NextRequest) {
+	const canonicalRedirect = redirectWwwToApex(request);
+	if (canonicalRedirect) {
+		return canonicalRedirect;
+	}
 	return responseWithSecurityHeaders(request, (requestHeaders) => {
 		if (!prefersMarkdown(request)) {
 			return NextResponse.next({
