@@ -4,6 +4,7 @@ import { cn } from "@/utils/cn";
 import { getUserColor } from "@/utils/getUserColor";
 import { bytes32ToHexColor, getSecondaryColor, hexToRGB } from "@/utils/utils";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import type { CSSProperties } from "react";
 import { OG_IMAGE_URL } from "utils/constants";
 import type { Hex } from "viem";
@@ -45,6 +46,7 @@ export default async function RootLayout({
 		getAuthenticatedUser(),
 		getAuthHint(),
 	]);
+	const nonce = (await headers()).get("x-nonce") ?? undefined;
 	let initialColor: string | null = null;
 
 	if (user?.wallet?.address) {
@@ -80,6 +82,7 @@ export default async function RootLayout({
 				)}
 			>
 				<script
+					nonce={nonce}
 					dangerouslySetInnerHTML={{
 						__html:
 							"(function(){try{var t=localStorage.getItem('writer-theme');var m=(t==='light'||t==='dark'||t==='system')?t:'system';var d=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.dataset.theme=(m==='system')?(d?'dark':'light'):m;}catch(e){}})();",
