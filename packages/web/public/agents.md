@@ -170,6 +170,7 @@ Useful endpoints and URLs:
 
 ```txt
 GET  /manager/:address
+GET  /tx/:id
 GET  https://writer.place/.well-known/writer-agent.json
 GET  https://writer.place/.well-known/x402.json
 GET  https://api.writer.place/x402/capabilities

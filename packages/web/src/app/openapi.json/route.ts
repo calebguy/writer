@@ -124,6 +124,25 @@ const openApiDocument = {
 				},
 			},
 		},
+		"/tx/{id}": {
+			get: {
+				tags: ["Read"],
+				summary: "Get relay transaction status",
+				description: "Used by agent clients and the CLI --wait flag to observe relay confirmation.",
+				parameters: [{ $ref: "#/components/parameters/TransactionId" }],
+				responses: {
+					"200": {
+						description: "Relay transaction status",
+						content: {
+							"application/json": {
+								schema: { $ref: "#/components/schemas/TransactionResponse" },
+							},
+						},
+					},
+					"404": { $ref: "#/components/responses/NotFound" },
+				},
+			},
+		},
 		"/me/{address}": {
 			get: {
 				tags: ["Read"],
@@ -312,6 +331,13 @@ const openApiDocument = {
 				required: true,
 				schema: { type: "string", pattern: "^[0-9]+$" },
 				description: "Onchain entry ID. Entry ID 0 is valid.",
+			},
+			TransactionId: {
+				name: "id",
+				in: "path",
+				required: true,
+				schema: { type: "string" },
+				description: "Relay transaction id returned by Writer write endpoints.",
 			},
 		},
 		responses: {
@@ -541,6 +567,28 @@ const openApiDocument = {
 				properties: {
 					signature: { $ref: "#/components/schemas/Hex" },
 					nonce: { type: "integer", minimum: 0 },
+				},
+			},
+			TransactionResponse: {
+				type: "object",
+				required: ["transaction"],
+				properties: {
+					transaction: {
+						type: "object",
+						required: ["id", "status"],
+						properties: {
+							id: { type: "string" },
+							status: {
+								type: "string",
+								enum: ["PENDING", "PROCESSED", "SUBMITTED", "CONFIRMED", "PAUSED", "ABANDONED"],
+							},
+							hash: { type: ["string", "null"] },
+							blockNumber: { type: ["string", "null"] },
+							error: { type: ["string", "null"] },
+							createdAt: { type: "string", format: "date-time" },
+							updatedAt: { type: "string", format: "date-time" },
+						},
+					},
 				},
 			},
 			PendingAuthor: {
