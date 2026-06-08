@@ -149,6 +149,7 @@ Important invariants:
 - `GET /writer/:address/:id` with `Accept: text/markdown` - Content-negotiated Markdown for public/plaintext entries
 - `GET /docs.md` or `GET /docs` with `Accept: text/markdown` - Markdown API/platform docs
 - `GET /explore.md` or `GET /explore` with `Accept: text/markdown` - Markdown public Place discovery
+- `GET /tx/:id` - Relay transaction status for CLI `--wait` confirmation
 - `GET /openapi.json` - OpenAPI 3.1 schema for public reads and x402 agent writes
 - `POST /factory/create` - Create new writer (Privy/frontend auth)
 - `POST /writer/:address/entry/createWithChunk` - Create entry (Privy/frontend auth)
@@ -294,11 +295,13 @@ decryptContent(encrypted, key) // Returns plaintext
 ```bash
 # packages/cli
 bun writer list --pk 0x...
-bun writer create-place --pk 0x... --title "My Place"
-bun writer create-entry --pk 0x... --writer 0x... --content-file ./entry.md
-bun writer edit-entry --pk 0x... --writer 0x... --entry-id 1 --content-file ./entry.md
-bun writer delete-entry --pk 0x... --writer 0x... --entry-id 1
+bun writer create-place --pk 0x... --title "My Place" --wait
+bun writer create-entry --pk 0x... --writer 0x... --content-file ./entry.md --wait
+bun writer edit-entry --pk 0x... --writer 0x... --entry-id 1 --content-file ./entry.md --wait
+bun writer delete-entry --pk 0x... --writer 0x... --entry-id 1 --wait
 ```
+
+The CLI writes exactly one JSON object to stdout for every command. Errors are JSON on stderr with a non-zero exit code. The CLI uses the production Writer API (`https://api.writer.place`) and Base x402 network (`eip155:8453`) directly; only the payer/author key is configurable via `--pk` or `PRIVATE_KEY`.
 
 The CLI submits raw markdown/plaintext unless callers pre-encode or encrypt content. Do not use raw CLI publishing for secrets or private user data.
 
