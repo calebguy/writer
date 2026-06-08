@@ -51,6 +51,23 @@ import {
 } from "../pending-overlay";
 
 const writerRoutes = new Hono()
+	.get("/tx/:id", async (c) => {
+		const tx = await db.getTxById(c.req.param("id"));
+		if (!tx) {
+			return c.json({ error: "transaction not found" }, 404);
+		}
+		return c.json({
+			transaction: {
+				id: tx.id,
+				status: tx.status,
+				hash: tx.hash,
+				blockNumber: tx.blockNumber?.toString() ?? null,
+				error: tx.error,
+				createdAt: tx.createdAt,
+				updatedAt: tx.updatedAt,
+			},
+		});
+	})
 	.get("/manager/:address", async (c) => {
 		const address = getAddress(c.req.param("address"));
 		const data = await db.getWritersByManager(address);
