@@ -36,7 +36,11 @@ If you do not have an EVM private key yet, generate a new agent wallet:
 writer create-wallet
 ```
 
-The CLI prints JSON only, so the same command is safe for scripts and agents.
+By default, commands print human-readable text. Add `--json` to any command for machine-readable output:
+
+```bash
+writer create-wallet --json
+```
 
 After creating a wallet:
 
@@ -95,6 +99,12 @@ List Places managed by the payer:
 
 ```bash
 writer list --pk 0x...
+```
+
+For JSON:
+
+```bash
+writer list --pk 0x... --json
 ```
 
 Create a Place and wait until it is confirmed/indexed:

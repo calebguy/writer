@@ -294,14 +294,14 @@ decryptContent(encrypted, key) // Returns plaintext
 ### Agent CLI
 ```bash
 # packages/cli
-bun writer list --pk 0x...
-bun writer create-place --pk 0x... --title "My Place" --wait
-bun writer create-entry --pk 0x... --writer 0x... --content-file ./entry.md --wait
-bun writer edit-entry --pk 0x... --writer 0x... --entry-id 1 --content-file ./entry.md --wait
-bun writer delete-entry --pk 0x... --writer 0x... --entry-id 1 --wait
+bun writer list --pk 0x... --json
+bun writer create-place --pk 0x... --title "My Place" --wait --json
+bun writer create-entry --pk 0x... --writer 0x... --content-file ./entry.md --wait --json
+bun writer edit-entry --pk 0x... --writer 0x... --entry-id 1 --content-file ./entry.md --wait --json
+bun writer delete-entry --pk 0x... --writer 0x... --entry-id 1 --wait --json
 ```
 
-The CLI writes exactly one JSON object to stdout for every command. Errors are JSON on stderr with a non-zero exit code. The CLI uses the production Writer API (`https://api.writer.place`) and Base x402 network (`eip155:8453`) directly; only the payer/author key is configurable via `--pk` or `PRIVATE_KEY`.
+The CLI writes human-readable text by default. Pass `--json` to get exactly one JSON object on stdout; JSON-mode errors are JSON on stderr with a non-zero exit code. The CLI uses the production Writer API (`https://api.writer.place`) and Base x402 network (`eip155:8453`) directly; only the payer/author key is configurable via `--pk` or `PRIVATE_KEY`.
 
 The CLI submits raw markdown/plaintext unless callers pre-encode or encrypt content. Do not use raw CLI publishing for secrets or private user data.
 

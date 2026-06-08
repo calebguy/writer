@@ -27,6 +27,7 @@ type CliOptions = {
 	contentFile?: string;
 	legacyDomain?: boolean;
 	wait?: boolean;
+	json?: boolean;
 };
 
 type ManagerWriter = {
@@ -88,18 +89,25 @@ Options:
   --content-file <path>     File containing raw markdown entry content.
   --legacy-domain           Sign with legacy EIP-712 domain including chainId.
   --wait                    Wait until the onchain/indexed result is observable.
+  --json                    Print machine-readable JSON instead of human-readable text.
 `.trim();
 }
 
 function parseArgs(argv: string[]): CliOptions {
+	const json = argv.includes("--json");
 	if (argv.length === 0 || argv[0] === "--help" || argv[0] === "-h") {
-		printJson({ ok: true, command: "help", usage: usage() });
+		if (json) {
+			printJson({ ok: true, command: "help", usage: usage() });
+		} else {
+			console.log(usage());
+		}
 		process.exit(0);
 	}
 
 	const options: CliOptions = {
 		command: argv[0] as Command | undefined,
 		privateKey: process.env.PRIVATE_KEY as Hex | undefined,
+		json,
 	};
 
 	for (let i = 1; i < argv.length; i++) {
@@ -146,9 +154,16 @@ function parseArgs(argv: string[]): CliOptions {
 			case "--wait":
 				options.wait = true;
 				break;
+			case "--json":
+				options.json = true;
+				break;
 			case "--help":
 			case "-h":
-				printJson({ ok: true, command: "help", usage: usage() });
+				if (options.json) {
+					printJson({ ok: true, command: "help", usage: usage() });
+				} else {
+					console.log(usage());
+				}
 				process.exit(0);
 			default:
 				throw new Error(`Unknown option: ${arg}\n\n${usage()}`);
@@ -235,8 +250,12 @@ function printJson(value: unknown) {
 	console.log(JSON.stringify(value, null, 2));
 }
 
-function printErrorJson(error: unknown) {
+function printError(error: unknown, json: boolean) {
 	const message = error instanceof Error ? error.message : String(error);
+	if (!json) {
+		console.error(message);
+		return;
+	}
 	console.error(
 		JSON.stringify(
 			{
@@ -344,6 +363,100 @@ function serializeWriter(writer: ManagerWriter, index?: number) {
 	};
 }
 
+function compactJson(value: unknown) {
+	return JSON.stringify(value);
+}
+
+function maybeLine(label: string, value: unknown) {
+	return value == null || value === "" ? [] : [`${label}: ${value}`];
+}
+
+function humanizeCommandResult(result: Record<string, any>) {
+	switch (result.command) {
+		case "create-wallet":
+			return [
+				"Generated Writer agent wallet:",
+				`Address: ${result.address}`,
+				`Private key: ${result.privateKey}`,
+				"",
+				"What next:",
+				...result.nextSteps.map(
+					(step: string, index: number) => `${index + 1}. ${step}`,
+				),
+				"",
+				`Warning: ${result.warning}`,
+			].join("\n");
+		case "list":
+			if (result.places.length === 0) {
+				return `No Places found for ${result.wallet}.`;
+			}
+			return [
+				`Places for ${result.wallet}:`,
+				...result.places.flatMap((place: Record<string, any>) => [
+					`${place.index}. ${place.title} ${place.writer} (${place.entryCount} entries)`,
+					...place.entries.map((entry: Record<string, any>) => {
+						const author = entry.author ?? "unknown";
+						const id = entry.entryId ?? "pending";
+						const preview = entry.preview ? `: ${entry.preview}` : "";
+						return `   - entry ${id} by ${author}${preview}`;
+					}),
+				]),
+			].join("\n");
+		case "create-place":
+			return [
+				`${result.status === "confirmed" ? "Created" : "Created pending"} Place: ${result.writer.writer}`,
+				...maybeLine("Title", result.writer.title),
+				...maybeLine("Status", result.status),
+				...maybeLine("Transaction id", result.transactionId),
+				...maybeLine("URL", result.writer.url),
+				...maybeLine("Markdown", result.writer.markdown),
+				`Payment: ${compactJson(result.payment)}`,
+			].join("\n");
+		case "create-entry":
+			return [
+				`${result.status === "confirmed" ? "Created" : "Created pending"} entry in ${result.writer}`,
+				...maybeLine("Status", result.status),
+				...maybeLine("Entry id", result.entryId),
+				...maybeLine("Author", result.author),
+				...maybeLine("Transaction id", result.transactionId),
+				...maybeLine("URL", result.url),
+				...maybeLine("Markdown", result.markdown),
+				`Payment: ${compactJson(result.payment)}`,
+			].join("\n");
+		case "edit-entry":
+			return [
+				`${result.status === "confirmed" ? "Updated" : "Updated pending"} entry ${result.entryId} in ${result.writer}`,
+				...maybeLine("Status", result.status),
+				...maybeLine("Author", result.author),
+				...maybeLine("Transaction id", result.transactionId),
+				...maybeLine("URL", result.url),
+				...maybeLine("Markdown", result.markdown),
+				`Payment: ${compactJson(result.payment)}`,
+			].join("\n");
+		case "delete-entry":
+			return [
+				`${result.status === "confirmed" ? "Deleted" : "Deleted pending"} entry ${result.entryId} in ${result.writer}`,
+				...maybeLine("Status", result.status),
+				...maybeLine("Signer", result.signer),
+				...maybeLine("Transaction id", result.transactionId),
+				result.transaction ? `Transaction: ${compactJson(result.transaction)}` : "",
+				`Payment: ${compactJson(result.payment)}`,
+			]
+				.filter(Boolean)
+				.join("\n");
+		default:
+			return compactJson(result);
+	}
+}
+
+function printCommandResult(options: CliOptions, result: Record<string, any>) {
+	if (options.json) {
+		printJson(result);
+		return;
+	}
+	console.log(humanizeCommandResult(result));
+}
+
 async function main() {
 	const options = parseArgs(Bun.argv.slice(2));
 	if (options.command === "create-wallet") {
@@ -358,7 +471,7 @@ async function main() {
 			"Send USDC on Base to this address so it can pay for Writer actions via x402.",
 		];
 
-		printJson({
+		printCommandResult(options, {
 			ok: true,
 			command: "create-wallet",
 			address,
@@ -643,7 +756,7 @@ async function main() {
 		});
 		const pending = created.data.writer;
 		if (!options.wait) {
-			printJson({
+			printCommandResult(options, {
 				ok: true,
 				status: "pending",
 				command: "create-place",
@@ -656,7 +769,7 @@ async function main() {
 			return;
 		}
 		const confirmed = await waitForWriter(pending.transactionId, pending.address);
-		printJson({
+		printCommandResult(options, {
 			ok: true,
 			status: "confirmed",
 			command: "create-place",
@@ -671,7 +784,7 @@ async function main() {
 
 	const writers = await loadWriters();
 	if (options.command === "list") {
-		printJson({
+		printCommandResult(options, {
 			ok: true,
 			command: "list",
 			wallet: payer,
@@ -688,7 +801,7 @@ async function main() {
 		}>(`/x402/writer/${writer.address}/entry/createWithChunk`, signed);
 		const pending = created.data.pending;
 		if (!options.wait) {
-			printJson({
+			printCommandResult(options, {
 				ok: true,
 				status: "pending",
 				command: "create-entry",
@@ -703,7 +816,7 @@ async function main() {
 		}
 		const entry = await waitForCreatedEntry(writer.address, pending.transactionId);
 		const entryId = entry.onChainId as string;
-		printJson({
+		printCommandResult(options, {
 			ok: true,
 			status: "confirmed",
 			command: "create-entry",
@@ -732,7 +845,7 @@ async function main() {
 		}>(`/x402/writer/${writer.address}/entry/${options.entryId}/update`, signed);
 		const pending = updated.data.pending;
 		if (!options.wait) {
-			printJson({
+			printCommandResult(options, {
 				ok: true,
 				status: "pending",
 				command: "edit-entry",
@@ -751,7 +864,7 @@ async function main() {
 			options.entryId,
 			pending.transactionId,
 		);
-		printJson({
+		printCommandResult(options, {
 			ok: true,
 			status: "confirmed",
 			command: "edit-entry",
@@ -775,7 +888,7 @@ async function main() {
 	}>(`/x402/writer/${writer.address}/entry/${options.entryId}/delete`, signed);
 	const pending = deleted.data.pending;
 	if (!options.wait) {
-		printJson({
+		printCommandResult(options, {
 			ok: true,
 			status: "pending",
 			command: "delete-entry",
@@ -790,7 +903,7 @@ async function main() {
 		return;
 	}
 	const transaction = await waitForRelayTransaction(pending.transactionId);
-	printJson({
+	printCommandResult(options, {
 		ok: true,
 		status: "confirmed",
 		command: "delete-entry",
@@ -806,6 +919,6 @@ async function main() {
 }
 
 main().catch((err) => {
-	printErrorJson(err);
+	printError(err, Bun.argv.includes("--json"));
 	process.exit(1);
 });
