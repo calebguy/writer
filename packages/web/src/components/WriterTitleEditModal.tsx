@@ -4,7 +4,6 @@ import type { MDXEditorMethods } from "@mdxeditor/editor";
 import dynamic from "next/dynamic";
 import { VisuallyHidden } from "radix-ui";
 import { useEffect, useRef, useState } from "react";
-import { MAX_TITLE_LENGTH } from "utils/constants";
 import { Modal, ModalTitle } from "./dsl/Modal";
 import { Check } from "./icons/Check";
 import { Close } from "./icons/Close";
@@ -74,7 +73,6 @@ export function WriterTitleEditModal({
 						aspectSquare={false}
 						placeholder="Place title"
 						onChange={setMarkdown}
-						maxLength={MAX_TITLE_LENGTH}
 						className="bg-transparent text-black dark:text-white h-full flex w-full p-2! create-input-mdx"
 					/>
 				</div>
@@ -90,9 +88,7 @@ export function WriterTitleEditModal({
 					<button
 						type="button"
 						aria-label="Save title"
-						disabled={
-							!canSave || isSaving || markdown.length > MAX_TITLE_LENGTH
-						}
+						disabled={!canSave || isSaving}
 						onClick={() => void onSave(markdown)}
 						className="px-4 py-1 text-neutral-500 dark:text-neutral-400 hover:text-primary cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-surface rounded-lg w-full flex items-center justify-center"
 					>

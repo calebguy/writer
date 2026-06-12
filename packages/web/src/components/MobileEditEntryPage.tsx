@@ -1,9 +1,9 @@
 "use client";
 
+import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
 import { Check } from "@/components/icons/Check";
 import { Lock } from "@/components/icons/Lock";
 import { Unlock } from "@/components/icons/Unlock";
-import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
 import { useComposeHeaderActions } from "@/components/writer/ComposeHeaderActionsContext";
 import {
 	type Entry,

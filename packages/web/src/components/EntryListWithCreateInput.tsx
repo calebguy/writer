@@ -4,8 +4,6 @@ import type { Entry, Writer } from "@/utils/api";
 import { createWithChunk } from "@/utils/api";
 import { useOPWallet } from "@/utils/hooks";
 import { getCachedDerivedKey } from "@/utils/keyCache";
-import { signCreateWithChunk } from "@/utils/signer";
-import { compress, encrypt } from "@/utils/utils";
 import {
 	PENDING_PRIVATE_ENTRY_RAW,
 	PENDING_PUBLIC_ENTRY_RAW,
@@ -14,6 +12,8 @@ import {
 	removeOptimisticEntry,
 	replaceOptimisticEntryRaw,
 } from "@/utils/optimisticEntry";
+import { signCreateWithChunk } from "@/utils/signer";
+import { compress, encrypt } from "@/utils/utils";
 import { usePrivy } from "@privy-io/react-auth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";

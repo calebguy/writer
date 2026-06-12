@@ -13,15 +13,10 @@ import {
 import { languages } from "@codemirror/language-data";
 import { clike } from "@codemirror/legacy-modes/mode/clike";
 import { Prec } from "@codemirror/state";
-import { tags } from "@lezer/highlight";
 import { STRIKETHROUGH } from "@lexical/markdown";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
-import {
-	COMMAND_PRIORITY_LOW,
-	FORMAT_TEXT_COMMAND,
-	KEY_DOWN_COMMAND,
-} from "lexical";
+import { tags } from "@lezer/highlight";
 import {
 	MDXEditor,
 	type MDXEditorMethods,
@@ -36,6 +31,11 @@ import {
 	quotePlugin,
 	realmPlugin,
 } from "@mdxeditor/editor";
+import {
+	COMMAND_PRIORITY_LOW,
+	FORMAT_TEXT_COMMAND,
+	KEY_DOWN_COMMAND,
+} from "lexical";
 import "@mdxeditor/editor/style.css";
 import { type FC, useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
@@ -52,7 +52,6 @@ interface EditorProps {
 	renderPlaceholderAsMarkdown?: boolean;
 	autoFocus?: boolean;
 	aspectSquare?: boolean;
-	maxLength?: number;
 }
 
 const strikethroughShortcutPlugin = realmPlugin({
@@ -181,7 +180,9 @@ const solidityLanguageSupport = new LanguageSupport(
 			blockKeywords: mapWords(
 				"catch contract do else finally for function if interface library struct switch try while",
 			),
-			atoms: mapWords("false null true wei gwei ether seconds minutes hours days weeks"),
+			atoms: mapWords(
+				"false null true wei gwei ether seconds minutes hours days weeks",
+			),
 			number:
 				/^(?:0x[a-f\d_]+|0b[01_]+|(?:\d[\d_]*\.?[\d_]*|\.\d[\d_]*)(?:e[-+]?\d+)?)(?:wei|gwei|ether|seconds|minutes|hours|days|weeks)?/i,
 		}),
@@ -203,7 +204,6 @@ if (
 		}),
 	);
 }
-
 
 const exampleTheme = {
 	paragraph: "mdx--paragraph",
@@ -288,7 +288,6 @@ const MDX: FC<EditorProps> = ({
 	renderPlaceholderAsMarkdown = false,
 	autoFocus = false,
 	aspectSquare = true,
-	maxLength,
 }) => {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [overlayContainer, setOverlayContainer] =
@@ -302,18 +301,10 @@ const MDX: FC<EditorProps> = ({
 
 	const handleChange = useCallback(
 		(nextMarkdown: string) => {
-			if (maxLength == null || nextMarkdown.length <= maxLength) {
-				onChange?.(nextMarkdown);
-				return;
-			}
-
-			const truncated = nextMarkdown.slice(0, maxLength);
-			ref?.current?.setMarkdown(truncated);
-			onChange?.(truncated);
+			onChange?.(nextMarkdown);
 		},
-		[maxLength, onChange, ref],
+		[onChange],
 	);
-
 
 	return (
 		<div
@@ -378,7 +369,9 @@ const MDX: FC<EditorProps> = ({
 			/>
 			{showMarkdownPlaceholder && (
 				<div className="mdx-markdown-placeholder prose" aria-hidden="true">
-					<ReactMarkdown remarkPlugins={[remarkGfm]}>{placeholder}</ReactMarkdown>
+					<ReactMarkdown remarkPlugins={[remarkGfm]}>
+						{placeholder}
+					</ReactMarkdown>
 				</div>
 			)}
 		</div>

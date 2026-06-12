@@ -9,7 +9,6 @@ import { isEscapeKey, isPrimaryEnterShortcut } from "@/utils/keyboardShortcuts";
 import type { MDXEditorMethods } from "@mdxeditor/editor";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { MAX_TITLE_LENGTH } from "utils/constants";
 import { LoadingRelic } from "./LoadingRelic";
 import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
 
@@ -32,7 +31,6 @@ interface CreateInputProps {
 	initialMarkdown?: string;
 	forceOpen?: boolean;
 	submitLabel?: string;
-	maxLength?: number;
 	onCancel?: () => void;
 	hidePrivacyControls?: boolean;
 }
@@ -47,7 +45,6 @@ export default function CreateInput({
 	initialMarkdown,
 	forceOpen = false,
 	submitLabel,
-	maxLength,
 	onCancel,
 	hidePrivacyControls = false,
 }: CreateInputProps) {
@@ -64,7 +61,6 @@ export default function CreateInput({
 	const [encrypted, setEncrypted] = useState(false);
 
 	const submitVerb = submitLabel ?? "create";
-	const lengthLimit = maxLength ?? MAX_TITLE_LENGTH;
 	// Handle clicks inside or outside the container
 	useEffect(() => {
 		const handleClick = (event: MouseEvent) => {
@@ -103,6 +99,41 @@ export default function CreateInput({
 		}
 	}, [hasFocus]);
 
+	const handleReset = useCallback(() => {
+		const resetMarkdown = forceOpen ? initialMarkdown ?? "" : "";
+		editorRef.current?.setMarkdown(resetMarkdown);
+		setMarkdown(resetMarkdown);
+		setHasFocus(Boolean(forceOpen));
+		setIsExpanded(false);
+		setEncrypted(false);
+		onExpand?.(false);
+		onCancel?.();
+	}, [forceOpen, initialMarkdown, onCancel, onExpand]);
+
+	const handleSubmit = useCallback(() => {
+		if (markdown.trim() === "") return;
+		if (isLoading) return;
+		const data = { markdown, encrypted };
+		// Optimistically clear the editor — restore on failure.
+		const prevMarkdown = markdown;
+		const prevEncrypted = encrypted;
+		setLoadingContent(markdown);
+		editorRef.current?.setMarkdown(forceOpen ? prevMarkdown : "");
+		setMarkdown(forceOpen ? prevMarkdown : "");
+		setHasFocus(Boolean(forceOpen));
+		setIsExpanded(false);
+		setEncrypted(false);
+		onExpand?.(false);
+		Promise.resolve(onSubmit(data)).catch((err) => {
+			console.error("Submit failed:", err);
+			// Restore the content so the user can retry
+			editorRef.current?.setMarkdown(prevMarkdown);
+			setMarkdown(prevMarkdown);
+			setEncrypted(prevEncrypted);
+			setHasFocus(true);
+		});
+	}, [encrypted, forceOpen, isLoading, markdown, onExpand, onSubmit]);
+
 	// Handle keyboard shortcuts. The submit shortcut runs in capture phase so
 	// Lexical never sees Cmd/Ctrl+Enter as a plain Enter and inserts a newline.
 	useEffect(() => {
@@ -112,9 +143,7 @@ export default function CreateInput({
 
 			event.preventDefault();
 			event.stopPropagation();
-			if (markdown.trim() !== "") {
-				handleSubmit();
-			}
+			handleSubmit();
 		};
 
 		document.addEventListener("keydown", handleSubmitShortcut, {
@@ -125,18 +154,7 @@ export default function CreateInput({
 				capture: true,
 			});
 		};
-	}, [
-		markdown,
-		encrypted,
-		onSubmit,
-		onExpand,
-		hasFocus,
-		isExpanded,
-		forceOpen,
-		isLoading,
-		initialMarkdown,
-		lengthLimit,
-	]);
+	}, [forceOpen, handleSubmit, hasFocus, isExpanded]);
 
 	useEffect(() => {
 		const handleEscapeKeyDown = (event: KeyboardEvent) => {
@@ -151,15 +169,7 @@ export default function CreateInput({
 		return () => {
 			document.removeEventListener("keydown", handleEscapeKeyDown);
 		};
-	}, [
-		markdown,
-		onExpand,
-		onCancel,
-		hasFocus,
-		isExpanded,
-		forceOpen,
-		initialMarkdown,
-	]);
+	}, [forceOpen, handleReset, hasFocus, isExpanded]);
 
 	const updateHintVisibility = useCallback(() => {
 		if (!markdown.trim()) {
@@ -218,41 +228,6 @@ export default function CreateInput({
 		return () => window.removeEventListener("resize", updateHintVisibility);
 	}, [hasFocus, isExpanded, updateHintVisibility]);
 
-	const handleReset = () => {
-		const resetMarkdown = forceOpen ? initialMarkdown ?? "" : "";
-		editorRef.current?.setMarkdown(resetMarkdown);
-		setMarkdown(resetMarkdown);
-		setHasFocus(Boolean(forceOpen));
-		setIsExpanded(false);
-		setEncrypted(false);
-		onExpand?.(false);
-		onCancel?.();
-	};
-
-	const handleSubmit = () => {
-		if (markdown.trim() === "" || markdown.length > lengthLimit) return;
-		if (isLoading) return;
-		const data = { markdown, encrypted };
-		// Optimistically clear the editor — restore on failure.
-		const prevMarkdown = markdown;
-		const prevEncrypted = encrypted;
-		setLoadingContent(markdown);
-		editorRef.current?.setMarkdown(forceOpen ? prevMarkdown : "");
-		setMarkdown(forceOpen ? prevMarkdown : "");
-		setHasFocus(Boolean(forceOpen));
-		setIsExpanded(false);
-		setEncrypted(false);
-		onExpand?.(false);
-		Promise.resolve(onSubmit(data)).catch((err) => {
-			console.error("Submit failed:", err);
-			// Restore the content so the user can retry
-			editorRef.current?.setMarkdown(prevMarkdown);
-			setMarkdown(prevMarkdown);
-			setEncrypted(prevEncrypted);
-			setHasFocus(true);
-		});
-	};
-
 	return (
 		<div
 			className={cn("group", {
@@ -309,7 +284,6 @@ export default function CreateInput({
 					placeholder={placeholderMarkdown ?? placeholder}
 					renderPlaceholderAsMarkdown={!!placeholderMarkdown}
 					onChange={setMarkdown}
-					maxLength={lengthLimit}
 				/>
 				<div
 					ref={hintRef}
