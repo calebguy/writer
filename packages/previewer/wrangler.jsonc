@@ -1,0 +1,19 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "previewer",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-06-27",
+	"compatibility_flags": ["nodejs_compat"],
+	"workers_dev": true,
+	"browser": {
+		"binding": "BROWSER",
+		"remote": true
+	},
+	"vars": {
+		"ALLOWED_ORIGINS": "https://writer.place,https://www.writer.place,http://localhost:3000,http://127.0.0.1:3000"
+	},
+	"observability": {
+		"enabled": true,
+		"head_sampling_rate": 1
+	}
+}

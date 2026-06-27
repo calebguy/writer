@@ -12,6 +12,9 @@ const schema = z.object({
 	NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID: minString(),
 	NEXT_PUBLIC_TARGET_CHAIN_ID: minString(),
 	NEXT_PUBLIC_COLOR_REGISTRY_ADDRESS: minString(),
+	NEXT_PUBLIC_PREVIEWER_URL: minString().default(
+		"https://previewer.writer.place",
+	),
 	PRIVY_SECRET: minString().optional(),
 });
 
@@ -23,5 +26,6 @@ export const env = schema.parse({
 	NEXT_PUBLIC_TARGET_CHAIN_ID: process.env.NEXT_PUBLIC_TARGET_CHAIN_ID,
 	NEXT_PUBLIC_COLOR_REGISTRY_ADDRESS:
 		process.env.NEXT_PUBLIC_COLOR_REGISTRY_ADDRESS,
+	NEXT_PUBLIC_PREVIEWER_URL: process.env.NEXT_PUBLIC_PREVIEWER_URL,
 	PRIVY_SECRET: process.env.PRIVY_SECRET,
 });

@@ -7,7 +7,9 @@ type AcceptMatch = {
 };
 
 function parseQ(params: string[]) {
-	const qParam = params.find((param) => param.trim().toLowerCase().startsWith("q="));
+	const qParam = params.find((param) =>
+		param.trim().toLowerCase().startsWith("q="),
+	);
 	if (!qParam) {
 		return 1;
 	}
@@ -20,14 +22,21 @@ function parseQ(params: string[]) {
 	return Math.max(0, Math.min(1, value));
 }
 
-function matchTarget(accept: string, target: `${string}/${string}`): AcceptMatch {
+function matchTarget(
+	accept: string,
+	target: `${string}/${string}`,
+): AcceptMatch {
 	const [targetType, targetSubtype] = target.toLowerCase().split("/");
 	const ranges = accept
 		.split(",")
 		.map((part) => part.trim())
 		.filter(Boolean);
 
-	let best: AcceptMatch = { q: 0, specificity: -1, order: Number.MAX_SAFE_INTEGER };
+	let best: AcceptMatch = {
+		q: 0,
+		specificity: -1,
+		order: Number.MAX_SAFE_INTEGER,
+	};
 
 	for (const [order, range] of ranges.entries()) {
 		const [mediaRange, ...params] = range.split(";").map((part) => part.trim());
@@ -66,7 +75,10 @@ function matchTarget(accept: string, target: `${string}/${string}`): AcceptMatch
 
 function hasExplicitMarkdown(accept: string) {
 	return accept.split(",").some((part) => {
-		const [mediaRange, ...params] = part.trim().split(";").map((item) => item.trim());
+		const [mediaRange, ...params] = part
+			.trim()
+			.split(";")
+			.map((item) => item.trim());
 		return mediaRange.toLowerCase() === "text/markdown" && parseQ(params) > 0;
 	});
 }
@@ -91,7 +103,6 @@ function prefersMarkdown(request: NextRequest) {
 			markdown.order <= html.order)
 	);
 }
-
 
 function base64Url(bytes: Uint8Array) {
 	let binary = "";
@@ -121,7 +132,11 @@ function originFromUrl(value: string | undefined) {
 
 function buildContentSecurityPolicy(nonce: string) {
 	const apiOrigin =
-		originFromUrl(process.env.NEXT_PUBLIC_BASE_URL) ?? "https://api.writer.place";
+		originFromUrl(process.env.NEXT_PUBLIC_BASE_URL) ??
+		"https://api.writer.place";
+	const previewerOrigin =
+		originFromUrl(process.env.NEXT_PUBLIC_PREVIEWER_URL) ??
+		"https://previewer.writer.place";
 	const isDevelopment = process.env.NODE_ENV !== "production";
 	const devConnectSources = isDevelopment
 		? [
@@ -177,6 +192,7 @@ function buildContentSecurityPolicy(nonce: string) {
 			"connect-src",
 			"'self'",
 			apiOrigin,
+			previewerOrigin,
 			"https://writer.place",
 			"https://www.writer.place",
 			"https://auth.privy.io",
@@ -203,7 +219,6 @@ function cspResponseHeaderName() {
 		: "Content-Security-Policy-Report-Only";
 }
 
-
 function responseWithSecurityHeaders(
 	request: NextRequest,
 	responseFactory: (requestHeaders: Headers) => NextResponse,
@@ -218,8 +233,6 @@ function responseWithSecurityHeaders(
 	response.headers.set(cspResponseHeaderName(), csp);
 	return response;
 }
-
-
 
 const placePathPattern = /^\/writer\/(0x[a-fA-F0-9]{40})$/;
 const entryPathPattern = /^\/writer\/(0x[a-fA-F0-9]{40})\/(\d+)$/;
@@ -245,11 +258,14 @@ export function middleware(request: NextRequest) {
 		}
 
 		if (pathname === "/explore") {
-			return NextResponse.rewrite(new URL("/api/explore-markdown", request.url), {
-				request: {
-					headers: requestHeaders,
+			return NextResponse.rewrite(
+				new URL("/api/explore-markdown", request.url),
+				{
+					request: {
+						headers: requestHeaders,
+					},
 				},
-			});
+			);
 		}
 
 		const entryMatch = pathname.match(entryPathPattern);

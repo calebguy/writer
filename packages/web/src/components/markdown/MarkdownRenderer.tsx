@@ -1,4 +1,7 @@
+"use client";
+
 import { cn } from "@/utils/cn";
+import { LinkPreviewAnchor } from "./LinkPreviewAnchor";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import solidity from "./language/solidity";
@@ -51,9 +54,7 @@ export function MarkdownRenderer({
 								),
 							a: ({ children, href }) =>
 								links ? (
-									<a href={href} target="_blank" rel="noreferrer noopener">
-										{children}
-									</a>
+									<LinkPreviewAnchor href={href}>{children}</LinkPreviewAnchor>
 								) : (
 									<span className="underline text-primary">{children}</span>
 								),

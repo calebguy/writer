@@ -1,0 +1,19 @@
+{
+	"name": "previewer",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "wrangler dev --remote",
+		"deploy": "wrangler deploy",
+		"typecheck": "tsc --noEmit",
+		"types": "wrangler types"
+	},
+	"dependencies": {
+		"hono": "^4.4.2"
+	},
+	"devDependencies": {
+		"typescript": "^5.6.0",
+		"wrangler": "^4.105.0"
+	}
+}
