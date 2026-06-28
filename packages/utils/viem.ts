@@ -3,6 +3,10 @@ import { optimism } from "viem/chains";
 import { WriterFactoryAbi } from "./abis/WriterFactoryAbi";
 import { WriterStorageAbi } from "./abis/WriterStorageAbi";
 
+interface StorageEntry {
+	exists: boolean;
+}
+
 const rpcUrl = process.env.RPC_URL;
 
 if (!rpcUrl) {
@@ -14,19 +18,19 @@ export const publicClient = createPublicClient({
 	transport: http(rpcUrl),
 });
 
-export function computeWriterStorageAddress({
+export async function computeWriterStorageAddress({
 	address,
 	salt,
-}: { address: Hex; salt: Hex }) {
-	return publicClient.readContract({
+}: { address: Hex; salt: Hex }): Promise<Hex> {
+	return (await publicClient.readContract({
 		address,
 		abi: WriterFactoryAbi,
 		functionName: "computeWriterStorageAddress",
 		args: [salt],
-	});
+	})) as Hex;
 }
 
-export function computeWriterAddress({
+export async function computeWriterAddress({
 	address,
 	salt,
 	title,
@@ -40,24 +44,25 @@ export function computeWriterAddress({
 	admin: Hex;
 	managers: Hex[];
 	publicWritable: boolean;
-}) {
-	return publicClient.readContract({
+}): Promise<Hex> {
+	return (await publicClient.readContract({
 		address,
 		abi: WriterFactoryAbi,
 		functionName: "computeWriterAddress",
 		args: [title, admin, managers, publicWritable, salt],
-	});
+	})) as Hex;
 }
 
 export async function getDoesEntryExist({
 	address,
 	id,
 }: { address: Hex; id: bigint }) {
-	const entry = await publicClient.readContract({
+	const entry = (await publicClient.readContract({
 		address,
 		abi: WriterStorageAbi,
 		functionName: "getEntry",
 		args: [id],
-	});
+	})) as StorageEntry;
+
 	return entry.exists;
 }
