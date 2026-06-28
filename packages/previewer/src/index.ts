@@ -1,6 +1,6 @@
+import type { Context } from "hono";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import type { Context } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 const CACHE_SECONDS = 60 * 60 * 24 * 30;
@@ -236,6 +236,7 @@ app.use("*", async (context, next) => {
 	await next();
 });
 
+app.get("hello", (context) => context.json({ message: "Hello, world!" }));
 app.get("/health", (context) => context.json({ ok: true }));
 app.get("/", previewResponse);
 app.get("/preview", previewResponse);

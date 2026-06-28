@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { runWithHyperdriveDatabase } from "./constants";
-import { runWithRelayBinding } from "./relay";
 import { pollPendingTransactions } from "./poller";
+import { runWithRelayBinding } from "./relay";
 import adminRoutes from "./routes/admin";
 import relayRoutes from "./routes/relay";
 import savedRoutes from "./routes/saved";
@@ -12,7 +12,7 @@ import x402Routes from "./routes/x402";
 const app = new Hono<{ Bindings: Env }>();
 
 app.use("*", cors());
-app.get("/", (c) => c.text("write today, forever"));
+app.get("/", (c) => c.text("write today,, forever"));
 
 app.use("*", async (c, next) =>
 	runWithHyperdriveDatabase(c.env.HYPERDRIVE.connectionString, () =>
