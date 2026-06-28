@@ -236,7 +236,6 @@ app.use("*", async (context, next) => {
 	await next();
 });
 
-app.get("hello", (context) => context.json({ message: "Hello, world!" }));
 app.get("/health", (context) => context.json({ ok: true }));
 app.get("/", previewResponse);
 app.get("/preview", previewResponse);

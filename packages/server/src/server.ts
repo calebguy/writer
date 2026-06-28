@@ -12,7 +12,7 @@ import x402Routes from "./routes/x402";
 const app = new Hono<{ Bindings: Env }>();
 
 app.use("*", cors());
-app.get("/", (c) => c.text("write today,, forever"));
+app.get("/", (c) => c.text("write today, forever"));
 
 app.use("*", async (c, next) =>
 	runWithHyperdriveDatabase(c.env.HYPERDRIVE.connectionString, () =>
