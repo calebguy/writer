@@ -1,0 +1,47 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "writer-api",
+	"main": "src/server.ts",
+	"compatibility_date": "2026-06-27",
+	"compatibility_flags": ["nodejs_compat"],
+	"workers_dev": true,
+	"services": [
+		{
+			"binding": "RELAY",
+			"service": "writer-durable-wallet"
+		}
+	],
+	"hyperdrive": [
+		{
+			"binding": "HYPERDRIVE",
+			"id": "f46916a6c115468189f486f2dde3f3d7"
+		}
+	],
+	"triggers": {
+		"crons": ["* * * * *"]
+	},
+	"vars": {
+		"APP_ENV": "PRODUCTION",
+		"BUN_VERSION": "1.2.0",
+		"COLOR_REGISTRY_ADDRESS": "0xA083Ff0E24F616AfD12755d7169256334669d4DD",
+		"FACTORY_ADDRESS": "0xF532F814a7A7291440Fc27AbB8CC845Ab86709c8",
+		"RPC_URL": "https://optimism-mainnet.core.chainstack.com/84b63be8c6b3f521c01e95cc37a4a34d",
+		"TARGET_CHAIN_ID": "10",
+		"X402_PAY_TO_ADDRESS": "0xCC2011577CaD30e15d8c8d6329d36DeAF85BD2Cc",
+		"RELAY_URL": "https://writer-durable-wallet.calebgcarithers.workers.dev"
+	},
+	"secrets": {
+		"required": [
+			"DATABASE_URL",
+			"RELAY_API_KEY",
+			"PRIVY_APP_ID",
+			"PRIVY_SECRET",
+			"CDP_API_KEY_ID",
+			"CDP_API_KEY_SECRET"
+		]
+	},
+	"observability": {
+		"enabled": true,
+		"head_sampling_rate": 1
+	}
+}

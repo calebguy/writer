@@ -1,17 +1,24 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { startPoller } from "./poller";
+import { runWithHyperdriveDatabase } from "./constants";
+import { runWithRelayBinding } from "./relay";
+import { pollPendingTransactions } from "./poller";
 import adminRoutes from "./routes/admin";
 import relayRoutes from "./routes/relay";
 import savedRoutes from "./routes/saved";
 import writerRoutes from "./routes/writer";
 import x402Routes from "./routes/x402";
 
-const app = new Hono();
+const app = new Hono<{ Bindings: Env }>();
 
 app.use("*", cors());
-
 app.get("/", (c) => c.text("write today, forever"));
+
+app.use("*", async (c, next) =>
+	runWithHyperdriveDatabase(c.env.HYPERDRIVE.connectionString, () =>
+		runWithRelayBinding(c.env.RELAY, next),
+	),
+);
 
 const api = app
 	.basePath("/")
@@ -21,7 +28,17 @@ const api = app
 	.route("/", x402Routes)
 	.route("/", writerRoutes);
 
-startPoller();
-
 export type Api = typeof api;
-export default app;
+
+export default {
+	fetch(request, env, ctx) {
+		return app.fetch(request, env, ctx);
+	},
+	scheduled(_event, env, ctx) {
+		ctx.waitUntil(
+			runWithHyperdriveDatabase(env.HYPERDRIVE.connectionString, () =>
+				runWithRelayBinding(env.RELAY, () => pollPendingTransactions()),
+			),
+		);
+	},
+} satisfies ExportedHandler<Env>;

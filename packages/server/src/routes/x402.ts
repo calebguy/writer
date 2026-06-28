@@ -27,7 +27,11 @@ import {
 } from "../middleware";
 import { makeRelayTxId, relay } from "../relay";
 import { watchRelayReceipt } from "../receipt-watcher";
-import { getX402Capabilities, getX402Payer, x402PaymentMiddleware } from "../x402";
+import {
+	getX402Capabilities,
+	getX402Payer,
+	x402PaymentMiddleware,
+} from "../x402";
 
 const x402Routes = new Hono()
 	.get("/x402/capabilities", (c) =>
@@ -92,14 +96,16 @@ const x402Routes = new Hono()
 				source: "x402",
 				targetAddress: address,
 			});
-			watchRelayReceipt({
-				txId: transactionId,
-				wallet,
-				nonce: relayNonce,
-				chainId: BigInt(env.TARGET_CHAIN_ID),
-				functionSignature: CREATE_FUNCTION_SIGNATURE,
-				args,
-			});
+			c.executionCtx.waitUntil(
+				watchRelayReceipt({
+					txId: transactionId,
+					wallet,
+					nonce: relayNonce,
+					chainId: BigInt(env.TARGET_CHAIN_ID),
+					functionSignature: CREATE_FUNCTION_SIGNATURE,
+					args,
+				}),
+			);
 			const now = new Date();
 			const writer = {
 				address,
@@ -190,14 +196,16 @@ const x402Routes = new Hono()
 					source: "x402",
 					targetAddress: contractAddress,
 				});
-				watchRelayReceipt({
-					txId: transactionId,
-					wallet,
-					nonce: relayNonce,
-					chainId: BigInt(env.TARGET_CHAIN_ID),
-					functionSignature: CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
-					args,
-				});
+				c.executionCtx.waitUntil(
+					watchRelayReceipt({
+						txId: transactionId,
+						wallet,
+						nonce: relayNonce,
+						chainId: BigInt(env.TARGET_CHAIN_ID),
+						functionSignature: CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
+						args,
+					}),
+				);
 				return c.json({ pending: { transactionId, author } }, 202);
 			} catch (err) {
 				console.error("x402 createWithChunk error:", err);
@@ -295,14 +303,16 @@ const x402Routes = new Hono()
 					source: "x402",
 					targetAddress: contractAddress,
 				});
-				watchRelayReceipt({
-					txId: transactionId,
-					wallet,
-					nonce: relayNonce,
-					chainId: BigInt(env.TARGET_CHAIN_ID),
-					functionSignature: UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE,
-					args,
-				});
+				c.executionCtx.waitUntil(
+					watchRelayReceipt({
+						txId: transactionId,
+						wallet,
+						nonce: relayNonce,
+						chainId: BigInt(env.TARGET_CHAIN_ID),
+						functionSignature: UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE,
+						args,
+					}),
+				);
 				return c.json({ pending: { transactionId, author } }, 202);
 			} catch (err) {
 				console.error("x402 update entry error:", err);
@@ -380,14 +390,16 @@ const x402Routes = new Hono()
 					source: "x402",
 					targetAddress: contractAddress,
 				});
-				watchRelayReceipt({
-					txId: transactionId,
-					wallet,
-					nonce: relayNonce,
-					chainId: BigInt(env.TARGET_CHAIN_ID),
-					functionSignature: DELETE_ENTRY_FUNCTION_SIGNATURE,
-					args,
-				});
+				c.executionCtx.waitUntil(
+					watchRelayReceipt({
+						txId: transactionId,
+						wallet,
+						nonce: relayNonce,
+						chainId: BigInt(env.TARGET_CHAIN_ID),
+						functionSignature: DELETE_ENTRY_FUNCTION_SIGNATURE,
+						args,
+					}),
+				);
 				return c.json({ pending: { transactionId, signer } }, 202);
 			} catch (err) {
 				console.error("x402 delete entry error:", err);

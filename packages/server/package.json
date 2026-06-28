@@ -3,9 +3,11 @@
 	"version": "0.0.0",
 	"type": "module",
 	"scripts": {
-		"dev": "bun run --hot src/server.ts",
-		"start": "bun run src/server.ts",
-		"typecheck": "tsc"
+		"dev": "wrangler dev --remote",
+		"deploy": "wrangler deploy",
+		"start": "wrangler dev --remote",
+		"typecheck": "tsc --noEmit",
+		"types": "wrangler types"
 	},
 	"dependencies": {
 		"@hono/zod-validator": "^0.2.2",
@@ -17,11 +19,15 @@
 		"@x402/hono": "^2.12.0",
 		"db": "workspace:db",
 		"hono": "^4.4.2",
+		"pg": "^8.16.3",
 		"utils": "workspace:utils",
 		"viem": "^2.21.35",
 		"zod": "^3.23.8"
 	},
 	"devDependencies": {
-		"@types/bun": "latest"
+		"@types/bun": "latest",
+		"@types/pg": "^8.11.10",
+		"typescript": "^5.6.0",
+		"wrangler": "^4.105.0"
 	}
 }

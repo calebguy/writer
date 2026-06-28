@@ -1,9 +1,7 @@
 import { db } from "./constants";
 import { parseRelayTxId, relay } from "./relay";
 
-const POLL_INTERVAL_MS = 5_000;
-
-async function pollPendingTransactions() {
+export async function pollPendingTransactions() {
 	try {
 		const pending = await db.getPendingTxs(20);
 		for (const tx of pending) {
@@ -38,11 +36,12 @@ async function pollPendingTransactions() {
 						functionSignature: tx.functionSignature,
 						args: tx.args,
 						hash: status.hash ?? tx.hash,
-						status: status.status === "confirmed"
-							? "CONFIRMED"
-							: status.status === "submitted"
-								? "SUBMITTED"
-								: "PENDING",
+						status:
+							status.status === "confirmed"
+								? "CONFIRMED"
+								: status.status === "submitted"
+									? "SUBMITTED"
+									: "PENDING",
 					});
 				}
 			} catch (error) {
@@ -52,9 +51,4 @@ async function pollPendingTransactions() {
 	} catch (error) {
 		console.error("Failed to poll pending transactions:", error);
 	}
-}
-
-export function startPoller() {
-	console.log(`Starting relay transaction poller (every ${POLL_INTERVAL_MS}ms)`);
-	setInterval(pollPendingTransactions, POLL_INTERVAL_MS);
 }
