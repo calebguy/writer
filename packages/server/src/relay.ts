@@ -27,10 +27,14 @@ type TransactionStatus = {
 	error?: string;
 };
 
-const relayBinding = new AsyncLocalStorage<Fetcher | undefined>();
+interface RelayServiceBinding {
+	fetch(request: Request): Promise<Response>;
+}
+
+const relayBinding = new AsyncLocalStorage<RelayServiceBinding | undefined>();
 
 export function runWithRelayBinding<T>(
-	binding: Fetcher | undefined,
+	binding: RelayServiceBinding | undefined,
 	callback: () => T,
 ): T {
 	return relayBinding.run(binding, callback);

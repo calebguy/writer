@@ -9,7 +9,22 @@ import savedRoutes from "./routes/saved";
 import writerRoutes from "./routes/writer";
 import x402Routes from "./routes/x402";
 
-const app = new Hono<{ Bindings: Env }>();
+interface WorkerExecutionContext {
+	waitUntil(promise: Promise<unknown>): void;
+	passThroughOnException(): void;
+	props: unknown;
+}
+
+interface WorkerEnv {
+	HYPERDRIVE: {
+		connectionString: string;
+	};
+	RELAY?: {
+		fetch(request: Request): Promise<Response>;
+	};
+}
+
+const app = new Hono<{ Bindings: WorkerEnv }>();
 
 app.use("*", cors());
 app.get("/", (c) => c.text("write today, forever"));
@@ -31,14 +46,14 @@ const api = app
 export type Api = typeof api;
 
 export default {
-	fetch(request, env, ctx) {
+	fetch(request: Request, env: WorkerEnv, ctx: WorkerExecutionContext) {
 		return app.fetch(request, env, ctx);
 	},
-	scheduled(_event, env, ctx) {
+	scheduled(_event: unknown, env: WorkerEnv, ctx: WorkerExecutionContext) {
 		ctx.waitUntil(
 			runWithHyperdriveDatabase(env.HYPERDRIVE.connectionString, () =>
 				runWithRelayBinding(env.RELAY, () => pollPendingTransactions()),
 			),
 		);
 	},
-} satisfies ExportedHandler<Env>;
+};
