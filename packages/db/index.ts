@@ -12,6 +12,8 @@ import {
 	or,
 } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import type { NodePgClient } from "drizzle-orm/node-postgres/session";
 import { processRawContent } from "utils";
 import type { Hex } from "viem";
 import {
@@ -32,6 +34,42 @@ import {
 	user,
 	writer,
 } from "./src/schema";
+
+const dbSchema = {
+	writer,
+	entry,
+	relayTx,
+	user,
+	chunk,
+	savedWriter,
+	savedEntry,
+	ingestorCursor,
+	writerRelations,
+	entryRelations,
+	chunkRelations,
+	savedWriterRelations,
+	savedEntryRelations,
+	relayTxRelations,
+};
+
+type WriterDrizzle = NodePgDatabase<typeof dbSchema> & {
+	$client: NodePgClient;
+};
+
+function drizzleFromConnectionUrl(connectionUrl: string): WriterDrizzle {
+	return drizzle({
+		casing: "snake_case",
+		connection: connectionUrl,
+		schema: dbSchema,
+	});
+}
+
+function drizzleFromClient(client: NodePgClient): WriterDrizzle {
+	return drizzle(client, {
+		casing: "snake_case",
+		schema: dbSchema,
+	});
+}
 
 function applyHomeWriterOrder<T extends { address: string }>(
 	writers: T[],
@@ -63,29 +101,16 @@ function applyHomeWriterOrder<T extends { address: string }>(
 }
 
 class Db {
-	private pg;
+	private pg: WriterDrizzle;
 
-	constructor(private readonly connectionUrl: string) {
-		this.pg = drizzle({
-			casing: "snake_case",
-			connection: this.connectionUrl,
-			schema: {
-				writer,
-				entry,
-				relayTx,
-				user,
-				chunk,
-				savedWriter,
-				savedEntry,
-				ingestorCursor,
-				writerRelations,
-				entryRelations,
-				chunkRelations,
-				savedWriterRelations,
-				savedEntryRelations,
-				relayTxRelations,
-			},
-		});
+	constructor(connectionUrl: string) {
+		this.pg = drizzleFromConnectionUrl(connectionUrl);
+	}
+
+	static fromClient(client: NodePgClient): Db {
+		const db = Object.create(Db.prototype) as Db;
+		db.pg = drizzleFromClient(client);
+		return db;
 	}
 
 	async getWritersByManager(managerAddress: Hex) {
@@ -1033,7 +1058,6 @@ class Db {
 			.returning();
 	}
 
-
 	/**
 	 * Re-point a writer row at a new logic-contract address. Driven by the
 	 * `WriterStorage.LogicSet` event in the indexer when a Writer is migrated
@@ -1082,7 +1106,9 @@ class Db {
 	}
 
 	async getAllWriterAddresses(): Promise<string[]> {
-		const rows = await this.pg.selectDistinct({ address: writer.address }).from(writer);
+		const rows = await this.pg
+			.selectDistinct({ address: writer.address })
+			.from(writer);
 		return rows.map((r) => r.address);
 	}
 

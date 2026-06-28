@@ -20,37 +20,22 @@ import { relay } from "./relay";
  * Any failure here is swallowed — the 5s poller is the fallback for watchers
  * that die with the server or get stuck.
  */
-export function watchRelayReceipt(params: {
+export async function watchRelayReceipt(params: {
 	txId: string;
 	wallet: string;
 	nonce: number;
 	chainId: bigint;
 	functionSignature: string;
 	args: unknown;
-}): void {
-	void (async () => {
-		try {
-			const hash = await waitForRelayHash(params.wallet, params.nonce);
-			if (!hash) return; // relay_tx is already ABANDONED (set below)
-			const receipt = await publicClient.waitForTransactionReceipt({
-				hash,
-				timeout: 60_000,
-			});
-			if (receipt.status === "reverted") {
-				await db.upsertTx({
-					id: params.txId,
-					wallet: params.wallet,
-					nonce: params.nonce,
-					chainId: params.chainId,
-					functionSignature: params.functionSignature,
-					args: params.args,
-					hash,
-					blockNumber: receipt.blockNumber,
-					status: "ABANDONED",
-					error: "onchain revert",
-				});
-				return;
-			}
+}): Promise<void> {
+	try {
+		const hash = await waitForRelayHash(params.wallet, params.nonce);
+		if (!hash) return; // relay_tx is already ABANDONED (set below)
+		const receipt = await publicClient.waitForTransactionReceipt({
+			hash,
+			timeout: 60_000,
+		});
+		if (receipt.status === "reverted") {
 			await db.upsertTx({
 				id: params.txId,
 				wallet: params.wallet,
@@ -60,15 +45,28 @@ export function watchRelayReceipt(params: {
 				args: params.args,
 				hash,
 				blockNumber: receipt.blockNumber,
-				status: "CONFIRMED",
+				status: "ABANDONED",
+				error: "onchain revert",
 			});
-		} catch (err) {
-			console.error(
-				`receipt watcher for ${params.txId} failed (poller will retry):`,
-				err,
-			);
+			return;
 		}
-	})();
+		await db.upsertTx({
+			id: params.txId,
+			wallet: params.wallet,
+			nonce: params.nonce,
+			chainId: params.chainId,
+			functionSignature: params.functionSignature,
+			args: params.args,
+			hash,
+			blockNumber: receipt.blockNumber,
+			status: "CONFIRMED",
+		});
+	} catch (err) {
+		console.error(
+			`receipt watcher for ${params.txId} failed (poller will retry):`,
+			err,
+		);
+	}
 }
 
 async function waitForRelayHash(

@@ -1,6 +1,5 @@
 import { entryToJsonSafe, publicWriterToJsonSafe, writerToJsonSafe } from "db";
 import { Hono } from "hono";
-import { randomBytes } from "node:crypto";
 import { computeWriterAddress, computeWriterStorageAddress } from "utils";
 import { type Hex, getAddress, toHex } from "viem";
 import {
@@ -71,9 +70,8 @@ const writerRoutes = new Hono()
 	.get("/manager/:address", async (c) => {
 		const address = getAddress(c.req.param("address"));
 		const data = await db.getWritersByManager(address);
-		const hiddenWriterAddresses = await db.getDeletedWriterAddressesByManager(
-			address,
-		);
+		const hiddenWriterAddresses =
+			await db.getDeletedWriterAddressesByManager(address);
 		const confirmed = data.map((w) => ({
 			...writerToJsonSafe(w),
 			entries: w.entries.map(entryToJsonSafe),
@@ -247,14 +245,16 @@ const writerRoutes = new Hono()
 					status: "PENDING",
 					source: "ui",
 				});
-				watchRelayReceipt({
-					txId: transactionId,
-					wallet,
-					nonce: relayNonce,
-					chainId: BigInt(env.TARGET_CHAIN_ID),
-					functionSignature: SET_HEX_FUNCTION_SIGNATURE,
-					args,
-				});
+				c.executionCtx.waitUntil(
+					watchRelayReceipt({
+						txId: transactionId,
+						wallet,
+						nonce: relayNonce,
+						chainId: BigInt(env.TARGET_CHAIN_ID),
+						functionSignature: SET_HEX_FUNCTION_SIGNATURE,
+						args,
+					}),
+				);
 				const user = await db.upsertUser({
 					address: address,
 					color: hexColor,
@@ -284,7 +284,7 @@ const writerRoutes = new Hono()
 				return c.json({ error: "admin must equal authenticated wallet" }, 403);
 			}
 
-			const salt = toHex(randomBytes(32));
+			const salt = toHex(crypto.getRandomValues(new Uint8Array(32)));
 			// publicWritable is hardcoded to false here. The UI never creates
 			// public writers — the launch public writer is deployed once via
 			// the `script/CreatePublicWriter.s.sol` foundry script and picked
@@ -342,14 +342,16 @@ const writerRoutes = new Hono()
 					// the authoritative row on WriterCreated.
 					targetAddress: address,
 				});
-				watchRelayReceipt({
-					txId: transactionId,
-					wallet,
-					nonce: relayNonce,
-					chainId: BigInt(env.TARGET_CHAIN_ID),
-					functionSignature: CREATE_FUNCTION_SIGNATURE,
-					args,
-				});
+				c.executionCtx.waitUntil(
+					watchRelayReceipt({
+						txId: transactionId,
+						wallet,
+						nonce: relayNonce,
+						chainId: BigInt(env.TARGET_CHAIN_ID),
+						functionSignature: CREATE_FUNCTION_SIGNATURE,
+						args,
+					}),
+				);
 				// The indexer is the sole writer of the `writer` table.
 				// Return a synthesized pending-writer shape (same shape as
 				// the overlay serves on reads) so existing FE callers can
@@ -452,14 +454,16 @@ const writerRoutes = new Hono()
 					source: "ui",
 					targetAddress: contractAddress,
 				});
-				watchRelayReceipt({
-					txId: transactionId,
-					wallet,
-					nonce: relayNonce,
-					chainId: BigInt(env.TARGET_CHAIN_ID),
-					functionSignature: SET_TITLE_WITH_SIG_FUNCTION_SIGNATURE,
-					args,
-				});
+				c.executionCtx.waitUntil(
+					watchRelayReceipt({
+						txId: transactionId,
+						wallet,
+						nonce: relayNonce,
+						chainId: BigInt(env.TARGET_CHAIN_ID),
+						functionSignature: SET_TITLE_WITH_SIG_FUNCTION_SIGNATURE,
+						args,
+					}),
+				);
 				return c.json({ transactionId, title });
 			} catch (err) {
 				console.error("writer/title error:", err);
@@ -598,14 +602,16 @@ const writerRoutes = new Hono()
 					source: "ui",
 					targetAddress: contractAddress,
 				});
-				watchRelayReceipt({
-					txId: transactionId,
-					wallet,
-					nonce: relayNonce,
-					chainId: BigInt(env.TARGET_CHAIN_ID),
-					functionSignature: CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
-					args,
-				});
+				c.executionCtx.waitUntil(
+					watchRelayReceipt({
+						txId: transactionId,
+						wallet,
+						nonce: relayNonce,
+						chainId: BigInt(env.TARGET_CHAIN_ID),
+						functionSignature: CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
+						args,
+					}),
+				);
 				// Indexer is the sole writer of `entry` / `chunk`. The
 				// pending overlay surfaces this tx via `relay_tx` on reads
 				// until EntryCreated fires. FE callers already update their
@@ -728,14 +734,16 @@ const writerRoutes = new Hono()
 				source: "ui",
 				targetAddress: contractAddress,
 			});
-			watchRelayReceipt({
-				txId: transactionId,
-				wallet,
-				nonce: relayNonce,
-				chainId: BigInt(env.TARGET_CHAIN_ID),
-				functionSignature: UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE,
-				args,
-			});
+			c.executionCtx.waitUntil(
+				watchRelayReceipt({
+					txId: transactionId,
+					wallet,
+					nonce: relayNonce,
+					chainId: BigInt(env.TARGET_CHAIN_ID),
+					functionSignature: UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE,
+					args,
+				}),
+			);
 
 			// Indexer is the sole writer of `entry` / `chunk`. The pending
 			// overlay patches in the new content on reads until EntryUpdated
@@ -816,14 +824,16 @@ const writerRoutes = new Hono()
 					source: "ui",
 					targetAddress: address,
 				});
-				watchRelayReceipt({
-					txId: transactionId,
-					wallet,
-					nonce: relayNonce,
-					chainId: BigInt(env.TARGET_CHAIN_ID),
-					functionSignature: DELETE_ENTRY_FUNCTION_SIGNATURE,
-					args,
-				});
+				c.executionCtx.waitUntil(
+					watchRelayReceipt({
+						txId: transactionId,
+						wallet,
+						nonce: relayNonce,
+						chainId: BigInt(env.TARGET_CHAIN_ID),
+						functionSignature: DELETE_ENTRY_FUNCTION_SIGNATURE,
+						args,
+					}),
+				);
 				// Indexer is the sole writer of `entry`. The overlay marks
 				// this entry as deletedAt on reads until EntryRemoved fires.
 				return c.json({ pending: { transactionId } }, 202);

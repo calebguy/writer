@@ -83,7 +83,8 @@ export function getX402Capabilities() {
 				endpoint: `${apiUrl}/x402/factory/create`,
 				path: "/x402/factory/create",
 				price: env.X402_PLACE_CREATE_PRICE,
-				description: "Create a Writer Place. The x402 payer becomes admin and sole manager.",
+				description:
+					"Create a Writer Place. The x402 payer becomes admin and sole manager.",
 				requires: ["x402 payer equals requested admin address"],
 			},
 			createEntry: {
@@ -91,7 +92,8 @@ export function getX402Capabilities() {
 				endpoint: `${apiUrl}/x402/writer/:address/entry/createWithChunk`,
 				path: "/x402/writer/:address/entry/createWithChunk",
 				price: env.X402_ENTRY_CREATE_PRICE,
-				description: "Create an entry in a Writer Place using an EIP-712 CreateWithChunk signature.",
+				description:
+					"Create an entry in a Writer Place using an EIP-712 CreateWithChunk signature.",
 				requires: [
 					"EIP-712 CreateWithChunk signature",
 					"x402 payer equals recovered signer",
@@ -102,7 +104,8 @@ export function getX402Capabilities() {
 				endpoint: `${apiUrl}/x402/writer/:address/entry/:id/update`,
 				path: "/x402/writer/:address/entry/:id/update",
 				price: env.X402_ENTRY_UPDATE_PRICE,
-				description: "Replace an existing entry using an EIP-712 Update signature. Content is a full replacement, not a patch.",
+				description:
+					"Replace an existing entry using an EIP-712 Update signature. Content is a full replacement, not a patch.",
 				requires: [
 					"EIP-712 Update signature",
 					"x402 payer equals recovered signer",
@@ -115,7 +118,8 @@ export function getX402Capabilities() {
 				endpoint: `${apiUrl}/x402/writer/:address/entry/:id/delete`,
 				path: "/x402/writer/:address/entry/:id/delete",
 				price: env.X402_ENTRY_DELETE_PRICE,
-				description: "Delete an entry using an EIP-712 Remove signature. Deletion updates Writer state and does not erase historical chain data.",
+				description:
+					"Delete an entry using an EIP-712 Remove signature. Deletion updates Writer state and does not erase historical chain data.",
 				requires: [
 					"EIP-712 Remove signature",
 					"x402 payer equals recovered signer",
