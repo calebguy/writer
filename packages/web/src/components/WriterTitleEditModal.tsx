@@ -39,8 +39,8 @@ export function WriterTitleEditModal({
 		"Discard this unsaved Place name?",
 	);
 
-	const handleClose = useCallback(() => {
-		if (hasUnsavedTitle && !confirmNavigation()) return;
+	const handleClose = useCallback(async () => {
+		if (hasUnsavedTitle && !(await confirmNavigation())) return;
 		onClose();
 	}, [confirmNavigation, hasUnsavedTitle, onClose]);
 

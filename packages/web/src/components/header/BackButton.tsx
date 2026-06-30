@@ -23,8 +23,8 @@ export function BackButton({ writerAddress }: { writerAddress: string }) {
 	const isCreateEntryPage = isEntryPage && segments[2] === "new";
 	const isEditEntryPage = isEntryPage && segments[3] === "edit";
 
-	const handleBack = () => {
-		if (!confirmNavigation()) return;
+	const handleBack = async () => {
+		if (!(await confirmNavigation())) return;
 		if (isEditEntryPage) {
 			router.push(`/writer/${currentWriterAddress}/${segments[2]}`);
 			return;

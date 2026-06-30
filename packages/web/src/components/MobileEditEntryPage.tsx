@@ -279,8 +279,8 @@ export function MobileEditEntryPage({
 	const confirmNavigation = useUnsavedChangesNavigation();
 	useUnsavedChangesWarning(canSave, "Discard these unsaved Entry edits?");
 
-	const handleExit = () => {
-		if (canSave && !confirmNavigation()) return;
+	const handleExit = async () => {
+		if (canSave && !(await confirmNavigation())) return;
 		router.push(`/writer/${address}/${id}`);
 	};
 

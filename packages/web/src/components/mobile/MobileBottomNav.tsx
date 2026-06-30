@@ -257,14 +257,14 @@ export function MobileBottomNav({
 		}
 	}, []);
 
-	const onHomeTap = () => {
+	const onHomeTap = async () => {
 		if (didLongPress.current) return;
 		if (isRouteActive(pathname, "/home")) {
 			setShowThemeMenu(false);
 			setShowSubMenu((prev) => !prev);
 			return;
 		}
-		if (!confirmNavigation()) return;
+		if (!(await confirmNavigation())) return;
 		setShowSubMenu(false);
 		setShowThemeMenu(false);
 		router.push("/home");
@@ -396,8 +396,8 @@ export function MobileBottomNav({
 								title="Leave"
 								tabIndex={showSubMenu ? 0 : -1}
 								className="h-10 w-10 inline-flex items-center justify-center rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
-								onClick={() => {
-									if (!confirmNavigation()) return;
+								onClick={async () => {
+									if (!(await confirmNavigation())) return;
 									logout().then(() => {
 										clearAllCachedKeys();
 										queryClient.clear();
@@ -448,8 +448,8 @@ export function MobileBottomNav({
 							className={`p-1.5 rounded-full transition-colors ${navIconClass(
 								isRouteActive(pathname, "/explore"),
 							)}`}
-							onClick={() => {
-								if (!confirmNavigation()) return;
+							onClick={async () => {
+								if (!(await confirmNavigation())) return;
 								setShowSubMenu(false);
 								router.push("/explore");
 							}}

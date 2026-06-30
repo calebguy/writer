@@ -9,13 +9,13 @@ export const UNSAVED_CHANGES_MESSAGE =
 
 export interface UnsavedChangesContextType {
 	hasUnsavedChanges: boolean;
-	confirmNavigation: () => boolean;
+	confirmNavigation: () => Promise<boolean>;
 	registerUnsavedChanges: (message?: string) => () => void;
 }
 
 export const UnsavedChangesContext = createContext<UnsavedChangesContextType>({
 	hasUnsavedChanges: false,
-	confirmNavigation: () => true,
+	confirmNavigation: async () => true,
 	registerUnsavedChanges: () => () => {},
 });
 

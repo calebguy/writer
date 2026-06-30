@@ -121,8 +121,8 @@ export function MobileCreateEntryPage({ address }: { address: string }) {
 		},
 	});
 
-	const handleExit = () => {
-		if (hasUnsavedChanges && !confirmNavigation()) return;
+	const handleExit = async () => {
+		if (hasUnsavedChanges && !(await confirmNavigation())) return;
 		router.push(`/writer/${address}`);
 	};
 

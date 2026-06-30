@@ -76,8 +76,8 @@ export function MobileCreateWriterPage() {
 		},
 	});
 
-	const handleExit = () => {
-		if (hasUnsavedChanges && !confirmNavigation()) return;
+	const handleExit = async () => {
+		if (hasUnsavedChanges && !(await confirmNavigation())) return;
 		router.push("/home");
 	};
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuthColor } from "@/hooks/useAuthColor";
+import { UnsavedChangesConfirmModal } from "@/components/UnsavedChangesConfirmModal";
 import {
 	AuthHintContext,
 	NavigationContext,
@@ -30,7 +31,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { optimism } from "viem/chains";
 
 import { env } from "@/utils/env";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 const UNSAVED_CHANGES_HISTORY_MARKER = "__writerUnsavedGuard";
 
 function createUnsavedHistoryState(state: unknown) {
@@ -180,6 +181,7 @@ export function Providers({
 	}, []);
 
 	const unsavedChangesRef = useRef<Map<symbol, string> | null>(null);
+	const router = useRouter();
 	if (unsavedChangesRef.current === null) {
 		unsavedChangesRef.current = new Map();
 	}
@@ -191,6 +193,13 @@ export function Providers({
 	const unsavedChangesSnapshotRef = useRef(unsavedChangesSnapshot);
 	const browserBackGuardActiveRef = useRef(false);
 	const allowNextPopRef = useRef(false);
+	const bypassBeforeUnloadRef = useRef(false);
+	const pendingUnsavedConfirmationRef = useRef<
+		((confirmed: boolean) => void) | null
+	>(null);
+	const [unsavedConfirmationMessage, setUnsavedConfirmationMessage] = useState<
+		string | null
+	>(null);
 
 	const syncUnsavedChangesSnapshot = useCallback(() => {
 		const messages = Array.from(unsavedChanges.values());
@@ -218,9 +227,24 @@ export function Providers({
 		[syncUnsavedChangesSnapshot, unsavedChanges],
 	);
 
+	const resolveUnsavedConfirmation = useCallback((confirmed: boolean) => {
+		pendingUnsavedConfirmationRef.current?.(confirmed);
+		pendingUnsavedConfirmationRef.current = null;
+		setUnsavedConfirmationMessage(null);
+	}, []);
+
 	const confirmNavigation = useCallback(() => {
 		const { count, message } = unsavedChangesSnapshotRef.current;
-		return count === 0 || window.confirm(message);
+		if (count === 0) return Promise.resolve(true);
+
+		if (pendingUnsavedConfirmationRef.current) {
+			pendingUnsavedConfirmationRef.current(false);
+		}
+
+		setUnsavedConfirmationMessage(message);
+		return new Promise<boolean>((resolve) => {
+			pendingUnsavedConfirmationRef.current = resolve;
+		});
 	}, []);
 
 	const hasUnsavedChanges = unsavedChangesSnapshot.count > 0;
@@ -229,6 +253,7 @@ export function Providers({
 		if (!hasUnsavedChanges) return;
 
 		const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+			if (bypassBeforeUnloadRef.current) return;
 			event.preventDefault();
 			event.returnValue = "";
 		};
@@ -241,6 +266,7 @@ export function Providers({
 		if (!hasUnsavedChanges) {
 			browserBackGuardActiveRef.current = false;
 			allowNextPopRef.current = false;
+			bypassBeforeUnloadRef.current = false;
 			return;
 		}
 
@@ -253,16 +279,17 @@ export function Providers({
 			browserBackGuardActiveRef.current = true;
 		}
 
-		const handlePopState = () => {
+		const handlePopState = async () => {
 			if (allowNextPopRef.current) {
 				allowNextPopRef.current = false;
 				browserBackGuardActiveRef.current = false;
 				return;
 			}
 
-			if (confirmNavigation()) {
+			if (await confirmNavigation()) {
 				allowNextPopRef.current = true;
 				browserBackGuardActiveRef.current = false;
+				bypassBeforeUnloadRef.current = true;
 				window.history.back();
 				return;
 			}
@@ -303,16 +330,28 @@ export function Providers({
 			const href = anchor.getAttribute("href");
 			if (!href || href.startsWith("#")) return;
 			if (anchor.href === window.location.href) return;
-			if (confirmNavigation()) return;
 
 			event.preventDefault();
 			event.stopImmediatePropagation();
+
+			void confirmNavigation().then((confirmed) => {
+				if (!confirmed) return;
+
+				const url = new URL(anchor.href);
+				if (url.origin === window.location.origin) {
+					router.push(`${url.pathname}${url.search}${url.hash}`);
+					return;
+				}
+
+				bypassBeforeUnloadRef.current = true;
+				window.location.assign(anchor.href);
+			});
 		};
 
 		document.addEventListener("click", handleDocumentClick, true);
 		return () =>
 			document.removeEventListener("click", handleDocumentClick, true);
-	}, [confirmNavigation, hasUnsavedChanges]);
+	}, [confirmNavigation, hasUnsavedChanges, router]);
 
 	const unsavedChangesContextValue = useMemo(
 		() => ({
@@ -371,6 +410,10 @@ export function Providers({
 							>
 								<AuthColorSync />
 								{children}
+								<UnsavedChangesConfirmModal
+									message={unsavedConfirmationMessage}
+									onResolve={resolveUnsavedConfirmation}
+								/>
 							</WriterContext>
 						</NavigationContext>
 					</UnsavedChangesContext>

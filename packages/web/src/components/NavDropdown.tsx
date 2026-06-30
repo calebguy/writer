@@ -171,8 +171,8 @@ export function NavDropdown() {
 				{navItems.map((item) => (
 					<DropdownItem
 						key={item.href}
-						onClick={() => {
-							if (confirmNavigation()) router.push(item.href);
+						onClick={async () => {
+							if (await confirmNavigation()) router.push(item.href);
 						}}
 					>
 						{item.label}
@@ -203,8 +203,8 @@ export function NavDropdown() {
 				)}
 				{authenticated ? (
 					<DropdownItem
-						onClick={() => {
-							if (!confirmNavigation()) return;
+						onClick={async () => {
+							if (!(await confirmNavigation())) return;
 							logout().then(() => {
 								clearAllCachedKeys();
 								globalQueryClient.clear();

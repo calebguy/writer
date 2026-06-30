@@ -110,8 +110,8 @@ export default function CreateInput({
 		}
 	}, [hasFocus]);
 
-	const handleReset = useCallback(() => {
-		if (hasUnsavedChanges && !confirmNavigation()) return;
+	const handleReset = useCallback(async () => {
+		if (hasUnsavedChanges && !(await confirmNavigation())) return;
 
 		const resetMarkdown = forceOpen ? initialMarkdown ?? "" : "";
 		editorRef.current?.setMarkdown(resetMarkdown);
