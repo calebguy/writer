@@ -4,6 +4,21 @@ import type { RGB } from "./utils";
 
 export const AuthHintContext = createContext<boolean>(false);
 
+export const UNSAVED_CHANGES_MESSAGE =
+	"You have unsaved writing. Leave without saving?";
+
+export interface UnsavedChangesContextType {
+	hasUnsavedChanges: boolean;
+	confirmNavigation: () => boolean;
+	registerUnsavedChanges: (message?: string) => () => void;
+}
+
+export const UnsavedChangesContext = createContext<UnsavedChangesContextType>({
+	hasUnsavedChanges: false,
+	confirmNavigation: () => true,
+	registerUnsavedChanges: () => () => {},
+});
+
 export interface NavigationContextType {
 	writerCameFromExplore: Record<string, boolean>;
 }

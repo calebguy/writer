@@ -1,5 +1,6 @@
 "use client";
 
+import { useUnsavedChangesNavigation } from "@/hooks/useUnsavedChangesWarning";
 import { useIsLoggedIn } from "@/hooks/useIsLoggedIn";
 import { NavigationContext } from "@/utils/context";
 import { usePathname, useRouter } from "next/navigation";
@@ -12,6 +13,7 @@ export function BackButton({ writerAddress }: { writerAddress: string }) {
 	const router = useRouter();
 	const isLoggedIn = useIsLoggedIn();
 	const { writerCameFromExplore } = useContext(NavigationContext);
+	const confirmNavigation = useUnsavedChangesNavigation();
 	const segments = pathname.split("/").filter(Boolean);
 
 	const isWriterRoute = segments[0] === "writer";
@@ -22,6 +24,7 @@ export function BackButton({ writerAddress }: { writerAddress: string }) {
 	const isEditEntryPage = isEntryPage && segments[3] === "edit";
 
 	const handleBack = () => {
+		if (!confirmNavigation()) return;
 		if (isEditEntryPage) {
 			router.push(`/writer/${currentWriterAddress}/${segments[2]}`);
 			return;

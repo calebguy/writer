@@ -785,6 +785,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 						onCancel={() => setEditingWriterAddress(null)}
 						onSubmit={(data) => handleTitleSubmit(writer, data)}
 						isLoading={isUpdatingWriterTitle}
+						unsavedChangesMessage="Discard this unsaved Place name?"
 					/>
 				</div>
 			);
@@ -923,7 +924,11 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 					className="grid gap-2 grid-cols-1 min-[321px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]"
 				>
 					<div className="hidden lg:block">
-						<CreateInput placeholder="Create a Place" onSubmit={handleSubmit} />
+						<CreateInput
+							placeholder="Create a Place"
+							onSubmit={handleSubmit}
+							unsavedChangesMessage="Discard this unsaved Place name?"
+						/>
 					</div>
 					{writers?.map((writer) => renderWriterCard(writer))}
 				</div>
@@ -945,6 +950,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 						placeholder="Create a Place"
 						onSubmit={handleSubmit}
 						isLoading={onboardingMode === "creating"}
+						unsavedChangesMessage="Discard this unsaved Place name?"
 					/>
 				)}
 			</div>

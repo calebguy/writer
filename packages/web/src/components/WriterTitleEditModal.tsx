@@ -1,9 +1,13 @@
 "use client";
+import {
+	useUnsavedChangesNavigation,
+	useUnsavedChangesWarning,
+} from "@/hooks/useUnsavedChangesWarning";
 
 import type { MDXEditorMethods } from "@mdxeditor/editor";
 import dynamic from "next/dynamic";
 import { VisuallyHidden } from "radix-ui";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Modal, ModalTitle } from "./dsl/Modal";
 import { Check } from "./icons/Check";
 import { Close } from "./icons/Close";
@@ -27,7 +31,18 @@ export function WriterTitleEditModal({
 }: WriterTitleEditModalProps) {
 	const editorRef = useRef<MDXEditorMethods>(null);
 	const [markdown, setMarkdown] = useState(initialTitle);
-	const canSave = markdown.trim() !== "" && markdown !== initialTitle;
+	const hasUnsavedTitle = markdown !== initialTitle;
+	const canSave = markdown.trim() !== "" && hasUnsavedTitle;
+	const confirmNavigation = useUnsavedChangesNavigation();
+	useUnsavedChangesWarning(
+		open && hasUnsavedTitle,
+		"Discard this unsaved Place name?",
+	);
+
+	const handleClose = useCallback(() => {
+		if (hasUnsavedTitle && !confirmNavigation()) return;
+		onClose();
+	}, [confirmNavigation, hasUnsavedTitle, onClose]);
 
 	useEffect(() => {
 		if (!open) return;
@@ -43,7 +58,7 @@ export function WriterTitleEditModal({
 		const handleKeyDown = (event: KeyboardEvent) => {
 			if (event.key === "Escape") {
 				event.preventDefault();
-				onClose();
+				handleClose();
 				return;
 			}
 			if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
@@ -53,12 +68,12 @@ export function WriterTitleEditModal({
 		};
 		document.addEventListener("keydown", handleKeyDown);
 		return () => document.removeEventListener("keydown", handleKeyDown);
-	}, [canSave, isSaving, markdown, onClose, onSave, open]);
+	}, [canSave, handleClose, isSaving, markdown, onSave, open]);
 
 	return (
 		<Modal
 			open={open}
-			onClose={onClose}
+			onClose={handleClose}
 			className="w-[min(90vw,420px)] p-4 bg-surface"
 		>
 			<div className="flex flex-col gap-4 text-center">
@@ -80,7 +95,7 @@ export function WriterTitleEditModal({
 					<button
 						type="button"
 						aria-label="Cancel title edit"
-						onClick={onClose}
+						onClick={handleClose}
 						className="px-4 py-1 text-neutral-500 dark:text-neutral-400 hover:text-primary cursor-pointer bg-surface rounded-lg w-full flex items-center justify-center"
 					>
 						<Close className="w-5 h-5" />

@@ -1,6 +1,10 @@
 "use client";
 
 import { Arrow } from "@/components/icons/Arrow";
+import {
+	useUnsavedChangesNavigation,
+	useUnsavedChangesWarning,
+} from "@/hooks/useUnsavedChangesWarning";
 import { Lock } from "@/components/icons/Lock";
 import { Unlock } from "@/components/icons/Unlock";
 import { cn } from "@/utils/cn";
@@ -33,6 +37,7 @@ interface CreateInputProps {
 	submitLabel?: string;
 	onCancel?: () => void;
 	hidePrivacyControls?: boolean;
+	unsavedChangesMessage?: string;
 }
 
 export default function CreateInput({
@@ -47,6 +52,7 @@ export default function CreateInput({
 	submitLabel,
 	onCancel,
 	hidePrivacyControls = false,
+	unsavedChangesMessage,
 }: CreateInputProps) {
 	const isMac = useIsMac();
 	const [hasFocus, setHasFocus] = useState(false);
@@ -59,6 +65,11 @@ export default function CreateInput({
 	const [showHint, setShowHint] = useState(true);
 	const [loadingContent, setLoadingContent] = useState<string>("");
 	const [encrypted, setEncrypted] = useState(false);
+	const hasUnsavedChanges = forceOpen
+		? markdown !== (initialMarkdown ?? "")
+		: markdown.trim() !== "";
+	const confirmNavigation = useUnsavedChangesNavigation();
+	useUnsavedChangesWarning(hasUnsavedChanges, unsavedChangesMessage);
 
 	const submitVerb = submitLabel ?? "create";
 	// Handle clicks inside or outside the container
@@ -100,6 +111,8 @@ export default function CreateInput({
 	}, [hasFocus]);
 
 	const handleReset = useCallback(() => {
+		if (hasUnsavedChanges && !confirmNavigation()) return;
+
 		const resetMarkdown = forceOpen ? initialMarkdown ?? "" : "";
 		editorRef.current?.setMarkdown(resetMarkdown);
 		setMarkdown(resetMarkdown);
@@ -108,7 +121,14 @@ export default function CreateInput({
 		setEncrypted(false);
 		onExpand?.(false);
 		onCancel?.();
-	}, [forceOpen, initialMarkdown, onCancel, onExpand]);
+	}, [
+		confirmNavigation,
+		forceOpen,
+		hasUnsavedChanges,
+		initialMarkdown,
+		onCancel,
+		onExpand,
+	]);
 
 	const handleSubmit = useCallback(() => {
 		if (markdown.trim() === "") return;

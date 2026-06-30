@@ -5,6 +5,10 @@ import { Lock } from "@/components/icons/Lock";
 import { Unlock } from "@/components/icons/Unlock";
 import { useComposeHeaderActions } from "@/components/writer/ComposeHeaderActionsContext";
 import {
+	useUnsavedChangesNavigation,
+	useUnsavedChangesWarning,
+} from "@/hooks/useUnsavedChangesWarning";
+import {
 	type Entry,
 	type Writer,
 	createWithChunk,
@@ -36,6 +40,9 @@ export function MobileCreateEntryPage({ address }: { address: string }) {
 	const [isSigning, setIsSigning] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const isExternalWallet = !!wallet && wallet.walletClientType !== "privy";
+	const hasUnsavedChanges = markdown.trim() !== "";
+	useUnsavedChangesWarning(hasUnsavedChanges, "Discard this unsaved Entry?");
+	const confirmNavigation = useUnsavedChangesNavigation();
 
 	const queryKey = ["writer", normalizedAddress] as const;
 	const { data: writer } = useQuery<Writer>({
@@ -115,7 +122,7 @@ export function MobileCreateEntryPage({ address }: { address: string }) {
 	});
 
 	const handleExit = () => {
-		if (markdown.trim() && !window.confirm("Discard this Entry?")) return;
+		if (hasUnsavedChanges && !confirmNavigation()) return;
 		router.push(`/writer/${address}`);
 	};
 

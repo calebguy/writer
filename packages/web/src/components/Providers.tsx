@@ -4,6 +4,8 @@ import { useAuthColor } from "@/hooks/useAuthColor";
 import {
 	AuthHintContext,
 	NavigationContext,
+	UNSAVED_CHANGES_MESSAGE,
+	UnsavedChangesContext,
 	WriterContext,
 	type WriterContextType,
 	defaultColor,
@@ -24,11 +26,23 @@ import {
 } from "@/utils/utils";
 import { PrivyProvider } from "@privy-io/react-auth";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { optimism } from "viem/chains";
 
 import { env } from "@/utils/env";
 import { usePathname } from "next/navigation";
+const UNSAVED_CHANGES_HISTORY_MARKER = "__writerUnsavedGuard";
+
+function createUnsavedHistoryState(state: unknown) {
+	if (state && typeof state === "object") {
+		return {
+			...(state as Record<string, unknown>),
+			[UNSAVED_CHANGES_HISTORY_MARKER]: true,
+		};
+	}
+
+	return { [UNSAVED_CHANGES_HISTORY_MARKER]: true };
+}
 
 function getBaseWriterAddress(pathname: string): string | null {
 	const segments = pathname.split("/").filter(Boolean);
@@ -165,6 +179,150 @@ export function Providers({
 		if (rgb) setPrimaryColor(rgb);
 	}, []);
 
+	const unsavedChangesRef = useRef<Map<symbol, string> | null>(null);
+	if (unsavedChangesRef.current === null) {
+		unsavedChangesRef.current = new Map();
+	}
+	const unsavedChanges = unsavedChangesRef.current;
+	const [unsavedChangesSnapshot, setUnsavedChangesSnapshot] = useState({
+		count: 0,
+		message: UNSAVED_CHANGES_MESSAGE,
+	});
+	const unsavedChangesSnapshotRef = useRef(unsavedChangesSnapshot);
+	const browserBackGuardActiveRef = useRef(false);
+	const allowNextPopRef = useRef(false);
+
+	const syncUnsavedChangesSnapshot = useCallback(() => {
+		const messages = Array.from(unsavedChanges.values());
+		setUnsavedChangesSnapshot({
+			count: messages.length,
+			message: messages[messages.length - 1] ?? UNSAVED_CHANGES_MESSAGE,
+		});
+	}, []);
+
+	useEffect(() => {
+		unsavedChangesSnapshotRef.current = unsavedChangesSnapshot;
+	}, [unsavedChangesSnapshot]);
+
+	const registerUnsavedChanges = useCallback(
+		(message = UNSAVED_CHANGES_MESSAGE) => {
+			const source = Symbol("unsaved-change-source");
+			unsavedChanges.set(source, message);
+			syncUnsavedChangesSnapshot();
+
+			return () => {
+				unsavedChanges.delete(source);
+				syncUnsavedChangesSnapshot();
+			};
+		},
+		[syncUnsavedChangesSnapshot, unsavedChanges],
+	);
+
+	const confirmNavigation = useCallback(() => {
+		const { count, message } = unsavedChangesSnapshotRef.current;
+		return count === 0 || window.confirm(message);
+	}, []);
+
+	const hasUnsavedChanges = unsavedChangesSnapshot.count > 0;
+
+	useEffect(() => {
+		if (!hasUnsavedChanges) return;
+
+		const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+			event.preventDefault();
+			event.returnValue = "";
+		};
+
+		window.addEventListener("beforeunload", handleBeforeUnload);
+		return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+	}, [hasUnsavedChanges]);
+
+	useEffect(() => {
+		if (!hasUnsavedChanges) {
+			browserBackGuardActiveRef.current = false;
+			allowNextPopRef.current = false;
+			return;
+		}
+
+		if (!browserBackGuardActiveRef.current) {
+			window.history.pushState(
+				createUnsavedHistoryState(window.history.state),
+				"",
+				window.location.href,
+			);
+			browserBackGuardActiveRef.current = true;
+		}
+
+		const handlePopState = () => {
+			if (allowNextPopRef.current) {
+				allowNextPopRef.current = false;
+				browserBackGuardActiveRef.current = false;
+				return;
+			}
+
+			if (confirmNavigation()) {
+				allowNextPopRef.current = true;
+				browserBackGuardActiveRef.current = false;
+				window.history.back();
+				return;
+			}
+
+			window.history.pushState(
+				createUnsavedHistoryState(window.history.state),
+				"",
+				window.location.href,
+			);
+			browserBackGuardActiveRef.current = true;
+		};
+
+		window.addEventListener("popstate", handlePopState);
+		return () => window.removeEventListener("popstate", handlePopState);
+	}, [confirmNavigation, hasUnsavedChanges]);
+
+	useEffect(() => {
+		if (!hasUnsavedChanges) return;
+
+		const handleDocumentClick = (event: MouseEvent) => {
+			if (
+				event.defaultPrevented ||
+				event.button !== 0 ||
+				event.metaKey ||
+				event.ctrlKey ||
+				event.shiftKey ||
+				event.altKey
+			) {
+				return;
+			}
+
+			if (!(event.target instanceof Element)) return;
+
+			const anchor = event.target.closest<HTMLAnchorElement>("a[href]");
+			if (!anchor) return;
+			if (anchor.target && anchor.target !== "_self") return;
+
+			const href = anchor.getAttribute("href");
+			if (!href || href.startsWith("#")) return;
+			if (anchor.href === window.location.href) return;
+			if (confirmNavigation()) return;
+
+			event.preventDefault();
+			event.stopImmediatePropagation();
+		};
+
+		document.addEventListener("click", handleDocumentClick, true);
+		return () =>
+			document.removeEventListener("click", handleDocumentClick, true);
+	}, [confirmNavigation, hasUnsavedChanges]);
+
+	const unsavedChangesContextValue = useMemo(
+		() => ({
+			hasUnsavedChanges,
+			confirmNavigation,
+			registerUnsavedChanges,
+		}),
+		[confirmNavigation, hasUnsavedChanges, registerUnsavedChanges],
+	);
+
 	return (
 		<QueryClientProvider client={queryClient}>
 			<PrivyProvider
@@ -198,22 +356,24 @@ export function Providers({
 				}}
 			>
 				<AuthHintContext value={initialLoggedIn}>
-					<NavigationContext value={{ writerCameFromExplore }}>
-						<WriterContext
-							value={{
-								writer,
-								setWriter,
-								defaultColor,
-								primaryColor,
-								setPrimaryColor: handleSetPrimaryColor,
-								setPrimaryFromLongHex: handleSetPrimaryFromLongHex,
-								resetPrimaryColor: handleResetPrimaryColor,
-							}}
-						>
-							<AuthColorSync />
-							{children}
-						</WriterContext>
-					</NavigationContext>
+					<UnsavedChangesContext value={unsavedChangesContextValue}>
+						<NavigationContext value={{ writerCameFromExplore }}>
+							<WriterContext
+								value={{
+									writer,
+									setWriter,
+									defaultColor,
+									primaryColor,
+									setPrimaryColor: handleSetPrimaryColor,
+									setPrimaryFromLongHex: handleSetPrimaryFromLongHex,
+									resetPrimaryColor: handleResetPrimaryColor,
+								}}
+							>
+								<AuthColorSync />
+								{children}
+							</WriterContext>
+						</NavigationContext>
+					</UnsavedChangesContext>
 				</AuthHintContext>
 			</PrivyProvider>
 		</QueryClientProvider>

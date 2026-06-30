@@ -6,6 +6,10 @@ import { Lock } from "@/components/icons/Lock";
 import { Unlock } from "@/components/icons/Unlock";
 import { useComposeHeaderActions } from "@/components/writer/ComposeHeaderActionsContext";
 import {
+	useUnsavedChangesNavigation,
+	useUnsavedChangesWarning,
+} from "@/hooks/useUnsavedChangesWarning";
+import {
 	type Entry,
 	type Writer,
 	deleteEntry,
@@ -272,9 +276,11 @@ export function MobileEditEntryPage({
 		if (!entry || !wallet || !isWalletAuthor(wallet, entry)) return false;
 		return markdown !== initialMarkdown || encrypted !== isEntryPrivate(entry);
 	}, [entry, wallet, markdown, initialMarkdown, encrypted]);
+	const confirmNavigation = useUnsavedChangesNavigation();
+	useUnsavedChangesWarning(canSave, "Discard these unsaved Entry edits?");
 
 	const handleExit = () => {
-		if (canSave && !window.confirm("Discard these edits?")) return;
+		if (canSave && !confirmNavigation()) return;
 		router.push(`/writer/${address}/${id}`);
 	};
 

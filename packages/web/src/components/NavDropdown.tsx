@@ -1,5 +1,6 @@
 "use client";
 
+import { useUnsavedChangesNavigation } from "@/hooks/useUnsavedChangesWarning";
 import { useHiddenWriters } from "@/hooks/useHiddenWriters";
 import type { Writer } from "@/utils/api";
 import { useOPWallet } from "@/utils/hooks";
@@ -75,6 +76,7 @@ export function NavDropdown() {
 	const router = useRouter();
 	const pathname = usePathname();
 	const queryClient = useQueryClient();
+	const confirmNavigation = useUnsavedChangesNavigation();
 
 	const navItems = [
 		{ label: "Home", href: "/home" },
@@ -167,7 +169,12 @@ export function NavDropdown() {
 				}
 			>
 				{navItems.map((item) => (
-					<DropdownItem key={item.href} onClick={() => router.push(item.href)}>
+					<DropdownItem
+						key={item.href}
+						onClick={() => {
+							if (confirmNavigation()) router.push(item.href);
+						}}
+					>
 						{item.label}
 					</DropdownItem>
 				))}
@@ -196,12 +203,13 @@ export function NavDropdown() {
 				)}
 				{authenticated ? (
 					<DropdownItem
-						onClick={() =>
+						onClick={() => {
+							if (!confirmNavigation()) return;
 							logout().then(() => {
 								clearAllCachedKeys();
 								globalQueryClient.clear();
-							})
-						}
+							});
+						}}
 					>
 						Sign out
 					</DropdownItem>

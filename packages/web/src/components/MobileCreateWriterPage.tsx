@@ -2,6 +2,10 @@
 
 import { Check } from "@/components/icons/Check";
 import { Close } from "@/components/icons/Close";
+import {
+	useUnsavedChangesNavigation,
+	useUnsavedChangesWarning,
+} from "@/hooks/useUnsavedChangesWarning";
 import { type Writer, factoryCreate } from "@/utils/api";
 import { cn } from "@/utils/cn";
 import { useOPWallet } from "@/utils/hooks";
@@ -21,6 +25,12 @@ export function MobileCreateWriterPage() {
 	const [wallet] = useOPWallet();
 	const [markdown, setMarkdown] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const hasUnsavedChanges = markdown.trim() !== "";
+	const confirmNavigation = useUnsavedChangesNavigation();
+	useUnsavedChangesWarning(
+		hasUnsavedChanges,
+		"Discard this unsaved Place name?",
+	);
 
 	const { mutate } = useMutation({
 		mutationFn: factoryCreate,
@@ -67,6 +77,7 @@ export function MobileCreateWriterPage() {
 	});
 
 	const handleExit = () => {
+		if (hasUnsavedChanges && !confirmNavigation()) return;
 		router.push("/home");
 	};
 

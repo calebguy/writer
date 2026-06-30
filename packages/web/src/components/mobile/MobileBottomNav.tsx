@@ -1,5 +1,6 @@
 "use client";
 
+import { useUnsavedChangesNavigation } from "@/hooks/useUnsavedChangesWarning";
 import { useHiddenWriters } from "@/hooks/useHiddenWriters";
 import { clearAllCachedKeys } from "@/utils/keyCache";
 import {
@@ -16,7 +17,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ColorModal } from "../ColorModal";
 import { HiddenPlacesModal } from "../HiddenPlacesModal";
 import { queryClient } from "../Providers";
-
 
 const VISIBLE_PATHS = new Set(["/home", "/explore", "/writer"]);
 
@@ -99,6 +99,7 @@ export function MobileBottomNav({
 	const [hidden, setHidden] = useState(false);
 	const lastScrollY = useRef(0);
 	const containerRef = useRef<HTMLDivElement>(null);
+	const confirmNavigation = useUnsavedChangesNavigation();
 
 	const { data: hiddenWriters } = useHiddenWriters();
 	const hasHiddenWriters = (hiddenWriters?.length ?? 0) > 0;
@@ -263,6 +264,7 @@ export function MobileBottomNav({
 			setShowSubMenu((prev) => !prev);
 			return;
 		}
+		if (!confirmNavigation()) return;
 		setShowSubMenu(false);
 		setShowThemeMenu(false);
 		router.push("/home");
@@ -358,7 +360,9 @@ export function MobileBottomNav({
 								alt={`Theme: ${activeThemeOption.title.toLowerCase()}`}
 								width={activeThemeOption.width}
 								height={activeThemeOption.height}
-								className={`${activeThemeOption.className} transition-transform duration-300 ${
+								className={`${
+									activeThemeOption.className
+								} transition-transform duration-300 ${
 									showThemeMenu ? "rotate-24" : ""
 								}`}
 								priority
@@ -392,12 +396,13 @@ export function MobileBottomNav({
 								title="Leave"
 								tabIndex={showSubMenu ? 0 : -1}
 								className="h-10 w-10 inline-flex items-center justify-center rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
-								onClick={() =>
+								onClick={() => {
+									if (!confirmNavigation()) return;
 									logout().then(() => {
 										clearAllCachedKeys();
 										queryClient.clear();
-									})
-								}
+									});
+								}}
 							>
 								<Image
 									src="/images/relics/doorway.png"
@@ -444,6 +449,7 @@ export function MobileBottomNav({
 								isRouteActive(pathname, "/explore"),
 							)}`}
 							onClick={() => {
+								if (!confirmNavigation()) return;
 								setShowSubMenu(false);
 								router.push("/explore");
 							}}

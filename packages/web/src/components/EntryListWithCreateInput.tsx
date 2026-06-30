@@ -203,6 +203,7 @@ export default function EntryListWithCreateInput({
 							canExpand={true}
 							onSubmit={handleSubmit}
 							isLoading={isSigning}
+							unsavedChangesMessage="Discard this unsaved Entry?"
 						/>
 					</div>
 				)}
