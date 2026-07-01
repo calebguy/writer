@@ -34,10 +34,7 @@ export function WriterTitleEditModal({
 	const hasUnsavedTitle = markdown !== initialTitle;
 	const canSave = markdown.trim() !== "" && hasUnsavedTitle;
 	const confirmNavigation = useUnsavedChangesNavigation();
-	useUnsavedChangesWarning(
-		open && hasUnsavedTitle,
-		"Discard this unsaved Place name?",
-	);
+	useUnsavedChangesWarning(open && hasUnsavedTitle, "Discard Place");
 
 	const handleClose = useCallback(async () => {
 		if (hasUnsavedTitle && !(await confirmNavigation())) return;

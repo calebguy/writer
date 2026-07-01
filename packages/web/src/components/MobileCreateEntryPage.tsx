@@ -41,7 +41,7 @@ export function MobileCreateEntryPage({ address }: { address: string }) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const isExternalWallet = !!wallet && wallet.walletClientType !== "privy";
 	const hasUnsavedChanges = markdown.trim() !== "";
-	useUnsavedChangesWarning(hasUnsavedChanges, "Discard this unsaved Entry?");
+	useUnsavedChangesWarning(hasUnsavedChanges, "Discard Entry");
 	const confirmNavigation = useUnsavedChangesNavigation();
 
 	const queryKey = ["writer", normalizedAddress] as const;

@@ -5,25 +5,22 @@ import { Check } from "@/components/icons/Check";
 import { Close } from "@/components/icons/Close";
 
 type UnsavedChangesConfirmModalProps = {
-	message: string | null;
+	title: string | null;
 	onResolve: (confirmed: boolean) => void;
 };
 
 export function UnsavedChangesConfirmModal({
-	message,
+	title,
 	onResolve,
 }: UnsavedChangesConfirmModalProps) {
 	return (
 		<Modal
-			open={message !== null}
+			open={title !== null}
 			onClose={() => onResolve(false)}
 			className="w-auto min-w-64 max-w-[340px] p-4 bg-surface"
 		>
 			<div className="flex flex-col gap-4 text-center">
-				<ModalTitle>Discard</ModalTitle>
-				<p className="text-sm text-neutral-600 dark:text-neutral-300">
-					{message}
-				</p>
+				<ModalTitle>{title}</ModalTitle>
 				<div className="flex items-center justify-center gap-2">
 					<button
 						type="button"

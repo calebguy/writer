@@ -4,13 +4,12 @@ import type { RGB } from "./utils";
 
 export const AuthHintContext = createContext<boolean>(false);
 
-export const UNSAVED_CHANGES_MESSAGE =
-	"You have unsaved writing. Leave without saving?";
+export const UNSAVED_CHANGES_TITLE = "Discard Changes";
 
 export interface UnsavedChangesContextType {
 	hasUnsavedChanges: boolean;
 	confirmNavigation: () => Promise<boolean>;
-	registerUnsavedChanges: (message?: string) => () => void;
+	registerUnsavedChanges: (title?: string) => () => void;
 }
 
 export const UnsavedChangesContext = createContext<UnsavedChangesContextType>({

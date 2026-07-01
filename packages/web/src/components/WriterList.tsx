@@ -785,7 +785,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 						onCancel={() => setEditingWriterAddress(null)}
 						onSubmit={(data) => handleTitleSubmit(writer, data)}
 						isLoading={isUpdatingWriterTitle}
-						unsavedChangesMessage="Discard this unsaved Place name?"
+						unsavedChangesTitle="Discard Place"
 					/>
 				</div>
 			);
@@ -927,7 +927,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 						<CreateInput
 							placeholder="Create a Place"
 							onSubmit={handleSubmit}
-							unsavedChangesMessage="Discard this unsaved Place name?"
+							unsavedChangesTitle="Discard Place"
 						/>
 					</div>
 					{writers?.map((writer) => renderWriterCard(writer))}
@@ -950,7 +950,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 						placeholder="Create a Place"
 						onSubmit={handleSubmit}
 						isLoading={onboardingMode === "creating"}
-						unsavedChangesMessage="Discard this unsaved Place name?"
+						unsavedChangesTitle="Discard Place"
 					/>
 				)}
 			</div>

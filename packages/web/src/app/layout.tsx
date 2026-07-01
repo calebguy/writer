@@ -13,10 +13,10 @@ import "./globals.css";
 
 export const metadata: Metadata = {
 	title: "Writer",
-	description: "Write for now, forever",
+	description: "Write today, forever",
 	openGraph: {
 		title: "Writer",
-		description: "Write for now, forever",
+		description: "Write today, forever",
 		url: "https://writer.place",
 		type: "website",
 		images: [
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
 	twitter: {
 		card: "summary_large_image",
 		title: "Writer",
-		description: "Write for now, forever",
+		description: "Write today, forever",
 		images: [
 			{
 				url: OG_IMAGE_URL,

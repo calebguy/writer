@@ -37,7 +37,7 @@ interface CreateInputProps {
 	submitLabel?: string;
 	onCancel?: () => void;
 	hidePrivacyControls?: boolean;
-	unsavedChangesMessage?: string;
+	unsavedChangesTitle?: string;
 }
 
 export default function CreateInput({
@@ -52,7 +52,7 @@ export default function CreateInput({
 	submitLabel,
 	onCancel,
 	hidePrivacyControls = false,
-	unsavedChangesMessage,
+	unsavedChangesTitle,
 }: CreateInputProps) {
 	const isMac = useIsMac();
 	const [hasFocus, setHasFocus] = useState(false);
@@ -69,7 +69,7 @@ export default function CreateInput({
 		? markdown !== (initialMarkdown ?? "")
 		: markdown.trim() !== "";
 	const confirmNavigation = useUnsavedChangesNavigation();
-	useUnsavedChangesWarning(hasUnsavedChanges, unsavedChangesMessage);
+	useUnsavedChangesWarning(hasUnsavedChanges, unsavedChangesTitle);
 
 	const submitVerb = submitLabel ?? "create";
 	// Handle clicks inside or outside the container

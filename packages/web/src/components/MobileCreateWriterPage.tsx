@@ -27,10 +27,7 @@ export function MobileCreateWriterPage() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const hasUnsavedChanges = markdown.trim() !== "";
 	const confirmNavigation = useUnsavedChangesNavigation();
-	useUnsavedChangesWarning(
-		hasUnsavedChanges,
-		"Discard this unsaved Place name?",
-	);
+	useUnsavedChangesWarning(hasUnsavedChanges, "Discard Place");
 
 	const { mutate } = useMutation({
 		mutationFn: factoryCreate,

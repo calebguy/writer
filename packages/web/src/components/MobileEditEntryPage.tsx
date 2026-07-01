@@ -277,7 +277,7 @@ export function MobileEditEntryPage({
 		return markdown !== initialMarkdown || encrypted !== isEntryPrivate(entry);
 	}, [entry, wallet, markdown, initialMarkdown, encrypted]);
 	const confirmNavigation = useUnsavedChangesNavigation();
-	useUnsavedChangesWarning(canSave, "Discard these unsaved Entry edits?");
+	useUnsavedChangesWarning(canSave, "Discard Entry");
 
 	const handleExit = async () => {
 		if (canSave && !(await confirmNavigation())) return;

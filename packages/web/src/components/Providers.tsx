@@ -5,7 +5,7 @@ import { UnsavedChangesConfirmModal } from "@/components/UnsavedChangesConfirmMo
 import {
 	AuthHintContext,
 	NavigationContext,
-	UNSAVED_CHANGES_MESSAGE,
+	UNSAVED_CHANGES_TITLE,
 	UnsavedChangesContext,
 	WriterContext,
 	type WriterContextType,
@@ -188,7 +188,7 @@ export function Providers({
 	const unsavedChanges = unsavedChangesRef.current;
 	const [unsavedChangesSnapshot, setUnsavedChangesSnapshot] = useState({
 		count: 0,
-		message: UNSAVED_CHANGES_MESSAGE,
+		title: UNSAVED_CHANGES_TITLE,
 	});
 	const unsavedChangesSnapshotRef = useRef(unsavedChangesSnapshot);
 	const browserBackGuardActiveRef = useRef(false);
@@ -197,15 +197,15 @@ export function Providers({
 	const pendingUnsavedConfirmationRef = useRef<
 		((confirmed: boolean) => void) | null
 	>(null);
-	const [unsavedConfirmationMessage, setUnsavedConfirmationMessage] = useState<
+	const [unsavedConfirmationTitle, setUnsavedConfirmationTitle] = useState<
 		string | null
 	>(null);
 
 	const syncUnsavedChangesSnapshot = useCallback(() => {
-		const messages = Array.from(unsavedChanges.values());
+		const titles = Array.from(unsavedChanges.values());
 		setUnsavedChangesSnapshot({
-			count: messages.length,
-			message: messages[messages.length - 1] ?? UNSAVED_CHANGES_MESSAGE,
+			count: titles.length,
+			title: titles[titles.length - 1] ?? UNSAVED_CHANGES_TITLE,
 		});
 	}, []);
 
@@ -214,9 +214,9 @@ export function Providers({
 	}, [unsavedChangesSnapshot]);
 
 	const registerUnsavedChanges = useCallback(
-		(message = UNSAVED_CHANGES_MESSAGE) => {
+		(title = UNSAVED_CHANGES_TITLE) => {
 			const source = Symbol("unsaved-change-source");
-			unsavedChanges.set(source, message);
+			unsavedChanges.set(source, title);
 			syncUnsavedChangesSnapshot();
 
 			return () => {
@@ -230,18 +230,18 @@ export function Providers({
 	const resolveUnsavedConfirmation = useCallback((confirmed: boolean) => {
 		pendingUnsavedConfirmationRef.current?.(confirmed);
 		pendingUnsavedConfirmationRef.current = null;
-		setUnsavedConfirmationMessage(null);
+		setUnsavedConfirmationTitle(null);
 	}, []);
 
 	const confirmNavigation = useCallback(() => {
-		const { count, message } = unsavedChangesSnapshotRef.current;
+		const { count, title } = unsavedChangesSnapshotRef.current;
 		if (count === 0) return Promise.resolve(true);
 
 		if (pendingUnsavedConfirmationRef.current) {
 			pendingUnsavedConfirmationRef.current(false);
 		}
 
-		setUnsavedConfirmationMessage(message);
+		setUnsavedConfirmationTitle(title);
 		return new Promise<boolean>((resolve) => {
 			pendingUnsavedConfirmationRef.current = resolve;
 		});
@@ -411,7 +411,7 @@ export function Providers({
 								<AuthColorSync />
 								{children}
 								<UnsavedChangesConfirmModal
-									message={unsavedConfirmationMessage}
+									title={unsavedConfirmationTitle}
 									onResolve={resolveUnsavedConfirmation}
 								/>
 							</WriterContext>
