@@ -2,11 +2,21 @@
 
 import { usePathname } from "next/navigation";
 
-const links = [
+const links: Array<{
+	href: string;
+	label: string;
+	rel?: string;
+	target?: "_blank";
+}> = [
 	{ href: "/about", label: "about" },
 	{ href: "/docs", label: "docs" },
 	{ href: "/fund", label: "fund" },
-	{ href: "https://store.writer.place", label: "buy" },
+	{
+		href: "https://store.writer.place",
+		label: "buy",
+		rel: "noopener noreferrer",
+		target: "_blank",
+	},
 ];
 
 export function Footer() {
@@ -28,6 +38,8 @@ export function Footer() {
 					<a
 						key={link.href}
 						href={link.href}
+						rel={link.rel}
+						target={link.target}
 						className="no-underline hover:text-primary"
 					>
 						{link.label}
