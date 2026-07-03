@@ -6,6 +6,7 @@ const links = [
 	{ href: "/about", label: "about" },
 	{ href: "/docs", label: "docs" },
 	{ href: "/fund", label: "fund" },
+	{ href: "https://store.writer.place", label: "store" },
 ];
 
 export function Footer() {
