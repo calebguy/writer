@@ -10,11 +10,11 @@ import { VisuallyHidden } from "radix-ui";
 import { useContext, useEffect, useState } from "react";
 import { type RgbColor, RgbColorPicker } from "react-colorful";
 import {
+	type RGB,
 	RGBToHex,
 	hexColorToBytes32,
 	setPrimaryAndSecondaryCSSVariables,
 } from "../utils/utils";
-import { LoadingRelic } from "./LoadingRelic";
 import { Modal, ModalDescription, ModalTitle } from "./dsl/Modal";
 import { Check } from "./icons/Check";
 import { Close } from "./icons/Close";
@@ -60,6 +60,7 @@ export function ColorModal({ open, onClose }: ModalProps) {
 		});
 		setPrimaryAndSecondaryCSSVariables(primaryColor);
 	};
+	const getSelectedColor = (): RGB => [rgbColor.r, rgbColor.g, rgbColor.b];
 	const hasColorChanged =
 		rgbColor.r !== primaryColor[0] ||
 		rgbColor.g !== primaryColor[1] ||
@@ -80,9 +81,9 @@ export function ColorModal({ open, onClose }: ModalProps) {
 			<div className="flex items-center justify-center">
 				<RgbColorPicker
 					color={rgbColor}
-					onChange={(c) => {
-						setRgbColor(c);
-						setPrimaryAndSecondaryCSSVariables([c.r, c.g, c.b]);
+					onChange={(color) => {
+						setRgbColor(color);
+						setPrimaryAndSecondaryCSSVariables([color.r, color.g, color.b]);
 					}}
 				/>
 			</div>
@@ -119,32 +120,31 @@ export function ColorModal({ open, onClose }: ModalProps) {
 							setSaveClicked(false);
 							return;
 						}
-						setPrimaryColor([rgbColor.r, rgbColor.g, rgbColor.b]);
-						const hexColor = hexColorToBytes32(
-							RGBToHex([rgbColor.r, rgbColor.g, rgbColor.b]),
-						);
-						const { signature, nonce } = await signSetColor(wallet, {
-							hexColor,
-						});
-						const authToken = await getAccessToken();
-						if (!authToken) {
-							console.error("No auth token found");
-							setSaveClicked(false);
-							return;
-						}
-						await mutateAsync({ signature, nonce, hexColor, authToken });
-						setSaveClicked(false);
+						const previousColor = primaryColor;
+						const nextColor = getSelectedColor();
+						setPrimaryColor(nextColor);
 						onClose();
+						try {
+							const hexColor = hexColorToBytes32(RGBToHex(nextColor));
+							const { signature, nonce } = await signSetColor(wallet, {
+								hexColor,
+							});
+							const authToken = await getAccessToken();
+							if (!authToken) {
+								throw new Error("No auth token found");
+							}
+							await mutateAsync({ signature, nonce, hexColor, authToken });
+						} catch (error) {
+							console.error("Failed to save color", error);
+							setPrimaryColor(previousColor);
+						} finally {
+							setSaveClicked(false);
+						}
 					}}
 				>
 					<Check className="w-5 h-5" />
 				</button>
 			</div>
-			{isSaving && (
-				<div className="absolute inset-0 bg-primary flex items-center justify-center rounded-lg z-10">
-					<LoadingRelic size={32} className="bg-secondary!" />
-				</div>
-			)}
 		</Modal>
 	);
 }
