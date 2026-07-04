@@ -9,6 +9,7 @@ assets
 .env
 .dev.vars
 dev
+!packages/web/src/app/dev
 notes.md
 
 dev.ts
