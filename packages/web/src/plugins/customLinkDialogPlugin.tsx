@@ -13,8 +13,8 @@ import {
 	withLatestFrom,
 } from "@mdxeditor/editor";
 import { $getNodeByKey } from "lexical";
-import * as Popover from "@radix-ui/react-popover";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { LinkEdit } from "../components/LinkEdit";
 
 const closeLinkDialog$ = Action((r) => {
@@ -125,7 +125,7 @@ const CustomLinkDialogComponent: React.FC = () => {
 	);
 	const [visible, setVisible] = useState(false);
 	const prevStateType = useRef(linkDialogState.type);
-	const delayTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const delayTimer = useRef<number | null>(null);
 
 	useEffect(() => {
 		const wasInactive = prevStateType.current === "inactive";
@@ -133,7 +133,7 @@ const CustomLinkDialogComponent: React.FC = () => {
 
 		if (linkDialogState.type === "inactive") {
 			setVisible(false);
-			clearTimeout(delayTimer.current as ReturnType<typeof setTimeout>);
+			if (delayTimer.current !== null) window.clearTimeout(delayTimer.current);
 			return;
 		}
 
@@ -142,51 +142,44 @@ const CustomLinkDialogComponent: React.FC = () => {
 			// On paste, mdxeditor will quickly cycle through states
 			// On click, the state persists
 			setVisible(false);
-			clearTimeout(delayTimer.current as ReturnType<typeof setTimeout>);
-			delayTimer.current = setTimeout(() => {
+			if (delayTimer.current !== null) window.clearTimeout(delayTimer.current);
+			delayTimer.current = window.setTimeout(() => {
 				setVisible(true);
 			}, 100);
 		}
 
-		return () => clearTimeout(delayTimer.current as ReturnType<typeof setTimeout>);
+		return () => {
+			if (delayTimer.current !== null) window.clearTimeout(delayTimer.current);
+		};
 	}, [linkDialogState]);
 
 	if (linkDialogState.type === "inactive" || !visible) {
 		return null;
 	}
 
-	return (
-		<Popover.Root open={true}>
-			<Popover.Portal>
-				<Popover.Content
-					className="z-[9999]"
-					sideOffset={5}
-					onOpenAutoFocus={(e) => e.preventDefault()}
-					onCloseAutoFocus={(e) => e.preventDefault()}
-					style={{
-						position: "absolute",
-						top: `${
-							linkDialogState.rectangle.top +
-							linkDialogState.rectangle.height +
-							5
-						}px`,
-						left: `${linkDialogState.rectangle.left}px`,
-					}}
-				>
-					<CombinedLinkDialog
-						url={linkDialogState.url}
-						text={
-							linkDialogState.type === "edit"
-								? linkDialogState.text
-								: undefined
-						}
-						linkNodeKey={linkDialogState.linkNodeKey}
-						type={linkDialogState.type}
-					/>
-					<Popover.Arrow className="fill-white dark:fill-gray-800" />
-				</Popover.Content>
-			</Popover.Portal>
-		</Popover.Root>
+	return createPortal(
+		<div
+			className="absolute z-[9999]"
+			style={{
+				top: `${
+					window.scrollY +
+					linkDialogState.rectangle.top +
+					linkDialogState.rectangle.height +
+					5
+				}px`,
+				left: `${window.scrollX + linkDialogState.rectangle.left}px`,
+			}}
+		>
+			<CombinedLinkDialog
+				url={linkDialogState.url}
+				text={
+					linkDialogState.type === "edit" ? linkDialogState.text : undefined
+				}
+				linkNodeKey={linkDialogState.linkNodeKey}
+				type={linkDialogState.type}
+			/>
+		</div>,
+		document.body,
 	);
 };
 

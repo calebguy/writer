@@ -53,6 +53,25 @@
   color: inherit !important;
 }
 
+
+.mdx.markdown-renderer .prose p {
+  margin: 0.75rem 0;
+}
+
+.mdx.markdown-renderer .prose p.preserved-blank-line {
+  height: 1rem;
+  margin: 0;
+  line-height: 1rem;
+}
+
+.mdx.markdown-renderer .prose p:first-child {
+  margin-top: 0;
+}
+
+.mdx.markdown-renderer .prose p:last-child {
+  margin-bottom: 0;
+}
+
 .mdx {
 
   width: 100%;
@@ -682,6 +701,7 @@
         /* margin: 1rem 0; */
         border-radius: 0.125rem;
         object-fit: contain;
+        outline: none;
       }
 
       h1 {

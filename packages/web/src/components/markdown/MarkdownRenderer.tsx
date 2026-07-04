@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/utils/cn";
+import { Children, type ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import remarkGfm from "remark-gfm";
@@ -17,6 +18,7 @@ interface MarkdownRendererProps {
 const HTML_IMAGE_TAG_PATTERN = /<img\b[^>]*>/gi;
 const HTML_ATTRIBUTE_PATTERN =
 	/([a-zA-Z_:][-a-zA-Z0-9_:.]*)\s*=\s*("([^"]*)"|'([^']*)'|([^\s"'>/=`]+))/g;
+const PRESERVED_BLANK_LINE = "\u00A0";
 
 function escapeMarkdownImageAlt(value: string) {
 	return value.replace(/([\\[\]])/g, "\\$1");
@@ -52,13 +54,63 @@ function convertHtmlImagesToMarkdown(input: string) {
 		return `![${alt}](${destination} "${escapeMarkdownImageTitle(title)}")`;
 	});
 }
+
+function markdownFenceDelimiter(line: string) {
+	const trimmed = line.trimStart();
+	if (trimmed.startsWith("```")) return "```";
+	if (trimmed.startsWith("~~~")) return "~~~";
+	return null;
+}
+
+function preserveMarkdownBlankLines(input: string) {
+	const output: string[] = [];
+	const lines = input.split("\n");
+	let pendingBlankLines = 0;
+	let activeFence: string | null = null;
+
+	const flushBlankLines = () => {
+		if (pendingBlankLines === 0) return;
+		output.push("");
+		for (let index = 1; index < pendingBlankLines; index += 1) {
+			output.push(PRESERVED_BLANK_LINE, "");
+		}
+		pendingBlankLines = 0;
+	};
+
+	for (const line of lines) {
+		const fenceDelimiter = markdownFenceDelimiter(line);
+		if (!activeFence && line.trim().length === 0) {
+			pendingBlankLines += 1;
+			continue;
+		}
+
+		flushBlankLines();
+		output.push(line);
+
+		if (!fenceDelimiter) continue;
+		if (!activeFence) {
+			activeFence = fenceDelimiter;
+			continue;
+		}
+		if (activeFence === fenceDelimiter) activeFence = null;
+	}
+
+	flushBlankLines();
+	return output.join("\n");
+}
+
+function isPreservedBlankLine(children: ReactNode) {
+	const childArray = Children.toArray(children);
+	return childArray.length === 1 && childArray[0] === PRESERVED_BLANK_LINE;
+}
+
 export function MarkdownRenderer({
 	markdown,
 	className,
 	links = true,
 }: MarkdownRendererProps) {
 	return (
-		<div className="mdx" style={{ position: "relative" }}>
+		<div className="mdx markdown-renderer" style={{ position: "relative" }}>
 			<div className={cn("mdxeditor", "grow min-w-24 relative", className)}>
 				<div className="prose">
 					<ReactMarkdown
@@ -73,7 +125,14 @@ export function MarkdownRenderer({
 							h4: ({ children }) => <h4>{children}</h4>,
 							h5: ({ children }) => <h5>{children}</h5>,
 							h6: ({ children }) => <h6>{children}</h6>,
-							p: ({ children }) => <p>{children}</p>,
+							p: ({ children }) =>
+								isPreservedBlankLine(children) ? (
+									<p className="preserved-blank-line" aria-hidden="true">
+										{children}
+									</p>
+								) : (
+									<p>{children}</p>
+								),
 							blockquote: ({ children }) => <blockquote>{children}</blockquote>,
 							ul: ({ children, className }) => (
 								<ul className={className}>{children}</ul>
@@ -115,7 +174,7 @@ export function MarkdownRenderer({
 							),
 						}}
 					>
-						{convertHtmlImagesToMarkdown(markdown)}
+						{preserveMarkdownBlankLines(convertHtmlImagesToMarkdown(markdown))}
 					</ReactMarkdown>
 				</div>
 			</div>

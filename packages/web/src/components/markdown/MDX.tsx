@@ -1,5 +1,6 @@
 "use client";
 
+import { ImageEdit } from "@/components/ImageEdit";
 import { customLinkDialogPlugin } from "@/plugins/customLinkDialogPlugin";
 import { pasteLinkPlugin } from "@/plugins/pasteLinkPlugin";
 import { cn } from "@/utils/cn";
@@ -20,21 +21,30 @@ import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPl
 import { tags } from "@lezer/highlight";
 import {
 	$createImageNode,
+	$isImageNode,
 	MDXEditor,
 	type MDXEditorMethods,
+	activeEditor$,
 	addComposerChild$,
 	addNestedEditorChild$,
+	closeImageDialog$,
 	codeBlockPlugin,
 	codeMirrorPlugin,
 	headingsPlugin,
+	imageDialogState$,
 	imagePlugin,
 	linkPlugin,
 	listsPlugin,
 	markdownShortcutPlugin,
+	openEditImageDialog$,
 	quotePlugin,
 	realmPlugin,
+	saveImage$,
+	useCellValues,
+	usePublisher,
 } from "@mdxeditor/editor";
 import {
+	$getNodeByKey,
 	$isTextNode,
 	COMMAND_PRIORITY_LOW,
 	FORMAT_TEXT_COMMAND,
@@ -42,6 +52,7 @@ import {
 } from "lexical";
 import "@mdxeditor/editor/style.css";
 import { type FC, useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./MDX.css";
@@ -91,6 +102,213 @@ const imageMarkdownShortcutPlugin = realmPlugin({
 		realm.pubIn({
 			[addComposerChild$]: ImageMarkdownShortcut,
 			[addNestedEditorChild$]: ImageMarkdownShortcut,
+		});
+	},
+});
+
+const IMAGE_EDIT_DIALOG_WIDTH = 256;
+const IMAGE_EDIT_DIALOG_GUTTER = 16;
+const IMAGE_EDIT_DIALOG_OFFSET = 8;
+
+function imageEditDialogPosition() {
+	const selectedImage = document.querySelector<HTMLElement>(
+		'[data-editor-block-type="image"] img[class*="focusedImage"], [data-editor-block-type="image"] img',
+	);
+	if (!selectedImage) {
+		return {
+			left:
+				window.scrollX +
+				Math.max(
+					IMAGE_EDIT_DIALOG_GUTTER,
+					(window.innerWidth - IMAGE_EDIT_DIALOG_WIDTH) / 2,
+				),
+			top: window.scrollY + IMAGE_EDIT_DIALOG_GUTTER,
+		};
+	}
+
+	const rect = selectedImage.getBoundingClientRect();
+	const left = Math.max(
+		IMAGE_EDIT_DIALOG_GUTTER,
+		Math.min(
+			rect.left + IMAGE_EDIT_DIALOG_OFFSET,
+			window.innerWidth - IMAGE_EDIT_DIALOG_WIDTH - IMAGE_EDIT_DIALOG_GUTTER,
+		),
+	);
+	const top = Math.max(
+		IMAGE_EDIT_DIALOG_GUTTER,
+		rect.top + IMAGE_EDIT_DIALOG_OFFSET,
+	);
+	return {
+		left: window.scrollX + left,
+		top: window.scrollY + top,
+	};
+}
+
+function ImageEditDialog() {
+	const [imageDialogState, activeEditor] = useCellValues(
+		imageDialogState$,
+		activeEditor$,
+	);
+	const saveImage = usePublisher(saveImage$);
+	const closeImageDialog = usePublisher(closeImageDialog$);
+	const dialogRef = useRef<HTMLDivElement>(null);
+	const [position, setPosition] = useState<{
+		left: number;
+		top: number;
+	} | null>(null);
+
+	useEffect(() => {
+		if (imageDialogState.type === "inactive") {
+			setPosition(null);
+			return;
+		}
+
+		const frame = window.requestAnimationFrame(() => {
+			setPosition(imageEditDialogPosition());
+		});
+		return () => window.cancelAnimationFrame(frame);
+	}, [imageDialogState]);
+
+	useEffect(() => {
+		if (imageDialogState.type === "inactive") return;
+
+		const handlePointerDown = (event: PointerEvent) => {
+			const target = event.target;
+			if (!(target instanceof Element)) return;
+			if (dialogRef.current?.contains(target)) return;
+			if (target.closest('[data-editor-block-type="image"]')) return;
+			closeImageDialog();
+		};
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.key === "Escape") closeImageDialog();
+		};
+
+		document.addEventListener("pointerdown", handlePointerDown, true);
+		document.addEventListener("keydown", handleKeyDown);
+		return () => {
+			document.removeEventListener("pointerdown", handlePointerDown, true);
+			document.removeEventListener("keydown", handleKeyDown);
+		};
+	}, [closeImageDialog, imageDialogState.type]);
+
+	if (imageDialogState.type === "inactive" || !position) return null;
+
+	const initialValues =
+		imageDialogState.type === "editing" ? imageDialogState.initialValues : {};
+	const src = initialValues.src ?? "";
+	const altText = initialValues.altText ?? "";
+	const title = initialValues.title;
+
+	return createPortal(
+		<div
+			ref={dialogRef}
+			className="absolute z-[9999]"
+			style={{ left: position.left, top: position.top }}
+		>
+			<ImageEdit
+				src={src}
+				altText={altText}
+				onSave={(nextSrc, nextAltText) => {
+					saveImage({ altText: nextAltText, src: nextSrc, title });
+					closeImageDialog();
+				}}
+				onDelete={
+					imageDialogState.type === "editing"
+						? () => {
+								activeEditor?.update(() => {
+									const node = $getNodeByKey(imageDialogState.nodeKey);
+									if ($isImageNode(node)) node.remove();
+								});
+								closeImageDialog();
+							}
+						: undefined
+				}
+			/>
+		</div>,
+		document.body,
+	);
+}
+
+interface WriterImageToolbarProps {
+	nodeKey: string;
+	imageSource: string;
+	initialImagePath: string | null;
+	title: string;
+	alt: string;
+	width?: number | "inherit";
+	height?: number | "inherit";
+}
+
+function WriterImageToolbar({
+	nodeKey,
+	imageSource,
+	initialImagePath,
+	title,
+	alt,
+	width,
+	height,
+}: WriterImageToolbarProps) {
+	return (
+		<span
+			hidden
+			data-writer-image-node-key={nodeKey}
+			data-writer-image-src={initialImagePath ?? imageSource}
+			data-writer-image-title={title}
+			data-writer-image-alt={alt}
+			data-writer-image-width={width}
+			data-writer-image-height={height}
+		/>
+	);
+}
+
+function ImageClickEdit() {
+	const [editor] = useLexicalComposerContext();
+	const openEditImageDialog = usePublisher(openEditImageDialog$);
+
+	useEffect(() => {
+		const handleClick = (event: MouseEvent) => {
+			const target = event.target;
+			if (!(target instanceof Element)) return;
+
+			const imageWrapper = target.closest('[data-editor-block-type="image"]');
+			const metadata = imageWrapper?.querySelector<HTMLElement>(
+				"[data-writer-image-node-key]",
+			);
+			const nodeKey = metadata?.dataset.writerImageNodeKey;
+			if (!nodeKey || !metadata) return;
+
+			openEditImageDialog({
+				nodeKey,
+				initialValues: {
+					src: metadata.dataset.writerImageSrc ?? "",
+					title: metadata.dataset.writerImageTitle ?? "",
+					altText: metadata.dataset.writerImageAlt ?? "",
+					width:
+						metadata.dataset.writerImageWidth === "inherit"
+							? undefined
+							: Number(metadata.dataset.writerImageWidth) || undefined,
+					height:
+						metadata.dataset.writerImageHeight === "inherit"
+							? undefined
+							: Number(metadata.dataset.writerImageHeight) || undefined,
+				},
+			});
+		};
+
+		return editor.registerRootListener((rootElement, previousRootElement) => {
+			previousRootElement?.removeEventListener("click", handleClick);
+			rootElement?.addEventListener("click", handleClick);
+		});
+	}, [editor, openEditImageDialog]);
+
+	return null;
+}
+
+const imageClickEditPlugin = realmPlugin({
+	init(realm) {
+		realm.pubIn({
+			[addComposerChild$]: ImageClickEdit,
+			[addNestedEditorChild$]: ImageClickEdit,
 		});
 	},
 });
@@ -346,7 +564,6 @@ const MDX: FC<EditorProps> = ({
 		},
 		[onChange],
 	);
-
 	return (
 		<div
 			className="mdx grow flex flex-col"
@@ -356,8 +573,13 @@ const MDX: FC<EditorProps> = ({
 			<MDXEditor
 				plugins={[
 					headingsPlugin(),
-					imagePlugin(),
+					imagePlugin({
+						disableImageResize: true,
+						ImageDialog: ImageEditDialog,
+						EditImageToolbar: WriterImageToolbar as FC,
+					}),
 					imageMarkdownShortcutPlugin(),
+					imageClickEditPlugin(),
 					listsPlugin(),
 					quotePlugin(),
 					pasteLinkPlugin(),
