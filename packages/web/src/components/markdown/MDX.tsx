@@ -13,11 +13,13 @@ import {
 import { languages } from "@codemirror/language-data";
 import { clike } from "@codemirror/legacy-modes/mode/clike";
 import { Prec } from "@codemirror/state";
-import { STRIKETHROUGH } from "@lexical/markdown";
+import { STRIKETHROUGH, type TextMatchTransformer } from "@lexical/markdown";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
 import { tags } from "@lezer/highlight";
 import {
+	$createImageNode,
+	ImageNode,
 	MDXEditor,
 	type MDXEditorMethods,
 	addComposerChild$,
@@ -54,6 +56,32 @@ interface EditorProps {
 	autoFocus?: boolean;
 	aspectSquare?: boolean;
 }
+
+const imageMarkdownShortcut: TextMatchTransformer = {
+	dependencies: [ImageNode],
+	importRegExp: /!\[([^\]]*)\]\(([^()\s]+)(?:\s"((?:[^"]*\\")*[^"]*)")?\)/,
+	regExp: /!\[([^\]]*)\]\(([^()\s]+)(?:\s"((?:[^"]*\\")*[^"]*)")?\)$/,
+	replace: (textNode, match) => {
+		const [, altText = "", src, title] = match;
+		if (!src) return;
+		textNode.replace($createImageNode({ altText, src, title }));
+	},
+	trigger: ")",
+	type: "text-match",
+};
+
+const imageMarkdownShortcutPlugin = realmPlugin({
+	init(realm) {
+		realm.pubIn({
+			[addComposerChild$]: () => (
+				<MarkdownShortcutPlugin transformers={[imageMarkdownShortcut]} />
+			),
+			[addNestedEditorChild$]: () => (
+				<MarkdownShortcutPlugin transformers={[imageMarkdownShortcut]} />
+			),
+		});
+	},
+});
 
 const strikethroughShortcutPlugin = realmPlugin({
 	init(realm) {
@@ -317,6 +345,7 @@ const MDX: FC<EditorProps> = ({
 				plugins={[
 					headingsPlugin(),
 					imagePlugin(),
+					imageMarkdownShortcutPlugin(),
 					listsPlugin(),
 					quotePlugin(),
 					pasteLinkPlugin(),
