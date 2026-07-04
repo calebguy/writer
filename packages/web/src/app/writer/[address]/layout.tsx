@@ -3,42 +3,15 @@ import { WriterHeader } from "@/components/header/WriterHeader";
 import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
 import { ComposeHeaderActionsProvider } from "@/components/writer/ComposeHeaderActionsContext";
 import { EntryLoadingProvider } from "@/utils/EntryLoadingContext";
-import { env } from "@/utils/env";
 import type { Metadata } from "next";
 import { use } from "react";
-import { OG_IMAGE_URL } from "utils/constants";
+import {
+	getWriterTitle,
+	sanitizeWriterTitle,
+	writerSocialImageUrl,
+} from "./metadata";
 
 type WriterRouteParams = Promise<{ address: string }>;
-
-function sanitizeWriterTitle(input: string): string {
-	return (
-		input
-			// Remove common markdown punctuation.
-			.replace(/[#*_`~>\[\]\(\)!|\\]/g, " ")
-			.replace(/\s+/g, " ")
-			.trim()
-	);
-}
-
-async function getWriterTitle(address: string): Promise<string | null> {
-	try {
-		const response = await fetch(
-			`${env.NEXT_PUBLIC_BASE_URL}/writer/${encodeURIComponent(address)}`,
-			{
-				next: { revalidate: 60 },
-			},
-		);
-		if (!response.ok) {
-			return null;
-		}
-		const data = (await response.json()) as {
-			writer?: { title?: string };
-		};
-		return data.writer?.title ?? null;
-	} catch {
-		return null;
-	}
-}
 
 export async function generateMetadata({
 	params,
@@ -56,19 +29,20 @@ export async function generateMetadata({
 
 	const title = writerTitle;
 	const description = `Read ${writerTitle} on Writer`;
+	const imageUrl = writerSocialImageUrl(address);
 	return {
 		title,
 		description,
 		openGraph: {
 			title,
 			description,
-			images: [{ url: OG_IMAGE_URL }],
+			images: [{ url: imageUrl, width: 1200, height: 630, alt: title }],
 		},
 		twitter: {
 			card: "summary_large_image",
 			title,
 			description,
-			images: [OG_IMAGE_URL],
+			images: [{ url: imageUrl, alt: title }],
 		},
 	};
 }
