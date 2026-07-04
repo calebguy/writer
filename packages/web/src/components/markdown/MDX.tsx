@@ -13,13 +13,13 @@ import {
 import { languages } from "@codemirror/language-data";
 import { clike } from "@codemirror/legacy-modes/mode/clike";
 import { Prec } from "@codemirror/state";
-import { STRIKETHROUGH, type TextMatchTransformer } from "@lexical/markdown";
+import { LinkNode } from "@lexical/link";
+import { STRIKETHROUGH } from "@lexical/markdown";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
 import { tags } from "@lezer/highlight";
 import {
 	$createImageNode,
-	ImageNode,
 	MDXEditor,
 	type MDXEditorMethods,
 	addComposerChild$,
@@ -35,6 +35,7 @@ import {
 	realmPlugin,
 } from "@mdxeditor/editor";
 import {
+	$isTextNode,
 	COMMAND_PRIORITY_LOW,
 	FORMAT_TEXT_COMMAND,
 	KEY_DOWN_COMMAND,
@@ -57,28 +58,39 @@ interface EditorProps {
 	aspectSquare?: boolean;
 }
 
-const imageMarkdownShortcut: TextMatchTransformer = {
-	dependencies: [ImageNode],
-	importRegExp: /!\[([^\]]*)\]\(([^()\s]+)(?:\s"((?:[^"]*\\")*[^"]*)")?\)/,
-	regExp: /!\[([^\]]*)\]\(([^()\s]+)(?:\s"((?:[^"]*\\")*[^"]*)")?\)$/,
-	replace: (textNode, match) => {
-		const [, altText = "", src, title] = match;
-		if (!src) return;
-		textNode.replace($createImageNode({ altText, src, title }));
-	},
-	trigger: ")",
-	type: "text-match",
-};
+function ImageMarkdownShortcut() {
+	const [editor] = useLexicalComposerContext();
+
+	useEffect(() => {
+		return editor.registerNodeTransform(LinkNode, (linkNode) => {
+			const previousSibling = linkNode.getPreviousSibling();
+			if (!$isTextNode(previousSibling)) return;
+
+			const previousText = previousSibling.getTextContent();
+			if (!previousText.endsWith("!")) return;
+
+			const imageNode = $createImageNode({
+				altText: linkNode.getTextContent(),
+				src: linkNode.getURL(),
+				title: linkNode.getTitle() ?? undefined,
+			});
+			if (previousText.length === 1) {
+				previousSibling.remove();
+			} else {
+				previousSibling.setTextContent(previousText.slice(0, -1));
+			}
+			linkNode.replace(imageNode);
+		});
+	}, [editor]);
+
+	return null;
+}
 
 const imageMarkdownShortcutPlugin = realmPlugin({
 	init(realm) {
 		realm.pubIn({
-			[addComposerChild$]: () => (
-				<MarkdownShortcutPlugin transformers={[imageMarkdownShortcut]} />
-			),
-			[addNestedEditorChild$]: () => (
-				<MarkdownShortcutPlugin transformers={[imageMarkdownShortcut]} />
-			),
+			[addComposerChild$]: ImageMarkdownShortcut,
+			[addNestedEditorChild$]: ImageMarkdownShortcut,
 		});
 	},
 });
