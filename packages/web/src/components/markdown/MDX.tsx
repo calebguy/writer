@@ -25,6 +25,7 @@ import {
 	codeBlockPlugin,
 	codeMirrorPlugin,
 	headingsPlugin,
+	imagePlugin,
 	linkPlugin,
 	listsPlugin,
 	markdownShortcutPlugin,
@@ -315,6 +316,7 @@ const MDX: FC<EditorProps> = ({
 			<MDXEditor
 				plugins={[
 					headingsPlugin(),
+					imagePlugin(),
 					listsPlugin(),
 					quotePlugin(),
 					pasteLinkPlugin(),

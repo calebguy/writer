@@ -673,6 +673,17 @@
         text-decoration: underline!important;
       }
 
+      img,
+      .mdx--image {
+        display: block;
+        max-width: 100%;
+        max-height: 70vh;
+        height: auto;
+        margin: 1rem 0;
+        border-radius: 0.125rem;
+        object-fit: contain;
+      }
+
       h1 {
         font-size: 2rem;
         line-height: 1.2;

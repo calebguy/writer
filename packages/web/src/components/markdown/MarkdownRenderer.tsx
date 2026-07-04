@@ -1,11 +1,11 @@
 "use client";
 
 import { cn } from "@/utils/cn";
-import { LinkPreviewAnchor } from "./LinkPreviewAnchor";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
-import solidity from "./language/solidity";
 import remarkGfm from "remark-gfm";
+import { LinkPreviewAnchor } from "./LinkPreviewAnchor";
+import solidity from "./language/solidity";
 import "./MDX.css";
 
 interface MarkdownRendererProps {
@@ -58,6 +58,15 @@ export function MarkdownRenderer({
 								) : (
 									<span className="underline text-primary">{children}</span>
 								),
+							img: ({ alt, src, title }) => (
+								<img
+									src={src}
+									alt={alt ?? ""}
+									title={title}
+									loading="lazy"
+									decoding="async"
+								/>
+							),
 							strong: ({ children }) => <strong>{children}</strong>,
 							em: ({ children }) => <em>{children}</em>,
 							code: ({ children, className }) => (
