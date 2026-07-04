@@ -14,6 +14,44 @@ interface MarkdownRendererProps {
 	links?: boolean;
 }
 
+const HTML_IMAGE_TAG_PATTERN = /<img\b[^>]*>/gi;
+const HTML_ATTRIBUTE_PATTERN =
+	/([a-zA-Z_:][-a-zA-Z0-9_:.]*)\s*=\s*("([^"]*)"|'([^']*)'|([^\s"'>/=`]+))/g;
+
+function escapeMarkdownImageAlt(value: string) {
+	return value.replace(/([\\[\]])/g, "\\$1");
+}
+
+function escapeMarkdownImageTitle(value: string) {
+	return value.replace(/(["\\])/g, "\\$1");
+}
+
+function readHtmlAttributes(tag: string) {
+	const attributes: Record<string, string> = {};
+	for (const match of tag.matchAll(HTML_ATTRIBUTE_PATTERN)) {
+		const [, name, , doubleQuotedValue, singleQuotedValue, unquotedValue] =
+			match;
+		if (!name) continue;
+		attributes[name.toLowerCase()] =
+			doubleQuotedValue ?? singleQuotedValue ?? unquotedValue ?? "";
+	}
+	return attributes;
+}
+
+function convertHtmlImagesToMarkdown(input: string) {
+	return input.replace(HTML_IMAGE_TAG_PATTERN, (tag) => {
+		const attributes = readHtmlAttributes(tag);
+		const src = attributes.src;
+		if (!src) return tag;
+
+		const alt = escapeMarkdownImageAlt(attributes.alt ?? "");
+		const title = attributes.title;
+		const destination = `<${src.replace(/[<>]/g, "")}>`;
+		if (!title) return `![${alt}](${destination})`;
+
+		return `![${alt}](${destination} "${escapeMarkdownImageTitle(title)}")`;
+	});
+}
 export function MarkdownRenderer({
 	markdown,
 	className,
@@ -77,7 +115,7 @@ export function MarkdownRenderer({
 							),
 						}}
 					>
-						{markdown}
+						{convertHtmlImagesToMarkdown(markdown)}
 					</ReactMarkdown>
 				</div>
 			</div>
