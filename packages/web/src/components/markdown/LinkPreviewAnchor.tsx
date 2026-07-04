@@ -1,7 +1,7 @@
 "use client";
 
 import { env } from "@/utils/env";
-import { useRef, useState, type MouseEvent, type ReactNode } from "react";
+import { type MouseEvent, type ReactNode, useRef, useState } from "react";
 
 const HOVER_DELAY_MS = 300;
 const CARD_WIDTH = 360;
@@ -150,20 +150,9 @@ function PreviewShell({
 		</span>
 	);
 }
-
-function PreviewMessage({ children }: { children: ReactNode }) {
-	return (
-		<span className="block rounded-md border border-neutral-200 bg-white px-3 py-2 text-xs text-neutral-600 shadow-2xl dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-400">
-			{children}
-		</span>
-	);
-}
-
 export function LinkPreviewAnchor({ href, children }: LinkPreviewAnchorProps) {
 	const [preview, setPreview] = useState<LinkPreview | null>(null);
 	const [isOpen, setIsOpen] = useState(false);
-	const [isLoading, setIsLoading] = useState(false);
-	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 	const [position, setPosition] = useState<PreviewPosition | null>(null);
 	const hoverTimer = useRef<number | null>(null);
 	const abortController = useRef<AbortController | null>(null);
@@ -184,13 +173,12 @@ export function LinkPreviewAnchor({ href, children }: LinkPreviewAnchorProps) {
 		).matches;
 		if (!targetUrl || !canHover) return;
 		setPosition(previewPosition(event));
-		setErrorMessage(null);
+		setPreview(null);
 		setIsOpen(true);
 
 		const cached = previewCache.get(targetUrl);
 		if (cached) {
 			setPreview(cached);
-			setIsLoading(false);
 			return;
 		}
 
@@ -198,31 +186,17 @@ export function LinkPreviewAnchor({ href, children }: LinkPreviewAnchorProps) {
 		hoverTimer.current = window.setTimeout(() => {
 			const controller = new AbortController();
 			abortController.current = controller;
-			setIsLoading(true);
 			void loadPreview(targetUrl, controller.signal)
 				.then((nextPreview) => {
 					setPreview(nextPreview);
 				})
-				.catch((error) => {
-					if (controller.signal.aborted) return;
-					setPreview(null);
-					setErrorMessage(
-						error instanceof PreviewRequestError
-							? error.message
-							: "Preview unavailable.",
-					);
-				})
-				.finally(() => {
-					if (!controller.signal.aborted) setIsLoading(false);
-				});
+				.catch(() => undefined);
 		}, HOVER_DELAY_MS);
 	}
 
 	function closePreview() {
 		clearPendingWork();
 		setIsOpen(false);
-		setIsLoading(false);
-		setErrorMessage(null);
 	}
 
 	return (
@@ -238,16 +212,6 @@ export function LinkPreviewAnchor({ href, children }: LinkPreviewAnchorProps) {
 			{targetUrl && isOpen && position && preview && (
 				<PreviewShell position={position}>
 					<PreviewCard preview={preview} />
-				</PreviewShell>
-			)}
-			{targetUrl && isOpen && position && isLoading && !preview && (
-				<PreviewShell position={position}>
-					<PreviewMessage>Loading preview...</PreviewMessage>
-				</PreviewShell>
-			)}
-			{targetUrl && isOpen && position && errorMessage && !preview && (
-				<PreviewShell position={position}>
-					<PreviewMessage>{errorMessage}</PreviewMessage>
 				</PreviewShell>
 			)}
 		</span>
