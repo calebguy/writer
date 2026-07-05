@@ -48,7 +48,7 @@ export default async function OpenGraphImage() {
 					justifyContent: "center",
 					fontFamily: "LTRemark",
 					fontSize: 26,
-					color: "#c8c8c8",
+					color: "#e5e5e5",
 				}}
 			>
 				writer.place
