@@ -121,12 +121,14 @@ function PreviewCard({ preview }: { preview: LinkPreview }) {
 
 	return (
 		<div className="overflow-hidden rounded-md border border-neutral-200 bg-white shadow-2xl dark:border-neutral-800 dark:bg-neutral-950">
-			<img
-				src={preview.imageUrl}
-				alt=""
-				className="aspect-[1200/630] w-full bg-neutral-100 object-cover dark:bg-neutral-900"
-				decoding="async"
-			/>
+			<div className="aspect-[4/3] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+				<img
+					src={preview.imageUrl}
+					alt=""
+					className="!h-full !w-full !max-w-none !max-h-none !object-cover !object-left-top"
+					decoding="async"
+				/>
+			</div>
 			<div className="border-t border-neutral-200 px-3 py-2 text-xs text-neutral-600 dark:border-neutral-800 dark:text-neutral-400">
 				{domain}
 			</div>
