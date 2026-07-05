@@ -54,22 +54,14 @@
 }
 
 
-.mdx.markdown-renderer .prose p {
-  margin: 0.75rem 0;
+.mdx .prose p {
+  margin: 0;
 }
 
 .mdx.markdown-renderer .prose p.preserved-blank-line {
-  height: 1rem;
+  height: 1em;
   margin: 0;
-  line-height: 1rem;
-}
-
-.mdx.markdown-renderer .prose p:first-child {
-  margin-top: 0;
-}
-
-.mdx.markdown-renderer .prose p:last-child {
-  margin-bottom: 0;
+  line-height: 1;
 }
 
 .mdx {

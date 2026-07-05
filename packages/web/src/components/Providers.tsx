@@ -207,7 +207,7 @@ export function Providers({
 			count: titles.length,
 			title: titles[titles.length - 1] ?? UNSAVED_CHANGES_TITLE,
 		});
-	}, []);
+	}, [unsavedChanges]);
 
 	useEffect(() => {
 		unsavedChangesSnapshotRef.current = unsavedChangesSnapshot;
@@ -325,6 +325,9 @@ export function Providers({
 
 			const anchor = event.target.closest<HTMLAnchorElement>("a[href]");
 			if (!anchor) return;
+			if (anchor.closest('[contenteditable="true"], [data-lexical-editor="true"]')) {
+				return;
+			}
 			if (anchor.target && anchor.target !== "_self") return;
 
 			const href = anchor.getAttribute("href");
