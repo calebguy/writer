@@ -4,7 +4,7 @@ import { env } from "@/utils/env";
 import { type MouseEvent, type ReactNode, useRef, useState } from "react";
 
 const HOVER_DELAY_MS = 300;
-const CARD_WIDTH = 360;
+const CARD_WIDTH = 320;
 const CARD_GUTTER = 16;
 const CARD_TOP_OFFSET = 14;
 const MAX_CACHED_PREVIEWS = 40;
@@ -121,7 +121,7 @@ function PreviewCard({ preview }: { preview: LinkPreview }) {
 
 	return (
 		<div className="overflow-hidden rounded-md border border-neutral-200 bg-white shadow-2xl dark:border-neutral-800 dark:bg-neutral-950">
-			<div className="aspect-[4/3] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+			<div className="aspect-[3/2] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
 				<img
 					src={preview.imageUrl}
 					alt=""
@@ -129,7 +129,7 @@ function PreviewCard({ preview }: { preview: LinkPreview }) {
 					decoding="async"
 				/>
 			</div>
-			<div className="border-t border-neutral-200 px-3 py-2 text-xs text-neutral-600 dark:border-neutral-800 dark:text-neutral-400">
+			<div className="border-t border-neutral-200 px-3 py-1.5 text-xs text-neutral-600 dark:border-neutral-800 dark:text-neutral-400">
 				{domain}
 			</div>
 		</div>
