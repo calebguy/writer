@@ -1,8 +1,8 @@
 import { ImageResponse } from "next/og";
-import { getWriterTitle, sanitizeWriterTitle } from "./metadata";
+import { getWriterTitle, sanitizeWriterTitle } from "../metadata";
 
 export const runtime = "edge";
-export const alt = "Writer Place";
+export const alt = "Writer Entry";
 export const size = {
 	width: 1200,
 	height: 630,
@@ -14,9 +14,10 @@ const OG_BACKGROUND_URL = "https://www.writer.place/images/OG.png";
 const TITLE_FONT_SIZE = 108;
 const LONG_TITLE_FONT_SIZE = 88;
 const EXTRA_LONG_TITLE_FONT_SIZE = 70;
+const ENTRY_LABEL_FONT_SIZE = 28;
 
 const ltRemarkRegular = fetch(
-	new URL("../../fonts/lt-remark/LTRemark-Regular.otf", import.meta.url),
+	new URL("../../../fonts/lt-remark/LTRemark-Regular.otf", import.meta.url),
 ).then((response) => response.arrayBuffer());
 
 function titleFontSize(title: string) {
@@ -28,12 +29,13 @@ function titleFontSize(title: string) {
 export default async function OpenGraphImage({
 	params,
 }: {
-	params: Promise<{ address: string }>;
+	params: Promise<{ address: string; id: string }>;
 }) {
-	const { address } = await params;
+	const { address, id } = await params;
 	const rawTitle = await getWriterTitle(address);
 	const title = rawTitle ? sanitizeWriterTitle(rawTitle) : "Writer";
 	const displayTitle = title.length > 0 ? title : "Writer";
+	const entryLabel = `entry ${id}`;
 	const fontData = await ltRemarkRegular;
 
 	return new ImageResponse(
@@ -68,8 +70,10 @@ export default async function OpenGraphImage({
 					height: 270,
 					background: "white",
 					display: "flex",
+					flexDirection: "column",
 					alignItems: "center",
 					justifyContent: "center",
+					gap: 18,
 					padding: "0 24px",
 				}}
 			>
@@ -87,6 +91,17 @@ export default async function OpenGraphImage({
 					}}
 				>
 					{displayTitle}
+				</div>
+				<div
+					style={{
+						fontFamily: "LTRemark",
+						fontSize: ENTRY_LABEL_FONT_SIZE,
+						fontWeight: 400,
+						letterSpacing: "-0.02em",
+						color: "#a1a1a1",
+					}}
+				>
+					{entryLabel}
 				</div>
 			</div>
 			<div

@@ -34,3 +34,9 @@ export function writerSocialImageUrl(address: string) {
 		address,
 	)}/opengraph-image`;
 }
+
+export function entrySocialImageUrl(address: string, id: string) {
+	return `${WRITER_SITE_ORIGIN}/writer/${encodeURIComponent(
+		address,
+	)}/${encodeURIComponent(id)}/opengraph-image`;
+}
