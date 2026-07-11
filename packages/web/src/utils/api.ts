@@ -8,9 +8,14 @@ import { env } from "./env";
 const client = hc<Api>(env.NEXT_PUBLIC_BASE_URL);
 
 export const WRITER_QUERY_STALE_TIME = 60 * 1000;
+export const ENTRY_QUERY_STALE_TIME = 60 * 1000;
 
 export function writerQueryKey(address: string) {
 	return ["writer", address.toLowerCase()] as const;
+}
+
+export function entryQueryKey(address: string, id: string | number) {
+	return ["entry", address.toLowerCase(), id.toString()] as const;
 }
 
 

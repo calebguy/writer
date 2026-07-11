@@ -4,12 +4,13 @@ import { EntryCardSkeleton } from "@/components/EntryCardSkeleton";
 import { Lock } from "@/components/icons/Lock";
 import { Unlock } from "@/components/icons/Unlock";
 import { MarkdownRenderer } from "@/components/markdown/MarkdownRenderer";
-import type { Entry } from "@/utils/api";
+import { entryQueryKey, type Entry } from "@/utils/api";
 import { cn } from "@/utils/cn";
 import { isEntryPrivate } from "@/utils/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
@@ -31,24 +32,28 @@ export default function EntryList({
 	onUnlock,
 }: EntryListProps) {
 	const queryClient = useQueryClient();
+	const router = useRouter();
+	const normalizedWriterAddress = writerAddress.toLowerCase();
 
-	// Sort entries by date (newest first)
 	const sortedEntries = useMemo(() => {
 		return [...processedEntries].sort((a, b) => {
 			const dateA = new Date(a.createdAtBlockDatetime ?? a.createdAt).getTime();
 			const dateB = new Date(b.createdAtBlockDatetime ?? b.createdAt).getTime();
-			return dateB - dateA; // Reverse chronological (newest first)
+			return dateB - dateA;
 		});
 	}, [processedEntries]);
 
-	// Pre-populate React Query cache on hover for instant entry page loads
 	const prefetchEntry = useCallback(
 		(entry: Entry) => {
 			const entryId = entry.onChainId?.toString() ?? entry.id.toString();
-			// Set the entry directly in React Query cache (already processed)
-			queryClient.setQueryData(["entry", writerAddress, entryId], entry);
+			const href = `/writer/${normalizedWriterAddress}/${entryId}`;
+			queryClient.setQueryData(
+				entryQueryKey(normalizedWriterAddress, entryId),
+				entry,
+			);
+			router.prefetch(href);
 		},
-		[queryClient, writerAddress],
+		[normalizedWriterAddress, queryClient, router],
 	);
 
 	return (
@@ -118,15 +123,16 @@ export default function EntryList({
 						href={
 							isPending
 								? "#"
-								: `/writer/${writerAddress}/${entry.onChainId?.toString()}`
+								: `/writer/${normalizedWriterAddress}/${entry.onChainId?.toString()}`
 						}
 						key={entry.id}
 						className={cn(
 							"relative aspect-square bg-surface flex flex-col px-2 pt-2 pb-0.5 overflow-hidden rounded-xs",
-							isPending ? "cursor-loading" : "hover:cursor-zoom-in",
+							isPending ? "cursor-loading" : "cursor-zoom-in",
 						)}
 						onClick={isPending ? (e) => e.preventDefault() : undefined}
-						onMouseEnter={() => prefetchEntry(entry)}
+						onFocus={isPending ? undefined : () => prefetchEntry(entry)}
+						onPointerEnter={isPending ? undefined : () => prefetchEntry(entry)}
 					>
 						<div className="overflow-y-auto grow min-h-0 rounded-xs">
 							<MarkdownRenderer

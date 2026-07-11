@@ -2,7 +2,7 @@
 
 import { useEntryLoading } from "@/utils/EntryLoadingContext";
 import type { Entry as EntryType, Writer } from "@/utils/api";
-import { deleteEntry, editEntry, writerQueryKey } from "@/utils/api";
+import { deleteEntry, editEntry, entryQueryKey, writerQueryKey } from "@/utils/api";
 import { cn } from "@/utils/cn";
 import {
 	clearPrivateCachedEntry,
@@ -103,7 +103,7 @@ export default function Entry({
 
 	const normalizedAddress = address.toLowerCase();
 	const writerKey = writerQueryKey(normalizedAddress);
-	const entryQueryKey = ["entry", normalizedAddress, id] as const;
+	const entryKey = entryQueryKey(normalizedAddress, id);
 
 	const { mutateAsync: mutateAsyncDelete, isPending: isPendingDelete } =
 		useMutation({
@@ -111,7 +111,7 @@ export default function Entry({
 			mutationKey: ["delete-entry", address, id],
 			onMutate: async () => {
 				await queryClient.cancelQueries({ queryKey: writerKey });
-				await queryClient.cancelQueries({ queryKey: entryQueryKey });
+				await queryClient.cancelQueries({ queryKey: entryKey });
 				const previous = queryClient.getQueryData<Writer>(writerKey);
 				const now = new Date().toISOString();
 				queryClient.setQueryData<Writer>(writerKey, (current) =>
@@ -126,7 +126,7 @@ export default function Entry({
 							}
 						: current,
 				);
-				queryClient.removeQueries({ queryKey: entryQueryKey });
+				queryClient.removeQueries({ queryKey: entryKey });
 				router.push(`/writer/${address}`);
 				return { previous };
 			},
@@ -152,10 +152,9 @@ export default function Entry({
 			mutationKey: ["edit-entry", address, id],
 			onMutate: async (vars) => {
 				await queryClient.cancelQueries({ queryKey: writerKey });
-				await queryClient.cancelQueries({ queryKey: entryQueryKey });
+				await queryClient.cancelQueries({ queryKey: entryKey });
 				const previousWriter = queryClient.getQueryData<Writer>(writerKey);
-				const previousEntry =
-					queryClient.getQueryData<EntryType>(entryQueryKey);
+				const previousEntry = queryClient.getQueryData<EntryType>(entryKey);
 
 				const now = new Date().toISOString();
 				const applyEntryPatch = (entry: EntryType): EntryType => ({
@@ -208,7 +207,7 @@ export default function Entry({
 				}
 				if (previousEntry) {
 					queryClient.setQueryData<EntryType>(
-						entryQueryKey,
+						entryKey,
 						applyEntryPatch(previousEntry),
 					);
 				}
@@ -219,7 +218,7 @@ export default function Entry({
 					queryClient.setQueryData(writerKey, ctx.previousWriter);
 				}
 				if (ctx?.previousEntry) {
-					queryClient.setQueryData(entryQueryKey, ctx.previousEntry);
+					queryClient.setQueryData(entryKey, ctx.previousEntry);
 				}
 			},
 			onSuccess: async () => {
@@ -230,7 +229,7 @@ export default function Entry({
 				onEntryUpdate();
 			},
 			onSettled: () => {
-				queryClient.invalidateQueries({ queryKey: entryQueryKey });
+				queryClient.invalidateQueries({ queryKey: entryKey });
 				queryClient.invalidateQueries({ queryKey: writerKey });
 			},
 		});

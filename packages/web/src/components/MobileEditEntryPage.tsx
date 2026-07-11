@@ -10,11 +10,13 @@ import {
 	useUnsavedChangesWarning,
 } from "@/hooks/useUnsavedChangesWarning";
 import {
+	ENTRY_QUERY_STALE_TIME,
 	WRITER_QUERY_STALE_TIME,
 	type Entry,
 	type Writer,
 	deleteEntry,
 	editEntry,
+	entryQueryKey,
 	getEntry,
 	getWriter,
 	writerQueryKey,
@@ -101,11 +103,12 @@ export function MobileEditEntryPage({
 	const normalizedAddress = address.toLowerCase();
 
 	const writerKey = writerQueryKey(normalizedAddress);
-	const entryQueryKey = ["entry", normalizedAddress, id] as const;
+	const entryKey = entryQueryKey(normalizedAddress, id);
 
 	const { data: fetchedEntry } = useQuery<Entry>({
-		queryKey: entryQueryKey,
-		queryFn: ({ signal }) => getEntry(address as Hex, entryId, signal),
+		queryKey: entryKey,
+		queryFn: ({ signal }) => getEntry(normalizedAddress as Hex, entryId, signal),
+		staleTime: ENTRY_QUERY_STALE_TIME,
 	});
 	const { data: writer } = useQuery<Writer>({
 		queryKey: writerKey,
@@ -153,9 +156,9 @@ export function MobileEditEntryPage({
 		mutationKey: ["delete-entry", address, id],
 		onMutate: async () => {
 			await queryClient.cancelQueries({ queryKey: writerKey });
-			await queryClient.cancelQueries({ queryKey: entryQueryKey });
+			await queryClient.cancelQueries({ queryKey: entryKey });
 			const previousWriter = queryClient.getQueryData<Writer>(writerKey);
-			const previousEntry = queryClient.getQueryData<Entry>(entryQueryKey);
+			const previousEntry = queryClient.getQueryData<Entry>(entryKey);
 			const now = new Date().toISOString();
 			queryClient.setQueryData<Writer>(writerKey, (current) =>
 				current
@@ -169,7 +172,7 @@ export function MobileEditEntryPage({
 						}
 					: current,
 			);
-			queryClient.removeQueries({ queryKey: entryQueryKey });
+			queryClient.removeQueries({ queryKey: entryKey });
 			router.push(`/writer/${address}`);
 			return { previousWriter, previousEntry };
 		},
@@ -178,7 +181,7 @@ export function MobileEditEntryPage({
 				queryClient.setQueryData(writerKey, ctx.previousWriter);
 			}
 			if (ctx?.previousEntry) {
-				queryClient.setQueryData(entryQueryKey, ctx.previousEntry);
+				queryClient.setQueryData(entryKey, ctx.previousEntry);
 			}
 		},
 		onSuccess: async () => {
@@ -197,9 +200,9 @@ export function MobileEditEntryPage({
 		mutationKey: ["edit-entry", address, id],
 		onMutate: async (vars) => {
 			await queryClient.cancelQueries({ queryKey: writerKey });
-			await queryClient.cancelQueries({ queryKey: entryQueryKey });
+			await queryClient.cancelQueries({ queryKey: entryKey });
 			const previousWriter = queryClient.getQueryData<Writer>(writerKey);
-			const previousEntry = queryClient.getQueryData<Entry>(entryQueryKey);
+			const previousEntry = queryClient.getQueryData<Entry>(entryKey);
 			const now = new Date().toISOString();
 			const applyEntryPatch = (current: Entry): Entry => ({
 				...current,
@@ -246,7 +249,7 @@ export function MobileEditEntryPage({
 			}
 			if (previousEntry) {
 				queryClient.setQueryData<Entry>(
-					entryQueryKey,
+					entryKey,
 					applyEntryPatch(previousEntry),
 				);
 			}
@@ -257,7 +260,7 @@ export function MobileEditEntryPage({
 				queryClient.setQueryData(writerKey, ctx.previousWriter);
 			}
 			if (ctx?.previousEntry) {
-				queryClient.setQueryData(entryQueryKey, ctx.previousEntry);
+				queryClient.setQueryData(entryKey, ctx.previousEntry);
 			}
 		},
 		onSuccess: async () => {
@@ -267,7 +270,7 @@ export function MobileEditEntryPage({
 			}
 		},
 		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: entryQueryKey });
+			queryClient.invalidateQueries({ queryKey: entryKey });
 			queryClient.invalidateQueries({ queryKey: writerKey });
 		},
 	});

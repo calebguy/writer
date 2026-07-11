@@ -2,8 +2,11 @@
 
 import Entry from "@/components/Entry";
 import {
+	ENTRY_QUERY_STALE_TIME,
 	WRITER_QUERY_STALE_TIME,
 	type Entry as EntryType,
+	type Writer,
+	entryQueryKey,
 	getEntry,
 	getWriter,
 	writerQueryKey,
@@ -27,7 +30,14 @@ export default function EntryPage({
 	const [wallet] = useOPWallet();
 	const { setEntryLoading } = useEntryLoading();
 	const normalizedAddress = address.toLowerCase();
-
+	const entryKey = entryQueryKey(normalizedAddress, id);
+	const writerKey = writerQueryKey(normalizedAddress);
+	const cachedQueryEntry = queryClient.getQueryData<EntryType>(entryKey) ?? null;
+	const cachedWriterEntry =
+		queryClient
+			.getQueryData<Writer>(writerKey)
+			?.entries.find((entry) => entry.onChainId?.toString() === id) ?? null;
+	const warmEntry = cachedQueryEntry ?? cachedWriterEntry;
 	// Set loading state on mount
 	useEffect(() => {
 		setEntryLoading(true);
@@ -82,17 +92,18 @@ export default function EntryPage({
 		checkCache();
 	}, [address, id, wallet?.address]);
 
-	// Use React Query with cache as initial data. The query is always
-	// enabled once the cache has been checked so that invalidations (from
-	// edit mutations) can refetch; `initialDataUpdatedAt` suppresses the
-	// initial cold fetch when the cache hits.
+	// Use warmed React Query data from the writer grid immediately. IndexedDB
+	// still covers direct public-entry visits, but it no longer gates
+	// /writer -> /writer/:id transitions after the writer page already has
+	// this entry in memory.
+	const initialEntry = cachedEntry ?? warmEntry ?? undefined;
 	const { data: entry, refetch } = useQuery<EntryType>({
-		queryKey: ["entry", address, id],
-		queryFn: ({ signal }) => getEntry(address as Hex, Number(id), signal),
-		initialData: cachedEntry ?? undefined,
-		initialDataUpdatedAt: cachedEntry ? Date.now() : undefined,
-		enabled: cacheChecked,
-		staleTime: 30 * 1000, // 30 seconds
+		queryKey: entryKey,
+		queryFn: ({ signal }) => getEntry(normalizedAddress as Hex, Number(id), signal),
+		initialData: initialEntry,
+		initialDataUpdatedAt: initialEntry ? Date.now() : undefined,
+		enabled: cacheChecked || Boolean(warmEntry),
+		staleTime: ENTRY_QUERY_STALE_TIME,
 		// While an edit is pending on-chain confirmation (overlay stamped
 		// updatedAtTransactionId but indexer hasn't filled updatedAtHash yet),
 		// poll every 3s so the Entry's inline "saving" spinner clears as soon
@@ -105,9 +116,8 @@ export default function EntryPage({
 		},
 	});
 
-	// Fetch the writer to get legacyDomain for EIP-712 signing
 	const { data: writer } = useQuery({
-		queryKey: writerQueryKey(normalizedAddress),
+		queryKey: writerKey,
 		queryFn: ({ signal }) => getWriter(normalizedAddress as Hex, signal),
 		staleTime: WRITER_QUERY_STALE_TIME,
 	});
@@ -145,8 +155,7 @@ export default function EntryPage({
 				id={id}
 				legacyDomain={writer?.legacyDomain ?? true}
 				onEntryUpdate={() => {
-					// Invalidate and refetch
-					queryClient.invalidateQueries({ queryKey: ["entry", address, id] });
+					queryClient.invalidateQueries({ queryKey: entryKey });
 					refetch();
 					router.refresh();
 				}}
