@@ -7,7 +7,9 @@ import {
 	WRITER_QUERY_STALE_TIME,
 	type Writer,
 	type WriterSummary,
+	getHiddenWritersByManager,
 	getWriter,
+	getWriterSummariesByManager,
 	hideWriter as hideWriterApi,
 	writerQueryKey,
 } from "@/utils/api";
@@ -29,6 +31,14 @@ import { MarkdownRenderer } from "../markdown/MarkdownRenderer";
 import { useComposeHeaderActions } from "../writer/ComposeHeaderActionsContext";
 import { BackButton } from "./BackButton";
 
+function writerSummaryFromWriter(writer: Writer): WriterSummary {
+	const { entries, ...summary } = writer;
+	return {
+		...summary,
+		entryCount: entries.length,
+	};
+}
+
 export function WriterHeader({
 	address,
 }: {
@@ -49,17 +59,59 @@ export function WriterHeader({
 	const userAddress = user?.wallet?.address;
 	const normalizedAddress = address.toLowerCase();
 
+	const { data: writer } = useQuery<Writer>({
+		queryKey: writerQueryKey(normalizedAddress),
+		queryFn: ({ signal }) => getWriter(normalizedAddress as Hex, signal),
+		staleTime: WRITER_QUERY_STALE_TIME,
+	});
+
 	useEffect(() => {
 		if (!authenticated || isEntryPage) return;
 		router.prefetch(newEntryHref);
 		void import("../markdown/MDX");
 	}, [authenticated, isEntryPage, newEntryHref, router]);
 
-	const { data: writer } = useQuery<Writer>({
-		queryKey: writerQueryKey(normalizedAddress),
-		queryFn: ({ signal }) => getWriter(normalizedAddress as Hex, signal),
-		staleTime: WRITER_QUERY_STALE_TIME,
-	});
+	useEffect(() => {
+		if (!authenticated || !userAddress) return;
+
+		void queryClient.prefetchQuery({
+			queryKey: ["get-writer-summaries", userAddress] as const,
+			queryFn: ({ signal }) =>
+				getWriterSummariesByManager(userAddress as Hex, signal),
+			staleTime: WRITER_QUERY_STALE_TIME,
+		});
+
+		void getAccessToken().then((authToken) => {
+			if (!authToken) return;
+			return queryClient.prefetchQuery({
+				queryKey: hiddenWritersQueryKey(userAddress),
+				queryFn: ({ signal }) =>
+					getHiddenWritersByManager({ userAddress, authToken, signal }),
+				staleTime: WRITER_QUERY_STALE_TIME,
+			});
+		});
+	}, [authenticated, getAccessToken, queryClient, userAddress]);
+
+	useEffect(() => {
+		if (!writer || !userAddress) return;
+
+		const homeQueryKey = ["get-writer-summaries", userAddress] as const;
+		const writerSummary = writerSummaryFromWriter(writer);
+		const normalizedWriterAddress = writer.address.toLowerCase();
+		queryClient.setQueryData<WriterSummary[]>(homeQueryKey, (current) => {
+			if (!current) return current;
+
+			let changed = false;
+			const next = current.map((candidate) => {
+				if (candidate.address.toLowerCase() !== normalizedWriterAddress) {
+					return candidate;
+				}
+				changed = true;
+				return writerSummary;
+			});
+			return changed ? next : current;
+		});
+	}, [queryClient, userAddress, writer]);
 
 	// Show skeleton if writer data not loaded OR if entry page is still loading
 	const showSkeleton = !writer?.title || isEntryLoading;
