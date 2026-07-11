@@ -17,6 +17,7 @@ import {
 } from "@/utils/keyboardShortcuts";
 import { signRemove, signUpdate } from "@/utils/signer";
 import {
+	canRenderEntryImmediately,
 	compress,
 	encrypt,
 	isEntryPrivate,
@@ -70,10 +71,17 @@ export default function Entry({
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [deleteSubmitted, setDeletedSubmitted] = useState(false);
 	const [editSubmitted, setEditSubmitted] = useState(false);
-	const [processedEntry, setProcessedEntry] = useState<EntryType | null>(null);
-	const [encrypted, setEncrypted] = useState(false);
-	const [editedContent, setEditedContent] = useState("");
-	const initializedRef = useRef(false);
+	const instantEntry = canRenderEntryImmediately(initialEntry)
+		? initialEntry
+		: null;
+	const [processedEntry, setProcessedEntry] = useState<EntryType | null>(
+		instantEntry,
+	);
+	const [encrypted, setEncrypted] = useState(isEntryPrivate(initialEntry));
+	const [editedContent, setEditedContent] = useState(
+		instantEntry?.decompressed ?? instantEntry?.raw ?? "",
+	);
+	const initializedRef = useRef(Boolean(instantEntry));
 	// Mirror of processedEntry for reads inside effects — we can't put the
 	// state itself in the effect's dep array without turning local
 	// setProcessedEntry() calls into a trigger that reverts the optimistic
@@ -274,7 +282,6 @@ export default function Entry({
 				if (!needsDecryption && contentMatchesInitial) return;
 			}
 
-			// If already processed (has decompressed content), set immediately
 			if (initialEntry.decompressed) {
 				setProcessedEntry(initialEntry);
 				setEditedContent(initialEntry.decompressed);
@@ -283,59 +290,60 @@ export default function Entry({
 				return;
 			}
 
-			// Only sleep for unprocessed entries that need decryption
+			if (!isEntryPrivate(initialEntry)) {
+				setProcessedEntry(initialEntry);
+				setEditedContent(initialEntry.raw ?? "");
+				setEncrypted(false);
+				initializedRef.current = true;
+				return;
+			}
+
 			await sleep(200);
 
-			if (isEntryPrivate(initialEntry)) {
-				setEncrypted(true);
-				if (wallet && isWalletAuthor(wallet, initialEntry)) {
-					const needsV5 =
-						initialEntry.raw?.startsWith("enc:v5:br:") &&
-						!!initialEntry.storageId;
-					const needsV4 =
-						initialEntry.raw?.startsWith("enc:v4:br:") &&
-						!!initialEntry.storageId;
-					const needsV3 = initialEntry.raw?.startsWith("enc:v3:br:");
-					const needsV2 = initialEntry.raw?.startsWith("enc:v2:br:");
-					const needsV1 = initialEntry.raw?.startsWith("enc:br:");
-					const keyV5 = needsV5
-						? await getCachedDerivedKey(wallet, "v5", initialEntry.storageId)
-						: undefined;
-					const keyV4 = needsV4
-						? await getCachedDerivedKey(wallet, "v4", initialEntry.storageId)
-						: undefined;
-					const keyV3 = needsV3
-						? await getCachedDerivedKey(wallet, "v3")
-						: undefined;
-					const keyV2 = needsV2
-						? await getCachedDerivedKey(wallet, "v2")
-						: undefined;
-					const keyV1 = needsV1
-						? await getCachedDerivedKey(wallet, "v1")
-						: undefined;
-					const processed = await processPrivateEntry(
-						keyV2,
-						initialEntry,
-						keyV1,
-						keyV3,
-						keyV4,
-						keyV5,
-					);
-					setProcessedEntry(processed);
-					setEditedContent(processed.decompressed ?? "");
-					initializedRef.current = true;
-				} else if (wallet) {
-					// Wallet is ready but user is not the author - they can't decrypt
-					setProcessedEntry(initialEntry);
-					setEditedContent(initialEntry.decompressed ?? "");
-					initializedRef.current = true;
-				}
-				// If wallet is undefined, don't set initialized - let it retry when wallet is ready
-			} else {
+			setEncrypted(true);
+			if (wallet && isWalletAuthor(wallet, initialEntry)) {
+				const needsV5 =
+					initialEntry.raw?.startsWith("enc:v5:br:") &&
+					!!initialEntry.storageId;
+				const needsV4 =
+					initialEntry.raw?.startsWith("enc:v4:br:") &&
+					!!initialEntry.storageId;
+				const needsV3 = initialEntry.raw?.startsWith("enc:v3:br:");
+				const needsV2 = initialEntry.raw?.startsWith("enc:v2:br:");
+				const needsV1 = initialEntry.raw?.startsWith("enc:br:");
+				const keyV5 = needsV5
+					? await getCachedDerivedKey(wallet, "v5", initialEntry.storageId)
+					: undefined;
+				const keyV4 = needsV4
+					? await getCachedDerivedKey(wallet, "v4", initialEntry.storageId)
+					: undefined;
+				const keyV3 = needsV3
+					? await getCachedDerivedKey(wallet, "v3")
+					: undefined;
+				const keyV2 = needsV2
+					? await getCachedDerivedKey(wallet, "v2")
+					: undefined;
+				const keyV1 = needsV1
+					? await getCachedDerivedKey(wallet, "v1")
+					: undefined;
+				const processed = await processPrivateEntry(
+					keyV2,
+					initialEntry,
+					keyV1,
+					keyV3,
+					keyV4,
+					keyV5,
+				);
+				setProcessedEntry(processed);
+				setEditedContent(processed.decompressed ?? "");
+				initializedRef.current = true;
+			} else if (wallet) {
+				// Wallet is ready but user is not the author - they can't decrypt
 				setProcessedEntry(initialEntry);
 				setEditedContent(initialEntry.decompressed ?? "");
 				initializedRef.current = true;
 			}
+			// If wallet is undefined, don't set initialized - let it retry when wallet is ready
 		}
 		loadProcessedEntry();
 	}, [initialEntry, wallet]);
@@ -349,12 +357,14 @@ export default function Entry({
 		);
 	}, [initialEntry, wallet, isPending]);
 
+	const processedContent = processedEntry?.decompressed ?? processedEntry?.raw ?? "";
+
 	const isContentChanged = useMemo(() => {
 		return (
-			editedContent !== processedEntry?.decompressed ||
+			editedContent !== processedContent ||
 			(processedEntry && encrypted !== isEntryPrivate(processedEntry))
 		);
-	}, [editedContent, processedEntry, encrypted]);
+	}, [editedContent, processedEntry, processedContent, encrypted]);
 
 	const isEditPending = useMemo(() => {
 		return isPendingDelete || isPendingEdit || deleteSubmitted || editSubmitted;
@@ -529,7 +539,7 @@ export default function Entry({
 
 			if (isEditing && isEscapeKey(e)) {
 				e.preventDefault();
-				setEditedContent(processedEntry?.decompressed ?? "");
+				setEditedContent(processedContent);
 				setIsEditing(false);
 				setIsDeleting(false);
 			}
@@ -549,7 +559,7 @@ export default function Entry({
 		isContentChanged,
 		isEditPending,
 		handleSave,
-		processedEntry,
+		processedContent,
 		router,
 		editHref,
 	]);
@@ -615,7 +625,7 @@ export default function Entry({
 				<div className="grow flex flex-col relative">
 					{canView && (
 						<MarkdownRenderer
-							markdown={processedEntry.decompressed ?? ""}
+							markdown={processedContent}
 							className="border border-transparent p-2"
 						/>
 					)}
@@ -723,7 +733,7 @@ export default function Entry({
 									)}
 									onClick={() => {
 										if (isEditing) {
-											setEditedContent(processedEntry?.decompressed ?? "");
+											setEditedContent(processedContent);
 											setIsEditing(false);
 											setIsDeleting(false);
 										} else {

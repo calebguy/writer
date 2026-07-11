@@ -130,8 +130,15 @@ export default function EntryList({
 							"relative aspect-square bg-surface flex flex-col px-2 pt-2 pb-0.5 overflow-hidden rounded-xs",
 							isPending ? "cursor-loading" : "cursor-zoom-in",
 						)}
-						onClick={isPending ? (e) => e.preventDefault() : undefined}
+						onClick={(event) => {
+							if (isPending) {
+								event.preventDefault();
+								return;
+							}
+							prefetchEntry(entry);
+						}}
 						onFocus={isPending ? undefined : () => prefetchEntry(entry)}
+						onPointerDown={isPending ? undefined : () => prefetchEntry(entry)}
 						onPointerEnter={isPending ? undefined : () => prefetchEntry(entry)}
 					>
 						<div className="overflow-y-auto grow min-h-0 rounded-xs">

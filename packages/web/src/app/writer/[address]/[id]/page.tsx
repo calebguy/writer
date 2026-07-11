@@ -14,6 +14,7 @@ import {
 import { getPrivateCachedEntry, getPublicCachedEntry } from "@/utils/entryCache";
 import { useEntryLoading } from "@/utils/EntryLoadingContext";
 import { useOPWallet } from "@/utils/hooks";
+import { canRenderEntryImmediately } from "@/utils/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
@@ -38,11 +39,6 @@ export default function EntryPage({
 			.getQueryData<Writer>(writerKey)
 			?.entries.find((entry) => entry.onChainId?.toString() === id) ?? null;
 	const warmEntry = cachedQueryEntry ?? cachedWriterEntry;
-	// Set loading state on mount
-	useEffect(() => {
-		setEntryLoading(true);
-		return () => setEntryLoading(false);
-	}, [setEntryLoading]);
 
 	useEffect(() => {
 		const href = `${window.location.origin}/writer/${address}/${id}.md`;
@@ -97,6 +93,13 @@ export default function EntryPage({
 	// /writer -> /writer/:id transitions after the writer page already has
 	// this entry in memory.
 	const initialEntry = cachedEntry ?? warmEntry ?? undefined;
+	const hasInstantEntry = Boolean(
+		initialEntry && canRenderEntryImmediately(initialEntry),
+	);
+	useEffect(() => {
+		setEntryLoading(!hasInstantEntry);
+		return () => setEntryLoading(false);
+	}, [hasInstantEntry, setEntryLoading]);
 	const { data: entry, refetch } = useQuery<EntryType>({
 		queryKey: entryKey,
 		queryFn: ({ signal }) => getEntry(normalizedAddress as Hex, Number(id), signal),

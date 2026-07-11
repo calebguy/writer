@@ -322,6 +322,10 @@ export function isEntryPrivate(entry: Entry) {
 	);
 }
 
+export function canRenderEntryImmediately(entry: Entry) {
+	return Boolean(entry.decompressed || !isEntryPrivate(entry));
+}
+
 export function isWalletAuthor(wallet: ConnectedWallet, entry: Entry) {
 	return entry.author?.toLowerCase() === wallet?.address?.toLowerCase();
 }
