@@ -788,7 +788,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 				data-home-writer-address={writer.address}
 				data-reorderable={canReorderWriter ? "true" : undefined}
 				className={`group/card home-writer-card aspect-square bg-surface flex flex-col overflow-hidden px-2 pt-2 pb-1.5 relative w-full rounded-xs transition-opacity ${
-					isPendingWriter ? "cursor-loading" : "hover:cursor-zoom-in"
+					isPendingWriter ? "cursor-loading" : "cursor-zoom-in"
 				} ${isDragging ? "opacity-30" : ""}`}
 				onFocus={
 					isPendingWriter ? undefined : () => prefetchWriter(writer.address)
