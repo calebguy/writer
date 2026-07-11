@@ -10,7 +10,7 @@ import { useEffect, useRef, useState } from "react";
 
 const secondaryGray = "dark:text-neutral-200 text-neutral-800";
 
-const humanLogos = Array.from({ length: 32 }, (_, i) => `logo-${i + 1}.png`);
+const humanLogos = Array.from({ length: 32 }, (_, i) => `logo-${i + 1}.webp`);
 
 function getLogoForSection(title: string) {
 	let hash = 0;

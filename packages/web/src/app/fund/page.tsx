@@ -34,7 +34,7 @@ function CopyAddressButton({ address }: { address: string }) {
 				<Check className="text-primary cursor-default" />
 			) : (
 				<Image
-					src="/images/relics/relic-10.png"
+					src="/images/relics/relic-10.webp"
 					alt="Copy"
 					width={25}
 					height={25}
@@ -80,7 +80,7 @@ export default function FundPage() {
 		<div className="max-w-2xl mx-auto w-full font-serif flex-1 flex flex-col justify-center items-center gap-8">
 			<div className="flex items-center justify-center gap-4">
 				<Image
-					src="/images/totem/totem-7.png"
+					src="/images/totem/totem-7.webp"
 					alt=""
 					width={120}
 					height={120}

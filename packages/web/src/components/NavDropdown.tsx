@@ -50,7 +50,6 @@ function ThemeButton({
 				width={100}
 				height={100}
 				className="h-4.5 w-4.5 min-w-4.5 shrink-0 dark:invert"
-				priority
 			/>
 		</button>
 	);
@@ -142,22 +141,13 @@ export function NavDropdown() {
 		setStoredThemeMode(mode);
 	};
 
-	const preloadImages = [
-		"/images/relics/relic-10.png",
-		"/images/relics/moon-3.png",
-		"/images/relics/computer-1.png",
-	];
-
 	return (
 		<>
-			{preloadImages.map((src) => (
-				<link key={src} rel="preload" as="image" href={src} />
-			))}
 			<Dropdown
 				onOpenChange={setDropdownOpen}
 				trigger={
 					<Image
-						src={"/images/relics/relic-5.png"}
+						src={"/images/relics/relic-5.webp"}
 						alt={"dropdown trigger"}
 						width={38}
 						height={38}
@@ -218,19 +208,19 @@ export function NavDropdown() {
 				)}
 				<div className="flex items-center justify-between gap-1 mt-1 pt-1 border-t border-neutral-300 dark:border-neutral-800/60">
 					<ThemeButton
-						src="/images/relics/relic-10.png"
+						src="/images/relics/relic-10.webp"
 						label="Light"
 						active={themeMode === "light"}
 						onClick={() => setTheme("light")}
 					/>
 					<ThemeButton
-						src="/images/relics/moon-3.png"
+						src="/images/relics/moon-3.webp"
 						label="Dark"
 						active={themeMode === "dark"}
 						onClick={() => setTheme("dark")}
 					/>
 					<ThemeButton
-						src="/images/relics/computer-1.png"
+						src="/images/relics/computer-1.webp"
 						label="System"
 						active={themeMode === "system"}
 						onClick={() => setTheme("system")}

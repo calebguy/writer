@@ -43,7 +43,7 @@ const THEME_OPTIONS = [
 	{
 		mode: "light",
 		title: "Light",
-		src: "/images/relics/relic-10.png",
+		src: "/images/relics/relic-10.webp",
 		width: 100,
 		height: 100,
 		className: "h-7 w-7 shrink-0 object-contain dark:invert",
@@ -51,7 +51,7 @@ const THEME_OPTIONS = [
 	{
 		mode: "dark",
 		title: "Dark",
-		src: "/images/relics/moon-3.png",
+		src: "/images/relics/moon-3.webp",
 		width: 96.4,
 		height: 100,
 		className: "h-7 w-7 shrink-0 object-contain dark:invert",
@@ -59,7 +59,7 @@ const THEME_OPTIONS = [
 	{
 		mode: "system",
 		title: "System",
-		src: "/images/relics/computer-1.png",
+		src: "/images/relics/computer-1.webp",
 		width: 100,
 		height: 100,
 		className: "h-7 w-7 shrink-0 object-contain dark:invert",
@@ -317,7 +317,6 @@ export function MobileBottomNav({
 									width={option.width}
 									height={option.height}
 									className={option.className}
-									priority
 								/>
 							</button>
 						))}
@@ -365,7 +364,6 @@ export function MobileBottomNav({
 								} transition-transform duration-300 ${
 									showThemeMenu ? "rotate-24" : ""
 								}`}
-								priority
 							/>
 						</button>
 						{isLoggedIn && hasHiddenWriters && (
@@ -381,12 +379,11 @@ export function MobileBottomNav({
 								}}
 							>
 								<Image
-									src="/images/relics/face.png"
+									src="/images/relics/face.webp"
 									alt="Hidden Places"
 									width={100}
 									height={100}
 									className="h-7 w-7 shrink-0 object-contain dark:invert"
-									priority
 								/>
 							</button>
 						)}
@@ -405,12 +402,11 @@ export function MobileBottomNav({
 								}}
 							>
 								<Image
-									src="/images/relics/doorway.png"
+									src="/images/relics/doorway.webp"
 									alt="Leave"
 									width={100}
 									height={100}
 									className="h-7 w-7 shrink-0 object-contain dark:invert"
-									priority
 								/>
 							</button>
 						)}
@@ -432,14 +428,13 @@ export function MobileBottomNav({
 							onMouseLeave={onHomePressEnd}
 						>
 							<Image
-								src="/images/relics/relic-5.png"
+								src="/images/relics/relic-5.webp"
 								alt="Home"
 								width={100}
 								height={100}
 								className={`w-8 h-8 dark:invert transition-transform duration-300 ${
 									showSubMenu ? "rotate-24" : ""
 								}`}
-								priority
 							/>
 						</button>
 						<button
@@ -455,12 +450,11 @@ export function MobileBottomNav({
 							}}
 						>
 							<Image
-								src="/images/relics/globe-1.png"
+								src="/images/relics/globe-1.webp"
 								alt="Explore"
 								width={100}
 								height={100}
 								className="w-8 h-8 dark:invert"
-								priority
 							/>
 						</button>
 					</div>

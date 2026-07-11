@@ -45,41 +45,40 @@ const icons = [
 
 const humanImages = Array.from(
 	{ length: 32 },
-	(_, i) => `/images/human/logo-${i + 1}.png`,
+	(_, i) => `/images/human/logo-${i + 1}.webp`,
 );
 
 const relicImages = [
-	"/images/relics/relic-1.png",
-	"/images/relics/relic-2.png",
-	"/images/relics/relic-3.png",
-	"/images/relics/relic-4.png",
-	"/images/relics/relic-5.png",
-	"/images/relics/relic-6.png",
-	"/images/relics/relic-7.png",
-	"/images/relics/relic-8.png",
-	"/images/relics/relic-9.png",
-	"/images/relics/relic-10.png",
-	"/images/relics/relic-11.png",
-	"/images/relics/relic-12.png",
-	"/images/relics/relic-13.png",
-	"/images/relics/relic-14.png",
-	"/images/relics/relic-15.png",
-	"/images/relics/relic-16.png",
-	"/images/relics/relic-17.png",
-	"/images/relics/arrow-1.png",
-	"/images/relics/computer-1.png",
-	"/images/relics/exit-1.png",
-	"/images/relics/frame-1.png",
-	"/images/relics/globe-1.png",
-	"/images/relics/moon-1.png",
-	"/images/relics/moon-2.png",
-	"/images/relics/moon-3.png",
-	"/images/relics/splat-1.png",
+	"/images/relics/relic-1.webp",
+	"/images/relics/relic-2.webp",
+	"/images/relics/relic-3.webp",
+	"/images/relics/relic-4.webp",
+	"/images/relics/relic-5.webp",
+	"/images/relics/relic-6.webp",
+	"/images/relics/relic-7.webp",
+	"/images/relics/relic-8.webp",
+	"/images/relics/relic-9.webp",
+	"/images/relics/relic-10.webp",
+	"/images/relics/relic-11.webp",
+	"/images/relics/relic-12.webp",
+	"/images/relics/relic-13.webp",
+	"/images/relics/relic-14.webp",
+	"/images/relics/relic-15.webp",
+	"/images/relics/relic-16.webp",
+	"/images/relics/relic-17.webp",
+	"/images/relics/arrow-1.webp",
+	"/images/relics/computer-1.webp",
+	"/images/relics/frame-1.webp",
+	"/images/relics/globe-1.webp",
+	"/images/relics/moon-1.webp",
+	"/images/relics/moon-2.webp",
+	"/images/relics/moon-3.webp",
+	"/images/relics/splat-1.webp",
 ];
 
 const totemImages = Array.from(
 	{ length: 16 },
-	(_, i) => `/images/totem/totem-${i + 1}.png`,
+	(_, i) => `/images/totem/totem-${i + 1}.webp`,
 );
 
 function Section({
@@ -119,7 +118,7 @@ function ImageGrid({
 			}}
 		>
 			{srcs.map((src) => {
-				const label = src.split("/").pop()?.replace(".png", "") ?? src;
+				const label = src.split("/").pop()?.replace(/\.(png|webp)$/, "") ?? src;
 				return (
 					<div
 						key={src}

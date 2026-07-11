@@ -20,7 +20,7 @@ export default function AboutPage() {
 			</div>
 			<div className="flex items-center justify-center gap-4">
 				<Image
-					src="/images/human/logo-1.png"
+					src="/images/human/logo-1.webp"
 					alt="Writer"
 					width={100}
 					height={100}
@@ -28,7 +28,7 @@ export default function AboutPage() {
 					priority
 				/>
 				<Image
-					src="/images/human/logo-2.png"
+					src="/images/human/logo-2.webp"
 					alt="Writer"
 					width={100}
 					height={100}
@@ -36,7 +36,7 @@ export default function AboutPage() {
 					priority
 				/>
 				<Image
-					src="/images/human/logo-3.png"
+					src="/images/human/logo-3.webp"
 					alt="Writer"
 					width={100}
 					height={100}

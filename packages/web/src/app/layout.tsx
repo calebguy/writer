@@ -1,13 +1,9 @@
 import { Providers } from "@/components/Providers";
-import { getAuthHint, getAuthenticatedUser } from "@/utils/auth";
+import { getAuthHint } from "@/utils/auth";
 import { cn } from "@/utils/cn";
-import { getUserColor } from "@/utils/getUserColor";
-import { bytes32ToHexColor, getSecondaryColor, hexToRGB } from "@/utils/utils";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import type { CSSProperties } from "react";
 import { OG_IMAGE_URL } from "utils/constants";
-import type { Hex } from "viem";
 import { diatypeRoundedMono, ltRemark } from "./fonts";
 import "./globals.css";
 
@@ -42,38 +38,14 @@ export default async function RootLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
-	const [user, initialLoggedIn] = await Promise.all([
-		getAuthenticatedUser(),
+	const [initialLoggedIn, headerList] = await Promise.all([
 		getAuthHint(),
+		headers(),
 	]);
-	const nonce = (await headers()).get("x-nonce") ?? undefined;
-	let initialColor: string | null = null;
-
-	if (user?.wallet?.address) {
-		try {
-			initialColor = await getUserColor(user.wallet.address as Hex);
-		} catch (error) {
-			console.warn("Failed to fetch user color in layout:", error);
-		}
-	}
-	const colorStyle: React.CSSProperties = {};
-	if (initialColor) {
-		const rgb = hexToRGB(bytes32ToHexColor(initialColor));
-		const secondaryColor = getSecondaryColor(rgb);
-		//@ts-ignore
-		colorStyle["--color-primary" as keyof CSSProperties] = rgb.join(" ");
-		//@ts-ignore
-		colorStyle["--color-secondary" as keyof CSSProperties] =
-			secondaryColor.join(" ");
-	}
+	const nonce = headerList.get("x-nonce") ?? undefined;
 
 	return (
-		<html
-			lang="en"
-			style={colorStyle}
-			className="min-h-dvh"
-			suppressHydrationWarning
-		>
+		<html lang="en" className="min-h-dvh" suppressHydrationWarning>
 			<body
 				className={cn(
 					"flex justify-center",
@@ -89,10 +61,7 @@ export default async function RootLayout({
 					}}
 				/>
 				<div className="antialiased w-full grow flex flex-col px-4 pt-4 pb-2 font-serif max-w-7xl">
-					<Providers
-						initialColor={initialColor || undefined}
-						initialLoggedIn={initialLoggedIn}
-					>
+					<Providers initialLoggedIn={initialLoggedIn}>
 						{children}
 					</Providers>
 				</div>

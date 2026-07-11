@@ -10,7 +10,7 @@ export function LoadingRelic({
 	size = 24,
 }: { className?: string; size?: number }) {
 	const src = useMemo(
-		() => `/images/human/logo-${Math.floor(Math.random() * LOGO_COUNT) + 1}.png`,
+		() => `/images/human/logo-${Math.floor(Math.random() * LOGO_COUNT) + 1}.webp`,
 		[],
 	);
 

@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Footer } from "./Footer";
 
-const STAR_IMAGE = "/images/relics/relic-5.png";
+const STAR_IMAGE = "/images/relics/relic-5.webp";
 const STAR_SIZE = 44;
 const STAR_GAP_DEFAULT = 80;
 
@@ -103,34 +103,33 @@ function useContinuationSideCols(
 }
 
 const BAR_1_ITEMS = [
-	{ src: "/images/human/logo-1.png", alt: "figurine" },
-	{ src: "/images/relics/relic-10.png", alt: "sun relic" },
-	{ src: "/images/human/logo-2.png", alt: "figurine" },
+	{ src: "/images/human/logo-1.webp", alt: "figurine" },
+	{ src: "/images/relics/relic-10.webp", alt: "sun relic" },
+	{ src: "/images/human/logo-2.webp", alt: "figurine" },
 ];
 
 const BAR_2_ITEMS = [
-	{ src: "/images/human/logo-3.png", alt: "figurine" },
-	{ src: "/images/relics/relic-1.png", alt: "orb relic" },
-	{ src: "/images/human/logo-4.png", alt: "figurine" },
+	{ src: "/images/human/logo-3.webp", alt: "figurine" },
+	{ src: "/images/relics/relic-1.webp", alt: "orb relic" },
+	{ src: "/images/human/logo-4.webp", alt: "figurine" },
 ];
 
 const BAR_3_ITEMS = [
-	{ src: "/images/human/logo-7.png", alt: "figurine" },
-	{ src: "/images/relics/relic-13.png", alt: "squiggle relic" },
-	{ src: "/images/human/logo-9.png", alt: "figurine" },
+	{ src: "/images/human/logo-7.webp", alt: "figurine" },
+	{ src: "/images/relics/relic-13.webp", alt: "squiggle relic" },
+	{ src: "/images/human/logo-9.webp", alt: "figurine" },
 ];
 
-// Extra bars shown only on mobile to fill the hero
 const BAR_MOBILE_1_ITEMS = [
-	{ src: "/images/human/logo-5.png", alt: "figurine" },
-	{ src: "/images/relics/relic-11.png", alt: "relic pressed" },
-	{ src: "/images/human/logo-6.png", alt: "figurine" },
+	{ src: "/images/human/logo-5.webp", alt: "figurine" },
+	{ src: "/images/relics/relic-11.webp", alt: "relic pressed" },
+	{ src: "/images/human/logo-6.webp", alt: "figurine" },
 ];
 
 const BAR_MOBILE_2_ITEMS = [
-	{ src: "/images/human/logo-8.png", alt: "figurine" },
-	{ src: "/images/relics/relic-12.png", alt: "relic squaggle" },
-	{ src: "/images/human/logo-10.png", alt: "figurine" },
+	{ src: "/images/human/logo-8.webp", alt: "figurine" },
+	{ src: "/images/relics/relic-12.webp", alt: "relic squaggle" },
+	{ src: "/images/human/logo-10.webp", alt: "figurine" },
 ];
 
 function ArtifactBar({ items }: { items: typeof BAR_1_ITEMS }) {

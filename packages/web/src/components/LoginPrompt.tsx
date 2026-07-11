@@ -21,7 +21,7 @@ export function LoginPrompt({ toWhat, logo }: LoginPromptProps) {
 				Sign in {toWhat ? `to ${toWhat}` : ""}
 			</button>
 			<Image
-				src={`/images/human/logo-${logo}.png`}
+				src={`/images/human/logo-${logo}.webp`}
 				alt="Light"
 				width={100}
 				height={100}
