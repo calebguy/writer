@@ -124,12 +124,19 @@ async function getPendingTxsByWriterAddress(
 	writers: Array<{ address: string }>,
 ): Promise<Map<string, PendingTx[]>> {
 	const pendingByAddress = new Map<string, PendingTx[]>();
-	await Promise.all(
-		writers.map(async (writer) => {
-			const address = writer.address.toLowerCase();
-			pendingByAddress.set(address, await db.getPendingTxsFor(address));
-		}),
+	const pendingRows = await db.getPendingTxsForTargets(
+		writers.map((writer) => writer.address),
 	);
+	for (const writer of writers) {
+		pendingByAddress.set(writer.address.toLowerCase(), []);
+	}
+	for (const tx of pendingRows) {
+		if (!tx.targetAddress) {
+			continue;
+		}
+		const address = tx.targetAddress.toLowerCase();
+		pendingByAddress.get(address)?.push(tx);
+	}
 	return pendingByAddress;
 }
 

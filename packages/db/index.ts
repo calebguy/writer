@@ -178,20 +178,25 @@ class Db {
 		}
 
 		applyHomeWriterOrder(writers, userPreferences?.homeWriterOrder);
-		const storageAddresses = writers.map((w) => w.storageAddress.toLowerCase());
-		const counts = await this.pg
-			.select({
-				storageAddress: entry.storageAddress,
-				entryCount: count(entry.id),
-			})
-			.from(entry)
-			.where(
-				and(
-					inArray(entry.storageAddress, storageAddresses),
-					isNull(entry.deletedAt),
-				),
-			)
-			.groupBy(entry.storageAddress);
+		const storageAddresses = writers
+			.filter((w) => w.storageAddress !== null)
+			.map((w) => w.storageAddress.toLowerCase()) as string[];
+		const counts =
+			storageAddresses.length === 0
+				? []
+				: await this.pg
+						.select({
+							storageAddress: entry.storageAddress,
+							entryCount: count(entry.id),
+						})
+						.from(entry)
+						.where(
+							and(
+								inArray(entry.storageAddress, storageAddresses),
+								isNull(entry.deletedAt),
+							),
+						)
+						.groupBy(entry.storageAddress);
 		const countByStorageAddress = new Map(
 			counts.map((row) => [
 				row.storageAddress.toLowerCase(),
@@ -201,7 +206,9 @@ class Db {
 
 		return writers.map((w) => ({
 			...w,
-			entryCount: countByStorageAddress.get(w.storageAddress.toLowerCase()) ?? 0,
+			entryCount: w.storageAddress
+				? (countByStorageAddress.get(w.storageAddress.toLowerCase()) ?? 0)
+				: 0,
 		}));
 	}
 
@@ -580,6 +587,30 @@ class Db {
 		return this.pg.query.relayTx.findMany({
 			where: and(
 				eq(relayTx.targetAddress, normalized),
+				or(
+					inArray(relayTx.status, ["PENDING", "SUBMITTED"] as const),
+					and(
+						eq(relayTx.status, "CONFIRMED"),
+						gt(relayTx.updatedAt, recentlyConfirmedCutoff),
+					),
+				),
+			),
+			orderBy: (tx, { desc: d }) => [d(tx.createdAt)],
+		});
+	}
+
+	async getPendingTxsForTargets(targetAddresses: string[]) {
+		const normalizedTargets = Array.from(
+			new Set(targetAddresses.map((address) => address.toLowerCase())),
+		);
+		if (normalizedTargets.length === 0) {
+			return [];
+		}
+
+		const recentlyConfirmedCutoff = new Date(Date.now() - 10 * 60 * 1000);
+		return this.pg.query.relayTx.findMany({
+			where: and(
+				inArray(relayTx.targetAddress, normalizedTargets),
 				or(
 					inArray(relayTx.status, ["PENDING", "SUBMITTED"] as const),
 					and(
