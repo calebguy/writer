@@ -1,7 +1,13 @@
 "use client";
 
 import Entry from "@/components/Entry";
-import { type Entry as EntryType, getEntry, getWriter } from "@/utils/api";
+import {
+	WRITER_QUERY_STALE_TIME,
+	type Entry as EntryType,
+	getEntry,
+	getWriter,
+	writerQueryKey,
+} from "@/utils/api";
 import { getPrivateCachedEntry, getPublicCachedEntry } from "@/utils/entryCache";
 import { useEntryLoading } from "@/utils/EntryLoadingContext";
 import { useOPWallet } from "@/utils/hooks";
@@ -20,6 +26,7 @@ export default function EntryPage({
 	const queryClient = useQueryClient();
 	const [wallet] = useOPWallet();
 	const { setEntryLoading } = useEntryLoading();
+	const normalizedAddress = address.toLowerCase();
 
 	// Set loading state on mount
 	useEffect(() => {
@@ -100,9 +107,9 @@ export default function EntryPage({
 
 	// Fetch the writer to get legacyDomain for EIP-712 signing
 	const { data: writer } = useQuery({
-		queryKey: ["writer", address],
-		queryFn: ({ signal }) => getWriter(address as Hex, signal),
-		staleTime: 60 * 1000,
+		queryKey: writerQueryKey(normalizedAddress),
+		queryFn: ({ signal }) => getWriter(normalizedAddress as Hex, signal),
+		staleTime: WRITER_QUERY_STALE_TIME,
 	});
 
 	const displayEntry = entry ?? cachedEntry;

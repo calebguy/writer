@@ -304,6 +304,31 @@ class Db {
 		};
 	}
 
+	async getWriterSummary(address: Hex) {
+		const data = await this.pg.query.writer.findFirst({
+			where: and(eq(writer.address, address.toLowerCase()), isNull(writer.deletedAt)),
+		});
+		if (!data) {
+			return null;
+		}
+
+		if (!data.storageAddress) {
+			return { ...data, entryCount: 0 };
+		}
+
+		const [entryCount] = await this.pg
+			.select({ count: count(entry.id) })
+			.from(entry)
+			.where(
+				and(
+					eq(entry.storageAddress, data.storageAddress.toLowerCase()),
+					isNull(entry.deletedAt),
+				),
+			);
+
+		return { ...data, entryCount: Number(entryCount?.count ?? 0) };
+	}
+
 	async getEntry(storageAddress: Hex, id: number) {
 		const data = await this.pg.query.entry.findFirst({
 			where: and(

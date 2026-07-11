@@ -4,10 +4,12 @@ import { hiddenWritersQueryKey } from "@/hooks/useHiddenWriters";
 import { useUpdateWriterTitle } from "@/hooks/useUpdateWriterTitle";
 import { useEntryLoading } from "@/utils/EntryLoadingContext";
 import {
+	WRITER_QUERY_STALE_TIME,
 	type Writer,
 	type WriterSummary,
 	getWriter,
 	hideWriter as hideWriterApi,
+	writerQueryKey,
 } from "@/utils/api";
 import { usePrivy } from "@privy-io/react-auth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -45,6 +47,7 @@ export function WriterHeader({
 	const { mutateAsync: updateWriterTitle, isSigning: isUpdatingWriterTitle } =
 		useUpdateWriterTitle();
 	const userAddress = user?.wallet?.address;
+	const normalizedAddress = address.toLowerCase();
 
 	useEffect(() => {
 		if (!authenticated || isEntryPage) return;
@@ -53,21 +56,9 @@ export function WriterHeader({
 	}, [authenticated, isEntryPage, newEntryHref, router]);
 
 	const { data: writer } = useQuery<Writer>({
-		queryKey: ["writer", address],
-		queryFn: ({ signal }) => getWriter(address as Hex, signal),
-		// Use cached data from writers list if available
-		placeholderData: () => {
-			const queries = queryClient.getQueriesData<Writer[]>({
-				queryKey: ["get-writers"],
-			});
-			for (const [, writers] of queries) {
-				const cached = writers?.find(
-					(w) => w.address.toLowerCase() === address.toLowerCase(),
-				);
-				if (cached) return cached;
-			}
-			return undefined;
-		},
+		queryKey: writerQueryKey(normalizedAddress),
+		queryFn: ({ signal }) => getWriter(normalizedAddress as Hex, signal),
+		staleTime: WRITER_QUERY_STALE_TIME,
 	});
 
 	// Show skeleton if writer data not loaded OR if entry page is still loading

@@ -8,12 +8,14 @@ import {
 import { useIsLoggedIn } from "@/hooks/useIsLoggedIn";
 import { useUpdateWriterTitle } from "@/hooks/useUpdateWriterTitle";
 import {
+	WRITER_QUERY_STALE_TIME,
 	type WriterSummary,
 	factoryCreate,
 	getWriter,
 	getWriterSummariesByManager,
 	hideWriter as hideWriterApi,
 	reorderWriters,
+	writerQueryKey,
 } from "@/utils/api";
 import { GRID_SKELETON_COUNT, POLLING_INTERVAL } from "@/utils/constants";
 import {
@@ -32,6 +34,7 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
 	type PointerEvent,
 	useCallback,
@@ -91,6 +94,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 	const isLoggedIn = useIsLoggedIn();
 	const [isPolling, setIsPolling] = useState(false);
 	const queryClient = useQueryClient();
+	const router = useRouter();
 	const [dragState, setDragState] = useState<DragState | null>(null);
 	const homeChrome = useHomeChrome();
 	const [editingWriterAddress, setEditingWriterAddress] = useState<
@@ -241,16 +245,17 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 		setHasSubmittedInOnboarding(false);
 	}, []);
 
-	// Prefetch writer data on hover for instant navigation
 	const prefetchWriter = useCallback(
 		(writerAddress: string) => {
-			queryClient.prefetchQuery({
-				queryKey: ["writer", writerAddress],
-				queryFn: ({ signal }) => getWriter(writerAddress as Hex, signal),
-				staleTime: 30 * 1000,
+			const normalizedAddress = writerAddress.toLowerCase();
+			router.prefetch(`/writer/${normalizedAddress}`);
+			void queryClient.prefetchQuery({
+				queryKey: writerQueryKey(normalizedAddress),
+				queryFn: ({ signal }) => getWriter(normalizedAddress as Hex, signal),
+				staleTime: WRITER_QUERY_STALE_TIME,
 			});
 		},
-		[queryClient],
+		[queryClient, router],
 	);
 
 	const { mutateAsync: hideWriter } = useMutation({
@@ -785,10 +790,13 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 				className={`group/card home-writer-card aspect-square bg-surface flex flex-col overflow-hidden px-2 pt-2 pb-1.5 relative w-full rounded-xs transition-opacity ${
 					isPendingWriter ? "cursor-loading" : "hover:cursor-zoom-in"
 				} ${isDragging ? "opacity-30" : ""}`}
-				onClick={isPendingWriter ? (e) => e.preventDefault() : undefined}
-				onMouseEnter={
+				onFocus={
 					isPendingWriter ? undefined : () => prefetchWriter(writer.address)
 				}
+				onPointerEnter={
+					isPendingWriter ? undefined : () => prefetchWriter(writer.address)
+				}
+				onClick={isPendingWriter ? (e) => e.preventDefault() : undefined}
 			>
 				<div className="grow min-h-0 min-w-0 overflow-y-auto">
 					<MarkdownRenderer

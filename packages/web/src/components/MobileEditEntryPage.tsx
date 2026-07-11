@@ -10,12 +10,14 @@ import {
 	useUnsavedChangesWarning,
 } from "@/hooks/useUnsavedChangesWarning";
 import {
+	WRITER_QUERY_STALE_TIME,
 	type Entry,
 	type Writer,
 	deleteEntry,
 	editEntry,
 	getEntry,
 	getWriter,
+	writerQueryKey,
 } from "@/utils/api";
 import { cn } from "@/utils/cn";
 import {
@@ -96,17 +98,19 @@ export function MobileEditEntryPage({
 	const [entry, setEntry] = useState<Entry | null>(null);
 	const entryId = Number(id);
 	const isExternalWallet = !!wallet && wallet.walletClientType !== "privy";
+	const normalizedAddress = address.toLowerCase();
 
-	const writerQueryKey = ["writer", address] as const;
-	const entryQueryKey = ["entry", address, id] as const;
+	const writerKey = writerQueryKey(normalizedAddress);
+	const entryQueryKey = ["entry", normalizedAddress, id] as const;
 
 	const { data: fetchedEntry } = useQuery<Entry>({
 		queryKey: entryQueryKey,
 		queryFn: ({ signal }) => getEntry(address as Hex, entryId, signal),
 	});
 	const { data: writer } = useQuery<Writer>({
-		queryKey: writerQueryKey,
-		queryFn: ({ signal }) => getWriter(address as Hex, signal),
+		queryKey: writerKey,
+		queryFn: ({ signal }) => getWriter(normalizedAddress as Hex, signal),
+		staleTime: WRITER_QUERY_STALE_TIME,
 	});
 
 	useEffect(() => {
@@ -148,12 +152,12 @@ export function MobileEditEntryPage({
 		mutationFn: deleteEntry,
 		mutationKey: ["delete-entry", address, id],
 		onMutate: async () => {
-			await queryClient.cancelQueries({ queryKey: writerQueryKey });
+			await queryClient.cancelQueries({ queryKey: writerKey });
 			await queryClient.cancelQueries({ queryKey: entryQueryKey });
-			const previousWriter = queryClient.getQueryData<Writer>(writerQueryKey);
+			const previousWriter = queryClient.getQueryData<Writer>(writerKey);
 			const previousEntry = queryClient.getQueryData<Entry>(entryQueryKey);
 			const now = new Date().toISOString();
-			queryClient.setQueryData<Writer>(writerQueryKey, (current) =>
+			queryClient.setQueryData<Writer>(writerKey, (current) =>
 				current
 					? {
 							...current,
@@ -171,7 +175,7 @@ export function MobileEditEntryPage({
 		},
 		onError: (_err, _vars, ctx) => {
 			if (ctx?.previousWriter) {
-				queryClient.setQueryData(writerQueryKey, ctx.previousWriter);
+				queryClient.setQueryData(writerKey, ctx.previousWriter);
 			}
 			if (ctx?.previousEntry) {
 				queryClient.setQueryData(entryQueryKey, ctx.previousEntry);
@@ -184,7 +188,7 @@ export function MobileEditEntryPage({
 			}
 		},
 		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: writerQueryKey });
+			queryClient.invalidateQueries({ queryKey: writerKey });
 		},
 	});
 
@@ -192,9 +196,9 @@ export function MobileEditEntryPage({
 		mutationFn: editEntry,
 		mutationKey: ["edit-entry", address, id],
 		onMutate: async (vars) => {
-			await queryClient.cancelQueries({ queryKey: writerQueryKey });
+			await queryClient.cancelQueries({ queryKey: writerKey });
 			await queryClient.cancelQueries({ queryKey: entryQueryKey });
-			const previousWriter = queryClient.getQueryData<Writer>(writerQueryKey);
+			const previousWriter = queryClient.getQueryData<Writer>(writerKey);
 			const previousEntry = queryClient.getQueryData<Entry>(entryQueryKey);
 			const now = new Date().toISOString();
 			const applyEntryPatch = (current: Entry): Entry => ({
@@ -227,7 +231,7 @@ export function MobileEditEntryPage({
 			});
 
 			if (previousWriter) {
-				queryClient.setQueryData<Writer>(writerQueryKey, (current) =>
+				queryClient.setQueryData<Writer>(writerKey, (current) =>
 					current
 						? {
 								...current,
@@ -250,7 +254,7 @@ export function MobileEditEntryPage({
 		},
 		onError: (_err, _vars, ctx) => {
 			if (ctx?.previousWriter) {
-				queryClient.setQueryData(writerQueryKey, ctx.previousWriter);
+				queryClient.setQueryData(writerKey, ctx.previousWriter);
 			}
 			if (ctx?.previousEntry) {
 				queryClient.setQueryData(entryQueryKey, ctx.previousEntry);
@@ -264,7 +268,7 @@ export function MobileEditEntryPage({
 		},
 		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey: entryQueryKey });
-			queryClient.invalidateQueries({ queryKey: writerQueryKey });
+			queryClient.invalidateQueries({ queryKey: writerKey });
 		},
 	});
 

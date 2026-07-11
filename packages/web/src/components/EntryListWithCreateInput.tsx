@@ -1,7 +1,7 @@
 "use client";
 
 import type { Entry, Writer } from "@/utils/api";
-import { createWithChunk } from "@/utils/api";
+import { createWithChunk, writerQueryKey } from "@/utils/api";
 import { useOPWallet } from "@/utils/hooks";
 import { getCachedDerivedKey } from "@/utils/keyCache";
 import {
@@ -63,7 +63,7 @@ export default function EntryListWithCreateInput({
 	// Privy's embedded wallet signs silently, so we only show a loader for external.
 	const isExternalWallet = !!wallet && wallet.walletClientType !== "privy";
 
-	const queryKey = ["writer", normalizedWriterAddress] as const;
+	const queryKey = writerQueryKey(normalizedWriterAddress);
 	const { mutateAsync } = useMutation({
 		mutationFn: createWithChunk,
 		mutationKey: ["create-with-chunk", normalizedWriterAddress],

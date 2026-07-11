@@ -9,10 +9,12 @@ import {
 	useUnsavedChangesWarning,
 } from "@/hooks/useUnsavedChangesWarning";
 import {
+	WRITER_QUERY_STALE_TIME,
 	type Entry,
 	type Writer,
 	createWithChunk,
 	getWriter,
+	writerQueryKey,
 } from "@/utils/api";
 import { cn } from "@/utils/cn";
 import { useOPWallet } from "@/utils/hooks";
@@ -44,10 +46,11 @@ export function MobileCreateEntryPage({ address }: { address: string }) {
 	useUnsavedChangesWarning(hasUnsavedChanges, "Discard Entry");
 	const confirmNavigation = useUnsavedChangesNavigation();
 
-	const queryKey = ["writer", normalizedAddress] as const;
+	const queryKey = writerQueryKey(normalizedAddress);
 	const { data: writer } = useQuery<Writer>({
 		queryKey,
 		queryFn: ({ signal }) => getWriter(normalizedAddress as Hex, signal),
+		staleTime: WRITER_QUERY_STALE_TIME,
 	});
 
 	const { mutate } = useMutation({

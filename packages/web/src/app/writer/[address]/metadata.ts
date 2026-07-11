@@ -12,7 +12,7 @@ export function sanitizeWriterTitle(input: string): string {
 export async function getWriterTitle(address: string): Promise<string | null> {
 	try {
 		const response = await fetch(
-			`${env.NEXT_PUBLIC_BASE_URL}/writer/${encodeURIComponent(address)}`,
+			`${env.NEXT_PUBLIC_BASE_URL}/writer/${encodeURIComponent(address)}/summary`,
 			{
 				next: { revalidate: 60 },
 			},

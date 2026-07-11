@@ -1,5 +1,5 @@
 import { hiddenWritersQueryKey } from "@/hooks/useHiddenWriters";
-import { type Writer, type WriterSummary, updateWriterTitle } from "@/utils/api";
+import { type Writer, type WriterSummary, updateWriterTitle, writerQueryKey } from "@/utils/api";
 import { useOPWallet } from "@/utils/hooks";
 import { signSetTitle } from "@/utils/signer";
 import { usePrivy } from "@privy-io/react-auth";
@@ -51,16 +51,14 @@ export function useUpdateWriterTitle() {
 		mutationKey: ["update-writer-title"],
 		onMutate: async ({ writer, title }) => {
 			const normalizedAddress = writer.address.toLowerCase();
+			const writerKey = writerQueryKey(normalizedAddress);
 			await Promise.all([
-				queryClient.cancelQueries({ queryKey: ["writer", normalizedAddress] }),
+				queryClient.cancelQueries({ queryKey: writerKey }),
 				queryClient.cancelQueries({ queryKey: ["get-writer-summaries"] }),
 				queryClient.cancelQueries({ queryKey: ["hidden-writers"] }),
 			]);
 
-			const previousWriter = queryClient.getQueryData<Writer>([
-				"writer",
-				normalizedAddress,
-			]);
+			const previousWriter = queryClient.getQueryData<Writer>(writerKey);
 			const previousWriterSummaries = queryClient.getQueriesData<
 				WriterSummary[]
 			>({
@@ -71,7 +69,7 @@ export function useUpdateWriterTitle() {
 			});
 
 			queryClient.setQueryData<Writer>(
-				["writer", normalizedAddress],
+				writerKey,
 				(current) =>
 					current
 						? { ...current, title, updatedAt: new Date().toISOString() }
@@ -94,7 +92,7 @@ export function useUpdateWriterTitle() {
 			if (!context) return;
 			if (context.previousWriter) {
 				queryClient.setQueryData(
-					["writer", context.previousWriter.address.toLowerCase()],
+					writerQueryKey(context.previousWriter.address),
 					context.previousWriter,
 				);
 			}
@@ -108,7 +106,7 @@ export function useUpdateWriterTitle() {
 		onSettled: (_data, _error, vars) => {
 			const normalizedAddress = vars?.writer.address.toLowerCase();
 			if (normalizedAddress) {
-				queryClient.invalidateQueries({ queryKey: ["writer", normalizedAddress] });
+				queryClient.invalidateQueries({ queryKey: writerQueryKey(normalizedAddress) });
 			}
 			queryClient.invalidateQueries({ queryKey: ["get-writer-summaries"] });
 			queryClient.invalidateQueries({ queryKey: hiddenWritersQueryKey(userAddress) });

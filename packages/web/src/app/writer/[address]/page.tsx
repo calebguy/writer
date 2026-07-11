@@ -2,13 +2,18 @@
 
 import { EntryCardSkeleton } from "@/components/EntryCardSkeleton";
 import EntryListWithCreateInput from "@/components/EntryListWithCreateInput";
-import { type Writer, getWriter } from "@/utils/api";
+import {
+	WRITER_QUERY_STALE_TIME,
+	type Writer,
+	getWriter,
+	writerQueryKey,
+} from "@/utils/api";
 import { GRID_SKELETON_COUNT } from "@/utils/constants";
 import { useOPWallet, useProcessedEntries } from "@/utils/hooks";
 import { hasCachedDerivedKey } from "@/utils/keyCache";
 import { isEntryPrivate } from "@/utils/utils";
 import { usePrivy } from "@privy-io/react-auth";
-import { useIsMutating, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useIsMutating, useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import type { Hex } from "viem";
@@ -21,7 +26,6 @@ const LOADING_SKELETON_KEYS = Array.from(
 export default function WriterPage() {
 	const { address } = useParams<{ address: string }>();
 	const normalizedAddress = address.toLowerCase();
-	const queryClient = useQueryClient();
 	const [wallet] = useOPWallet();
 	const { authenticated, ready } = usePrivy();
 	const isLoggedIn = ready && authenticated;
@@ -34,21 +38,9 @@ export default function WriterPage() {
 		0;
 
 	const { data: writer, isLoading } = useQuery<Writer>({
-		queryKey: ["writer", normalizedAddress],
+		queryKey: writerQueryKey(normalizedAddress),
 		queryFn: ({ signal }) => getWriter(normalizedAddress as Hex, signal),
-		placeholderData: () => {
-			// Look through all manager query caches to find this writer
-			const queries = queryClient.getQueriesData<Writer[]>({
-				queryKey: ["get-writers"],
-			});
-			for (const [, writers] of queries) {
-				const cached = writers?.find(
-					(w) => w.address.toLowerCase() === normalizedAddress,
-				);
-				if (cached) return cached;
-			}
-			return undefined;
-		},
+		staleTime: WRITER_QUERY_STALE_TIME,
 		// Poll every 3 seconds when there are pending entries, but pause while a
 		// create mutation is in flight so the refetch can't clobber the
 		// optimistic entry before the server has persisted it.

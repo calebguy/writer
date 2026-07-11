@@ -7,6 +7,13 @@ import { env } from "./env";
 
 const client = hc<Api>(env.NEXT_PUBLIC_BASE_URL);
 
+export const WRITER_QUERY_STALE_TIME = 60 * 1000;
+
+export function writerQueryKey(address: string) {
+	return ["writer", address.toLowerCase()] as const;
+}
+
+
 export async function hideWriter({
 	address,
 	authToken,
@@ -119,7 +126,25 @@ export async function getWriter(
 ): Promise<Writer> {
 	const res = await client.writer[":address"].$get(
 		{
-			param: { address },
+			param: { address: getAddress(address) },
+		},
+		{
+			init: { signal },
+		},
+	);
+	if (!res.ok) {
+		throw new Error(res.statusText);
+	}
+	return (await res.json()).writer;
+}
+
+export async function getWriterSummary(
+	address: Hex,
+	signal?: AbortSignal,
+): Promise<WriterSummary> {
+	const res = await client.writer[":address"].summary.$get(
+		{
+			param: { address: getAddress(address) },
 		},
 		{
 			init: { signal },

@@ -1,9 +1,15 @@
 "use client";
 
-import { type PublicWriter, getWriter } from "@/utils/api";
+import {
+	WRITER_QUERY_STALE_TIME,
+	type PublicWriter,
+	getWriter,
+	writerQueryKey,
+} from "@/utils/api";
 import { useOPWallet } from "@/utils/hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 import type { Hex } from "viem";
 import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
@@ -14,19 +20,21 @@ interface PublicWriterListProps {
 
 export default function PublicWriterList({ writers }: PublicWriterListProps) {
 	const queryClient = useQueryClient();
+	const router = useRouter();
 	const [wallet] = useOPWallet();
 	const viewerAddress = wallet?.address.toLowerCase();
 
-	// Prefetch writer data on hover for instant navigation
 	const prefetchWriter = useCallback(
 		(writerAddress: string) => {
-			queryClient.prefetchQuery({
-				queryKey: ["writer", writerAddress],
-				queryFn: ({ signal }) => getWriter(writerAddress as Hex, signal),
-				staleTime: 30 * 1000,
+			const normalizedAddress = writerAddress.toLowerCase();
+			router.prefetch(`/writer/${normalizedAddress}`);
+			void queryClient.prefetchQuery({
+				queryKey: writerQueryKey(normalizedAddress),
+				queryFn: ({ signal }) => getWriter(normalizedAddress as Hex, signal),
+				staleTime: WRITER_QUERY_STALE_TIME,
 			});
 		},
-		[queryClient],
+		[queryClient, router],
 	);
 
 	return (
@@ -36,7 +44,7 @@ export default function PublicWriterList({ writers }: PublicWriterListProps) {
 					href={`/writer/${writer.address}`}
 					key={writer.address}
 					className="aspect-square bg-surface flex flex-col overflow-hidden px-2 pt-2 pb-1.5 hover:cursor-zoom-in rounded-xs"
-					onMouseEnter={() => prefetchWriter(writer.address)}
+					onPointerEnter={() => prefetchWriter(writer.address)}
 				>
 					<div className="grow min-h-0 min-w-0 overflow-y-auto">
 						<MarkdownRenderer

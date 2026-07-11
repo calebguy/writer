@@ -205,6 +205,19 @@ const writerRoutes = new Hono()
 		const writers = await db.getPublicWriters();
 		return c.json({ writers: writers.map(publicWriterToJsonSafe) });
 	})
+	.get("/writer/:address/summary", addressParamSchema, async (c) => {
+		const { address } = c.req.valid("param");
+		const writer = await db.getWriterSummary(address);
+		if (!writer) {
+			return c.json({ error: "writer not found" }, 404);
+		}
+		return c.json({
+			writer: {
+				...writerToJsonSafe(writer),
+				entryCount: writer.entryCount,
+			},
+		});
+	})
 	.get("/writer/:address", async (c) => {
 		const address = getAddress(c.req.param("address"));
 		// Overlay serves the same shape as before when the writer already
