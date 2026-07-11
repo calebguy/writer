@@ -2,7 +2,7 @@
 
 import { useUnsavedChangesNavigation } from "@/hooks/useUnsavedChangesWarning";
 import { useHiddenWriters } from "@/hooks/useHiddenWriters";
-import type { Writer } from "@/utils/api";
+import { getWritersByManager } from "@/utils/api";
 import { useOPWallet } from "@/utils/hooks";
 import { clearAllCachedKeys } from "@/utils/keyCache";
 import {
@@ -14,7 +14,7 @@ import {
 } from "@/utils/theme";
 import { isEntryPrivate, isWalletAuthor } from "@/utils/utils";
 import { usePrivy } from "@privy-io/react-auth";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -74,7 +74,6 @@ export function NavDropdown() {
 	const [wallet] = useOPWallet();
 	const router = useRouter();
 	const pathname = usePathname();
-	const queryClient = useQueryClient();
 	const confirmNavigation = useUnsavedChangesNavigation();
 
 	const navItems = [
@@ -87,12 +86,15 @@ export function NavDropdown() {
 	const [dropdownOpen, setDropdownOpen] = useState(false);
 	const [themeMode, setThemeMode] = useState<ThemeMode>("system");
 
-	// Derive legacy entries from the cached get-writers query
+	// Legacy migration needs full writer entries; load them only after the
+	// account menu opens so the home grid can use lightweight summaries.
 	const address = user?.wallet?.address;
-	const writersData = queryClient.getQueryData<Writer[]>([
-		"get-writers",
-		address,
-	]);
+	const { data: writersData } = useQuery({
+		queryKey: ["get-writers-full", address],
+		queryFn: ({ signal }) => getWritersByManager(address ?? "", signal),
+		enabled: dropdownOpen && authenticated && !!address && !!wallet,
+		staleTime: 60 * 1000,
+	});
 
 	const entriesToMigrate = useMemo<MigrateEntry[]>(() => {
 		if (!writersData || !wallet) return [];

@@ -5,6 +5,7 @@ import { useUpdateWriterTitle } from "@/hooks/useUpdateWriterTitle";
 import { useEntryLoading } from "@/utils/EntryLoadingContext";
 import {
 	type Writer,
+	type WriterSummary,
 	getWriter,
 	hideWriter as hideWriterApi,
 } from "@/utils/api";
@@ -95,7 +96,7 @@ export function WriterHeader({
 			if (!writer || !userAddress) {
 				return undefined;
 			}
-			const writersQueryKey = ["get-writers", userAddress] as const;
+			const writersQueryKey = ["get-writer-summaries", userAddress] as const;
 			const hiddenQueryKey = hiddenWritersQueryKey(userAddress);
 			const normalizedWriterAddress = writer.address.toLowerCase();
 
@@ -103,11 +104,11 @@ export function WriterHeader({
 			await queryClient.cancelQueries({ queryKey: hiddenQueryKey });
 
 			const previousWriters =
-				queryClient.getQueryData<Writer[]>(writersQueryKey);
+				queryClient.getQueryData<WriterSummary[]>(writersQueryKey);
 			const previousHiddenWriters =
 				queryClient.getQueryData<Writer[]>(hiddenQueryKey);
 
-			queryClient.setQueryData<Writer[]>(writersQueryKey, (current) =>
+			queryClient.setQueryData<WriterSummary[]>(writersQueryKey, (current) =>
 				(current ?? []).filter(
 					(candidate) =>
 						candidate.address.toLowerCase() !== normalizedWriterAddress,
@@ -149,7 +150,9 @@ export function WriterHeader({
 		},
 		onSettled: () => {
 			if (!userAddress) return;
-			queryClient.invalidateQueries({ queryKey: ["get-writers", userAddress] });
+			queryClient.invalidateQueries({
+				queryKey: ["get-writer-summaries", userAddress],
+			});
 			queryClient.invalidateQueries({
 				queryKey: hiddenWritersQueryKey(userAddress),
 			});

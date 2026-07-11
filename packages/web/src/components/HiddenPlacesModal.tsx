@@ -56,7 +56,9 @@ export function HiddenPlacesModal({ open, onClose }: HiddenPlacesModalProps) {
 		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey });
 			if (address) {
-				queryClient.invalidateQueries({ queryKey: ["get-writers", address] });
+				queryClient.invalidateQueries({
+					queryKey: ["get-writer-summaries", address],
+				});
 			}
 		},
 	});

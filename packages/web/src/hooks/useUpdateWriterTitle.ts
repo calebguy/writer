@@ -1,5 +1,5 @@
 import { hiddenWritersQueryKey } from "@/hooks/useHiddenWriters";
-import { type Writer, updateWriterTitle } from "@/utils/api";
+import { type Writer, type WriterSummary, updateWriterTitle } from "@/utils/api";
 import { useOPWallet } from "@/utils/hooks";
 import { signSetTitle } from "@/utils/signer";
 import { usePrivy } from "@privy-io/react-auth";
@@ -53,7 +53,7 @@ export function useUpdateWriterTitle() {
 			const normalizedAddress = writer.address.toLowerCase();
 			await Promise.all([
 				queryClient.cancelQueries({ queryKey: ["writer", normalizedAddress] }),
-				queryClient.cancelQueries({ queryKey: ["get-writers"] }),
+				queryClient.cancelQueries({ queryKey: ["get-writer-summaries"] }),
 				queryClient.cancelQueries({ queryKey: ["hidden-writers"] }),
 			]);
 
@@ -61,8 +61,10 @@ export function useUpdateWriterTitle() {
 				"writer",
 				normalizedAddress,
 			]);
-			const previousWriterLists = queryClient.getQueriesData<Writer[]>({
-				queryKey: ["get-writers"],
+			const previousWriterSummaries = queryClient.getQueriesData<
+				WriterSummary[]
+			>({
+				queryKey: ["get-writer-summaries"],
 			});
 			const previousHiddenLists = queryClient.getQueriesData<Writer[]>({
 				queryKey: ["hidden-writers"],
@@ -75,8 +77,8 @@ export function useUpdateWriterTitle() {
 						? { ...current, title, updatedAt: new Date().toISOString() }
 						: current,
 			);
-			queryClient.setQueriesData<Writer[]>(
-				{ queryKey: ["get-writers"] },
+			queryClient.setQueriesData<WriterSummary[]>(
+				{ queryKey: ["get-writer-summaries"] },
 				(current) =>
 					current?.map((item) => patchWriterTitle(item, normalizedAddress, title)),
 			);
@@ -86,7 +88,7 @@ export function useUpdateWriterTitle() {
 					current?.map((item) => patchWriterTitle(item, normalizedAddress, title)),
 			);
 
-			return { previousWriter, previousWriterLists, previousHiddenLists };
+			return { previousWriter, previousWriterSummaries, previousHiddenLists };
 		},
 		onError: (_error, _vars, context) => {
 			if (!context) return;
@@ -96,7 +98,7 @@ export function useUpdateWriterTitle() {
 					context.previousWriter,
 				);
 			}
-			for (const [queryKey, data] of context.previousWriterLists) {
+			for (const [queryKey, data] of context.previousWriterSummaries) {
 				queryClient.setQueryData(queryKey, data);
 			}
 			for (const [queryKey, data] of context.previousHiddenLists) {
@@ -108,7 +110,7 @@ export function useUpdateWriterTitle() {
 			if (normalizedAddress) {
 				queryClient.invalidateQueries({ queryKey: ["writer", normalizedAddress] });
 			}
-			queryClient.invalidateQueries({ queryKey: ["get-writers"] });
+			queryClient.invalidateQueries({ queryKey: ["get-writer-summaries"] });
 			queryClient.invalidateQueries({ queryKey: hiddenWritersQueryKey(userAddress) });
 		},
 	});

@@ -231,6 +231,24 @@ export async function getWritersByManager(
 	return (await res.json()).writers;
 }
 
+export async function getWriterSummariesByManager(
+	address: Hex | string,
+	signal?: AbortSignal,
+): Promise<WriterSummary[]> {
+	const res = await client.manager[":address"].summary.$get(
+		{
+			param: { address: getAddress(address) },
+		},
+		{
+			init: { signal },
+		},
+	);
+	if (!res.ok) {
+		throw new Error(res.statusText);
+	}
+	return (await res.json()).writers;
+}
+
 export async function getHiddenWritersByManager({
 	userAddress,
 	authToken,
@@ -505,6 +523,10 @@ export type Writer = GetWritersResponse["writers"][number];
 export type Entry = Writer["entries"][number];
 export type HiddenWriter = Writer;
 
+export type GetWriterSummariesResponse = InferResponseType<
+	(typeof client.manager)[":address"]["summary"]["$get"]
+>;
+export type WriterSummary = GetWriterSummariesResponse["writers"][number];
 export type GetPublicWritersResponse = InferResponseType<
 	(typeof client.writer)["public"]["$get"]
 >;

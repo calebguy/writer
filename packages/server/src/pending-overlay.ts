@@ -34,6 +34,10 @@ type WriterJson = {
 	entries: EntryJson[];
 };
 
+type WriterSummaryJson = Omit<WriterJson, "entries"> & {
+	entryCount: number;
+};
+
 // Matches the shape emitted by `entryToJsonSafe` exactly: nullable-bigint
 // columns come out as `string | undefined` (because `?.toString()` is used),
 // nullable-text/timestamp columns come out as `string | null` / `Date | null`
@@ -116,6 +120,19 @@ export async function getWriterWithOverlay(
 	return writer;
 }
 
+async function getPendingTxsByWriterAddress(
+	writers: Array<{ address: string }>,
+): Promise<Map<string, PendingTx[]>> {
+	const pendingByAddress = new Map<string, PendingTx[]>();
+	await Promise.all(
+		writers.map(async (writer) => {
+			const address = writer.address.toLowerCase();
+			pendingByAddress.set(address, await db.getPendingTxsFor(address));
+		}),
+	);
+	return pendingByAddress;
+}
+
 /**
  * Same as getWriterWithOverlay but for a list. Batches the pending-tx fetch
  * per writer to keep the /manager/:address route cheap.
@@ -123,14 +140,7 @@ export async function getWriterWithOverlay(
 export async function applyOverlayToWriters(
 	writers: WriterJson[],
 ): Promise<WriterJson[]> {
-	if (writers.length === 0) return writers;
-	const pendingByAddress = new Map<string, PendingTx[]>();
-	await Promise.all(
-		writers.map(async (w) => {
-			const pending = await db.getPendingTxsFor(w.address.toLowerCase());
-			pendingByAddress.set(w.address.toLowerCase(), pending);
-		}),
-	);
+	const pendingByAddress = await getPendingTxsByWriterAddress(writers);
 	return writers.map((w) => {
 		const pending = pendingByAddress.get(w.address.toLowerCase()) ?? [];
 		const next = { ...w };
@@ -170,37 +180,12 @@ export async function applyOverlayToWritersForManager(
 	}
 	const synthesized: WriterJson[] = [];
 
-	console.log(
-		"[overlay] manager",
-		normalizedManager,
-		"pendingCreates",
-		pendingCreates.length,
-		"alreadyListed",
-		Array.from(alreadyListed),
-	);
-
 	for (const tx of pendingCreates) {
-		console.log(
-			"[overlay] tx",
-			tx.id,
-			"target",
-			tx.targetAddress,
-			"status",
-			tx.status,
-			"args",
-			JSON.stringify(tx.args),
-		);
 		if (!tx.targetAddress) {
-			console.log("  skip: no targetAddress");
 			continue;
 		}
 		const target = tx.targetAddress.toLowerCase();
-		if (excluded.has(target)) {
-			console.log("  skip: excluded");
-			continue;
-		}
-		if (alreadyListed.has(target)) {
-			console.log("  skip: already listed");
+		if (excluded.has(target) || alreadyListed.has(target)) {
 			continue;
 		}
 
@@ -211,7 +196,6 @@ export async function applyOverlayToWritersForManager(
 			publicWritable?: boolean;
 		} | null;
 		if (!args) {
-			console.log("  skip: no args");
 			continue;
 		}
 
@@ -219,9 +203,7 @@ export async function applyOverlayToWritersForManager(
 			(m) => m.toLowerCase() === normalizedManager,
 		);
 		const adminHit = (args.admin ?? "").toLowerCase() === normalizedManager;
-		console.log("  managerHit", managerHit, "adminHit", adminHit);
 		if (!managerHit && !adminHit) {
-			console.log("  skip: neither manager nor admin hit");
 			continue;
 		}
 
@@ -237,24 +219,88 @@ export async function applyOverlayToWritersForManager(
 		if (synth) {
 			synthesized.push(synth);
 			alreadyListed.add(target);
-			console.log("  synthesized writer", synth.address);
-		} else {
-			console.log("  skip: synth returned null");
 		}
 	}
-	console.log(
-		"[overlay] synthesized",
-		synthesized.length,
-		"withEntryOverlay",
-		withEntryOverlay.length,
-	);
-
-	// Pending creates are the newest rows on the user's list; sort by
-	// createdAt desc to match the user's most-recent-first expectation.
 	synthesized.sort(
 		(a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
 	);
 	return [...synthesized, ...withEntryOverlay];
+}
+
+export async function applyOverlayToWriterSummariesForManager(
+	managerAddress: string,
+	writers: WriterSummaryJson[],
+	options: { excludeAddresses?: Iterable<string> } = {},
+): Promise<WriterSummaryJson[]> {
+	const normalizedManager = managerAddress.toLowerCase();
+	const [pendingByAddress, pendingCreates] = await Promise.all([
+		getPendingTxsByWriterAddress(writers),
+		db.getPendingTxsByFunction(CREATE_FUNCTION_SIGNATURE),
+	]);
+	const withTitleOverlay = writers.map((writer) => {
+		const next = { ...writer };
+		applyPendingTitleOps(
+			next,
+			pendingByAddress.get(writer.address.toLowerCase()) ?? [],
+		);
+		return next;
+	});
+
+	const alreadyListed = new Set(
+		withTitleOverlay.map((w) => w.address.toLowerCase()),
+	);
+	const excluded = new Set<string>();
+	for (const address of options.excludeAddresses ?? []) {
+		excluded.add(address.toLowerCase());
+	}
+	const synthesized: WriterSummaryJson[] = [];
+
+	for (const tx of pendingCreates) {
+		if (!tx.targetAddress) {
+			continue;
+		}
+		const target = tx.targetAddress.toLowerCase();
+		if (excluded.has(target) || alreadyListed.has(target)) {
+			continue;
+		}
+
+		const args = tx.args as {
+			title?: string;
+			admin?: string;
+			managers?: string[];
+			publicWritable?: boolean;
+		} | null;
+		if (!args) {
+			continue;
+		}
+
+		const managerHit = (args.managers ?? []).some(
+			(m) => m.toLowerCase() === normalizedManager,
+		);
+		const adminHit = (args.admin ?? "").toLowerCase() === normalizedManager;
+		if (!managerHit && !adminHit) {
+			continue;
+		}
+
+		const synth = synthesizePendingWriter(target, [
+			{
+				id: tx.id,
+				functionSignature: tx.functionSignature,
+				args: tx.args,
+				targetAddress: tx.targetAddress,
+				createdAt: tx.createdAt,
+			},
+		]);
+		if (synth) {
+			const { entries, ...summary } = synth;
+			synthesized.push({ ...summary, entryCount: entries.length });
+			alreadyListed.add(target);
+		}
+	}
+	synthesized.sort(
+		(a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+	);
+	return [...synthesized, ...withTitleOverlay];
 }
 
 // ---------------------------------------------------------------------------
@@ -329,7 +375,10 @@ function applyPendingEntryOps(
 	return result;
 }
 
-function applyPendingTitleOps(writer: WriterJson, pending: PendingTx[]): void {
+function applyPendingTitleOps(
+	writer: Pick<WriterJson, "title" | "updatedAt">,
+	pending: PendingTx[],
+): void {
 	const titleTx = pending.find(
 		(tx) => tx.functionSignature === SET_TITLE_WITH_SIG_FUNCTION_SIGNATURE,
 	);

@@ -6,7 +6,7 @@ import {
 	useUnsavedChangesNavigation,
 	useUnsavedChangesWarning,
 } from "@/hooks/useUnsavedChangesWarning";
-import { type Writer, factoryCreate } from "@/utils/api";
+import { type WriterSummary, factoryCreate } from "@/utils/api";
 import { cn } from "@/utils/cn";
 import { useOPWallet } from "@/utils/hooks";
 import { usePrivy } from "@privy-io/react-auth";
@@ -33,11 +33,11 @@ export function MobileCreateWriterPage() {
 		mutationFn: factoryCreate,
 		mutationKey: ["create-from-factory"],
 		onMutate: async (vars) => {
-			const snapshots = queryClient.getQueriesData<Writer[]>({
-				queryKey: ["get-writers"],
+			const snapshots = queryClient.getQueriesData<WriterSummary[]>({
+				queryKey: ["get-writer-summaries"],
 			});
 			const tempAddress = `pending-${Date.now()}`;
-			const now = new Date();
+			const now = new Date().toISOString();
 			const optimistic = {
 				address: tempAddress,
 				storageAddress: tempAddress,
@@ -54,11 +54,11 @@ export function MobileCreateWriterPage() {
 				updatedAt: now,
 				deletedAt: null,
 				transactionId: null,
-				entries: [],
-			} as unknown as Writer;
+				entryCount: 0,
+			} satisfies WriterSummary;
 
-			queryClient.setQueriesData<Writer[]>(
-				{ queryKey: ["get-writers"] },
+			queryClient.setQueriesData<WriterSummary[]>(
+				{ queryKey: ["get-writer-summaries"] },
 				(prev) => (prev ? [optimistic, ...prev] : [optimistic]),
 			);
 			return { snapshots };
@@ -69,7 +69,7 @@ export function MobileCreateWriterPage() {
 			}
 		},
 		onSettled: () => {
-			queryClient.invalidateQueries({ queryKey: ["get-writers"] });
+			queryClient.invalidateQueries({ queryKey: ["get-writer-summaries"] });
 		},
 	});
 

@@ -45,6 +45,7 @@ import {
 import { makeRelayTxId, relay } from "../relay";
 import { watchRelayReceipt } from "../receipt-watcher";
 import {
+	applyOverlayToWriterSummariesForManager,
 	applyOverlayToWritersForManager,
 	getWriterWithOverlay,
 } from "../pending-overlay";
@@ -66,6 +67,23 @@ const writerRoutes = new Hono()
 				updatedAt: tx.updatedAt,
 			},
 		});
+	})
+	.get("/manager/:address/summary", async (c) => {
+		const address = getAddress(c.req.param("address"));
+		const [data, hiddenWriterAddresses] = await Promise.all([
+			db.getWriterSummariesByManager(address),
+			db.getDeletedWriterAddressesByManager(address),
+		]);
+		const confirmed = data.map((w) => ({
+			...writerToJsonSafe(w),
+			entryCount: w.entryCount,
+		}));
+		const writers = await applyOverlayToWriterSummariesForManager(
+			address,
+			confirmed,
+			{ excludeAddresses: hiddenWriterAddresses },
+		);
+		return c.json({ writers });
 	})
 	.get("/manager/:address", async (c) => {
 		const address = getAddress(c.req.param("address"));

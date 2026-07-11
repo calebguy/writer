@@ -8,10 +8,10 @@ import {
 import { useIsLoggedIn } from "@/hooks/useIsLoggedIn";
 import { useUpdateWriterTitle } from "@/hooks/useUpdateWriterTitle";
 import {
-	type Writer,
+	type WriterSummary,
 	factoryCreate,
 	getWriter,
-	getWritersByManager,
+	getWriterSummariesByManager,
 	hideWriter as hideWriterApi,
 	reorderWriters,
 } from "@/utils/api";
@@ -141,8 +141,9 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 		useIsMutating({ mutationKey: ["create-from-factory"] }) > 0;
 
 	const { data: writers, isLoading } = useQuery({
-		queryFn: ({ signal }) => getWritersByManager(address as Hex, signal),
-		queryKey: ["get-writers", address],
+		queryFn: ({ signal }) =>
+			getWriterSummariesByManager(address as Hex, signal),
+		queryKey: ["get-writer-summaries", address],
 		enabled: !!address && authenticated,
 		refetchInterval: isPolling && !isCreatingWriter ? POLLING_INTERVAL : false,
 	});
@@ -261,41 +262,22 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 		mutationKey: ["hide-writer"],
 		onMutate: async (writerAddress: Hex | string) => {
 			if (!address) return { previousWriters: undefined as undefined };
-			const queryKey = ["get-writers", address] as const;
+			const queryKey = ["get-writer-summaries", address] as const;
 			const hiddenQueryKey = hiddenWritersQueryKey(address);
 			const normalizedWriterAddress = writerAddress.toLowerCase();
 			await queryClient.cancelQueries({ queryKey });
 			await queryClient.cancelQueries({ queryKey: hiddenQueryKey });
-			const previousWriters = queryClient.getQueryData<Writer[]>(queryKey);
-			const previousHiddenWriters =
-				queryClient.getQueryData<Writer[]>(hiddenQueryKey);
-			const hiddenWriter = previousWriters?.find(
-				(writer) => writer.address.toLowerCase() === normalizedWriterAddress,
-			);
+			const previousWriters =
+				queryClient.getQueryData<WriterSummary[]>(queryKey);
 
-			queryClient.setQueryData<Writer[]>(queryKey, (current) =>
+			queryClient.setQueryData<WriterSummary[]>(queryKey, (current) =>
 				(current ?? []).filter(
 					(writer) => writer.address.toLowerCase() !== normalizedWriterAddress,
 				),
 			);
 
-			if (hiddenWriter) {
-				queryClient.setQueryData<Writer[]>(hiddenQueryKey, (current) => {
-					if (
-						current?.some(
-							(writer) =>
-								writer.address.toLowerCase() === normalizedWriterAddress,
-						)
-					) {
-						return current;
-					}
-					return [hiddenWriter, ...(current ?? [])];
-				});
-			}
-
 			return {
 				previousWriters,
-				previousHiddenWriters,
 				queryKey,
 				hiddenQueryKey,
 			};
@@ -303,14 +285,12 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 		onError: (_error, _writerAddress, context) => {
 			if (!context?.queryKey) return;
 			queryClient.setQueryData(context.queryKey, context.previousWriters);
-			queryClient.setQueryData(
-				context.hiddenQueryKey,
-				context.previousHiddenWriters,
-			);
 		},
 		onSettled: () => {
 			if (!address) return;
-			queryClient.invalidateQueries({ queryKey: ["get-writers", address] });
+			queryClient.invalidateQueries({
+				queryKey: ["get-writer-summaries", address],
+			});
 			queryClient.invalidateQueries({
 				queryKey: hiddenWritersQueryKey(address),
 			});
@@ -331,11 +311,12 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 		mutationKey: ["reorder-writers", address],
 		onMutate: async (orderedAddresses: string[]) => {
 			if (!address) return { previousWriters: undefined as undefined };
-			const queryKey = ["get-writers", address] as const;
+			const queryKey = ["get-writer-summaries", address] as const;
 			await queryClient.cancelQueries({ queryKey });
-			const previousWriters = queryClient.getQueryData<Writer[]>(queryKey);
+			const previousWriters =
+				queryClient.getQueryData<WriterSummary[]>(queryKey);
 
-			queryClient.setQueryData<Writer[]>(queryKey, (current) =>
+			queryClient.setQueryData<WriterSummary[]>(queryKey, (current) =>
 				applyWriterAddressOrder(current, orderedAddresses),
 			);
 
@@ -347,14 +328,16 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 		},
 		onSettled: () => {
 			if (!address) return;
-			queryClient.invalidateQueries({ queryKey: ["get-writers", address] });
+			queryClient.invalidateQueries({
+				queryKey: ["get-writer-summaries", address],
+			});
 		},
 	});
 	const { mutateAsync: createWriter } = useMutation({
 		mutationFn: factoryCreate,
 		mutationKey: ["create-from-factory"],
 		onMutate: async (vars) => {
-			const queryKey = ["get-writers", address] as const;
+			const queryKey = ["get-writer-summaries", address] as const;
 			await queryClient.cancelQueries({ queryKey });
 			// During onboarding we skip the optimistic insert: the CreateInput
 			// stays in its loading state until the server confirms the writer
@@ -365,7 +348,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 				return { previous: undefined, queryKey: undefined };
 			}
 			const tempAddress = `pending-${Date.now()}`;
-			const now = new Date();
+			const now = new Date().toISOString();
 			const optimistic = {
 				address: tempAddress,
 				storageAddress: tempAddress,
@@ -382,10 +365,10 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 				updatedAt: now,
 				deletedAt: null,
 				transactionId: null,
-				entries: [],
-			} as unknown as Writer;
-			const previous = queryClient.getQueryData<Writer[]>(queryKey);
-			queryClient.setQueryData<Writer[]>(queryKey, (current) =>
+				entryCount: 0,
+			} satisfies WriterSummary;
+			const previous = queryClient.getQueryData<WriterSummary[]>(queryKey);
+			queryClient.setQueryData<WriterSummary[]>(queryKey, (current) =>
 				current ? [optimistic, ...current] : [optimistic],
 			);
 			return { previous, queryKey };
@@ -398,7 +381,9 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 		},
 		onSettled: () => {
 			if (!address) return;
-			queryClient.invalidateQueries({ queryKey: ["get-writers", address] });
+			queryClient.invalidateQueries({
+				queryKey: ["get-writer-summaries", address],
+			});
 		},
 	});
 
@@ -424,7 +409,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 	};
 
 	const handleTitleSubmit = async (
-		writer: Writer,
+		writer: WriterSummary,
 		{ markdown }: CreateInputData,
 	) => {
 		const title = markdown.trim();
@@ -538,7 +523,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 	);
 
 	const handleReorderPointerDown = useCallback(
-		(event: PointerEvent<HTMLButtonElement>, writer: Writer) => {
+		(event: PointerEvent<HTMLButtonElement>, writer: WriterSummary) => {
 			if (!writer.createdAtHash || !canReorderWriters) {
 				return;
 			}
@@ -757,7 +742,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 		showHideAction?: boolean;
 	};
 	const renderWriterCard = (
-		writer: Writer,
+		writer: WriterSummary,
 		{ showHideAction = true }: WriterCardOptions = {},
 	) => {
 		const isPendingWriter = !writer.createdAtHash;
@@ -880,7 +865,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 							</span>
 						) : (
 							<span className="block lg:group-hover/card:hidden">
-								{writer.entries.length.toString()}
+								{writer.entryCount.toString()}
 							</span>
 						)}
 					</div>

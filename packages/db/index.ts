@@ -1,6 +1,7 @@
 import {
 	and,
 	arrayContains,
+	count,
 	desc,
 	eq,
 	gt,
@@ -154,6 +155,53 @@ class Db {
 		return writers.map((w) => ({
 			...w,
 			entries: entries.filter((e) => e.storageAddress === w.storageAddress),
+		}));
+	}
+
+	async getWriterSummariesByManager(managerAddress: Hex) {
+		const normalizedManager = managerAddress.toLowerCase();
+		const [writers, userPreferences] = await Promise.all([
+			this.pg.query.writer.findMany({
+				where: and(
+					arrayContains(writer.managers, [normalizedManager]),
+					isNull(writer.deletedAt),
+				),
+				orderBy: (writer, { desc }) => [desc(writer.createdAt)],
+			}),
+			this.pg.query.user.findFirst({
+				columns: { homeWriterOrder: true },
+				where: eq(user.address, normalizedManager),
+			}),
+		]);
+		if (writers.length === 0) {
+			return [];
+		}
+
+		applyHomeWriterOrder(writers, userPreferences?.homeWriterOrder);
+		const storageAddresses = writers.map((w) => w.storageAddress.toLowerCase());
+		const counts = await this.pg
+			.select({
+				storageAddress: entry.storageAddress,
+				entryCount: count(entry.id),
+			})
+			.from(entry)
+			.where(
+				and(
+					inArray(entry.storageAddress, storageAddresses),
+					isNull(entry.deletedAt),
+				),
+			)
+			.groupBy(entry.storageAddress);
+		const countByStorageAddress = new Map(
+			counts.map((row) => [
+				row.storageAddress.toLowerCase(),
+				Number(row.entryCount),
+			]),
+		);
+
+		return writers.map((w) => ({
+			...w,
+			entryCount: countByStorageAddress.get(w.storageAddress.toLowerCase()) ?? 0,
 		}));
 	}
 

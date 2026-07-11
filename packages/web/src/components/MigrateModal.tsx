@@ -129,7 +129,7 @@ export function MigrateModal({
 			}
 
 			queryClient.invalidateQueries({ queryKey: ["writer"] });
-			queryClient.invalidateQueries({ queryKey: ["get-writers"] });
+			queryClient.invalidateQueries({ queryKey: ["get-writer-summaries"] });
 			setStatus("done");
 		} catch (error) {
 			console.error("Migration failed", error);
