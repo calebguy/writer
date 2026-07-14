@@ -519,6 +519,7 @@ const openApiDocument = {
 						},
 					},
 					docs: { type: "object" },
+					bazaar: { type: "object" },
 				},
 			},
 			X402Capability: {

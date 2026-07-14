@@ -29,6 +29,12 @@ export async function GET() {
 					agents: "https://writer.place/agents.md",
 					openapi: "https://writer.place/openapi.json",
 				},
+				bazaar: {
+					discovery:
+						"https://api.cdp.coinbase.com/platform/v2/x402/discovery/resources",
+					routeMetadata:
+						"Writer x402 routes include Bazaar discovery extensions with input and output schemas.",
+				},
 			},
 			{
 				status: 503,

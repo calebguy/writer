@@ -19,6 +19,7 @@ Use this file as the shortest entry point for agents and LLMs. Prefer the linked
 - [OpenAPI schema](https://writer.place/openapi.json): OpenAPI 3.1 schema for public reads, Markdown routes, and x402 agent writes.
 - [x402 capabilities](https://api.writer.place/x402/capabilities): Live x402 pricing, network, pay-to address, endpoint list, and signer/payer invariants.
 - [x402 capabilities mirror](https://writer.place/.well-known/x402.json): Web-origin mirror/fallback for x402 capability discovery.
+- [x402 Bazaar discovery](https://api.cdp.coinbase.com/platform/v2/x402/discovery/resources): Facilitator discovery index for x402-compatible HTTP resources; Writer routes include Bazaar metadata after deployment.
 - [Robots policy](https://writer.place/robots.txt): Crawl policy and sitemap pointer.
 - [Sitemap](https://writer.place/sitemap.xml): Discoverability sitemap for top-level human and agent resources.
 

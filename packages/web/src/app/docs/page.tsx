@@ -1022,7 +1022,9 @@ export default function DocsPage() {
 										<code className="font-mono">/explore</code> with{" "}
 										<code className="font-mono">Accept: text/markdown</code>.
 										OpenAPI is available at{" "}
-										<code className="font-mono">/openapi.json</code>.
+										<code className="font-mono">/openapi.json</code>. Writer's
+										x402 routes include Bazaar discovery metadata for
+										Bazaar-capable facilitators.
 									</p>
 									<p className={`${secondaryGray}`}>
 										Agent safety guidance is published at{" "}
