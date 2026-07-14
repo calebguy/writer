@@ -325,7 +325,9 @@ function ContractFunction({
 function ApiSection({ section }: { section: ApiSectionDoc }) {
 	return (
 		<Section title={section.title} description={section.description}>
-			{section.intro && <p className={`${secondaryGray} mb-4`}>{section.intro}</p>}
+			{section.intro && (
+				<p className={`${secondaryGray} mb-4`}>{section.intro}</p>
+			)}
 			{section.flow && <FlowText className="mb-6">{section.flow}</FlowText>}
 			{section.endpoints.map((endpoint) => (
 				<Endpoint
@@ -978,7 +980,9 @@ export default function DocsPage() {
 						<div key={section.title}>
 							{index > 0 && (
 								<RelicDivider
-									seed={`${apiSections[index - 1]?.title.toLowerCase()}-${section.title.toLowerCase()}`}
+									seed={`${apiSections[
+										index - 1
+									]?.title.toLowerCase()}-${section.title.toLowerCase()}`}
 								/>
 							)}
 							<ApiSection section={section} />
@@ -986,28 +990,39 @@ export default function DocsPage() {
 								<div className="mt-6 space-y-3 bg-surface p-2.5 rounded-xs">
 									<p className={`${secondaryGray}`}>
 										Writer Places can be fetched as markdown using{" "}
-										<code className="font-mono">/writer/:address.md</code>, or from
-										the canonical Place URL with{" "}
-										<code className="font-mono">Accept: text/markdown</code>. Public
-										entries can be fetched as markdown with provenance frontmatter using{" "}
-										<code className="font-mono">/writer/:address/:id.md</code>, or
-										from the canonical entry URL with{" "}
-										<code className="font-mono">Accept: text/markdown</code>. Private
-										entries are returned by the API as opaque encoded content and must
-										be decrypted client-side with the author wallet.
+										<code className="font-mono">/writer/:address.md</code>, or
+										from the canonical Place URL with{" "}
+										<code className="font-mono">Accept: text/markdown</code>.
+										Public entries can be fetched as markdown with provenance
+										frontmatter using{" "}
+										<code className="font-mono">/writer/:address/:id.md</code>,
+										or from the canonical entry URL with{" "}
+										<code className="font-mono">Accept: text/markdown</code>.
+										Private entries are returned by the API as opaque encoded
+										content and must be decrypted client-side with the author
+										wallet.
 									</p>
 									<p className={`${secondaryGray}`}>
 										Machine-readable discovery is available at{" "}
-										<code className="font-mono">/.well-known/writer-agent.json</code>.
-										 These docs are available as markdown at{" "}
+										<code className="font-mono">
+											/.well-known/ai-catalog.json
+										</code>
+										,{" "}
+										<code className="font-mono">
+											/.well-known/writer-agent.json
+										</code>
+										, <code className="font-mono">/robots.txt</code>, and{" "}
+										<code className="font-mono">/sitemap.xml</code>. These docs
+										are available as markdown at{" "}
 										<code className="font-mono">/docs.md</code>, or from{" "}
 										<code className="font-mono">/docs</code> with{" "}
-										<code className="font-mono">Accept: text/markdown</code>. Public
-										Place discovery is available at{" "}
+										<code className="font-mono">Accept: text/markdown</code>.
+										Public Place discovery is available at{" "}
 										<code className="font-mono">/explore.md</code>, or from{" "}
 										<code className="font-mono">/explore</code> with{" "}
-										<code className="font-mono">Accept: text/markdown</code>. OpenAPI
-										is available at <code className="font-mono">/openapi.json</code>.
+										<code className="font-mono">Accept: text/markdown</code>.
+										OpenAPI is available at{" "}
+										<code className="font-mono">/openapi.json</code>.
 									</p>
 									<p className={`${secondaryGray}`}>
 										Agent safety guidance is published at{" "}

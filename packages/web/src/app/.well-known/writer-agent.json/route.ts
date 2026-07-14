@@ -11,9 +11,12 @@ export async function GET() {
 			api: API_URL,
 			agents: `${SITE_URL}/agents.md`,
 			llms: `${SITE_URL}/llms.txt`,
+			aiCatalog: `${SITE_URL}/.well-known/ai-catalog.json`,
 			docs: `${SITE_URL}/docs.md`,
 			explore: `${SITE_URL}/explore.md`,
 			openapi: `${SITE_URL}/openapi.json`,
+			robots: `${SITE_URL}/robots.txt`,
+			sitemap: `${SITE_URL}/sitemap.xml`,
 			x402Capabilities: `${SITE_URL}/.well-known/x402.json`,
 			markdown: {
 				docs: `${SITE_URL}/docs.md`,

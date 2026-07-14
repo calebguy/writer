@@ -22,7 +22,10 @@ const openApiDocument = {
 	tags: [
 		{ name: "Read", description: "Public read endpoints" },
 		{ name: "Agents", description: "x402-paid programmatic write endpoints" },
-		{ name: "Markdown", description: "Agent-friendly Markdown representations" },
+		{
+			name: "Markdown",
+			description: "Agent-friendly Markdown representations",
+		},
 	],
 	paths: {
 		"/writer/public": {
@@ -83,7 +86,8 @@ const openApiDocument = {
 		"/writer/{address}/entry/pending/{id}": {
 			get: {
 				tags: ["Read"],
-				summary: "Get a pending entry by database ID before onchain confirmation",
+				summary:
+					"Get a pending entry by database ID before onchain confirmation",
 				parameters: [
 					{ $ref: "#/components/parameters/Address" },
 					{
@@ -128,7 +132,8 @@ const openApiDocument = {
 			get: {
 				tags: ["Read"],
 				summary: "Get relay transaction status",
-				description: "Used by agent clients and the CLI --wait flag to observe relay confirmation.",
+				description:
+					"Used by agent clients and the CLI --wait flag to observe relay confirmation.",
 				parameters: [{ $ref: "#/components/parameters/TransactionId" }],
 				responses: {
 					"200": {
@@ -160,10 +165,33 @@ const openApiDocument = {
 				},
 			},
 		},
+		"/.well-known/ai-catalog.json": {
+			get: {
+				tags: ["Markdown"],
+				servers: [
+					{ url: "https://writer.place", description: "Writer web app" },
+				],
+				summary: "Get Writer agentic resource catalog",
+				description:
+					"Returns an ARD-style catalog of Writer agent resources, including OpenAPI, Markdown docs, x402 capabilities, and public Place discovery.",
+				responses: {
+					"200": {
+						description: "Agentic resource catalog",
+						content: {
+							"application/json": {
+								schema: { $ref: "#/components/schemas/AgenticResourceCatalog" },
+							},
+						},
+					},
+				},
+			},
+		},
 		"/.well-known/writer-agent.json": {
 			get: {
 				tags: ["Markdown"],
-				servers: [{ url: "https://writer.place", description: "Writer web app" }],
+				servers: [
+					{ url: "https://writer.place", description: "Writer web app" },
+				],
 				summary: "Get machine-readable Writer agent discovery manifest",
 				responses: {
 					"200": {
@@ -180,7 +208,9 @@ const openApiDocument = {
 		"/writer/{address}.md": {
 			get: {
 				tags: ["Markdown"],
-				servers: [{ url: "https://writer.place", description: "Writer web app" }],
+				servers: [
+					{ url: "https://writer.place", description: "Writer web app" },
+				],
 				summary: "Get a Writer Place as Markdown",
 				description:
 					"Returns a Markdown Place summary with YAML frontmatter, provenance metadata, and links to public entries. The canonical /writer/{address} URL also returns this representation when requested with Accept: text/markdown.",
@@ -194,7 +224,9 @@ const openApiDocument = {
 		"/writer/{address}/{id}.md": {
 			get: {
 				tags: ["Markdown"],
-				servers: [{ url: "https://writer.place", description: "Writer web app" }],
+				servers: [
+					{ url: "https://writer.place", description: "Writer web app" },
+				],
 				summary: "Get a public Writer entry as Markdown",
 				description:
 					"Returns a public/plaintext entry as Markdown with YAML provenance frontmatter. Encrypted entries return 403 because the server does not have wallet-derived decryption keys. The canonical /writer/{address}/{id} URL also returns this representation when requested with Accept: text/markdown.",
@@ -246,7 +278,9 @@ const openApiDocument = {
 						description: "Pending Writer Place",
 						content: {
 							"application/json": {
-								schema: { $ref: "#/components/schemas/X402FactoryCreateResponse" },
+								schema: {
+									$ref: "#/components/schemas/X402FactoryCreateResponse",
+								},
 							},
 						},
 					},
@@ -270,13 +304,18 @@ const openApiDocument = {
 						},
 					},
 				},
-				responses: { "200": { $ref: "#/components/responses/PendingAuthor" }, "402": { description: "x402 payment required" }, "403": { $ref: "#/components/responses/Forbidden" } },
+				responses: {
+					"200": { $ref: "#/components/responses/PendingAuthor" },
+					"402": { description: "x402 payment required" },
+					"403": { $ref: "#/components/responses/Forbidden" },
+				},
 			},
 		},
 		"/x402/writer/{address}/entry/{id}/update": {
 			post: {
 				tags: ["Agents"],
-				summary: "Replace entry content with x402 payment and EIP-712 signature",
+				summary:
+					"Replace entry content with x402 payment and EIP-712 signature",
 				description:
 					"The x402 payer must equal the recovered EIP-712 Update signer. The signer must match the existing entry author. The content is the full replacement encoded content string, not a patch.",
 				parameters: [
@@ -291,7 +330,12 @@ const openApiDocument = {
 						},
 					},
 				},
-				responses: { "200": { $ref: "#/components/responses/PendingAuthor" }, "402": { description: "x402 payment required" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } },
+				responses: {
+					"200": { $ref: "#/components/responses/PendingAuthor" },
+					"402": { description: "x402 payment required" },
+					"403": { $ref: "#/components/responses/Forbidden" },
+					"404": { $ref: "#/components/responses/NotFound" },
+				},
 			},
 		},
 		"/x402/writer/{address}/entry/{id}/delete": {
@@ -312,7 +356,12 @@ const openApiDocument = {
 						},
 					},
 				},
-				responses: { "200": { $ref: "#/components/responses/PendingSigner" }, "402": { description: "x402 payment required" }, "403": { $ref: "#/components/responses/Forbidden" }, "404": { $ref: "#/components/responses/NotFound" } },
+				responses: {
+					"200": { $ref: "#/components/responses/PendingSigner" },
+					"402": { description: "x402 payment required" },
+					"403": { $ref: "#/components/responses/Forbidden" },
+					"404": { $ref: "#/components/responses/NotFound" },
+				},
 			},
 		},
 	},
@@ -343,11 +392,19 @@ const openApiDocument = {
 		responses: {
 			NotFound: {
 				description: "Resource not found",
-				content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } },
+				content: {
+					"application/json": {
+						schema: { $ref: "#/components/schemas/Error" },
+					},
+				},
 			},
 			Forbidden: {
 				description: "Forbidden",
-				content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } },
+				content: {
+					"application/json": {
+						schema: { $ref: "#/components/schemas/Error" },
+					},
+				},
 			},
 			PendingAuthor: {
 				description: "Pending relay transaction",
@@ -402,7 +459,16 @@ const openApiDocument = {
 			Address: { type: "string", pattern: "^0x[a-fA-F0-9]{40}$" },
 			AgentManifest: {
 				type: "object",
-				required: ["name", "site", "api", "agents", "docs", "explore", "openapi"],
+				required: [
+					"name",
+					"site",
+					"api",
+					"agents",
+					"aiCatalog",
+					"docs",
+					"explore",
+					"openapi",
+				],
 				properties: {
 					name: { type: "string" },
 					description: { type: "string" },
@@ -413,9 +479,24 @@ const openApiDocument = {
 					docs: { type: "string", format: "uri" },
 					explore: { type: "string", format: "uri" },
 					openapi: { type: "string", format: "uri" },
+					aiCatalog: { type: "string", format: "uri" },
+					robots: { type: "string", format: "uri" },
+					sitemap: { type: "string", format: "uri" },
 					x402Capabilities: { type: "string", format: "uri" },
 					markdown: { type: "object" },
 					x402: { type: "object" },
+				},
+			},
+			AgenticResourceCatalog: {
+				type: "object",
+				required: ["specVersion", "host", "entries"],
+				properties: {
+					specVersion: { type: "string" },
+					host: { type: "object" },
+					entries: {
+						type: "array",
+						items: { type: "object" },
+					},
 				},
 			},
 			X402Capabilities: {
@@ -426,12 +507,16 @@ const openApiDocument = {
 					name: { type: "string" },
 					description: { type: "string" },
 					network: { type: "string", examples: ["eip155:8453"] },
-					payTo: { anyOf: [{ $ref: "#/components/schemas/Address" }, { type: "null" }] },
+					payTo: {
+						anyOf: [{ $ref: "#/components/schemas/Address" }, { type: "null" }],
+					},
 					facilitator: { type: "string", format: "uri" },
 					contentType: { type: "string", examples: ["application/json"] },
 					capabilities: {
 						type: "object",
-						additionalProperties: { $ref: "#/components/schemas/X402Capability" },
+						additionalProperties: {
+							$ref: "#/components/schemas/X402Capability",
+						},
 					},
 					docs: { type: "object" },
 				},
@@ -479,8 +564,14 @@ const openApiDocument = {
 						properties: {
 							storageAddress: { $ref: "#/components/schemas/Address" },
 							storageId: { type: "string" },
-							managers: { type: "array", items: { $ref: "#/components/schemas/Address" } },
-							entries: { type: "array", items: { $ref: "#/components/schemas/Entry" } },
+							managers: {
+								type: "array",
+								items: { $ref: "#/components/schemas/Address" },
+							},
+							entries: {
+								type: "array",
+								items: { $ref: "#/components/schemas/Entry" },
+							},
 						},
 					},
 				],
@@ -489,12 +580,22 @@ const openApiDocument = {
 				type: "object",
 				properties: {
 					id: { type: "string" },
-					onChainId: { type: ["string", "null"], description: "Onchain entry ID; 0 is valid." },
+					onChainId: {
+						type: ["string", "null"],
+						description: "Onchain entry ID; 0 is valid.",
+					},
 					storageAddress: { $ref: "#/components/schemas/Address" },
 					author: { $ref: "#/components/schemas/Address" },
 					raw: { type: ["string", "null"] },
-					version: { type: ["string", "null"], examples: ["br:", "enc:v5:br:"] },
-					decompressed: { type: ["string", "null"], description: "Plaintext markdown for public entries. Null/omitted for encrypted entries." },
+					version: {
+						type: ["string", "null"],
+						examples: ["br:", "enc:v5:br:"],
+					},
+					decompressed: {
+						type: ["string", "null"],
+						description:
+							"Plaintext markdown for public entries. Null/omitted for encrypted entries.",
+					},
 					deletedAt: { type: ["string", "null"], format: "date-time" },
 					createdAtHash: { type: ["string", "null"] },
 					updatedAtHash: { type: ["string", "null"] },
@@ -503,7 +604,12 @@ const openApiDocument = {
 			PublicWritersResponse: {
 				type: "object",
 				required: ["writers"],
-				properties: { writers: { type: "array", items: { $ref: "#/components/schemas/PublicWriter" } } },
+				properties: {
+					writers: {
+						type: "array",
+						items: { $ref: "#/components/schemas/PublicWriter" },
+					},
+				},
 			},
 			WriterResponse: {
 				type: "object",
@@ -519,7 +625,10 @@ const openApiDocument = {
 				type: "object",
 				required: ["address", "title"],
 				properties: {
-					address: { $ref: "#/components/schemas/Address", description: "x402 payer and requested admin" },
+					address: {
+						$ref: "#/components/schemas/Address",
+						description: "x402 payer and requested admin",
+					},
 					title: { type: "string", minLength: 1 },
 				},
 			},
@@ -548,7 +657,10 @@ const openApiDocument = {
 					signature: { $ref: "#/components/schemas/Hex" },
 					nonce: { type: "integer", minimum: 0 },
 					chunkCount: { type: "integer", minimum: 1 },
-					chunkContent: { type: "string", description: "Final encoded content string" },
+					chunkContent: {
+						type: "string",
+						description: "Final encoded content string",
+					},
 				},
 			},
 			UpdateEntryRequest: {
@@ -558,7 +670,10 @@ const openApiDocument = {
 					signature: { $ref: "#/components/schemas/Hex" },
 					nonce: { type: "integer", minimum: 0 },
 					totalChunks: { type: "integer", minimum: 1 },
-					content: { type: "string", description: "Full replacement encoded content string" },
+					content: {
+						type: "string",
+						description: "Full replacement encoded content string",
+					},
 				},
 			},
 			DeleteEntryRequest: {
@@ -580,7 +695,14 @@ const openApiDocument = {
 							id: { type: "string" },
 							status: {
 								type: "string",
-								enum: ["PENDING", "PROCESSED", "SUBMITTED", "CONFIRMED", "PAUSED", "ABANDONED"],
+								enum: [
+									"PENDING",
+									"PROCESSED",
+									"SUBMITTED",
+									"CONFIRMED",
+									"PAUSED",
+									"ABANDONED",
+								],
 							},
 							hash: { type: ["string", "null"] },
 							blockNumber: { type: ["string", "null"] },

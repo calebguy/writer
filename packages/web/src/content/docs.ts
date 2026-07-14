@@ -184,8 +184,7 @@ export const apiSections: ApiSectionDoc[] = [
 			"Agent-oriented write endpoints use x402 payments instead of Privy browser auth. See /agents.md for operational guidance and safety policy.",
 		intro:
 			"x402 endpoints return a payment challenge when payment is required. The x402 payer must match the action signer: for Place creation the payer must equal the requested admin address; for entry creates, updates, and deletes the payer must equal the recovered EIP-712 signer.",
-		flow:
-			"agent prepares request → x402 payment → EIP-712 signature where needed → relay transaction → pending response → indexer confirmation",
+		flow: "agent prepares request → x402 payment → EIP-712 signature where needed → relay transaction → pending response → indexer confirmation",
 		endpoints: [
 			{
 				method: "POST",
@@ -282,7 +281,8 @@ export const apiSections: ApiSectionDoc[] = [
 					{
 						name: "content",
 						type: "string",
-						description: "Replacement encoded entry content; see Content Encoding",
+						description:
+							"Replacement encoded entry content; see Content Encoding",
 					},
 				],
 				response: "{ pending: { transactionId: string, author: address } }",
@@ -327,12 +327,19 @@ function paramTable(params: DocParam[]) {
 	return [
 		"| Parameter | Type | Description |",
 		"|-----------|------|-------------|",
-		...params.map((p) => `| \`${p.name}\` | \`${p.type}\` | ${p.description} |`),
+		...params.map(
+			(p) => `| \`${p.name}\` | \`${p.type}\` | ${p.description} |`,
+		),
 	].join("\n");
 }
 
 function endpointMarkdown(endpoint: ApiEndpointDoc) {
-	const lines = [`#### \`${endpoint.method} ${endpoint.path}\``, "", endpoint.description, ""];
+	const lines = [
+		`#### \`${endpoint.method} ${endpoint.path}\``,
+		"",
+		endpoint.description,
+		"",
+	];
 	if (endpoint.auth) {
 		lines.push(`**Auth:** ${endpoint.auth}`, "");
 	}
@@ -369,7 +376,7 @@ function apiMarkdown() {
 	lines.push(
 		"Writer Places can be fetched as Markdown at `https://writer.place/writer/:address.md`, or from the canonical Place URL with `Accept: text/markdown`. Public entries can be fetched as Markdown with provenance frontmatter at `https://writer.place/writer/:address/:id.md`, or from the canonical entry URL with `Accept: text/markdown`. Encrypted entries cannot be returned as Markdown by the server.",
 		"",
-		"Agent guidance is published at `/agents.md`, `/agents.txt`, and `/llms.txt`. Machine-readable discovery is available at `/.well-known/writer-agent.json`. Current x402 pricing and write capabilities are available at `/.well-known/x402.json` and `https://api.writer.place/x402/capabilities`. The TypeScript SDK in `packages/sdk` exposes `createWriterSdk()` for capability discovery, Markdown reads, x402 payments, EIP-712 signing, Place creation, entry updates, and entry deletion. These docs are also available as Markdown at `/docs.md`, or from `/docs` with `Accept: text/markdown`. Public Place discovery is available at `/explore.md`, or from `/explore` with `Accept: text/markdown`. The OpenAPI 3.1 schema for public reads and x402 writes is available at `/openapi.json`.",
+		"Agent guidance is published at `/agents.md`, `/agents.txt`, and `/llms.txt`. Machine-readable discovery is available at `/.well-known/ai-catalog.json`, `/.well-known/writer-agent.json`, `/openapi.json`, `/robots.txt`, and `/sitemap.xml`. Current x402 pricing and write capabilities are available at `/.well-known/x402.json` and `https://api.writer.place/x402/capabilities`. The TypeScript SDK in `packages/sdk` exposes `createWriterSdk()` for capability discovery, Markdown reads, x402 payments, EIP-712 signing, Place creation, entry updates, and entry deletion. These docs are also available as Markdown at `/docs.md`, or from `/docs` with `Accept: text/markdown`. Public Place discovery is available at `/explore.md`, or from `/explore` with `Accept: text/markdown`. The OpenAPI 3.1 schema for public reads and x402 writes is available at `/openapi.json`.",
 		"",
 	);
 	return lines.join("\n");

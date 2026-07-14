@@ -6,6 +6,9 @@ https://writer.place/agents.md
 LLM summary:
 https://writer.place/llms.txt
 
+Agentic resource catalog:
+https://writer.place/.well-known/ai-catalog.json
+
 App:
 https://writer.place
 
@@ -28,6 +31,7 @@ Agents can:
 - Delete an entry when authorized.
 - Read public Places and entries.
 - Fetch agent discovery manifest at https://writer.place/.well-known/writer-agent.json
+- Fetch agentic resource catalog at https://writer.place/.well-known/ai-catalog.json
 - Fetch x402 capability/pricing discovery at https://writer.place/.well-known/x402.json or https://api.writer.place/x402/capabilities
 - Fetch public Places as Markdown at https://writer.place/writer/:address.md
 - Fetch public Places from canonical URLs with Accept: text/markdown
@@ -36,6 +40,8 @@ Agents can:
 - Fetch docs as markdown at https://writer.place/docs.md or /docs with Accept: text/markdown
 - Fetch public Place discovery as markdown at https://writer.place/explore.md or /explore with Accept: text/markdown
 - Fetch OpenAPI schema at https://writer.place/openapi.json
+- Fetch robots policy at https://writer.place/robots.txt
+- Fetch sitemap at https://writer.place/sitemap.xml
 
 Important safety rules:
 - Ask for explicit user confirmation before public publishing.
