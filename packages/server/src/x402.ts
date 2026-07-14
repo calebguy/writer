@@ -104,31 +104,46 @@ function bazaarDiscoveryUrl() {
 }
 
 function cdpAuthHeaders(): FacilitatorConfig["createAuthHeaders"] | undefined {
-	if (!env.CDP_API_KEY_ID || !env.CDP_API_KEY_SECRET) {
-		return undefined;
-	}
-
-	const apiKeyId = env.CDP_API_KEY_ID;
-	const apiKeySecret = env.CDP_API_KEY_SECRET;
 	const facilitatorUrl = new URL(env.X402_FACILITATOR_URL);
 	if (facilitatorUrl.host !== "api.cdp.coinbase.com") {
 		return undefined;
 	}
 
+	if (!env.CDP_API_KEY_ID || !env.CDP_API_KEY_SECRET) {
+		throw new Error(
+			"CDP_API_KEY_ID and CDP_API_KEY_SECRET are required when X402_FACILITATOR_URL uses the Coinbase CDP facilitator",
+		);
+	}
+
+	const apiKeyId = env.CDP_API_KEY_ID;
+	const apiKeySecret = env.CDP_API_KEY_SECRET;
+
 	const requestHost = facilitatorUrl.host;
 	const pathPrefix = facilitatorUrl.pathname.replace(/\/$/, "");
 
 	async function bearer(method: "GET" | "POST", path: string) {
-		const token = await generateJwt({
-			apiKeyId,
-			apiKeySecret,
-			requestMethod: method,
-			requestHost,
-			requestPath: `${pathPrefix}${path}`,
-			expiresIn: 120,
-		});
+		const requestPath = `${pathPrefix}${path}`;
 
-		return { Authorization: `Bearer ${token}` };
+		try {
+			const token = await generateJwt({
+				apiKeyId,
+				apiKeySecret,
+				requestMethod: method,
+				requestHost,
+				requestPath,
+				expiresIn: 120,
+			});
+
+			return { Authorization: `Bearer ${token}` };
+		} catch (error) {
+			console.error("Failed to sign CDP facilitator auth header", {
+				method,
+				requestHost,
+				requestPath,
+				error,
+			});
+			throw error;
+		}
 	}
 
 	return async () => ({

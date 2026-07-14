@@ -3,7 +3,9 @@
 	"name": "writer-api",
 	"main": "src/server.ts",
 	"compatibility_date": "2026-06-27",
-	"compatibility_flags": ["nodejs_compat"],
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
 	"workers_dev": true,
 	"services": [
 		{
@@ -28,6 +30,7 @@
 		"RPC_URL": "https://optimism-mainnet.core.chainstack.com/84b63be8c6b3f521c01e95cc37a4a34d",
 		"TARGET_CHAIN_ID": "10",
 		"X402_PAY_TO_ADDRESS": "0xCC2011577CaD30e15d8c8d6329d36DeAF85BD2Cc",
+		"X402_FACILITATOR_URL": "https://api.cdp.coinbase.com/platform/v2/x402",
 		"RELAY_URL": "https://writer-durable-wallet.calebgcarithers.workers.dev"
 	},
 	"secrets": {
