@@ -45,6 +45,8 @@ import { useComposeHeaderActions } from "./writer/ComposeHeaderActionsContext";
 
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 
+const MOBILE_VIEW_MEDIA_QUERY = "(max-width: 767px)";
+
 export default function Entry({
 	initialEntry,
 	address,
@@ -524,7 +526,7 @@ export default function Entry({
 			if (!isEditing && canEdit && isPrimaryEditShortcut(e)) {
 				e.preventDefault();
 				const shouldUseEditPage = window.matchMedia(
-					"(max-width: 1023px)",
+					MOBILE_VIEW_MEDIA_QUERY,
 				).matches;
 
 				if (shouldUseEditPage) {
@@ -640,7 +642,7 @@ export default function Entry({
 						</div>
 					)}
 					{isEntryPrivate(processedEntry) && (
-						<div className="absolute bottom-0 left-0 hidden lg:block">
+						<div className="absolute bottom-0 left-0 hidden md:block">
 							<Lock className="w-3.5 h-3.5 text-neutral-400 dark:text-neutral-600" />
 						</div>
 					)}
@@ -729,7 +731,7 @@ export default function Entry({
 									type="button"
 									className={cn(
 										"text-neutral-400 dark:text-neutral-600 hover:text-secondary cursor-pointer",
-										{ "hidden lg:inline": !isEditing },
+										{ "hidden md:inline": !isEditing },
 									)}
 									onClick={() => {
 										if (isEditing) {

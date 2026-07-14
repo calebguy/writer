@@ -229,9 +229,9 @@ export function WriterHeader({
 				</div>
 
 				{actions ? (
-					<div className="lg:hidden flex items-center gap-4">{actions}</div>
+					<div className="md:hidden flex items-center gap-4">{actions}</div>
 				) : authenticated && !isEntryPage ? (
-					<div className="lg:hidden flex items-center gap-4 text-primary">
+					<div className="md:hidden flex items-center gap-4 text-primary">
 						{canHideWriter && (
 							<button
 								type="button"
@@ -270,7 +270,7 @@ export function WriterHeader({
 						</Link>
 					</div>
 				) : null}
-				<div className="hidden lg:block">
+				<div className="hidden md:block">
 					<NavDropdown />
 				</div>
 			</div>

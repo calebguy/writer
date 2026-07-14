@@ -810,7 +810,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 							type="button"
 							aria-label="Hide Place"
 							title="Hide Place"
-							className="peer/hide absolute bottom-0.25 right-1 z-20 hidden h-6 w-6 items-center justify-center rounded-xs text-neutral-400 opacity-0 transition-opacity lg:flex group-hover/card:opacity-40 hover:text-primary hover:opacity-100 focus-visible:text-primary focus-visible:opacity-100 cursor-pointer"
+							className="peer/hide absolute bottom-0.25 right-1 z-20 hidden h-6 w-6 items-center justify-center rounded-xs text-neutral-400 opacity-0 transition-opacity md:flex group-hover/card:opacity-40 hover:text-primary hover:opacity-100 focus-visible:text-primary focus-visible:opacity-100 cursor-pointer"
 							onClick={(e) => {
 								e.preventDefault();
 								e.stopPropagation();
@@ -824,7 +824,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 								type="button"
 								aria-label="Edit Place title"
 								title="Edit Place title"
-								className="absolute bottom-0.25 right-6 z-20 hidden h-6 w-6 items-center justify-center rounded-xs text-neutral-400 opacity-0 transition-opacity lg:flex group-hover/card:opacity-40 hover:text-primary hover:opacity-100 focus-visible:text-primary focus-visible:opacity-100 cursor-pointer"
+								className="absolute bottom-0.25 right-6 z-20 hidden h-6 w-6 items-center justify-center rounded-xs text-neutral-400 opacity-0 transition-opacity md:flex group-hover/card:opacity-40 hover:text-primary hover:opacity-100 focus-visible:text-primary focus-visible:opacity-100 cursor-pointer"
 								onClick={(e) => {
 									e.preventDefault();
 									e.stopPropagation();
@@ -834,7 +834,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 								<MdModeEdit className="w-4 h-4" />
 							</button>
 						)}
-						<div className="absolute left-0 top-0 z-10 hidden h-full w-full items-center justify-center bg-surface-overlay/90 pointer-events-none lg:peer-hover/hide:flex lg:peer-focus/hide:flex">
+						<div className="absolute left-0 top-0 z-10 hidden h-full w-full items-center justify-center bg-surface-overlay/90 pointer-events-none md:peer-hover/hide:flex md:peer-focus/hide:flex">
 							<span className="text-primary italic">Hide?</span>
 						</div>
 					</>
@@ -844,7 +844,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 						type="button"
 						aria-label="Drag to rearrange Place"
 						title="Drag to rearrange"
-						className="absolute bottom-0.5 left-0.5 z-20 flex h-6 w-6 touch-none cursor-grab items-center justify-center rounded-xs text-neutral-400 opacity-40 transition-opacity hover:text-primary hover:opacity-100 focus-visible:text-primary focus-visible:opacity-100 active:cursor-grabbing lg:opacity-0 lg:group-hover/card:opacity-40"
+						className="absolute bottom-0.5 left-0.5 z-20 flex h-6 w-6 touch-none cursor-grab items-center justify-center rounded-xs text-neutral-400 opacity-40 transition-opacity hover:text-primary hover:opacity-100 focus-visible:text-primary focus-visible:opacity-100 active:cursor-grabbing md:opacity-0 md:group-hover/card:opacity-40"
 						draggable={false}
 						onClick={(e) => {
 							e.preventDefault();
@@ -872,7 +872,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 								<AiOutlineLoading3Quarters className="pending-entry-spinner-icon w-3 h-3 rotating" />
 							</span>
 						) : (
-							<span className="block lg:group-hover/card:hidden">
+							<span className="block md:group-hover/card:hidden">
 								{writer.entryCount.toString()}
 							</span>
 						)}
@@ -916,7 +916,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 					data-home-writer-grid="true"
 					className="grid gap-2 grid-cols-1 min-[321px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]"
 				>
-					<div className="hidden lg:block">
+					<div className="hidden md:block">
 						<CreateInput
 							placeholder="Create a Place"
 							onSubmit={handleSubmit}
@@ -935,7 +935,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 	// three so the central card never shifts position between states.
 	return (
 		<div className="grow flex flex-col items-center justify-center">
-			<div className="hidden lg:block w-[234px] h-[234px]">
+			<div className="hidden md:block w-[234px] h-[234px]">
 				{onboardingMode === "created" && confirmedFirstWriter ? (
 					renderWriterCard(confirmedFirstWriter, { showHideAction: false })
 				) : (
@@ -960,14 +960,14 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 							onPointerEnter={() => {
 								void import("./markdown/MDX");
 							}}
-							className="lg:hidden flex flex-col items-center gap-3 text-neutral-500 transition-colors hover:text-primary dark:text-neutral-400"
+							className="md:hidden flex flex-col items-center gap-3 text-neutral-500 transition-colors hover:text-primary dark:text-neutral-400"
 						>
 							<span className="flex h-14 w-14 items-center justify-center rounded-full text-primary">
 								<FiPlus className="h-10 w-10" />
 							</span>
 							<span>Create your first Place</span>
 						</Link>
-						<span className="hidden lg:inline text-neutral-500 dark:text-neutral-400">
+						<span className="hidden md:inline text-neutral-500 dark:text-neutral-400">
 							Create your first Place
 						</span>
 					</>

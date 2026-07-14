@@ -196,7 +196,7 @@ export default function EntryListWithCreateInput({
 				}`}
 			>
 				{canCreateEntries && (
-					<div className="hidden lg:block">
+					<div className="hidden md:block">
 						<CreateInput
 							placeholderMarkdown={`Write in Place:\n ${writerTitle}`}
 							onExpand={setIsExpanded}

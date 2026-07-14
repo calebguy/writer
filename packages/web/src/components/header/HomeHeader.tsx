@@ -49,12 +49,12 @@ export function HomeHeader() {
 							router.prefetch("/place/new");
 							void import("../markdown/MDX");
 						}}
-						className="lg:hidden text-primary hover:opacity-80 transition-opacity cursor-pointer"
+						className="md:hidden text-primary hover:opacity-80 transition-opacity cursor-pointer"
 					>
 						<FiPlus className="h-6 w-6" />
 					</Link>
 				)}
-				<div className="hidden lg:block">
+				<div className="hidden md:block">
 					<NavDropdown />
 				</div>
 			</div>
