@@ -3,12 +3,13 @@ import { createFacilitatorConfig } from "@coinbase/x402";
 import {
 	HTTPFacilitatorClient,
 	type RoutesConfig,
+	x402HTTPResourceServer,
 	x402ResourceServer,
 } from "@x402/core/server";
 import type { Network } from "@x402/core/types";
 import { ExactEvmScheme } from "@x402/evm/exact/server";
 import { declareDiscoveryExtension } from "@x402/extensions/bazaar";
-import { paymentMiddleware } from "@x402/hono";
+import { paymentMiddlewareFromHTTPServer } from "@x402/hono";
 import type { Context, MiddlewareHandler } from "hono";
 import { type Hex, getAddress } from "viem";
 import { env } from "./env";
@@ -451,19 +452,44 @@ const resourceServer = new x402ResourceServer(
 		}
 	});
 
+const httpServer = new x402HTTPResourceServer(resourceServer, routes);
+let initializePromise: Promise<void> | undefined;
+let isInitialized = false;
+
+async function initializeX402HttpServer() {
+	if (isInitialized) return;
+
+	initializePromise ??= httpServer
+		.initialize()
+		.then(() => {
+			isInitialized = true;
+		})
+		.catch((error: unknown) => {
+			initializePromise = undefined;
+			throw error;
+		});
+
+	await initializePromise;
+}
+
 export function getX402Payer(_c: Context): Hex | undefined {
 	return paymentContext.getStore()?.payer;
 }
 
 export function x402PaymentMiddleware(): MiddlewareHandler {
-	let middleware: MiddlewareHandler | undefined;
+	const middleware = paymentMiddlewareFromHTTPServer(
+		httpServer,
+		undefined,
+		undefined,
+		false,
+	);
 
 	return async (c, next) => {
-		const x402Middleware = (middleware ??= paymentMiddleware(routes, resourceServer));
 		const context: X402PaymentContext = {};
 		return paymentContext.run(context, async () => {
 			try {
-				return await x402Middleware(c, next);
+				await initializeX402HttpServer();
+				return await middleware(c, next);
 			} catch (error) {
 				console.error("x402 payment middleware failed", {
 					facilitator: env.X402_FACILITATOR_URL,
