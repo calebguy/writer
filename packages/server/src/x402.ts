@@ -1,9 +1,8 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import { generateJwt } from "@coinbase/cdp-sdk/auth";
+import { createFacilitatorConfig } from "@coinbase/x402";
 import {
 	HTTPFacilitatorClient,
 	type RoutesConfig,
-	type FacilitatorConfig,
 	x402ResourceServer,
 } from "@x402/core/server";
 import type { Network } from "@x402/core/types";
@@ -103,10 +102,12 @@ function bazaarDiscoveryUrl() {
 	return facilitatorUrl.toString();
 }
 
-function cdpAuthHeaders(): FacilitatorConfig["createAuthHeaders"] | undefined {
+function x402FacilitatorConfig() {
 	const facilitatorUrl = new URL(env.X402_FACILITATOR_URL);
 	if (facilitatorUrl.host !== "api.cdp.coinbase.com") {
-		return undefined;
+		return {
+			url: env.X402_FACILITATOR_URL as `${string}://${string}`,
+		};
 	}
 
 	if (!env.CDP_API_KEY_ID || !env.CDP_API_KEY_SECRET) {
@@ -115,42 +116,7 @@ function cdpAuthHeaders(): FacilitatorConfig["createAuthHeaders"] | undefined {
 		);
 	}
 
-	const apiKeyId = env.CDP_API_KEY_ID;
-	const apiKeySecret = env.CDP_API_KEY_SECRET;
-
-	const requestHost = facilitatorUrl.host;
-	const pathPrefix = facilitatorUrl.pathname.replace(/\/$/, "");
-
-	async function bearer(method: "GET" | "POST", path: string) {
-		const requestPath = `${pathPrefix}${path}`;
-
-		try {
-			const token = await generateJwt({
-				apiKeyId,
-				apiKeySecret,
-				requestMethod: method,
-				requestHost,
-				requestPath,
-				expiresIn: 120,
-			});
-
-			return { Authorization: `Bearer ${token}` };
-		} catch (error) {
-			console.error("Failed to sign CDP facilitator auth header", {
-				method,
-				requestHost,
-				requestPath,
-				error,
-			});
-			throw error;
-		}
-	}
-
-	return async () => ({
-		supported: await bearer("GET", "/supported"),
-		verify: await bearer("POST", "/verify"),
-		settle: await bearer("POST", "/settle"),
-	});
+	return createFacilitatorConfig(env.CDP_API_KEY_ID, env.CDP_API_KEY_SECRET);
 }
 
 export function getX402Capabilities() {
@@ -439,10 +405,7 @@ const routes: RoutesConfig = {
 };
 
 const resourceServer = new x402ResourceServer(
-	new HTTPFacilitatorClient({
-		url: env.X402_FACILITATOR_URL as `${string}://${string}`,
-		createAuthHeaders: cdpAuthHeaders(),
-	}),
+	new HTTPFacilitatorClient(x402FacilitatorConfig()),
 )
 	.register("eip155:*" as Network, new ExactEvmScheme())
 	.onAfterVerify(async ({ result }) => {
