@@ -19,6 +19,7 @@ type X402PaymentContext = {
 
 const paymentContext = new AsyncLocalStorage<X402PaymentContext>();
 const network = env.X402_NETWORK as Network;
+
 const apiUrl = "https://api.writer.place";
 const addressExample = "0x0000000000000000000000000000000000000000";
 const signatureExample =
@@ -455,13 +456,14 @@ export function getX402Payer(_c: Context): Hex | undefined {
 }
 
 export function x402PaymentMiddleware(): MiddlewareHandler {
-	const middleware = paymentMiddleware(routes, resourceServer);
+	let middleware: MiddlewareHandler | undefined;
 
 	return async (c, next) => {
+		const x402Middleware = (middleware ??= paymentMiddleware(routes, resourceServer));
 		const context: X402PaymentContext = {};
 		return paymentContext.run(context, async () => {
 			try {
-				return await middleware(c, next);
+				return await x402Middleware(c, next);
 			} catch (error) {
 				console.error("x402 payment middleware failed", {
 					facilitator: env.X402_FACILITATOR_URL,
