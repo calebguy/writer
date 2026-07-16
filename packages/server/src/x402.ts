@@ -119,6 +119,40 @@ function x402FacilitatorConfig() {
 	return createFacilitatorConfig(env.CDP_API_KEY_ID, env.CDP_API_KEY_SECRET);
 }
 
+function x402ErrorDetails(error: unknown) {
+	if (!(error instanceof Error)) {
+		return { message: String(error) };
+	}
+
+	const cause = error.cause;
+	return {
+		name: error.name,
+		message: error.message,
+		cause:
+			cause instanceof Error
+				? { name: cause.name, message: cause.message }
+				: cause
+					? String(cause)
+					: undefined,
+	};
+}
+
+class WriterFacilitatorClient extends HTTPFacilitatorClient {
+	async getSupported() {
+		try {
+			return await super.getSupported();
+		} catch (error) {
+			console.error("x402 facilitator supported request failed", {
+				facilitator: env.X402_FACILITATOR_URL,
+				hasCdpApiKeyId: Boolean(env.CDP_API_KEY_ID),
+				hasCdpApiKeySecret: Boolean(env.CDP_API_KEY_SECRET),
+				error: x402ErrorDetails(error),
+			});
+			throw error;
+		}
+	}
+}
+
 export function getX402Capabilities() {
 	const payTo = env.X402_PAY_TO_ADDRESS
 		? getAddress(env.X402_PAY_TO_ADDRESS)
@@ -405,7 +439,7 @@ const routes: RoutesConfig = {
 };
 
 const resourceServer = new x402ResourceServer(
-	new HTTPFacilitatorClient(x402FacilitatorConfig()),
+	new WriterFacilitatorClient(x402FacilitatorConfig()),
 )
 	.register("eip155:*" as Network, new ExactEvmScheme())
 	.onAfterVerify(async ({ result }) => {
@@ -425,6 +459,19 @@ export function x402PaymentMiddleware(): MiddlewareHandler {
 
 	return async (c, next) => {
 		const context: X402PaymentContext = {};
-		return paymentContext.run(context, () => middleware(c, next));
+		return paymentContext.run(context, async () => {
+			try {
+				return await middleware(c, next);
+			} catch (error) {
+				console.error("x402 payment middleware failed", {
+					facilitator: env.X402_FACILITATOR_URL,
+					hasCdpApiKeyId: Boolean(env.CDP_API_KEY_ID),
+					hasCdpApiKeySecret: Boolean(env.CDP_API_KEY_SECRET),
+					error: x402ErrorDetails(error),
+				});
+
+				return c.json({ error: "x402 facilitator unavailable" }, 503);
+			}
+		});
 	};
 }
