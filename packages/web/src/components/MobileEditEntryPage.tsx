@@ -4,6 +4,7 @@ import { DeleteConfirmModal } from "@/components/DeleteConfirmModal";
 import { Check } from "@/components/icons/Check";
 import { Lock } from "@/components/icons/Lock";
 import { Unlock } from "@/components/icons/Unlock";
+import { MarkdownHelpLink } from "@/components/markdown/MarkdownGuide";
 import { useComposeHeaderActions } from "@/components/writer/ComposeHeaderActionsContext";
 import {
 	useUnsavedChangesNavigation,
@@ -11,8 +12,8 @@ import {
 } from "@/hooks/useUnsavedChangesWarning";
 import {
 	ENTRY_QUERY_STALE_TIME,
-	WRITER_QUERY_STALE_TIME,
 	type Entry,
+	WRITER_QUERY_STALE_TIME,
 	type Writer,
 	deleteEntry,
 	editEntry,
@@ -43,7 +44,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MdDelete } from "react-icons/md";
 import type { Hex } from "viem";
 
@@ -107,7 +108,8 @@ export function MobileEditEntryPage({
 
 	const { data: fetchedEntry } = useQuery<Entry>({
 		queryKey: entryKey,
-		queryFn: ({ signal }) => getEntry(normalizedAddress as Hex, entryId, signal),
+		queryFn: ({ signal }) =>
+			getEntry(normalizedAddress as Hex, entryId, signal),
 		staleTime: ENTRY_QUERY_STALE_TIME,
 	});
 	const { data: writer } = useQuery<Writer>({
@@ -286,10 +288,10 @@ export function MobileEditEntryPage({
 	const confirmNavigation = useUnsavedChangesNavigation();
 	useUnsavedChangesWarning(canSave, "Discard Entry");
 
-	const handleExit = async () => {
+	const handleExit = useCallback(async () => {
 		if (canSave && !(await confirmNavigation())) return;
 		router.push(`/writer/${address}/${id}`);
-	};
+	}, [address, canSave, confirmNavigation, id, router]);
 
 	const handleDelete = async () => {
 		if (!entry || !wallet || !writer || isSubmitting || isDeleting) return;
@@ -320,7 +322,7 @@ export function MobileEditEntryPage({
 		}
 	};
 
-	const handleSave = async () => {
+	const handleSave = useCallback(async () => {
 		if (!entry || !wallet || !writer || !canSave || isSubmitting || isDeleting)
 			return;
 		setIsSubmitting(true);
@@ -370,7 +372,22 @@ export function MobileEditEntryPage({
 		} finally {
 			if (isExternalWallet) setIsSigning(false);
 		}
-	};
+	}, [
+		address,
+		canSave,
+		encrypted,
+		entry,
+		getAccessToken,
+		id,
+		isDeleting,
+		isExternalWallet,
+		isSubmitting,
+		markdown,
+		mutate,
+		router,
+		wallet,
+		writer,
+	]);
 
 	useEffect(() => {
 		const onKeyDown = (event: KeyboardEvent) => {
@@ -386,16 +403,7 @@ export function MobileEditEntryPage({
 
 		document.addEventListener("keydown", onKeyDown);
 		return () => document.removeEventListener("keydown", onKeyDown);
-	}, [
-		canSave,
-		isDeleting,
-		isSubmitting,
-		markdown,
-		encrypted,
-		entry,
-		writer,
-		wallet?.address,
-	]);
+	}, [handleExit, handleSave]);
 
 	useEffect(() => {
 		setActions(
@@ -449,13 +457,11 @@ export function MobileEditEntryPage({
 		canSave,
 		encrypted,
 		entry,
+		handleSave,
 		isDeleting,
 		isSigning,
 		isSubmitting,
-		markdown,
 		setActions,
-		wallet?.address,
-		writer,
 	]);
 
 	if (entry && wallet && !isWalletAuthor(wallet, entry)) {
@@ -469,7 +475,7 @@ export function MobileEditEntryPage({
 	return (
 		<>
 			<div className="grow flex flex-col min-h-0">
-				<div className="grow min-h-0 flex flex-col rounded-xs border border-dashed border-primary bg-surface overflow-hidden">
+				<div className="relative grow min-h-0 flex flex-col rounded-xs border border-dashed border-primary bg-surface overflow-hidden">
 					<MDX
 						ref={editorRef}
 						markdown={markdown}
@@ -479,6 +485,7 @@ export function MobileEditEntryPage({
 						onChange={setMarkdown}
 						className="bg-transparent text-black dark:text-white h-full flex w-full p-2! create-input-mdx"
 					/>
+					<MarkdownHelpLink className="absolute right-2 bottom-2 z-20" />
 				</div>
 			</div>
 

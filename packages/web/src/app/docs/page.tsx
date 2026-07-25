@@ -2,6 +2,7 @@
 
 import { Check } from "@/components/icons/Check";
 import { Copy } from "@/components/icons/Copy";
+import { MarkdownGuide } from "@/components/markdown/MarkdownGuide";
 import { apiBaseUrl, apiIntro, apiSections, tocItems } from "@/content/docs";
 import type { ApiSectionDoc } from "@/content/docs";
 import Image from "next/image";
@@ -1037,6 +1038,19 @@ export default function DocsPage() {
 							)}
 						</div>
 					))}
+				</div>
+
+				{/* MARKDOWN */}
+				<div className="mb-24">
+					<AnchorHeading
+						id="markdown"
+						className="text-3xl font-serif italic text-primary mb-1"
+					>
+						Markdown
+					</AnchorHeading>
+					<div className="bg-surface p-2.5 rounded-xs">
+						<MarkdownGuide />
+					</div>
 				</div>
 
 				{/* CONTENT ENCODING */}

@@ -1,12 +1,12 @@
 "use client";
 
 import { Arrow } from "@/components/icons/Arrow";
+import { Lock } from "@/components/icons/Lock";
+import { Unlock } from "@/components/icons/Unlock";
 import {
 	useUnsavedChangesNavigation,
 	useUnsavedChangesWarning,
 } from "@/hooks/useUnsavedChangesWarning";
-import { Lock } from "@/components/icons/Lock";
-import { Unlock } from "@/components/icons/Unlock";
 import { cn } from "@/utils/cn";
 import { useIsMac } from "@/utils/hooks";
 import { isEscapeKey, isPrimaryEnterShortcut } from "@/utils/keyboardShortcuts";
@@ -14,6 +14,7 @@ import type { MDXEditorMethods } from "@mdxeditor/editor";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LoadingRelic } from "./LoadingRelic";
+import { MarkdownHelpLink } from "./markdown/MarkdownGuide";
 import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
 
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
@@ -329,6 +330,7 @@ export default function CreateInput({
 								<Unlock className="h-3.5 w-3.5 ml-0.5" />
 							)}
 						</button>
+						<MarkdownHelpLink className="mt-1" />
 						<button
 							type="button"
 							className="create-input-control hover:text-primary text-neutral-400 dark:text-neutral-600 mt-1 cursor-pointer"
@@ -350,6 +352,10 @@ export default function CreateInput({
 						</button>
 					</div>
 				)}
+				{(forceOpen || hasFocus || isExpanded) &&
+					(!hasFocus || !canExpand || hidePrivacyControls) && (
+						<MarkdownHelpLink className="absolute right-2 bottom-2 z-20" />
+					)}
 			</div>
 		</div>
 	);

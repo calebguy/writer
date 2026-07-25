@@ -1,3 +1,5 @@
+import { renderMarkdownGuideMarkdown } from "./markdownGuide";
+
 export type DocParam = {
 	name: string;
 	type: string;
@@ -36,6 +38,9 @@ export const tocItems = [
 	{ id: "entries", label: "Entries", depth: 1 },
 	{ id: "user", label: "User", depth: 1 },
 	{ id: "for-agents", label: "For Agents", depth: 1 },
+	{ id: "markdown", label: "Markdown", depth: 0 },
+	{ id: "syntax", label: "Syntax", depth: 1 },
+	{ id: "shortcuts", label: "Shortcuts", depth: 1 },
 	{ id: "content-encoding", label: "Content Encoding", depth: 0 },
 	{ id: "format-prefixes", label: "Format Prefixes", depth: 1 },
 	{ id: "compression", label: "Compression", depth: 1 },
@@ -533,6 +538,8 @@ export function renderDocsMarkdown() {
 		smartContractsMarkdown.trim(),
 		"",
 		apiMarkdown().trim(),
+		"",
+		renderMarkdownGuideMarkdown().trim(),
 		"",
 		contentEncodingMarkdown.trim(),
 		"",

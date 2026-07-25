@@ -3,14 +3,15 @@
 import { Check } from "@/components/icons/Check";
 import { Lock } from "@/components/icons/Lock";
 import { Unlock } from "@/components/icons/Unlock";
+import { MarkdownHelpLink } from "@/components/markdown/MarkdownGuide";
 import { useComposeHeaderActions } from "@/components/writer/ComposeHeaderActionsContext";
 import {
 	useUnsavedChangesNavigation,
 	useUnsavedChangesWarning,
 } from "@/hooks/useUnsavedChangesWarning";
 import {
-	WRITER_QUERY_STALE_TIME,
 	type Entry,
+	WRITER_QUERY_STALE_TIME,
 	type Writer,
 	createWithChunk,
 	getWriter,
@@ -24,8 +25,7 @@ import { compress, encrypt } from "@/utils/utils";
 import { usePrivy } from "@privy-io/react-auth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Hex } from "viem";
 
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
@@ -124,12 +124,12 @@ export function MobileCreateEntryPage({ address }: { address: string }) {
 		},
 	});
 
-	const handleExit = async () => {
+	const handleExit = useCallback(async () => {
 		if (hasUnsavedChanges && !(await confirmNavigation())) return;
 		router.push(`/writer/${address}`);
-	};
+	}, [address, confirmNavigation, hasUnsavedChanges, router]);
 
-	const handleCreate = async () => {
+	const handleCreate = useCallback(async () => {
 		if (!markdown.trim() || !writer || !wallet || isSubmitting) return;
 		setIsSubmitting(true);
 		try {
@@ -179,7 +179,18 @@ export function MobileCreateEntryPage({ address }: { address: string }) {
 		} finally {
 			if (isExternalWallet) setIsSigning(false);
 		}
-	};
+	}, [
+		address,
+		encrypted,
+		getAccessToken,
+		isExternalWallet,
+		isSubmitting,
+		markdown,
+		mutate,
+		router,
+		wallet,
+		writer,
+	]);
 
 	useEffect(() => {
 		const onKeyDown = (event: KeyboardEvent) => {
@@ -195,7 +206,7 @@ export function MobileCreateEntryPage({ address }: { address: string }) {
 
 		document.addEventListener("keydown", onKeyDown);
 		return () => document.removeEventListener("keydown", onKeyDown);
-	}, [markdown, encrypted, writer, wallet?.address, isSubmitting]);
+	}, [handleCreate, handleExit]);
 
 	useEffect(() => {
 		setActions(
@@ -237,12 +248,13 @@ export function MobileCreateEntryPage({ address }: { address: string }) {
 		markdown,
 		writer,
 		wallet,
+		handleCreate,
 		setActions,
 	]);
 
 	return (
 		<div className="grow flex flex-col min-h-0">
-			<div className="grow min-h-0 flex flex-col rounded-xs border border-dashed border-primary bg-surface overflow-hidden">
+			<div className="relative grow min-h-0 flex flex-col rounded-xs border border-dashed border-primary bg-surface overflow-hidden">
 				<MDX
 					markdown={markdown}
 					autoFocus
@@ -252,6 +264,7 @@ export function MobileCreateEntryPage({ address }: { address: string }) {
 					onChange={setMarkdown}
 					className="bg-transparent text-black dark:text-white h-full flex w-full p-2! create-input-mdx"
 				/>
+				<MarkdownHelpLink className="absolute right-2 bottom-2 z-20" />
 			</div>
 		</div>
 	);

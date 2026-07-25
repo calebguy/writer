@@ -2,7 +2,12 @@
 
 import { useEntryLoading } from "@/utils/EntryLoadingContext";
 import type { Entry as EntryType, Writer } from "@/utils/api";
-import { deleteEntry, editEntry, entryQueryKey, writerQueryKey } from "@/utils/api";
+import {
+	deleteEntry,
+	editEntry,
+	entryQueryKey,
+	writerQueryKey,
+} from "@/utils/api";
 import { cn } from "@/utils/cn";
 import {
 	clearPrivateCachedEntry,
@@ -40,6 +45,7 @@ import { LoadingRelic } from "./LoadingRelic";
 import { Lock } from "./icons/Lock";
 import { Logo } from "./icons/Logo";
 import { Unlock } from "./icons/Unlock";
+import { MarkdownHelpLink } from "./markdown/MarkdownGuide";
 import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
 import { useComposeHeaderActions } from "./writer/ComposeHeaderActionsContext";
 
@@ -359,7 +365,8 @@ export default function Entry({
 		);
 	}, [initialEntry, wallet, isPending]);
 
-	const processedContent = processedEntry?.decompressed ?? processedEntry?.raw ?? "";
+	const processedContent =
+		processedEntry?.decompressed ?? processedEntry?.raw ?? "";
 
 	const isContentChanged = useMemo(() => {
 		return (
@@ -677,6 +684,7 @@ export default function Entry({
 						<Unlock className="h-3.5 w-3.5 ml-0.5" />
 					)}
 				</button>
+				<MarkdownHelpLink className="absolute right-2 bottom-3 z-20" />
 				{showBlockingOverlay && (
 					<div
 						className={cn(
