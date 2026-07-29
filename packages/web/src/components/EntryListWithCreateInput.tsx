@@ -198,7 +198,7 @@ export default function EntryListWithCreateInput({
 				{canCreateEntries && (
 					<div className="hidden md:block">
 						<CreateInput
-							placeholderMarkdown={`Write in Place:\n ${writerTitle}`}
+							placeholderMarkdown={`Write in Place: ${writerTitle}`}
 							onExpand={setIsExpanded}
 							canExpand={true}
 							onSubmit={handleSubmit}
