@@ -206,12 +206,10 @@
 
 :root[data-theme="light"] .modal-overlay {
   background-color: rgb(0 0 0 / 0.2) !important;
-  backdrop-filter: blur(2px) !important;
 }
 
 :root:not([data-theme="light"]) .modal-overlay {
   background-color: rgb(0 0 0 / 0.2) !important;
-  backdrop-filter: blur(2px) !important;
 }
 
 .index-title {
