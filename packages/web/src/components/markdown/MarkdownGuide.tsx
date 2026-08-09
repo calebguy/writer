@@ -99,7 +99,7 @@ export function MarkdownHelpLink({ className }: { className?: string }) {
 			target="_blank"
 			rel="noreferrer"
 			className={cn(
-				"font-mono text-xs text-neutral-400 transition-colors hover:text-primary dark:text-neutral-600",
+				"font-mono text-xs text-muted transition-colors hover:text-primary",
 				className,
 			)}
 		>
