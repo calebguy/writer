@@ -9,6 +9,7 @@ import {
 	type ThemeMode,
 	applyThemeMode,
 	getStoredThemeMode,
+	onThemeChange,
 	setStoredThemeMode,
 	subscribeSystemThemeChange,
 } from "@/utils/theme";
@@ -18,7 +19,7 @@ import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { ColorModal } from "./ColorModal";
+import { ThemeModal } from "./ThemeModal";
 import { HiddenPlacesModal } from "./HiddenPlacesModal";
 import { type MigrateEntry, MigrateModal } from "./MigrateModal";
 import { queryClient as globalQueryClient } from "./Providers";
@@ -80,7 +81,7 @@ export function NavDropdown() {
 		{ label: "Home", href: "/home" },
 		{ label: "Explore", href: "/explore" },
 	].filter((item) => item.href !== pathname);
-	const [open, setOpen] = useState(false);
+	const [themeOpen, setThemeOpen] = useState(false);
 	const [migrateOpen, setMigrateOpen] = useState(false);
 	const [hiddenPlacesOpen, setHiddenPlacesOpen] = useState(false);
 	const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -137,10 +138,16 @@ export function NavDropdown() {
 		});
 	}, [themeMode]);
 
+	useEffect(() => {
+		return onThemeChange(() => {
+			setThemeMode(getStoredThemeMode());
+		});
+	}, []);
+
 	const setTheme = (mode: ThemeMode) => {
 		setThemeMode(mode);
-		applyThemeMode(mode);
 		setStoredThemeMode(mode);
+		applyThemeMode(mode);
 	};
 
 	return (
@@ -176,7 +183,7 @@ export function NavDropdown() {
 					</DropdownItem>
 				)}
 				{authenticated && (
-					<DropdownItem onClick={() => setOpen(true)}>
+					<DropdownItem onClick={() => setThemeOpen(true)}>
 						<div className="flex items-center justify-between gap-2 w-full">
 							<span>Color</span>
 							<span className="w-2 h-2 bg-primary rounded-[1px]" />
@@ -227,9 +234,15 @@ export function NavDropdown() {
 						active={themeMode === "system"}
 						onClick={() => setTheme("system")}
 					/>
+					<ThemeButton
+						src="/images/relics/relic-13.webp"
+						label="Custom"
+						active={themeMode === "custom"}
+						onClick={() => setTheme("custom")}
+					/>
 				</div>
 			</Dropdown>
-			<ColorModal open={open} onClose={() => setOpen(false)} />
+			<ThemeModal open={themeOpen} onClose={() => setThemeOpen(false)} />
 			<HiddenPlacesModal
 				open={hiddenPlacesOpen}
 				onClose={() => setHiddenPlacesOpen(false)}

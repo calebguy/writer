@@ -7,6 +7,7 @@ import {
 	type ThemeMode,
 	applyThemeMode,
 	getStoredThemeMode,
+	onThemeChange,
 	setStoredThemeMode,
 	subscribeSystemThemeChange,
 } from "@/utils/theme";
@@ -14,7 +15,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ColorModal } from "../ColorModal";
+import { ThemeModal } from "../ThemeModal";
 import { HiddenPlacesModal } from "../HiddenPlacesModal";
 import { queryClient } from "../Providers";
 
@@ -64,6 +65,14 @@ const THEME_OPTIONS = [
 		height: 100,
 		className: "h-7 w-7 shrink-0 object-contain dark:invert",
 	},
+	{
+		mode: "custom",
+		title: "Custom",
+		src: "/images/relics/relic-13.webp",
+		width: 100,
+		height: 100,
+		className: "h-7 w-7 shrink-0 object-contain dark:invert",
+	},
 ] satisfies readonly {
 	mode: ThemeMode;
 	title: string;
@@ -81,6 +90,8 @@ function getThemeOption(mode: ThemeMode) {
 			return THEME_OPTIONS[1];
 		case "system":
 			return THEME_OPTIONS[2];
+		case "custom":
+			return THEME_OPTIONS[3];
 	}
 }
 
@@ -93,7 +104,7 @@ export function MobileBottomNav({
 	const isLoggedIn = ready && authenticated;
 	const [showSubMenu, setShowSubMenu] = useState(false);
 	const [showThemeMenu, setShowThemeMenu] = useState(false);
-	const [showColorModal, setShowColorModal] = useState(false);
+	const [showThemeModal, setShowThemeModal] = useState(false);
 	const [showHiddenPlacesModal, setShowHiddenPlacesModal] = useState(false);
 	const [themeMode, setThemeMode] = useState<ThemeMode>("system");
 	const [hidden, setHidden] = useState(false);
@@ -118,7 +129,7 @@ export function MobileBottomNav({
 	useEffect(() => {
 		setShowSubMenu(false);
 		setShowThemeMenu(false);
-		setShowColorModal(false);
+		setShowThemeModal(false);
 		setShowHiddenPlacesModal(false);
 	}, [pathname]);
 
@@ -135,6 +146,12 @@ export function MobileBottomNav({
 			applyThemeMode("system");
 		});
 	}, [themeMode]);
+
+	useEffect(() => {
+		return onThemeChange(() => {
+			setThemeMode(getStoredThemeMode());
+		});
+	}, []);
 
 	useEffect(() => {
 		if (!showSubMenu) return;
@@ -232,8 +249,8 @@ export function MobileBottomNav({
 
 	const setTheme = (mode: ThemeMode) => {
 		setThemeMode(mode);
-		applyThemeMode(mode);
 		setStoredThemeMode(mode);
+		applyThemeMode(mode);
 	};
 	const activeThemeOption = getThemeOption(themeMode);
 	const themeMenuVisible = showSubMenu && showThemeMenu;
@@ -338,7 +355,7 @@ export function MobileBottomNav({
 								onClick={() => {
 									setShowSubMenu(false);
 									setShowThemeMenu(false);
-									setShowColorModal(true);
+									setShowThemeModal(true);
 								}}
 							>
 								<span className="block h-5 w-5 rounded-sm bg-primary" />
@@ -461,9 +478,9 @@ export function MobileBottomNav({
 				</div>
 			</div>
 
-			<ColorModal
-				open={showColorModal}
-				onClose={() => setShowColorModal(false)}
+			<ThemeModal
+				open={showThemeModal}
+				onClose={() => setShowThemeModal(false)}
 			/>
 			<HiddenPlacesModal
 				open={showHiddenPlacesModal}

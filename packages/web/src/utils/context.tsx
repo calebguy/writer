@@ -32,8 +32,11 @@ export interface WriterContextType {
 
 	defaultColor: RGB;
 	primaryColor: RGB;
+	customBackgroundColor: RGB | null;
 	setPrimaryColor: (color: RGB) => void;
+	setCustomBackgroundColor: (color: RGB | null) => void;
 	setPrimaryFromLongHex: (hex: string) => void;
+	setCustomBackgroundFromLongHex: (hex: string | null) => void;
 	resetPrimaryColor: () => void;
 }
 
@@ -56,7 +59,10 @@ export const WriterContext = createContext<WriterContextType>({
 
 	defaultColor: defaultColor,
 	primaryColor: defaultColor,
+	customBackgroundColor: null,
 	setPrimaryColor: () => {},
+	setCustomBackgroundColor: () => {},
 	setPrimaryFromLongHex: () => {},
+	setCustomBackgroundFromLongHex: () => {},
 	resetPrimaryColor: () => {},
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuthColor } from "@/hooks/useAuthColor";
+import { useAuthTheme } from "@/hooks/useAuthTheme";
 import { UnsavedChangesConfirmModal } from "@/components/UnsavedChangesConfirmModal";
 import {
 	AuthHintContext,
@@ -13,8 +13,11 @@ import {
 } from "@/utils/context";
 import {
 	applyThemeMode,
+	clearStoredCustomBackgroundColor,
+	getStoredCustomBackgroundColor,
 	getStoredThemeMode,
 	onThemeChange,
+	setStoredCustomBackgroundColor,
 	subscribeSystemThemeChange,
 } from "@/utils/theme";
 import {
@@ -101,6 +104,9 @@ export function Providers({
 	const [primaryColor, setPrimaryColor] = useState<
 		WriterContextType["primaryColor"]
 	>(getInitialColor());
+	const [customBackgroundColor, setCustomBackgroundColor] = useState<
+		WriterContextType["customBackgroundColor"]
+	>(() => getStoredCustomBackgroundColor());
 	const [hasUserColor, setHasUserColor] = useState<boolean>(!!initialColor);
 
 	useEffect(() => {
@@ -172,6 +178,42 @@ export function Providers({
 		setPrimaryColor(rgb);
 		setPrimaryAndSecondaryCSSVariables(rgb);
 	}, []);
+
+	const handleSetCustomBackgroundColor = useCallback(
+		(rgb: WriterContextType["customBackgroundColor"]) => {
+			setCustomBackgroundColor(rgb);
+			if (rgb) {
+				setStoredCustomBackgroundColor(rgb);
+			}
+			if (!rgb) {
+				clearStoredCustomBackgroundColor();
+			}
+			if (getStoredThemeMode() === "custom") {
+				applyThemeMode("custom");
+			}
+		},
+		[],
+	);
+
+	const handleSetCustomBackgroundFromLongHex = useCallback(
+		(hex: string | null) => {
+			if (!hex) {
+				setCustomBackgroundColor(null);
+				clearStoredCustomBackgroundColor();
+				if (getStoredThemeMode() === "custom") {
+					applyThemeMode("custom");
+				}
+				return;
+			}
+			const rgb = hexToRGB(bytes32ToHexColor(hex));
+			setCustomBackgroundColor(rgb);
+			setStoredCustomBackgroundColor(rgb);
+			if (getStoredThemeMode() === "custom") {
+				applyThemeMode("custom");
+			}
+		},
+		[],
+	);
 
 	const handleResetPrimaryColor = useCallback(() => {
 		setHasUserColor(false);
@@ -325,7 +367,9 @@ export function Providers({
 
 			const anchor = event.target.closest<HTMLAnchorElement>("a[href]");
 			if (!anchor) return;
-			if (anchor.closest('[contenteditable="true"], [data-lexical-editor="true"]')) {
+			if (
+				anchor.closest('[contenteditable="true"], [data-lexical-editor="true"]')
+			) {
 				return;
 			}
 			if (anchor.target && anchor.target !== "_self") return;
@@ -406,8 +450,12 @@ export function Providers({
 									setWriter,
 									defaultColor,
 									primaryColor,
+									customBackgroundColor,
 									setPrimaryColor: handleSetPrimaryColor,
+									setCustomBackgroundColor: handleSetCustomBackgroundColor,
 									setPrimaryFromLongHex: handleSetPrimaryFromLongHex,
+									setCustomBackgroundFromLongHex:
+										handleSetCustomBackgroundFromLongHex,
 									resetPrimaryColor: handleResetPrimaryColor,
 								}}
 							>
@@ -427,6 +475,6 @@ export function Providers({
 }
 
 function AuthColorSync() {
-	useAuthColor();
+	useAuthTheme();
 	return null;
 }

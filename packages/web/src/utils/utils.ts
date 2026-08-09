@@ -90,6 +90,50 @@ export function RGBToHex(rgb: RGB): `#${string}` {
 
 export type RGB = [number, number, number];
 
+type CSSColorVariable =
+	| "--color-background"
+	| "--color-surface"
+	| "--color-surface-raised"
+	| "--color-surface-overlay"
+	| "--color-foreground"
+	| "--color-muted"
+	| "--color-muted-strong"
+	| "--color-border"
+	| "--color-border-strong";
+
+const LIGHT_THEME_BACKGROUND_THRESHOLD = 0.45;
+const LIGHT_SURFACE_MIX = 0.06;
+const LIGHT_RAISED_SURFACE_MIX = 0.12;
+const LIGHT_OVERLAY_MIX = 0.08;
+const LIGHT_BORDER_MIX = 0.18;
+const LIGHT_STRONG_BORDER_MIX = 0.28;
+const DARK_SURFACE_MIX = 0.08;
+const DARK_RAISED_SURFACE_MIX = 0.18;
+const DARK_OVERLAY_MIX = 0.12;
+const DARK_BORDER_MIX = 0.2;
+const DARK_STRONG_BORDER_MIX = 0.32;
+const MUTED_MIX = 0.45;
+const STRONG_MUTED_MIX = 0.25;
+const WHITE_RGB: RGB = [255, 255, 255];
+const BLACK_RGB: RGB = [0, 0, 0];
+
+function clampChannel(value: number) {
+	return Math.min(255, Math.max(0, Math.round(value)));
+}
+
+function mixRGB(from: RGB, to: RGB, amount: number): RGB {
+	return from.map((channel, index) =>
+		clampChannel(channel + (to[index] - channel) * amount),
+	) as RGB;
+}
+
+function setCSSColorVariableFromRGB(variable: CSSColorVariable, rgb: RGB) {
+	document.documentElement.style.setProperty(
+		variable,
+		`rgb(${rgb[0]} ${rgb[1]} ${rgb[2]})`,
+	);
+}
+
 export function hexToRGB(hex: string): RGB {
 	// Validate the input to ensure it is a valid HEX color
 	const hexRegex = /^#?([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$/;
@@ -156,6 +200,86 @@ export function clearInlinePrimaryAndSecondary() {
 	document.documentElement.style.removeProperty("--color-secondary");
 }
 
+export function getRelativeLuminance(rgb: RGB) {
+	const [red, green, blue] = rgb.map((channel) => {
+		const normalized = channel / 255;
+		return normalized <= 0.03928
+			? normalized / 12.92
+			: ((normalized + 0.055) / 1.055) ** 2.4;
+	});
+	return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+}
+
+export function getCustomBackgroundResolvedTheme(rgb: RGB): "light" | "dark" {
+	return getRelativeLuminance(rgb) < LIGHT_THEME_BACKGROUND_THRESHOLD
+		? "dark"
+		: "light";
+}
+
+export function setCustomBackgroundCSSVariables(
+	background: RGB,
+	resolvedTheme: "light" | "dark",
+) {
+	const foreground = resolvedTheme === "dark" ? WHITE_RGB : BLACK_RGB;
+	const surfaceTarget = foreground;
+	const surfaceMix =
+		resolvedTheme === "dark" ? DARK_SURFACE_MIX : LIGHT_SURFACE_MIX;
+	const raisedMix =
+		resolvedTheme === "dark"
+			? DARK_RAISED_SURFACE_MIX
+			: LIGHT_RAISED_SURFACE_MIX;
+	const overlayMix =
+		resolvedTheme === "dark" ? DARK_OVERLAY_MIX : LIGHT_OVERLAY_MIX;
+	const borderMix =
+		resolvedTheme === "dark" ? DARK_BORDER_MIX : LIGHT_BORDER_MIX;
+	const strongBorderMix =
+		resolvedTheme === "dark" ? DARK_STRONG_BORDER_MIX : LIGHT_STRONG_BORDER_MIX;
+
+	setCSSColorVariableFromRGB("--color-background", background);
+	setCSSColorVariableFromRGB(
+		"--color-surface",
+		mixRGB(background, surfaceTarget, surfaceMix),
+	);
+	setCSSColorVariableFromRGB(
+		"--color-surface-raised",
+		mixRGB(background, surfaceTarget, raisedMix),
+	);
+	setCSSColorVariableFromRGB(
+		"--color-surface-overlay",
+		mixRGB(background, surfaceTarget, overlayMix),
+	);
+	setCSSColorVariableFromRGB("--color-foreground", foreground);
+	setCSSColorVariableFromRGB(
+		"--color-muted",
+		mixRGB(foreground, background, MUTED_MIX),
+	);
+	setCSSColorVariableFromRGB(
+		"--color-muted-strong",
+		mixRGB(foreground, background, STRONG_MUTED_MIX),
+	);
+	setCSSColorVariableFromRGB(
+		"--color-border",
+		mixRGB(background, surfaceTarget, borderMix),
+	);
+	setCSSColorVariableFromRGB(
+		"--color-border-strong",
+		mixRGB(background, surfaceTarget, strongBorderMix),
+	);
+}
+
+export function clearInlineCustomBackgroundCSSVariables() {
+	if (typeof document === "undefined") return;
+	document.documentElement.style.removeProperty("--color-background");
+	document.documentElement.style.removeProperty("--color-surface");
+	document.documentElement.style.removeProperty("--color-surface-raised");
+	document.documentElement.style.removeProperty("--color-surface-overlay");
+	document.documentElement.style.removeProperty("--color-foreground");
+	document.documentElement.style.removeProperty("--color-muted");
+	document.documentElement.style.removeProperty("--color-muted-strong");
+	document.documentElement.style.removeProperty("--color-border");
+	document.documentElement.style.removeProperty("--color-border-strong");
+}
+
 export function readCSSRgbVariable(name: string): RGB | null {
 	if (typeof document === "undefined") return null;
 	const raw = getComputedStyle(document.documentElement)
@@ -165,6 +289,18 @@ export function readCSSRgbVariable(name: string): RGB | null {
 	const parts = raw.split(/\s+/).map(Number);
 	if (parts.length !== 3 || parts.some((n) => Number.isNaN(n))) return null;
 	return parts as RGB;
+}
+
+export function readDocumentBackgroundColor(): RGB | null {
+	if (typeof document === "undefined") return null;
+	const raw = getComputedStyle(document.documentElement).backgroundColor;
+	const channels = raw
+		.match(/\d+(\.\d+)?/g)
+		?.slice(0, 3)
+		.map(Number);
+	if (!channels || channels.length !== 3) return null;
+	if (channels.some((channel) => Number.isNaN(channel))) return null;
+	return channels.map(clampChannel) as RGB;
 }
 
 export async function compress(input: string) {

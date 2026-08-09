@@ -12,6 +12,11 @@
   --color-surface-raised: var(--color-neutral-300);
   --color-surface-overlay: var(--color-neutral-200);
   --color-background: var(--color-white);
+  --color-foreground: var(--color-black);
+  --color-muted: rgb(97 97 92);
+  --color-muted-strong: rgb(64 64 60);
+  --color-border: rgb(204 204 204);
+  --color-border-strong: rgb(160 160 154);
 
   --screen-space: 0px!important;
 }
@@ -23,6 +28,11 @@
   --color-surface-raised: var(--color-neutral-700);
   --color-surface-overlay: var(--color-neutral-900);
   --color-background: var(--color-neutral-800);
+  --color-foreground: var(--color-white);
+  --color-muted: rgb(115 115 115);
+  --color-muted-strong: rgb(163 163 163);
+  --color-border: var(--color-neutral-700);
+  --color-border-strong: var(--color-neutral-600);
 }
 
 /* biome-ignore lint/suspicious/noUnknownAtRules: Tailwind CSS @theme directive */
@@ -34,6 +44,11 @@
   --color-surface-raised: var(--color-surface-raised);
   --color-surface-overlay: var(--color-surface-overlay);
   --color-background: var(--color-background);
+  --color-foreground: var(--color-foreground);
+  --color-muted: var(--color-muted);
+  --color-muted-strong: var(--color-muted-strong);
+  --color-border: var(--color-border);
+  --color-border-strong: var(--color-border-strong);
   --font-serif: var(--font-lt-remark);
   --font-mono: var(--font-diatype-rounded-mono);
 }
@@ -41,12 +56,12 @@
 @layer base {
   :root {
     font-family: var(--font-serif);
-    color: var(--color-black);
+    color: var(--color-foreground);
     background-color: var(--color-background);
   }
 
   :root[data-theme="dark"] {
-    color: var(--color-white);
+    color: var(--color-foreground);
     background-color: var(--color-background);
   }
 
@@ -113,41 +128,41 @@
 }
 
 :root[data-theme="light"] .writer-title {
-  color: var(--color-black);
+  color: var(--color-foreground);
 }
 
 :root[data-theme="light"] .writer-title .prose,
 :root[data-theme="light"] .writer-title .prose * {
-  color: var(--color-black);
+  color: var(--color-foreground);
 }
 
 :root[data-theme="light"] .writer-card-meta {
-  color: rgb(97 97 92);
+  color: var(--color-muted);
 }
 
 :root[data-theme="light"] .home-writer-card:has(.home-hide-group:hover) .home-writer-content .prose,
 :root[data-theme="light"] .home-writer-card:has(.home-hide-group:hover) .home-writer-content .prose * {
-  color: rgb(160 160 154) !important;
+  color: var(--color-border-strong) !important;
 }
 
 :root[data-theme="light"] .private-entry-card {
-  border-color: rgb(204 204 204);
+  border-color: var(--color-border);
 }
 
 :root[data-theme="light"] .private-entry-content {
-  color: rgb(97 97 92);
+  color: var(--color-muted);
 }
 
 :root[data-theme="light"] .private-entry-icon {
-  color: rgb(97 97 92);
+  color: var(--color-muted);
 }
 
 :root[data-theme="light"] .private-entry-meta {
-  color: rgb(97 97 92);
+  color: var(--color-muted);
 }
 
 :root[data-theme="light"] .pending-entry-spinner {
-  color: rgb(64 64 60);
+  color: var(--color-muted-strong);
 }
 
 .pending-entry-spinner {
@@ -173,7 +188,7 @@
 }
 
 :root[data-theme="light"] .create-input-hint {
-  color: rgb(128 128 122);
+  color: var(--color-muted);
 }
 
 :root[data-theme="light"] .create-input-control:hover {

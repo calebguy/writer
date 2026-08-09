@@ -1,0 +1,1 @@
+ALTER TABLE "user" ADD COLUMN "custom_background_color" text;

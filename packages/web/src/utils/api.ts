@@ -18,7 +18,6 @@ export function entryQueryKey(address: string, id: string | number) {
 	return ["entry", address.toLowerCase(), id.toString()] as const;
 }
 
-
 export async function hideWriter({
 	address,
 	authToken,
@@ -89,7 +88,6 @@ export async function updateWriterTitle({
 	return res.json();
 }
 
-
 export async function getMe(address: Hex) {
 	const res = await client.me[":address"].$get({
 		param: { address },
@@ -114,6 +112,30 @@ export async function setColor({
 	const res = await client["color-registry"].set.$post(
 		{
 			json: { signature, nonce, hexColor },
+		},
+		{
+			headers: { Authorization: `Bearer ${authToken}` },
+		},
+	);
+	if (!res.ok) {
+		throw new Error(res.statusText);
+	}
+	return res.json();
+}
+
+export async function updateTheme({
+	address,
+	authToken,
+	customBackgroundColor,
+}: {
+	address: Hex | string;
+	authToken: string;
+	customBackgroundColor: string | null;
+}) {
+	const res = await client.me[":address"].theme.$patch(
+		{
+			param: { address: getAddress(address) },
+			json: { customBackgroundColor },
 		},
 		{
 			headers: { Authorization: `Bearer ${authToken}` },
@@ -302,7 +324,6 @@ export async function getHiddenWritersByManager({
 	}
 	return (await res.json()).writers;
 }
-
 
 export async function reconcileManager({
 	userAddress,

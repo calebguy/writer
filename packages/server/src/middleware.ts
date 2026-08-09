@@ -170,6 +170,13 @@ export const colorRegistrySetJsonValidator = zValidator(
 	}),
 );
 
+export const userThemeJsonValidator = zValidator(
+	"json",
+	z.object({
+		customBackgroundColor: hexColor.nullable(),
+	}),
+);
+
 export function assertAdminKey(c: Context) {
 	const expectedKey = env.ADMIN_KEY;
 	if (!expectedKey) {

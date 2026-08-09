@@ -1,12 +1,27 @@
-export type ThemeMode = "light" | "dark" | "system";
+import {
+	type RGB,
+	RGBToHex,
+	clearInlineCustomBackgroundCSSVariables,
+	getCustomBackgroundResolvedTheme,
+	hexToRGB,
+	setCustomBackgroundCSSVariables,
+} from "./utils";
+
+export type ThemeMode = "light" | "dark" | "system" | "custom";
 export type ResolvedTheme = "light" | "dark";
 
 const THEME_STORAGE_KEY = "writer-theme";
+const CUSTOM_BACKGROUND_STORAGE_KEY = "writer-custom-background-color";
 const DARK_MEDIA_QUERY = "(prefers-color-scheme: dark)";
 const THEME_CHANGE_EVENT = "writer:theme-changed";
 
 function isThemeMode(value: string | null): value is ThemeMode {
-	return value === "light" || value === "dark" || value === "system";
+	return (
+		value === "light" ||
+		value === "dark" ||
+		value === "system" ||
+		value === "custom"
+	);
 }
 
 export function getStoredThemeMode(): ThemeMode {
@@ -20,8 +35,35 @@ export function setStoredThemeMode(mode: ThemeMode) {
 	window.localStorage.setItem(THEME_STORAGE_KEY, mode);
 }
 
+export function getStoredCustomBackgroundColor(): RGB | null {
+	if (typeof window === "undefined") return null;
+	const stored = window.localStorage.getItem(CUSTOM_BACKGROUND_STORAGE_KEY);
+	if (!stored) return null;
+	try {
+		return hexToRGB(stored);
+	} catch {
+		return null;
+	}
+}
+
+export function setStoredCustomBackgroundColor(color: RGB) {
+	if (typeof window === "undefined") return;
+	window.localStorage.setItem(CUSTOM_BACKGROUND_STORAGE_KEY, RGBToHex(color));
+}
+
+export function clearStoredCustomBackgroundColor() {
+	if (typeof window === "undefined") return;
+	window.localStorage.removeItem(CUSTOM_BACKGROUND_STORAGE_KEY);
+}
+
 export function resolveThemeMode(mode: ThemeMode): ResolvedTheme {
 	if (mode === "light" || mode === "dark") return mode;
+	if (mode === "custom") {
+		const customBackground = getStoredCustomBackgroundColor();
+		return customBackground
+			? getCustomBackgroundResolvedTheme(customBackground)
+			: "light";
+	}
 	if (typeof window === "undefined") return "dark";
 	return window.matchMedia(DARK_MEDIA_QUERY).matches ? "dark" : "light";
 }
@@ -30,6 +72,17 @@ export function applyThemeMode(mode: ThemeMode): ResolvedTheme {
 	const resolved = resolveThemeMode(mode);
 	if (typeof document !== "undefined") {
 		document.documentElement.dataset.theme = resolved;
+		document.documentElement.dataset.themeMode = mode;
+		if (mode === "custom") {
+			const customBackground = getStoredCustomBackgroundColor();
+			if (customBackground) {
+				setCustomBackgroundCSSVariables(customBackground, resolved);
+			} else {
+				clearInlineCustomBackgroundCSSVariables();
+			}
+		} else {
+			clearInlineCustomBackgroundCSSVariables();
+		}
 		if (typeof window !== "undefined") {
 			window.dispatchEvent(
 				new CustomEvent(THEME_CHANGE_EVENT, { detail: resolved }),

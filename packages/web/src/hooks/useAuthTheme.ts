@@ -6,10 +6,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useContext, useEffect, useMemo } from "react";
 import type { Hex } from "viem";
 
-export function useAuthColor() {
+export function useAuthTheme() {
 	const { ready, authenticated } = usePrivy();
-	const { setPrimaryFromLongHex, resetPrimaryColor } =
-		useContext(WriterContext);
+	const {
+		setCustomBackgroundFromLongHex,
+		setPrimaryFromLongHex,
+		resetPrimaryColor,
+	} = useContext(WriterContext);
 
 	const isLoggedIn = useMemo(
 		() => ready && authenticated,
@@ -30,10 +33,20 @@ export function useAuthColor() {
 	});
 
 	useEffect(() => {
-		if (isLoggedIn && data?.user?.color) {
-			setPrimaryFromLongHex(data.user.color);
+		if (isLoggedIn && data?.user) {
+			if (data.user.color) {
+				setPrimaryFromLongHex(data.user.color);
+			}
+			setCustomBackgroundFromLongHex(data.user.customBackgroundColor ?? null);
 		} else if (!isLoggedIn) {
 			resetPrimaryColor();
+			setCustomBackgroundFromLongHex(null);
 		}
-	}, [data?.user?.color, isLoggedIn, setPrimaryFromLongHex, resetPrimaryColor]);
+	}, [
+		data?.user,
+		isLoggedIn,
+		setCustomBackgroundFromLongHex,
+		setPrimaryFromLongHex,
+		resetPrimaryColor,
+	]);
 }

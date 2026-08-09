@@ -36,6 +36,7 @@ import {
 	userAddressParamSchema,
 	setTitleJsonValidator,
 	writerOrderJsonValidator,
+	userThemeJsonValidator,
 } from "../middleware";
 import {
 	requireSavedAuth,
@@ -201,6 +202,28 @@ const writerRoutes = new Hono()
 		const user = await db.getUser(address);
 		return c.json({ user });
 	})
+	.patch(
+		"/me/:address/theme",
+		addressParamSchema,
+		requireWalletAuth,
+		userThemeJsonValidator,
+		async (c) => {
+			const { address } = c.req.valid("param");
+			if (!c.var.walletAddresses.has(getAddress(address))) {
+				return c.json(
+					{ error: "address does not match authenticated wallet" },
+					403,
+				);
+			}
+
+			const { customBackgroundColor } = c.req.valid("json");
+			const [user] = await db.upsertUser({
+				address,
+				customBackgroundColor,
+			});
+			return c.json({ user });
+		},
+	)
 	.get("/writer/public", async (c) => {
 		const writers = await db.getPublicWriters();
 		return c.json({ writers: writers.map(publicWriterToJsonSafe) });
