@@ -864,7 +864,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 						</span>
 					</button>
 				)}
-				<div className="writer-card-meta shrink-0 text-right text-sm text-neutral-400 dark:text-neutral-600 leading-3 pt-2">
+				<div className="writer-card-meta shrink-0 text-right text-sm text-muted leading-3 pt-2">
 					<div className="inline-block">
 						{isPendingWriter ? (
 							<span className="pending-entry-spinner inline-flex ml-auto">
@@ -960,22 +960,20 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 							onPointerEnter={() => {
 								void import("./markdown/MDX");
 							}}
-							className="md:hidden flex flex-col items-center gap-3 text-neutral-500 transition-colors hover:text-primary dark:text-neutral-400"
+							className="md:hidden flex flex-col items-center gap-3 text-muted-strong transition-colors hover:text-primary"
 						>
 							<span className="flex h-14 w-14 items-center justify-center rounded-full text-primary">
 								<FiPlus className="h-10 w-10" />
 							</span>
 							<span>Create your first Place</span>
 						</Link>
-						<span className="hidden md:inline text-neutral-500 dark:text-neutral-400">
+						<span className="hidden md:inline text-muted-strong">
 							Create your first Place
 						</span>
 					</>
 				)}
 				{onboardingMode === "creating" && (
-					<span className="text-neutral-500 dark:text-neutral-400">
-						Creating your first Place
-					</span>
+					<span className="text-muted-strong">Creating your first Place</span>
 				)}
 				{onboardingMode === "created" && confirmedFirstWriter && (
 					<>

@@ -52,7 +52,7 @@ export default function PublicWriterList({ writers }: PublicWriterListProps) {
 							className="text-black dark:text-white writer-title"
 						/>
 					</div>
-					<div className="writer-card-meta shrink-0 flex items-center justify-end gap-3 text-sm text-neutral-400 dark:text-neutral-600 leading-3 pt-2">
+					<div className="writer-card-meta shrink-0 flex items-center justify-end gap-3 text-sm text-muted leading-3 pt-2">
 						<span className="flex items-end gap-1">{writer.publicCount}</span>
 					</div>
 				</Link>

@@ -76,8 +76,8 @@ const THEME_BOOTSTRAP_SCRIPT = `(() => {
 				setColor("--color-surface-raised", mix(rgb, foreground, dark ? 0.18 : 0.12));
 				setColor("--color-surface-overlay", mix(rgb, foreground, dark ? 0.12 : 0.08));
 				setColor("--color-foreground", foreground);
-				setColor("--color-muted", mix(foreground, rgb, 0.45));
-				setColor("--color-muted-strong", mix(foreground, rgb, 0.25));
+				setColor("--color-muted", mix(foreground, rgb, 0.28));
+				setColor("--color-muted-strong", mix(foreground, rgb, 0.16));
 				setColor("--color-border", mix(rgb, foreground, dark ? 0.2 : 0.18));
 				setColor("--color-border-strong", mix(rgb, foreground, dark ? 0.32 : 0.28));
 				return;

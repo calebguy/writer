@@ -395,7 +395,7 @@ export default function Entry({
 				{showHeaderPrivacyIcon && (
 					<span
 						aria-label="Private entry"
-						className="inline-flex h-6 w-6 items-center justify-center text-neutral-500 dark:text-neutral-400"
+						className="inline-flex h-6 w-6 items-center justify-center text-muted-strong"
 					>
 						<Lock className="h-4 w-4" />
 					</span>
@@ -640,21 +640,19 @@ export default function Entry({
 					)}
 					{!canView && (
 						<div className="flex flex-col gap-2 justify-center items-center grow">
-							<div className="text-sm text-neutral-400 dark:text-neutral-600">
+							<div className="text-sm text-muted">
 								<Logo className="w-8 h-8" />
 							</div>
-							<div className="text-lg text-neutral-400 dark:text-neutral-600">
-								Private
-							</div>
+							<div className="text-lg text-muted">Private</div>
 						</div>
 					)}
 					{isEntryPrivate(processedEntry) && (
 						<div className="absolute bottom-0 left-0 hidden md:block">
-							<Lock className="w-3.5 h-3.5 text-neutral-400 dark:text-neutral-600" />
+							<Lock className="w-3.5 h-3.5 text-muted" />
 						</div>
 					)}
 					{isPending && (
-						<div className="absolute bottom-0 right-0 flex items-center gap-1.5 text-neutral-400 dark:text-neutral-600">
+						<div className="absolute bottom-0 right-0 flex items-center gap-1.5 text-muted">
 							<span className="text-xs">confirming</span>
 							<LoadingRelic size={14} />
 						</div>
@@ -676,7 +674,7 @@ export default function Entry({
 				<button
 					type="button"
 					onClick={() => setEncrypted?.(!encrypted)}
-					className="hover:text-primary text-neutral-400 dark:text-neutral-600 absolute bottom-3 left-2 z-20 cursor-pointer"
+					className="hover:text-primary text-muted absolute bottom-3 left-2 z-20 cursor-pointer"
 				>
 					{encrypted ? (
 						<Lock className="h-3.5 w-3.5" />
@@ -726,9 +724,7 @@ export default function Entry({
 							<AiOutlineLoading3Quarters className="pending-entry-spinner-icon w-3 h-3 rotating" />
 						</span>
 					) : (
-						<span className="text-neutral-400 dark:text-neutral-600 bold">
-							{createdAt}
-						</span>
+						<span className="text-muted bold">{createdAt}</span>
 					)}
 				</div>
 				{canEdit && (
@@ -738,7 +734,7 @@ export default function Entry({
 								<button
 									type="button"
 									className={cn(
-										"text-neutral-400 dark:text-neutral-600 hover:text-secondary cursor-pointer",
+										"text-muted hover:text-secondary cursor-pointer",
 										{ "hidden md:inline": !isEditing },
 									)}
 									onClick={() => {
@@ -772,7 +768,7 @@ export default function Entry({
 							<div className="ml-2">
 								<button
 									type="button"
-									className="text-neutral-400 dark:text-neutral-600 hover:text-red-700 cursor-pointer"
+									className="text-muted hover:text-red-700 cursor-pointer"
 									onClick={() => setIsDeleting(true)}
 								>
 									delete

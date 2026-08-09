@@ -112,8 +112,8 @@ const DARK_RAISED_SURFACE_MIX = 0.18;
 const DARK_OVERLAY_MIX = 0.12;
 const DARK_BORDER_MIX = 0.2;
 const DARK_STRONG_BORDER_MIX = 0.32;
-const MUTED_MIX = 0.45;
-const STRONG_MUTED_MIX = 0.25;
+const MUTED_MIX = 0.28;
+const STRONG_MUTED_MIX = 0.16;
 const WHITE_RGB: RGB = [255, 255, 255];
 const BLACK_RGB: RGB = [0, 0, 0];
 

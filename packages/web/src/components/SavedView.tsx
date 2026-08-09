@@ -286,7 +286,7 @@ function MixedSavedGrid({
 									className="text-black dark:text-white writer-title"
 								/>
 							</div>
-							<div className="writer-card-meta text-neutral-400 dark:text-neutral-600 flex items-end justify-between text-sm leading-3 pt-2 shrink-0 pb-2">
+							<div className="writer-card-meta text-muted flex items-end justify-between text-sm leading-3 pt-2 shrink-0 pb-2">
 								<span>Writer</span>
 								{isPendingWriter ? (
 									<span className="pending-entry-spinner">
@@ -348,10 +348,10 @@ function MixedSavedGrid({
 						}}
 					>
 						{showLockedState ? (
-							<div className="flex flex-col items-center justify-center grow text-neutral-400 dark:text-neutral-600 gap-2 private-entry-content">
+							<div className="flex flex-col items-center justify-center grow text-muted gap-2 private-entry-content">
 								<>
 									<span className="block group-hover:hidden">
-										<Lock className="h-4 w-4 text-neutral-400 dark:text-neutral-600 private-entry-icon" />
+										<Lock className="h-4 w-4 text-muted private-entry-icon" />
 									</span>
 									<span className="hidden group-hover:block">
 										<Unlock className="h-4 w-4 text-primary" />
@@ -378,7 +378,7 @@ function MixedSavedGrid({
 						)}
 						<div
 							className={cn(
-								"writer-card-meta text-neutral-400 dark:text-neutral-600 flex items-end text-sm leading-3 pt-2 shrink-0 pb-2",
+								"writer-card-meta text-muted flex items-end text-sm leading-3 pt-2 shrink-0 pb-2",
 								isPending ? "justify-between" : "justify-start",
 							)}
 						>

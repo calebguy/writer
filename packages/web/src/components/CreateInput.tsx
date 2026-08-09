@@ -310,7 +310,7 @@ export default function CreateInput({
 					ref={hintRef}
 					aria-hidden="true"
 					className={cn(
-						"create-input-hint text-neutral-700 text-base leading-[16px] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-opacity",
+						"create-input-hint text-muted text-base leading-[16px] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-opacity",
 						showHint ? "opacity-100" : "opacity-0",
 					)}
 				>
@@ -322,7 +322,7 @@ export default function CreateInput({
 						<button
 							type="button"
 							onClick={() => setEncrypted?.(!encrypted)}
-							className="create-input-control hover:text-primary text-neutral-400 dark:text-neutral-600 cursor-pointer"
+							className="create-input-control hover:text-primary text-muted cursor-pointer"
 						>
 							{encrypted ? (
 								<Lock className="h-3.5 w-3.5" />
@@ -333,7 +333,7 @@ export default function CreateInput({
 						<MarkdownHelpLink className="mt-1" />
 						<button
 							type="button"
-							className="create-input-control hover:text-primary text-neutral-400 dark:text-neutral-600 mt-1 cursor-pointer"
+							className="create-input-control hover:text-primary text-muted mt-1 cursor-pointer"
 							onClick={() => {
 								setIsExpanded(!isExpanded);
 								onExpand?.(!isExpanded);
