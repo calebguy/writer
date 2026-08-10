@@ -309,7 +309,7 @@ const writerRoutes = new Hono()
 						args,
 					}),
 				);
-				const user = await db.upsertUser({
+				const [user] = await db.upsertUser({
 					address: address,
 					color: hexColor,
 				});

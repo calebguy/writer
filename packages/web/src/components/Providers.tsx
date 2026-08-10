@@ -108,6 +108,7 @@ export function Providers({
 		WriterContextType["customBackgroundColor"]
 	>(() => getStoredCustomBackgroundColor());
 	const [hasUserColor, setHasUserColor] = useState<boolean>(!!initialColor);
+	const hasUserColorRef = useRef<boolean>(!!initialColor);
 
 	useEffect(() => {
 		const previousPathname = previousPathnameRef.current;
@@ -154,8 +155,13 @@ export function Providers({
 	// themed default so consumers (Privy accentColor, swatches, etc.) react to
 	// light/dark toggles.
 	useEffect(() => {
+		hasUserColorRef.current = hasUserColor;
+	}, [hasUserColor]);
+
+	useEffect(() => {
 		if (hasUserColor) return;
 		const sync = () => {
+			if (hasUserColorRef.current) return;
 			const rgb = readCSSRgbVariable("--color-primary-default");
 			if (rgb) setPrimaryColor(rgb);
 		};
@@ -165,6 +171,7 @@ export function Providers({
 
 	const handleSetPrimaryColor = useCallback(
 		(rgb: WriterContextType["primaryColor"]) => {
+			hasUserColorRef.current = true;
 			setHasUserColor(true);
 			setPrimaryColor(rgb);
 			setPrimaryAndSecondaryCSSVariables(rgb);
@@ -174,6 +181,7 @@ export function Providers({
 
 	const handleSetPrimaryFromLongHex = useCallback((hex: string) => {
 		const rgb = hexToRGB(bytes32ToHexColor(hex));
+		hasUserColorRef.current = true;
 		setHasUserColor(true);
 		setPrimaryColor(rgb);
 		setPrimaryAndSecondaryCSSVariables(rgb);
@@ -216,6 +224,7 @@ export function Providers({
 	);
 
 	const handleResetPrimaryColor = useCallback(() => {
+		hasUserColorRef.current = false;
 		setHasUserColor(false);
 		clearInlinePrimaryAndSecondary();
 		const rgb = readCSSRgbVariable("--color-primary-default");
