@@ -28,7 +28,7 @@ export function Footer() {
 	}
 
 	return (
-		<footer className="flex justify-between items-end w-full font-serif text-base dark:text-neutral-500 text-neutral-400 pt-4">
+		<footer className="flex justify-between items-end w-full font-serif text-base text-border-strong pt-4">
 			<span className="flex-1 text-left hidden md:block">writer.place</span>
 			<span className="flex-1 hidden md:block text-left md:text-center">
 				write today, forever

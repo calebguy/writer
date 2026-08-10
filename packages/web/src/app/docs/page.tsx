@@ -163,7 +163,7 @@ function Endpoint({
 	return (
 		<div
 			id={id}
-			className="border-b last:mb-0 last:pb-0 mb-6 pb-6 border-neutral-300 dark:border-neutral-700 last:border-b-0 scroll-mt-24 flex flex-col gap-6"
+			className="border-b last:mb-0 last:pb-0 mb-6 pb-6 border-border last:border-b-0 scroll-mt-24 flex flex-col gap-6"
 		>
 			<div>
 				<div
@@ -263,7 +263,7 @@ function ContractFunction({
 	return (
 		<div
 			id={id}
-			className="border-b last:mb-0 last:pb-0 mb-6 pb-6 border-neutral-300 dark:border-neutral-700 last:border-b-0 scroll-mt-24 flex flex-col gap-6"
+			className="border-b last:mb-0 last:pb-0 mb-6 pb-6 border-border last:border-b-0 scroll-mt-24 flex flex-col gap-6"
 		>
 			<div>
 				<AnchorHeading id={id} as="code" className="font-mono font-bold">
@@ -1086,7 +1086,7 @@ export default function DocsPage() {
 						</p>
 
 						<div className="space-y-6">
-							<div className="border-b border-neutral-300 dark:border-neutral-700 pb-6">
+							<div className="border-b border-border pb-6">
 								<code className="font-mono font-bold text-primary">
 									no prefix
 								</code>
@@ -1101,7 +1101,7 @@ export default function DocsPage() {
 								</p>
 							</div>
 
-							<div className="border-b border-neutral-300 dark:border-neutral-700 pb-6">
+							<div className="border-b border-border pb-6">
 								<code className="font-mono font-bold text-primary">br:</code>
 								<p className={`${secondaryGray} mt-1`}>
 									Public entry. Brotli compressed, Base64 encoded. No
@@ -1112,7 +1112,7 @@ export default function DocsPage() {
 								</p>
 							</div>
 
-							<div className="border-b border-neutral-300 dark:border-neutral-700 pb-6">
+							<div className="border-b border-border pb-6">
 								<code className="font-mono font-bold text-primary">
 									enc:v5:br:
 								</code>
@@ -1226,14 +1226,14 @@ export default function DocsPage() {
 						description="To read an entry, reverse the pipeline based on the prefix."
 					>
 						<div className="space-y-6">
-							<div className="border-b border-neutral-300 dark:border-neutral-700 pb-6">
+							<div className="border-b border-border pb-6">
 								<code className="font-mono font-bold text-primary">br:</code>
 								<FlowText className="mt-1">
 									strip prefix &rarr; base64 decode &rarr; brotli decompress
 								</FlowText>
 							</div>
 
-							<div className="border-b border-neutral-300 dark:border-neutral-700 pb-6">
+							<div className="border-b border-border pb-6">
 								<code className="font-mono font-bold text-primary">
 									enc:v5:br:
 								</code>
