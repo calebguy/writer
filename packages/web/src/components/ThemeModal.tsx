@@ -212,7 +212,10 @@ export function ThemeModal({ open, onClose }: ModalProps) {
 					Set your primary and custom background colors
 				</ModalDescription>
 			</VisuallyHidden.Root>
-			<div className="mb-4 grid grid-cols-2 rounded-full bg-background/10 p-1 text-sm ring-1 ring-background/30 backdrop-blur-[1px]">
+			<div className="flex items-center justify-center">
+				<RgbColorPicker color={selectedColor} onChange={updateSelectedColor} />
+			</div>
+			<div className="mt-4 grid grid-cols-2 rounded-full bg-background/10 p-1 text-sm ring-1 ring-background/30 backdrop-blur-[1px]">
 				<button
 					type="button"
 					className="flex cursor-pointer items-center justify-center gap-2 rounded-full px-3 py-2 text-background transition-[background-color,color,transform,opacity] duration-150 hover:bg-background/15 active:scale-[0.98] data-[active=true]:bg-background/95 data-[active=true]:text-primary"
@@ -223,7 +226,7 @@ export function ThemeModal({ open, onClose }: ModalProps) {
 						className="h-3 w-3 rounded-full ring-1 ring-primary/40"
 						style={{ backgroundColor: primaryHex }}
 					/>
-					<span>Foreground</span>
+					<span>Front</span>
 				</button>
 				<button
 					type="button"
@@ -235,11 +238,8 @@ export function ThemeModal({ open, onClose }: ModalProps) {
 						className="h-3 w-3 rounded-full ring-1 ring-primary/40"
 						style={{ backgroundColor: backgroundHex }}
 					/>
-					<span>Background</span>
+					<span>Back</span>
 				</button>
-			</div>
-			<div className="flex items-center justify-center">
-				<RgbColorPicker color={selectedColor} onChange={updateSelectedColor} />
 			</div>
 			{backgroundRequiresCustomTheme && (
 				<p className="mt-3 text-center text-xs text-background/80">
