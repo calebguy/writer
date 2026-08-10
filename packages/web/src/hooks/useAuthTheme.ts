@@ -33,18 +33,20 @@ export function useAuthTheme() {
 	});
 
 	useEffect(() => {
-		if (isLoggedIn && data?.user) {
+		if (!ready) return;
+		if (authenticated && data?.user) {
 			if (data.user.color) {
 				setPrimaryFromLongHex(data.user.color);
 			}
 			setCustomBackgroundFromLongHex(data.user.customBackgroundColor ?? null);
-		} else if (!isLoggedIn) {
+		} else if (!authenticated) {
 			resetPrimaryColor();
 			setCustomBackgroundFromLongHex(null);
 		}
 	}, [
+		authenticated,
 		data?.user,
-		isLoggedIn,
+		ready,
 		setCustomBackgroundFromLongHex,
 		setPrimaryFromLongHex,
 		resetPrimaryColor,
