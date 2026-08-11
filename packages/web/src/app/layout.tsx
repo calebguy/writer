@@ -41,6 +41,29 @@ const THEME_BOOTSTRAP_SCRIPT = `(() => {
 			: "system";
 		const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
 		const root = document.documentElement;
+		const parseHexColor = (value) => {
+			const match = value?.match(/^#?([a-fA-F0-9]{6})$/);
+			if (!match) return null;
+			const hex = match[1];
+			return [0, 2, 4].map((offset) =>
+				Number.parseInt(hex.slice(offset, offset + 2), 16),
+			);
+		};
+		const setRgbColor = (name, value) =>
+			root.style.setProperty(name, "rgb(" + value.join(" ") + ")");
+		const primary = parseHexColor(localStorage.getItem("writer-primary-color"));
+		if (primary) {
+			setRgbColor("--color-primary", primary);
+			const primaryLuminance =
+				0.299 * primary[0] + 0.587 * primary[1] + 0.114 * primary[2];
+			const secondaryOffset = primaryLuminance > 128 ? -125 : 75;
+			setRgbColor(
+				"--color-secondary",
+				primary.map((channel) =>
+					Math.min(255, Math.max(0, channel + secondaryOffset)),
+				),
+			);
+		}
 
 		if (mode === "custom") {
 			const background = localStorage.getItem("writer-custom-background-color");

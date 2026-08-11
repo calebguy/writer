@@ -14,10 +14,13 @@ import {
 import {
 	applyThemeMode,
 	clearStoredCustomBackgroundColor,
+	clearStoredPrimaryColor,
 	getStoredCustomBackgroundColor,
+	getStoredPrimaryColor,
 	getStoredThemeMode,
 	onThemeChange,
 	setStoredCustomBackgroundColor,
+	setStoredPrimaryColor,
 	subscribeSystemThemeChange,
 } from "@/utils/theme";
 import {
@@ -91,6 +94,8 @@ export function Providers({
 	>({});
 
 	const getInitialColor = () => {
+		const storedPrimaryColor = getStoredPrimaryColor();
+		if (storedPrimaryColor) return storedPrimaryColor;
 		if (initialColor) {
 			try {
 				return hexToRGB(bytes32ToHexColor(initialColor));
@@ -107,8 +112,12 @@ export function Providers({
 	const [customBackgroundColor, setCustomBackgroundColor] = useState<
 		WriterContextType["customBackgroundColor"]
 	>(() => getStoredCustomBackgroundColor());
-	const [hasUserColor, setHasUserColor] = useState<boolean>(!!initialColor);
-	const hasUserColorRef = useRef<boolean>(!!initialColor);
+	const [hasUserColor, setHasUserColor] = useState<boolean>(
+		() => !!initialColor || !!getStoredPrimaryColor(),
+	);
+	const hasUserColorRef = useRef<boolean>(
+		!!initialColor || !!getStoredPrimaryColor(),
+	);
 
 	useEffect(() => {
 		const previousPathname = previousPathnameRef.current;
@@ -175,6 +184,7 @@ export function Providers({
 			setHasUserColor(true);
 			setPrimaryColor(rgb);
 			setPrimaryAndSecondaryCSSVariables(rgb);
+			setStoredPrimaryColor(rgb);
 		},
 		[],
 	);
@@ -185,6 +195,7 @@ export function Providers({
 		setHasUserColor(true);
 		setPrimaryColor(rgb);
 		setPrimaryAndSecondaryCSSVariables(rgb);
+		setStoredPrimaryColor(rgb);
 	}, []);
 
 	const handleSetCustomBackgroundColor = useCallback(
@@ -227,6 +238,7 @@ export function Providers({
 		hasUserColorRef.current = false;
 		setHasUserColor(false);
 		clearInlinePrimaryAndSecondary();
+		clearStoredPrimaryColor();
 		const rgb = readCSSRgbVariable("--color-primary-default");
 		if (rgb) setPrimaryColor(rgb);
 	}, []);

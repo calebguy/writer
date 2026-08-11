@@ -34,11 +34,13 @@ export function useAuthTheme() {
 
 	useEffect(() => {
 		if (!ready) return;
-		if (authenticated && data?.user) {
-			if (data.user.color) {
+		if (authenticated && data) {
+			if (data.user?.color) {
 				setPrimaryFromLongHex(data.user.color);
+			} else {
+				resetPrimaryColor();
 			}
-			setCustomBackgroundFromLongHex(data.user.customBackgroundColor ?? null);
+			setCustomBackgroundFromLongHex(data.user?.customBackgroundColor ?? null);
 		} else if (!authenticated) {
 			resetPrimaryColor();
 			setCustomBackgroundFromLongHex(null);
