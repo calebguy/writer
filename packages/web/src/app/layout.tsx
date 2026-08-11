@@ -57,15 +57,15 @@ const THEME_BOOTSTRAP_SCRIPT = `(() => {
 				Number.parseInt(hex.slice(offset, offset + 2), 16),
 			);
 		};
-		const setRgbColor = (name, value) =>
-			root.style.setProperty(name, "rgb(" + value.join(" ") + ")");
+		const setRgbChannels = (name, value) =>
+			root.style.setProperty(name, value.join(" "));
 		const primary = parseHexColor(localStorage.getItem("writer-primary-color"));
 		if (primary) {
-			setRgbColor("--color-primary", primary);
+			setRgbChannels("--color-primary", primary);
 			const primaryLuminance =
 				0.299 * primary[0] + 0.587 * primary[1] + 0.114 * primary[2];
 			const secondaryOffset = primaryLuminance > 128 ? -125 : 75;
-			setRgbColor(
+			setRgbChannels(
 				"--color-secondary",
 				primary.map((channel) =>
 					Math.min(255, Math.max(0, channel + secondaryOffset)),
@@ -130,8 +130,8 @@ const THEME_BOOTSTRAP_SCRIPT = `(() => {
 })();`;
 
 const THEME_BOOTSTRAP_STYLE = `
-.text-primary{color:rgb(var(--color-primary));color:var(--color-primary)}
-.text-secondary{color:rgb(var(--color-secondary));color:var(--color-secondary)}
+.text-primary{color:rgb(var(--color-primary))}
+.text-secondary{color:rgb(var(--color-secondary))}
 :root[data-theme-bootstrapping] *,
 :root[data-theme-bootstrapping] *::before,
 :root[data-theme-bootstrapping] *::after{transition:none!important}
