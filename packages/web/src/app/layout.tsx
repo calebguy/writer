@@ -41,6 +41,14 @@ const THEME_BOOTSTRAP_SCRIPT = `(() => {
 			: "system";
 		const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
 		const root = document.documentElement;
+		root.dataset.themeBootstrapping = "true";
+		const clearThemeBootstrapping = () => {
+			requestAnimationFrame(() => {
+				requestAnimationFrame(() => {
+					delete root.dataset.themeBootstrapping;
+				});
+			});
+		};
 		const parseHexColor = (value) => {
 			const match = value?.match(/^#?([a-fA-F0-9]{6})$/);
 			if (!match) return null;
@@ -103,6 +111,7 @@ const THEME_BOOTSTRAP_SCRIPT = `(() => {
 				setColor("--color-muted-strong", mix(foreground, rgb, 0.16));
 				setColor("--color-border", mix(rgb, foreground, dark ? 0.2 : 0.18));
 				setColor("--color-border-strong", mix(rgb, foreground, dark ? 0.32 : 0.28));
+				clearThemeBootstrapping();
 				return;
 			}
 		}
@@ -116,8 +125,17 @@ const THEME_BOOTSTRAP_SCRIPT = `(() => {
 					: mode;
 		root.dataset.theme = resolved;
 		root.dataset.themeMode = mode;
+		clearThemeBootstrapping();
 	} catch {}
 })();`;
+
+const THEME_BOOTSTRAP_STYLE = `
+.text-primary{color:rgb(var(--color-primary));color:var(--color-primary)}
+.text-secondary{color:rgb(var(--color-secondary));color:var(--color-secondary)}
+:root[data-theme-bootstrapping] *,
+:root[data-theme-bootstrapping] *::before,
+:root[data-theme-bootstrapping] *::after{transition:none!important}
+`;
 
 export default async function RootLayout({
 	children,
@@ -143,6 +161,12 @@ export default async function RootLayout({
 					nonce={nonce}
 					dangerouslySetInnerHTML={{
 						__html: THEME_BOOTSTRAP_SCRIPT,
+					}}
+				/>
+				<style
+					nonce={nonce}
+					dangerouslySetInnerHTML={{
+						__html: THEME_BOOTSTRAP_STYLE,
 					}}
 				/>
 				<div className="antialiased w-full grow flex flex-col px-4 pt-4 pb-2 font-serif max-w-7xl">
