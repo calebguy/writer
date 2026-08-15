@@ -5,11 +5,20 @@ import type { RGB } from "./utils";
 export const AuthHintContext = createContext<boolean>(false);
 
 export const UNSAVED_CHANGES_TITLE = "Discard Changes";
+export type UnsavedChangesPromptAction = () => Promise<void> | void;
+
+export type UnsavedChangesPrompt = {
+	title: string;
+	onConfirm?: UnsavedChangesPromptAction;
+	onDiscard?: UnsavedChangesPromptAction;
+};
+
+export type UnsavedChangesRegistration = string | UnsavedChangesPrompt;
 
 export interface UnsavedChangesContextType {
 	hasUnsavedChanges: boolean;
-	confirmNavigation: () => Promise<boolean>;
-	registerUnsavedChanges: (title?: string) => () => void;
+	confirmNavigation: (prompt?: UnsavedChangesRegistration) => Promise<boolean>;
+	registerUnsavedChanges: (prompt?: UnsavedChangesRegistration) => () => void;
 }
 
 export const UnsavedChangesContext = createContext<UnsavedChangesContextType>({

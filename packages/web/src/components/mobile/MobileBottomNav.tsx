@@ -68,7 +68,7 @@ const THEME_OPTIONS = [
 	{
 		mode: "custom",
 		title: "Custom",
-		src: "/images/relics/relic-13.webp",
+		src: "/images/relics/splat-1.webp",
 		width: 100,
 		height: 100,
 		className: "h-7 w-7 shrink-0 object-contain dark:invert",

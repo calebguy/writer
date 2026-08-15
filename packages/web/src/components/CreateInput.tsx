@@ -13,7 +13,7 @@ import { useIsMac } from "@/utils/hooks";
 import { isEscapeKey, isPrimaryEnterShortcut } from "@/utils/keyboardShortcuts";
 import type { MDXEditorMethods } from "@mdxeditor/editor";
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LoadingRelic } from "./LoadingRelic";
 import { MarkdownHelpLink } from "./markdown/MarkdownGuide";
 import { MarkdownRenderer } from "./markdown/MarkdownRenderer";
@@ -73,19 +73,35 @@ export default function CreateInput({
 		? markdown !== (initialMarkdown ?? "")
 		: markdown.trim() !== "";
 	const confirmNavigation = useUnsavedChangesNavigation();
-	useUnsavedChangesWarning(hasUnsavedChanges, unsavedChangesTitle);
 	const restoreDraft = useCallback((draft: CreateInputData) => {
 		editorRef.current?.setMarkdown(draft.markdown);
 		setMarkdown(draft.markdown);
 		setEncrypted(draft.encrypted);
 		setHasFocus(true);
 	}, []);
-	const { clearDraft } = useEncryptedDraftAutosave({
+	const { clearDraft, saveDraft } = useEncryptedDraftAutosave({
 		draftId,
 		markdown,
 		encrypted,
 		onRestore: restoreDraft,
 	});
+	const unsavedChangesPrompt = useMemo(() => {
+		if (!draftId?.startsWith("create-entry:")) return unsavedChangesTitle;
+		return {
+			title: "Save Draft?",
+			onConfirm: saveDraft,
+			onDiscard: async () => {
+				await clearDraft();
+				editorRef.current?.setMarkdown("");
+				setMarkdown("");
+				setEncrypted(false);
+				setHasFocus(false);
+				setIsExpanded(false);
+				onExpand?.(false);
+			},
+		};
+	}, [clearDraft, draftId, onExpand, saveDraft, unsavedChangesTitle]);
+	useUnsavedChangesWarning(hasUnsavedChanges, unsavedChangesPrompt);
 
 	const submitVerb = submitLabel ?? "create";
 	// Handle clicks inside or outside the container
@@ -127,7 +143,8 @@ export default function CreateInput({
 	}, [hasFocus]);
 
 	const handleReset = useCallback(async () => {
-		if (hasUnsavedChanges && !(await confirmNavigation())) return;
+		if (hasUnsavedChanges && !(await confirmNavigation(unsavedChangesTitle)))
+			return;
 
 		const resetMarkdown = forceOpen ? initialMarkdown ?? "" : "";
 		editorRef.current?.setMarkdown(resetMarkdown);
@@ -146,6 +163,7 @@ export default function CreateInput({
 		initialMarkdown,
 		onCancel,
 		onExpand,
+		unsavedChangesTitle,
 	]);
 
 	const handleSubmit = useCallback(() => {

@@ -93,9 +93,7 @@ function Section({
 	return (
 		<section className="mb-12">
 			<h2 className="text-3xl font-serif italic text-primary mb-1">{title}</h2>
-			{description && (
-				<p className={`${secondaryGray} mb-4`}>{description}</p>
-			)}
+			{description && <p className={`${secondaryGray} mb-4`}>{description}</p>}
 			<div className="bg-surface p-4">{children}</div>
 		</section>
 	);
@@ -118,7 +116,11 @@ function ImageGrid({
 			}}
 		>
 			{srcs.map((src) => {
-				const label = src.split("/").pop()?.replace(/\.(png|webp)$/, "") ?? src;
+				const label =
+					src
+						.split("/")
+						.pop()
+						?.replace(/\.(png|webp)$/, "") ?? src;
 				return (
 					<div
 						key={src}
@@ -136,7 +138,9 @@ function ImageGrid({
 								className="object-contain dark:invert"
 							/>
 						</div>
-						<code className={`text-xs font-mono ${secondaryGray} truncate w-full text-center`}>
+						<code
+							className={`text-xs font-mono ${secondaryGray} truncate w-full text-center`}
+						>
 							{label}
 						</code>
 					</div>
@@ -230,15 +234,21 @@ export default function ComponentsPage() {
 				<div className="flex items-center gap-8 text-primary">
 					<div className="flex flex-col items-center gap-2">
 						<LoadingRelic size={24} />
-						<code className={`text-xs font-mono ${secondaryGray}`}>size=24</code>
+						<code className={`text-xs font-mono ${secondaryGray}`}>
+							size=24
+						</code>
 					</div>
 					<div className="flex flex-col items-center gap-2">
 						<LoadingRelic size={48} />
-						<code className={`text-xs font-mono ${secondaryGray}`}>size=48</code>
+						<code className={`text-xs font-mono ${secondaryGray}`}>
+							size=48
+						</code>
 					</div>
 					<div className="flex flex-col items-center gap-2">
 						<LoadingRelic size={96} />
-						<code className={`text-xs font-mono ${secondaryGray}`}>size=96</code>
+						<code className={`text-xs font-mono ${secondaryGray}`}>
+							size=96
+						</code>
 					</div>
 				</div>
 			</Section>

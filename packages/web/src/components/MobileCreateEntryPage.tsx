@@ -28,7 +28,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Hex } from "viem";
 
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
@@ -46,7 +46,6 @@ export function MobileCreateEntryPage({ address }: { address: string }) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const isExternalWallet = !!wallet && wallet.walletClientType !== "privy";
 	const hasUnsavedChanges = markdown.trim() !== "";
-	useUnsavedChangesWarning(hasUnsavedChanges, "Discard Entry");
 	const confirmNavigation = useUnsavedChangesNavigation();
 	const createEntryDraftId = wallet
 		? buildEntryDraftId({
@@ -62,12 +61,25 @@ export function MobileCreateEntryPage({ address }: { address: string }) {
 		},
 		[],
 	);
-	const { clearDraft } = useEncryptedDraftAutosave({
+	const { clearDraft, saveDraft } = useEncryptedDraftAutosave({
 		draftId: createEntryDraftId,
 		markdown,
 		encrypted,
 		onRestore: restoreDraft,
 	});
+	const unsavedChangesPrompt = useMemo(() => {
+		if (!createEntryDraftId) return "Discard Entry";
+		return {
+			title: "Save Draft?",
+			onConfirm: saveDraft,
+			onDiscard: async () => {
+				await clearDraft();
+				setMarkdown("");
+				setEncrypted(false);
+			},
+		};
+	}, [clearDraft, createEntryDraftId, saveDraft]);
+	useUnsavedChangesWarning(hasUnsavedChanges, unsavedChangesPrompt);
 
 	const queryKey = writerQueryKey(normalizedAddress);
 	const { data: writer } = useQuery<Writer>({

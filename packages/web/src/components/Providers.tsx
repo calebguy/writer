@@ -9,6 +9,8 @@ import {
 	UnsavedChangesContext,
 	WriterContext,
 	type WriterContextType,
+	type UnsavedChangesPrompt,
+	type UnsavedChangesRegistration,
 	defaultColor,
 } from "@/utils/context";
 import {
@@ -39,6 +41,14 @@ import { optimism } from "viem/chains";
 import { env } from "@/utils/env";
 import { usePathname, useRouter } from "next/navigation";
 const UNSAVED_CHANGES_HISTORY_MARKER = "__writerUnsavedGuard";
+type UnsavedChangesPromptActionChoice = "confirm" | "discard";
+
+function normalizeUnsavedPrompt(
+	prompt: UnsavedChangesRegistration = UNSAVED_CHANGES_TITLE,
+): UnsavedChangesPrompt {
+	if (typeof prompt === "string") return { title: prompt };
+	return prompt;
+}
 
 function createUnsavedHistoryState(state: unknown) {
 	if (state && typeof state === "object") {
@@ -243,15 +253,20 @@ export function Providers({
 		if (rgb) setPrimaryColor(rgb);
 	}, []);
 
-	const unsavedChangesRef = useRef<Map<symbol, string> | null>(null);
+	const unsavedChangesRef = useRef<Map<symbol, UnsavedChangesPrompt> | null>(
+		null,
+	);
 	const router = useRouter();
 	if (unsavedChangesRef.current === null) {
 		unsavedChangesRef.current = new Map();
 	}
 	const unsavedChanges = unsavedChangesRef.current;
-	const [unsavedChangesSnapshot, setUnsavedChangesSnapshot] = useState({
+	const [unsavedChangesSnapshot, setUnsavedChangesSnapshot] = useState<{
+		count: number;
+		prompt: UnsavedChangesPrompt;
+	}>({
 		count: 0,
-		title: UNSAVED_CHANGES_TITLE,
+		prompt: { title: UNSAVED_CHANGES_TITLE },
 	});
 	const unsavedChangesSnapshotRef = useRef(unsavedChangesSnapshot);
 	const browserBackGuardActiveRef = useRef(false);
@@ -260,15 +275,16 @@ export function Providers({
 	const pendingUnsavedConfirmationRef = useRef<
 		((confirmed: boolean) => void) | null
 	>(null);
-	const [unsavedConfirmationTitle, setUnsavedConfirmationTitle] = useState<
-		string | null
-	>(null);
+	const [unsavedConfirmationPrompt, setUnsavedConfirmationPrompt] =
+		useState<UnsavedChangesPrompt | null>(null);
 
 	const syncUnsavedChangesSnapshot = useCallback(() => {
-		const titles = Array.from(unsavedChanges.values());
+		const prompts = Array.from(unsavedChanges.values());
 		setUnsavedChangesSnapshot({
-			count: titles.length,
-			title: titles[titles.length - 1] ?? UNSAVED_CHANGES_TITLE,
+			count: prompts.length,
+			prompt: prompts[prompts.length - 1] ?? {
+				title: UNSAVED_CHANGES_TITLE,
+			},
 		});
 	}, [unsavedChanges]);
 
@@ -277,9 +293,9 @@ export function Providers({
 	}, [unsavedChangesSnapshot]);
 
 	const registerUnsavedChanges = useCallback(
-		(title = UNSAVED_CHANGES_TITLE) => {
+		(prompt: UnsavedChangesRegistration = UNSAVED_CHANGES_TITLE) => {
 			const source = Symbol("unsaved-change-source");
-			unsavedChanges.set(source, title);
+			unsavedChanges.set(source, normalizeUnsavedPrompt(prompt));
 			syncUnsavedChangesSnapshot();
 
 			return () => {
@@ -290,25 +306,52 @@ export function Providers({
 		[syncUnsavedChangesSnapshot, unsavedChanges],
 	);
 
-	const resolveUnsavedConfirmation = useCallback((confirmed: boolean) => {
-		pendingUnsavedConfirmationRef.current?.(confirmed);
-		pendingUnsavedConfirmationRef.current = null;
-		setUnsavedConfirmationTitle(null);
-	}, []);
+	const resolveUnsavedConfirmation = useCallback(
+		async (confirmed: boolean, action?: UnsavedChangesPromptActionChoice) => {
+			const pendingConfirmation = pendingUnsavedConfirmationRef.current;
+			const prompt = unsavedConfirmationPrompt;
+			pendingUnsavedConfirmationRef.current = null;
+			setUnsavedConfirmationPrompt(null);
 
-	const confirmNavigation = useCallback(() => {
-		const { count, title } = unsavedChangesSnapshotRef.current;
-		if (count === 0) return Promise.resolve(true);
+			if (!pendingConfirmation) return;
+			if (!confirmed) {
+				pendingConfirmation(false);
+				return;
+			}
 
-		if (pendingUnsavedConfirmationRef.current) {
-			pendingUnsavedConfirmationRef.current(false);
-		}
+			try {
+				if (action === "discard") {
+					await prompt?.onDiscard?.();
+				} else {
+					await prompt?.onConfirm?.();
+				}
+				pendingConfirmation(true);
+			} catch (error) {
+				console.error("Failed to resolve unsaved changes prompt", error);
+				pendingConfirmation(false);
+			}
+		},
+		[unsavedConfirmationPrompt],
+	);
 
-		setUnsavedConfirmationTitle(title);
-		return new Promise<boolean>((resolve) => {
-			pendingUnsavedConfirmationRef.current = resolve;
-		});
-	}, []);
+	const confirmNavigation = useCallback(
+		(promptOverride?: UnsavedChangesRegistration) => {
+			const { count, prompt } = unsavedChangesSnapshotRef.current;
+			if (count === 0) return Promise.resolve(true);
+
+			if (pendingUnsavedConfirmationRef.current) {
+				pendingUnsavedConfirmationRef.current(false);
+			}
+
+			setUnsavedConfirmationPrompt(
+				promptOverride ? normalizeUnsavedPrompt(promptOverride) : prompt,
+			);
+			return new Promise<boolean>((resolve) => {
+				pendingUnsavedConfirmationRef.current = resolve;
+			});
+		},
+		[],
+	);
 
 	const hasUnsavedChanges = unsavedChangesSnapshot.count > 0;
 
@@ -483,7 +526,7 @@ export function Providers({
 								<AuthColorSync />
 								{children}
 								<UnsavedChangesConfirmModal
-									title={unsavedConfirmationTitle}
+									prompt={unsavedConfirmationPrompt}
 									onResolve={resolveUnsavedConfirmation}
 								/>
 							</WriterContext>

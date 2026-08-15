@@ -34,6 +34,13 @@ export function useEncryptedDraftAutosave({
 }: UseEncryptedDraftAutosaveOptions) {
 	const latestMarkdownRef = useRef(markdown);
 	const [restoredAt, setRestoredAt] = useState<number | null>(null);
+	const saveTimeoutRef = useRef<number | null>(null);
+
+	const clearPendingSave = useCallback(() => {
+		if (saveTimeoutRef.current === null) return;
+		window.clearTimeout(saveTimeoutRef.current);
+		saveTimeoutRef.current = null;
+	}, []);
 
 	useEffect(() => {
 		latestMarkdownRef.current = markdown;
@@ -61,21 +68,36 @@ export function useEncryptedDraftAutosave({
 	useEffect(() => {
 		if (!enabled || !draftId || !markdown.trim()) return;
 		const timeout = window.setTimeout(() => {
+			saveTimeoutRef.current = null;
 			saveEncryptedDraft(draftId, { markdown, encrypted }).catch((error) => {
 				console.error("Could not save encrypted draft", error);
 			});
 		}, DRAFT_AUTOSAVE_DELAY_MS);
+		saveTimeoutRef.current = timeout;
 
-		return () => window.clearTimeout(timeout);
+		return () => {
+			if (saveTimeoutRef.current === timeout) {
+				saveTimeoutRef.current = null;
+			}
+			window.clearTimeout(timeout);
+		};
 	}, [draftId, enabled, encrypted, markdown]);
+
+	const saveDraft = useCallback(async () => {
+		if (!enabled || !draftId || !markdown.trim()) return;
+		clearPendingSave();
+		await saveEncryptedDraft(draftId, { markdown, encrypted });
+		setRestoredAt(Date.now());
+	}, [clearPendingSave, draftId, enabled, encrypted, markdown]);
 
 	const clearDraft = useCallback(async () => {
 		if (!draftId) return;
+		clearPendingSave();
 		await clearEncryptedDraft(draftId);
 		setRestoredAt(null);
-	}, [draftId]);
+	}, [clearPendingSave, draftId]);
 
-	return { clearDraft, restoredAt };
+	return { clearDraft, restoredAt, saveDraft };
 }
 
 function shouldRestoreIntoEmptyEditor(

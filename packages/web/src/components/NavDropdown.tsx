@@ -5,56 +5,17 @@ import { useHiddenWriters } from "@/hooks/useHiddenWriters";
 import { getWritersByManager } from "@/utils/api";
 import { useOPWallet } from "@/utils/hooks";
 import { clearAllCachedKeys } from "@/utils/keyCache";
-import {
-	type ThemeMode,
-	applyThemeMode,
-	getStoredThemeMode,
-	onThemeChange,
-	setStoredThemeMode,
-	subscribeSystemThemeChange,
-} from "@/utils/theme";
 import { isEntryPrivate, isWalletAuthor } from "@/utils/utils";
 import { usePrivy } from "@privy-io/react-auth";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ThemeModal } from "./ThemeModal";
 import { HiddenPlacesModal } from "./HiddenPlacesModal";
 import { type MigrateEntry, MigrateModal } from "./MigrateModal";
 import { queryClient as globalQueryClient } from "./Providers";
 import { Dropdown, DropdownItem } from "./dsl/Dropdown";
-
-function ThemeButton({
-	src,
-	label,
-	active,
-	onClick,
-}: {
-	src: string;
-	label: string;
-	active: boolean;
-	onClick: () => void;
-}) {
-	return (
-		<button
-			type="button"
-			aria-label={`Use ${label.toLowerCase()} theme`}
-			title={label}
-			className="p-1 inline-flex items-center justify-center cursor-pointer border border-transparent dark:text-secondary transition-colors duration-120 hover:bg-surface dark:hover:bg-surface-raised data-[active=true]:bg-surface-raised rounded-xs"
-			data-active={active}
-			onClick={onClick}
-		>
-			<Image
-				src={src}
-				alt={label}
-				width={100}
-				height={100}
-				className="h-4.5 w-4.5 min-w-4.5 shrink-0 dark:invert"
-			/>
-		</button>
-	);
-}
 
 function isLegacyEncrypted(raw: string | undefined | null): boolean {
 	if (!raw) return false;
@@ -85,7 +46,6 @@ export function NavDropdown() {
 	const [migrateOpen, setMigrateOpen] = useState(false);
 	const [hiddenPlacesOpen, setHiddenPlacesOpen] = useState(false);
 	const [dropdownOpen, setDropdownOpen] = useState(false);
-	const [themeMode, setThemeMode] = useState<ThemeMode>("system");
 
 	// Legacy migration needs full writer entries; load them only after the
 	// account menu opens so the home grid can use lightweight summaries.
@@ -123,32 +83,6 @@ export function NavDropdown() {
 	const { data: hiddenWriters } = useHiddenWriters();
 	const hasHiddenWriters = (hiddenWriters?.length ?? 0) > 0;
 	const hasLegacyEntries = entriesToMigrate.length > 0;
-
-	useEffect(() => {
-		if (typeof window === "undefined") return;
-		const initialMode = getStoredThemeMode();
-		setThemeMode(initialMode);
-		applyThemeMode(initialMode);
-	}, []);
-
-	useEffect(() => {
-		if (themeMode !== "system") return;
-		return subscribeSystemThemeChange(() => {
-			applyThemeMode("system");
-		});
-	}, [themeMode]);
-
-	useEffect(() => {
-		return onThemeChange(() => {
-			setThemeMode(getStoredThemeMode());
-		});
-	}, []);
-
-	const setTheme = (mode: ThemeMode) => {
-		setThemeMode(mode);
-		setStoredThemeMode(mode);
-		applyThemeMode(mode);
-	};
 
 	return (
 		<>
@@ -215,32 +149,6 @@ export function NavDropdown() {
 				) : (
 					<DropdownItem onClick={() => login()}>Sign in</DropdownItem>
 				)}
-				<div className="flex items-center justify-between gap-1 mt-1 pt-1 border-t border-border">
-					<ThemeButton
-						src="/images/relics/relic-10.webp"
-						label="Light"
-						active={themeMode === "light"}
-						onClick={() => setTheme("light")}
-					/>
-					<ThemeButton
-						src="/images/relics/moon-3.webp"
-						label="Dark"
-						active={themeMode === "dark"}
-						onClick={() => setTheme("dark")}
-					/>
-					<ThemeButton
-						src="/images/relics/computer-1.webp"
-						label="System"
-						active={themeMode === "system"}
-						onClick={() => setTheme("system")}
-					/>
-					<ThemeButton
-						src="/images/relics/relic-13.webp"
-						label="Custom"
-						active={themeMode === "custom"}
-						onClick={() => setTheme("custom")}
-					/>
-				</div>
 			</Dropdown>
 			<ThemeModal open={themeOpen} onClose={() => setThemeOpen(false)} />
 			<HiddenPlacesModal
