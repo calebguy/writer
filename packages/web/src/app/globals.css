@@ -204,13 +204,14 @@
   margin: 0 !important;
 }
 
+/* 
 :root[data-theme="light"] .modal-overlay {
   background-color: rgb(0 0 0 / 0.2) !important;
 }
 
 :root:not([data-theme="light"]) .modal-overlay {
   background-color: rgb(0 0 0 / 0.2) !important;
-}
+} */
 
 .index-title {
   color: rgb(240 240 240);

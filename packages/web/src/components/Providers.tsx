@@ -41,7 +41,6 @@ import { optimism } from "viem/chains";
 import { env } from "@/utils/env";
 import { usePathname, useRouter } from "next/navigation";
 const UNSAVED_CHANGES_HISTORY_MARKER = "__writerUnsavedGuard";
-type UnsavedChangesPromptActionChoice = "confirm" | "discard";
 
 function normalizeUnsavedPrompt(
 	prompt: UnsavedChangesRegistration = UNSAVED_CHANGES_TITLE,
@@ -307,7 +306,7 @@ export function Providers({
 	);
 
 	const resolveUnsavedConfirmation = useCallback(
-		async (confirmed: boolean, action?: UnsavedChangesPromptActionChoice) => {
+		async (confirmed: boolean) => {
 			const pendingConfirmation = pendingUnsavedConfirmationRef.current;
 			const prompt = unsavedConfirmationPrompt;
 			pendingUnsavedConfirmationRef.current = null;
@@ -320,11 +319,7 @@ export function Providers({
 			}
 
 			try {
-				if (action === "discard") {
-					await prompt?.onDiscard?.();
-				} else {
-					await prompt?.onConfirm?.();
-				}
+				await prompt?.onConfirm?.();
 				pendingConfirmation(true);
 			} catch (error) {
 				console.error("Failed to resolve unsaved changes prompt", error);
@@ -335,12 +330,22 @@ export function Providers({
 	);
 
 	const confirmNavigation = useCallback(
-		(promptOverride?: UnsavedChangesRegistration) => {
+		async (promptOverride?: UnsavedChangesRegistration) => {
 			const { count, prompt } = unsavedChangesSnapshotRef.current;
-			if (count === 0) return Promise.resolve(true);
+			if (count === 0) return true;
 
 			if (pendingUnsavedConfirmationRef.current) {
 				pendingUnsavedConfirmationRef.current(false);
+			}
+
+			if (!promptOverride && prompt.autoConfirm) {
+				try {
+					await prompt.onConfirm?.();
+					return true;
+				} catch (error) {
+					console.error("Failed to resolve unsaved changes prompt", error);
+					return false;
+				}
 			}
 
 			setUnsavedConfirmationPrompt(

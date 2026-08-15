@@ -10,7 +10,7 @@ export type UnsavedChangesPromptAction = () => Promise<void> | void;
 export type UnsavedChangesPrompt = {
 	title: string;
 	onConfirm?: UnsavedChangesPromptAction;
-	onDiscard?: UnsavedChangesPromptAction;
+	autoConfirm?: boolean;
 };
 
 export type UnsavedChangesRegistration = string | UnsavedChangesPrompt;

@@ -88,19 +88,11 @@ export default function CreateInput({
 	const unsavedChangesPrompt = useMemo(() => {
 		if (!draftId?.startsWith("create-entry:")) return unsavedChangesTitle;
 		return {
-			title: "Save Draft?",
+			title: "Draft autosave",
 			onConfirm: saveDraft,
-			onDiscard: async () => {
-				await clearDraft();
-				editorRef.current?.setMarkdown("");
-				setMarkdown("");
-				setEncrypted(false);
-				setHasFocus(false);
-				setIsExpanded(false);
-				onExpand?.(false);
-			},
+			autoConfirm: true,
 		};
-	}, [clearDraft, draftId, onExpand, saveDraft, unsavedChangesTitle]);
+	}, [draftId, saveDraft, unsavedChangesTitle]);
 	useUnsavedChangesWarning(hasUnsavedChanges, unsavedChangesPrompt);
 
 	const submitVerb = submitLabel ?? "create";

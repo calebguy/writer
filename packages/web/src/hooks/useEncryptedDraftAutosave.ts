@@ -33,6 +33,7 @@ export function useEncryptedDraftAutosave({
 	shouldRestore = shouldRestoreIntoEmptyEditor,
 }: UseEncryptedDraftAutosaveOptions) {
 	const latestMarkdownRef = useRef(markdown);
+	const latestEncryptedRef = useRef(encrypted);
 	const [restoredAt, setRestoredAt] = useState<number | null>(null);
 	const saveTimeoutRef = useRef<number | null>(null);
 
@@ -44,7 +45,8 @@ export function useEncryptedDraftAutosave({
 
 	useEffect(() => {
 		latestMarkdownRef.current = markdown;
-	}, [markdown]);
+		latestEncryptedRef.current = encrypted;
+	}, [encrypted, markdown]);
 
 	useEffect(() => {
 		if (!draftId) return;
@@ -84,11 +86,15 @@ export function useEncryptedDraftAutosave({
 	}, [draftId, enabled, encrypted, markdown]);
 
 	const saveDraft = useCallback(async () => {
-		if (!enabled || !draftId || !markdown.trim()) return;
+		const latestMarkdown = latestMarkdownRef.current;
+		if (!enabled || !draftId || !latestMarkdown.trim()) return;
 		clearPendingSave();
-		await saveEncryptedDraft(draftId, { markdown, encrypted });
+		await saveEncryptedDraft(draftId, {
+			markdown: latestMarkdown,
+			encrypted: latestEncryptedRef.current,
+		});
 		setRestoredAt(Date.now());
-	}, [clearPendingSave, draftId, enabled, encrypted, markdown]);
+	}, [clearPendingSave, draftId, enabled]);
 
 	const clearDraft = useCallback(async () => {
 		if (!draftId) return;

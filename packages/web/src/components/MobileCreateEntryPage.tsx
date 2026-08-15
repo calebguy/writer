@@ -70,15 +70,11 @@ export function MobileCreateEntryPage({ address }: { address: string }) {
 	const unsavedChangesPrompt = useMemo(() => {
 		if (!createEntryDraftId) return "Discard Entry";
 		return {
-			title: "Save Draft?",
+			title: "Draft autosave",
 			onConfirm: saveDraft,
-			onDiscard: async () => {
-				await clearDraft();
-				setMarkdown("");
-				setEncrypted(false);
-			},
+			autoConfirm: true,
 		};
-	}, [clearDraft, createEntryDraftId, saveDraft]);
+	}, [createEntryDraftId, saveDraft]);
 	useUnsavedChangesWarning(hasUnsavedChanges, unsavedChangesPrompt);
 
 	const queryKey = writerQueryKey(normalizedAddress);
