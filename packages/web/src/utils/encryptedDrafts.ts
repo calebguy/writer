@@ -54,6 +54,18 @@ export function buildEntryDraftId({
 	].join(":");
 }
 
+export function buildCreatePlaceDraftId({
+	userAddress,
+}: {
+	userAddress: string;
+}) {
+	return ["create-place", userAddress.toLowerCase()].join(":");
+}
+
+export function isAutoSavedDraftId(id: string | undefined) {
+	return id?.startsWith("create-entry:") || id?.startsWith("create-place:");
+}
+
 export async function saveEncryptedDraft(
 	id: string,
 	payload: EntryDraftPayload,

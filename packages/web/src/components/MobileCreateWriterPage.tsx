@@ -2,18 +2,20 @@
 
 import { Check } from "@/components/icons/Check";
 import { Close } from "@/components/icons/Close";
+import { useEncryptedDraftAutosave } from "@/hooks/useEncryptedDraftAutosave";
 import {
 	useUnsavedChangesNavigation,
 	useUnsavedChangesWarning,
 } from "@/hooks/useUnsavedChangesWarning";
 import { type WriterSummary, factoryCreate } from "@/utils/api";
 import { cn } from "@/utils/cn";
+import { buildCreatePlaceDraftId } from "@/utils/encryptedDrafts";
 import { useOPWallet } from "@/utils/hooks";
 import { usePrivy } from "@privy-io/react-auth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Hex } from "viem";
 
 const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
@@ -26,8 +28,28 @@ export function MobileCreateWriterPage() {
 	const [markdown, setMarkdown] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const hasUnsavedChanges = markdown.trim() !== "";
+	const createPlaceDraftId = wallet?.address
+		? buildCreatePlaceDraftId({ userAddress: wallet.address })
+		: undefined;
+	const restoreDraft = useCallback((draft: { markdown: string }) => {
+		setMarkdown(draft.markdown);
+	}, []);
+	const { clearDraft, saveDraft } = useEncryptedDraftAutosave({
+		draftId: createPlaceDraftId,
+		markdown,
+		encrypted: false,
+		onRestore: restoreDraft,
+	});
+	const unsavedChangesPrompt = useMemo(() => {
+		if (!createPlaceDraftId) return "Discard Place";
+		return {
+			title: "Draft autosave",
+			onConfirm: saveDraft,
+			autoConfirm: true,
+		};
+	}, [createPlaceDraftId, saveDraft]);
 	const confirmNavigation = useUnsavedChangesNavigation();
-	useUnsavedChangesWarning(hasUnsavedChanges, "Discard Place");
+	useUnsavedChangesWarning(hasUnsavedChanges, unsavedChangesPrompt);
 
 	const { mutate } = useMutation({
 		mutationFn: factoryCreate,
@@ -73,15 +95,16 @@ export function MobileCreateWriterPage() {
 		},
 	});
 
-	const handleExit = async () => {
+	const handleExit = useCallback(async () => {
 		if (hasUnsavedChanges && !(await confirmNavigation())) return;
 		router.push("/home");
-	};
+	}, [confirmNavigation, hasUnsavedChanges, router]);
 
-	const handleCreate = async () => {
+	const handleCreate = useCallback(async () => {
 		const title = markdown.trim();
 		if (!title || !wallet?.address || isSubmitting) return;
 		setIsSubmitting(true);
+		await saveDraft();
 		const authToken = await getAccessToken();
 		if (!authToken) {
 			console.error("No auth token found");
@@ -101,10 +124,22 @@ export function MobileCreateWriterPage() {
 				onError: (err) => {
 					console.error("Create writer failed:", err);
 				},
+				onSuccess: () => {
+					void clearDraft();
+				},
 			},
 		);
 		router.push("/home");
-	};
+	}, [
+		clearDraft,
+		getAccessToken,
+		isSubmitting,
+		markdown,
+		mutate,
+		router,
+		saveDraft,
+		wallet?.address,
+	]);
 
 	useEffect(() => {
 		const onKeyDown = (event: KeyboardEvent) => {
@@ -120,7 +155,7 @@ export function MobileCreateWriterPage() {
 
 		document.addEventListener("keydown", onKeyDown);
 		return () => document.removeEventListener("keydown", onKeyDown);
-	}, [markdown, wallet?.address, isSubmitting]);
+	}, [handleCreate, handleExit]);
 
 	return (
 		<div className="grow flex flex-col min-h-0">

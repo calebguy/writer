@@ -9,6 +9,7 @@ import {
 	useUnsavedChangesWarning,
 } from "@/hooks/useUnsavedChangesWarning";
 import { cn } from "@/utils/cn";
+import { isAutoSavedDraftId } from "@/utils/encryptedDrafts";
 import { useIsMac } from "@/utils/hooks";
 import { isEscapeKey, isPrimaryEnterShortcut } from "@/utils/keyboardShortcuts";
 import type { MDXEditorMethods } from "@mdxeditor/editor";
@@ -86,7 +87,7 @@ export default function CreateInput({
 		onRestore: restoreDraft,
 	});
 	const unsavedChangesPrompt = useMemo(() => {
-		if (!draftId?.startsWith("create-entry:")) return unsavedChangesTitle;
+		if (!isAutoSavedDraftId(draftId)) return unsavedChangesTitle;
 		return {
 			title: "Draft autosave",
 			onConfirm: saveDraft,

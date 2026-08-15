@@ -18,6 +18,7 @@ import {
 	writerQueryKey,
 } from "@/utils/api";
 import { GRID_SKELETON_COUNT, POLLING_INTERVAL } from "@/utils/constants";
+import { buildCreatePlaceDraftId } from "@/utils/encryptedDrafts";
 import {
 	getHomeOnboardingMode,
 	shouldStartHomeOnboarding,
@@ -141,6 +142,9 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 	}, [dragState]);
 
 	const address = user?.wallet?.address;
+	const createPlaceDraftId = address
+		? buildCreatePlaceDraftId({ userAddress: address })
+		: undefined;
 	const isCreatingWriter =
 		useIsMutating({ mutationKey: ["create-from-factory"] }) > 0;
 
@@ -918,6 +922,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 				>
 					<div className="hidden md:block">
 						<CreateInput
+							draftId={createPlaceDraftId}
 							placeholder="Create a Place"
 							onSubmit={handleSubmit}
 							unsavedChangesTitle="Discard Place"
@@ -940,6 +945,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 					renderWriterCard(confirmedFirstWriter, { showHideAction: false })
 				) : (
 					<CreateInput
+						draftId={createPlaceDraftId}
 						placeholder="Create a Place"
 						onSubmit={handleSubmit}
 						isLoading={onboardingMode === "creating"}

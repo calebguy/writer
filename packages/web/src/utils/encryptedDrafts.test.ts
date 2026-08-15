@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+	buildCreatePlaceDraftId,
 	buildEntryDraftId,
 	decryptDraftPayload,
 	encryptDraftPayload,
@@ -25,6 +26,12 @@ describe("buildEntryDraftId", () => {
 				entryId: 0,
 			}),
 		).toBe("edit-entry:0xabcdef:0x123abc:0");
+	});
+
+	test("normalizes create place drafts", () => {
+		expect(buildCreatePlaceDraftId({ userAddress: "0xABCDEF" })).toBe(
+			"create-place:0xabcdef",
+		);
 	});
 });
 
