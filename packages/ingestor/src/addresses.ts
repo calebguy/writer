@@ -3,16 +3,14 @@ import type { Hex } from "viem";
 
 export class AddressRegistry {
 	private factoryAddresses: Set<string>;
-	private colorRegistryAddress: string;
 	private storageAddresses: Set<string>;
 	private writerAddresses: Set<string>;
 	private newlyDiscovered: string[] = [];
 
-	constructor(config: { factories: string[]; colorRegistry: string }) {
+	constructor(config: { factories: string[] }) {
 		this.factoryAddresses = new Set(
 			config.factories.map((a) => a.toLowerCase()),
 		);
-		this.colorRegistryAddress = config.colorRegistry.toLowerCase();
 		this.storageAddresses = new Set();
 		this.writerAddresses = new Set();
 	}
@@ -55,7 +53,6 @@ export class AddressRegistry {
 	getAllAddresses(): Hex[] {
 		return [
 			...this.factoryAddresses,
-			this.colorRegistryAddress,
 			...this.storageAddresses,
 			...this.writerAddresses,
 		] as Hex[];
@@ -63,10 +60,6 @@ export class AddressRegistry {
 
 	isFactory(addr: string): boolean {
 		return this.factoryAddresses.has(addr.toLowerCase());
-	}
-
-	isColorRegistry(addr: string): boolean {
-		return this.colorRegistryAddress === addr.toLowerCase();
 	}
 
 	isStorage(addr: string): boolean {

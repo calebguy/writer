@@ -28,7 +28,8 @@ const parseAddressList = (
 		} catch {
 			ctx.addIssue({
 				code: z.ZodIssueCode.custom,
-				message: "must be a comma/whitespace-separated list or JSON string array",
+				message:
+					"must be a comma/whitespace-separated list or JSON string array",
 			});
 			return z.NEVER;
 		}
@@ -68,7 +69,6 @@ const schema = z.object({
 		.string()
 		.optional()
 		.transform((value, ctx) => parseAddressList(value, ctx)),
-	COLOR_REGISTRY_ADDRESS: minString(),
 	START_BLOCK: minString().transform((val) => Number(val)),
 	HEALTH_PORT: minString()
 		.transform((val) => Number(val))

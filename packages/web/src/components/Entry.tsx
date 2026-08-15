@@ -1,4 +1,5 @@
 "use client";
+import { useEncryptedDraftAutosave } from "@/hooks/useEncryptedDraftAutosave";
 
 import { useEntryLoading } from "@/utils/EntryLoadingContext";
 import type { Entry as EntryType, Writer } from "@/utils/api";
@@ -13,6 +14,7 @@ import {
 	clearPrivateCachedEntry,
 	clearPublicCachedEntry,
 } from "@/utils/entryCache";
+import { buildEntryDraftId } from "@/utils/encryptedDrafts";
 import { useOPWallet } from "@/utils/hooks";
 import { getCachedDerivedKey } from "@/utils/keyCache";
 import {
@@ -35,8 +37,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { MdModeEdit } from "react-icons/md";
 import type { Hex } from "viem";
@@ -378,6 +380,36 @@ export default function Entry({
 	const isEditPending = useMemo(() => {
 		return isPendingDelete || isPendingEdit || deleteSubmitted || editSubmitted;
 	}, [isPendingDelete, isPendingEdit, deleteSubmitted, editSubmitted]);
+	const editEntryDraftId =
+		wallet && canEdit && processedEntry
+			? buildEntryDraftId({
+					kind: "edit-entry",
+					userAddress: wallet.address,
+					writerAddress: normalizedAddress,
+					entryId: id,
+				})
+			: undefined;
+	const restoreDraft = useCallback(
+		(draft: { markdown: string; encrypted: boolean }) => {
+			setEditedContent(draft.markdown);
+			setEncrypted(draft.encrypted);
+			setIsEditing(true);
+		},
+		[],
+	);
+	const shouldRestoreDraft = useCallback(
+		(currentMarkdown: string, draft: { markdown: string }) =>
+			draft.markdown.trim().length > 0 && draft.markdown !== currentMarkdown,
+		[],
+	);
+	const { clearDraft } = useEncryptedDraftAutosave({
+		draftId: editEntryDraftId,
+		markdown: editedContent,
+		encrypted,
+		enabled: isEditing && Boolean(isContentChanged),
+		shouldRestore: shouldRestoreDraft,
+		onRestore: restoreDraft,
+	});
 
 	const editHref = `/writer/${address}/${id}/edit`;
 	const showHeaderEdit = canEdit && !isEditing;
@@ -503,6 +535,7 @@ export default function Entry({
 			);
 			setIsEditing(false);
 			setEditSubmitted(false);
+			await clearDraft();
 		} catch (err) {
 			console.error("Edit failed", err);
 			if (isEmbeddedWallet) {
@@ -551,6 +584,7 @@ export default function Entry({
 				setEditedContent(processedContent);
 				setIsEditing(false);
 				setIsDeleting(false);
+				void clearDraft();
 			}
 		};
 
@@ -563,6 +597,7 @@ export default function Entry({
 			window.removeEventListener("keydown", handleKeyDown);
 		};
 	}, [
+		clearDraft,
 		canEdit,
 		isEditing,
 		isContentChanged,
@@ -742,6 +777,7 @@ export default function Entry({
 											setEditedContent(processedContent);
 											setIsEditing(false);
 											setIsDeleting(false);
+											void clearDraft();
 										} else {
 											setIsEditing(true);
 										}

@@ -157,8 +157,7 @@ export const relayTx = pgTable(
 		// entry routes, or the deterministically-computed writer address
 		// for factory creates. Lets us look up pending txs by writer with
 		// a simple indexed lookup instead of JSONB gymnastics across
-		// heterogeneous `args` shapes. Nullable to allow txs (e.g.
-		// color-registry) that don't target a writer.
+		// heterogeneous `args` shapes.
 		targetAddress: varchar({ length: 42 }),
 		error: text(),
 		createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),

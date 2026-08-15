@@ -34,25 +34,17 @@ export const LOGIC_SET = parseAbiItem(
 );
 export const TITLE_SET = parseAbiItem("event TitleSet(string indexed title)");
 
-// ColorRegistry events
-export const HEX_SET = parseAbiItem(
-	"event HexSet(address indexed user, bytes32 indexed hexColor)",
-);
-
 // Pre-compute topic0 selectors
 export const TOPIC0 = {
 	NEW_WRITER_CREATED: toEventSelector(NEW_WRITER_CREATED),
 	OLD_WRITER_CREATED: toEventSelector(OLD_WRITER_CREATED),
-	LEGACY_WRITER_CREATED_WITH_ID: toEventSelector(
-		LEGACY_WRITER_CREATED_WITH_ID,
-	),
+	LEGACY_WRITER_CREATED_WITH_ID: toEventSelector(LEGACY_WRITER_CREATED_WITH_ID),
 	ENTRY_CREATED: toEventSelector(ENTRY_CREATED),
 	CHUNK_RECEIVED: toEventSelector(CHUNK_RECEIVED),
 	LEGACY_CHUNK_RECEIVED: toEventSelector(LEGACY_CHUNK_RECEIVED),
 	ENTRY_UPDATED: toEventSelector(ENTRY_UPDATED),
 	ENTRY_REMOVED: toEventSelector(ENTRY_REMOVED),
 	LOGIC_SET: toEventSelector(LOGIC_SET),
-	HEX_SET: toEventSelector(HEX_SET),
 	TITLE_SET: toEventSelector(TITLE_SET),
 } as const;
 
@@ -67,6 +59,5 @@ export const ALL_EVENTS = [
 	ENTRY_UPDATED,
 	ENTRY_REMOVED,
 	LOGIC_SET,
-	HEX_SET,
 	TITLE_SET,
 ] as const;

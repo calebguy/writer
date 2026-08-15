@@ -23,7 +23,6 @@ const schema = z.object({
 	DATABASE_URL: minString(),
 	RPC_URL: minString(),
 	FACTORY_ADDRESS: minString(),
-	COLOR_REGISTRY_ADDRESS: minString(),
 	RELAY_URL: minString(),
 	RELAY_API_KEY: z.string().default(""),
 	TARGET_CHAIN_ID: minString().transform((val) => Number(val)),

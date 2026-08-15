@@ -1,9 +1,6 @@
 "use client";
 
-import {
-	setColor as setColorApi,
-	updateTheme as updateThemeApi,
-} from "@/utils/api";
+import { updateTheme as updateThemeApi } from "@/utils/api";
 import { WriterContext } from "@/utils/context";
 import { useOPWallet } from "@/utils/hooks";
 import {
@@ -11,7 +8,6 @@ import {
 	getStoredThemeMode,
 	setStoredThemeMode,
 } from "@/utils/theme";
-import { signSetColor } from "@/utils/signer";
 import {
 	type RGB,
 	RGBToHex,
@@ -57,18 +53,11 @@ function getDefaultCustomBackground(): RGB {
 export function ThemeModal({ open, onClose }: ModalProps) {
 	const [wallet] = useOPWallet();
 	const { getAccessToken } = usePrivy();
-	const { mutateAsync: savePrimaryColor, isPending: primaryColorIsPending } =
+	const { mutateAsync: saveThemeSettings, isPending: themeIsPending } =
 		useMutation({
-			mutationFn: setColorApi,
-			mutationKey: ["set-color"],
+			mutationFn: updateThemeApi,
+			mutationKey: ["update-theme"],
 		});
-	const {
-		mutateAsync: saveCustomBackground,
-		isPending: customBackgroundIsPending,
-	} = useMutation({
-		mutationFn: updateThemeApi,
-		mutationKey: ["update-theme"],
-	});
 	const {
 		customBackgroundColor,
 		primaryColor,
@@ -106,8 +95,7 @@ export function ThemeModal({ open, onClose }: ModalProps) {
 		backgroundWasEdited &&
 		!colorsMatch(nextBackgroundColor, customBackgroundColor);
 	const hasChanges = hasPrimaryColorChanged || hasBackgroundChanged;
-	const isSaving =
-		primaryColorIsPending || customBackgroundIsPending || saveClicked;
+	const isSaving = themeIsPending || saveClicked;
 
 	const backgroundRequiresCustomTheme =
 		activeTarget === "background" && getStoredThemeMode() !== "custom";
@@ -177,22 +165,16 @@ export function ThemeModal({ open, onClose }: ModalProps) {
 			if (!authToken) {
 				throw new Error("No auth token found");
 			}
-			if (hasPrimaryColorChanged) {
-				const hexColor = hexColorToBytes32(RGBToHex(nextPrimaryColor));
-				const { signature, nonce } = await signSetColor(wallet, {
-					hexColor,
-				});
-				await savePrimaryColor({ signature, nonce, hexColor, authToken });
-			}
-			if (hasBackgroundChanged) {
-				await saveCustomBackground({
-					address: wallet.address,
-					authToken,
-					customBackgroundColor: hexColorToBytes32(
-						RGBToHex(nextBackgroundColor),
-					),
-				});
-			}
+			await saveThemeSettings({
+				address: wallet.address,
+				authToken,
+				color: hasPrimaryColorChanged
+					? hexColorToBytes32(RGBToHex(nextPrimaryColor))
+					: undefined,
+				customBackgroundColor: hasBackgroundChanged
+					? hexColorToBytes32(RGBToHex(nextBackgroundColor))
+					: undefined,
+			});
 		} catch (error) {
 			console.error("Failed to save theme", error);
 			setPrimaryColor(previousPrimaryColor);

@@ -6,7 +6,6 @@ import {
 	ENTRY_CREATED,
 	ENTRY_REMOVED,
 	ENTRY_UPDATED,
-	HEX_SET,
 	LEGACY_CHUNK_RECEIVED,
 	LEGACY_WRITER_CREATED_WITH_ID,
 	LOGIC_SET,
@@ -60,8 +59,6 @@ export async function processLog(
 			return handleLogicSet(log, db);
 		case TOPIC0.TITLE_SET:
 			return handleTitleSet(log, tx, block, db);
-		case TOPIC0.HEX_SET:
-			return handleHexSet(log, db);
 	}
 }
 
@@ -220,9 +217,7 @@ async function handleEntryCreated(
 		author: args.author,
 	});
 
-	const writerRow = await db.getWriterByStorageAddress(
-		log.address as Hex,
-	);
+	const writerRow = await db.getWriterByStorageAddress(log.address as Hex);
 
 	await db.upsertEntry({
 		storageAddress: log.address,
@@ -270,10 +265,7 @@ async function handleChunkReceived(
 		index: args.index.toString(),
 	});
 
-	const entry = await db.getEntryByOnchainId(
-		log.address as Hex,
-		args.id,
-	);
+	const entry = await db.getEntryByOnchainId(log.address as Hex, args.id);
 	if (!entry) {
 		console.error(
 			"ChunkReceived: entry not found",
@@ -459,19 +451,5 @@ async function handleTitleSet(
 		writer: log.address,
 		title,
 		transactionId,
-	});
-}
-
-async function handleHexSet(log: Log, db: Db): Promise<void> {
-	const decoded = decodeEventLog({
-		abi: [HEX_SET],
-		data: log.data,
-		topics: log.topics,
-	});
-	const args = decoded.args as { user: string; hexColor: string };
-
-	await db.upsertUser({
-		address: args.user,
-		color: args.hexColor,
 	});
 }

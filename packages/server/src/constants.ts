@@ -17,8 +17,6 @@ export const SET_TITLE_WITH_SIG_FUNCTION_SIGNATURE =
 	"setTitleWithSig(bytes signature, uint256 nonce, string newTitle)";
 export const DELETE_ENTRY_FUNCTION_SIGNATURE =
 	"removeWithSig(bytes signature, uint256 nonce, uint256 id)";
-export const SET_HEX_FUNCTION_SIGNATURE =
-	"setHexWithSig(bytes signature, uint256 nonce, bytes32 hexColor)";
 
 const fallbackDb = new Db(env.DATABASE_URL);
 const databaseContext = new AsyncLocalStorage<Db | undefined>();

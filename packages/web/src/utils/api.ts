@@ -98,44 +98,25 @@ export async function getMe(address: Hex) {
 	return res.json();
 }
 
-export async function setColor({
-	signature,
-	nonce,
-	hexColor,
-	authToken,
-}: {
-	signature: string;
-	nonce: number;
-	hexColor: string;
-	authToken: string;
-}) {
-	const res = await client["color-registry"].set.$post(
-		{
-			json: { signature, nonce, hexColor },
-		},
-		{
-			headers: { Authorization: `Bearer ${authToken}` },
-		},
-	);
-	if (!res.ok) {
-		throw new Error(res.statusText);
-	}
-	return res.json();
-}
-
 export async function updateTheme({
 	address,
 	authToken,
+	color,
 	customBackgroundColor,
 }: {
 	address: Hex | string;
 	authToken: string;
-	customBackgroundColor: string | null;
+	color?: string | null;
+	customBackgroundColor?: string | null;
 }) {
+	const json = {
+		...(color !== undefined ? { color } : {}),
+		...(customBackgroundColor !== undefined ? { customBackgroundColor } : {}),
+	};
 	const res = await client.me[":address"].theme.$patch(
 		{
 			param: { address: getAddress(address) },
-			json: { customBackgroundColor },
+			json,
 		},
 		{
 			headers: { Authorization: `Bearer ${authToken}` },

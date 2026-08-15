@@ -161,20 +161,18 @@ export const deleteEntryJsonValidator = zValidator(
 	}),
 );
 
-export const colorRegistrySetJsonValidator = zValidator(
-	"json",
-	z.object({
-		signature: z.string(),
-		nonce: bigIntSafe,
-		hexColor: hexColor,
-	}),
-);
-
 export const userThemeJsonValidator = zValidator(
 	"json",
-	z.object({
-		customBackgroundColor: hexColor.nullable(),
-	}),
+	z
+		.object({
+			color: hexColor.nullable().optional(),
+			customBackgroundColor: hexColor.nullable().optional(),
+		})
+		.refine(
+			(value) =>
+				value.color !== undefined || value.customBackgroundColor !== undefined,
+			{ message: "Expected at least one theme field" },
+		),
 );
 
 export function assertAdminKey(c: Context) {

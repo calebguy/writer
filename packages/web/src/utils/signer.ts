@@ -2,7 +2,6 @@ import type { ConnectedWallet } from "@privy-io/react-auth";
 import { type Hex, getAddress, keccak256 } from "viem";
 import { env } from "./env";
 
-const COLOR_REGISTRY_ADDRESS = env.NEXT_PUBLIC_COLOR_REGISTRY_ADDRESS as Hex;
 const TARGET_CHAIN_ID = env.NEXT_PUBLIC_TARGET_CHAIN_ID;
 
 // EIP-712 domain helper. New writers use a chain-portable domain (no
@@ -41,48 +40,6 @@ function writerDomain(address: string, legacyDomain: boolean) {
 			{ name: "version", type: "string" },
 			{ name: "verifyingContract", type: "address" },
 		],
-	};
-}
-
-export async function signSetColor(
-	wallet: ConnectedWallet,
-	{ hexColor }: { hexColor: string },
-) {
-	const provider = await wallet.getEthereumProvider();
-	const method = "eth_signTypedData_v4";
-	const nonce = getRandomNonce();
-	const payload = {
-		domain: {
-			name: "ColorRegistry",
-			version: "1",
-			verifyingContract: getAddress(COLOR_REGISTRY_ADDRESS),
-		},
-		message: {
-			nonce,
-			hexColor,
-		},
-		primaryType: "SetHex",
-		types: {
-			EIP712Domain: [
-				{ name: "name", type: "string" },
-				{ name: "version", type: "string" },
-				{ name: "verifyingContract", type: "address" },
-			],
-			SetHex: [
-				{ name: "nonce", type: "uint256" },
-				{ name: "hexColor", type: "bytes32" },
-			],
-		},
-	};
-	const signature = await provider.request({
-		method,
-		params: [wallet.address, JSON.stringify(payload)],
-	});
-
-	return {
-		signature,
-		nonce,
-		hexColor,
 	};
 }
 

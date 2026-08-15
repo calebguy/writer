@@ -13,7 +13,6 @@ async function main() {
 	const factories = [env.FACTORY_ADDRESS, ...env.OLD_FACTORY_ADDRESS];
 	const registry = new AddressRegistry({
 		factories,
-		colorRegistry: env.COLOR_REGISTRY_ADDRESS,
 	});
 
 	// Seed known storage addresses from existing writer rows

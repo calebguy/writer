@@ -5,17 +5,15 @@ import {Script, console} from "forge-std/Script.sol";
 import {WriterDeployer} from "../src/WriterDeployer.sol";
 import {WriterStorageDeployer} from "../src/WriterStorageDeployer.sol";
 import {WriterFactory} from "../src/WriterFactory.sol";
-import {ColorRegistry} from "../src/ColorRegistry.sol";
 
 /// @title Deploy
 /// @notice Deploys the full Writer contract stack via the Arachnid
 ///         deterministic deployer (0x4e59b44847b379578588920cA78FbF26c0B4956C).
 ///
-///         The stack is 4 contracts:
+///         The stack is 3 contracts:
 ///           1. WriterDeployer     — embeds Writer creation bytecode, CREATE2
 ///           2. WriterStorageDeployer — embeds WriterStorage creation bytecode + wiring
 ///           3. WriterFactory      — thin orchestrator, calls 1 & 2
-///           4. ColorRegistry      — standalone
 ///
 ///         The factory is split into three pieces because Writer + WriterStorage
 ///         together exceed the EIP-170 contract size limit (24,576 bytes). Each
@@ -32,13 +30,11 @@ import {ColorRegistry} from "../src/ColorRegistry.sol";
 ///           WRITER_DEPLOYER_SALT       — bytes32 salt for WriterDeployer
 ///           STORAGE_DEPLOYER_SALT      — bytes32 salt for WriterStorageDeployer
 ///           FACTORY_SALT               — bytes32 salt for WriterFactory
-///           COLOR_REGISTRY_SALT        — bytes32 salt for ColorRegistry
 ///
 ///         Run with:
 ///           WRITER_DEPLOYER_SALT=0x...  \
 ///           STORAGE_DEPLOYER_SALT=0x... \
 ///           FACTORY_SALT=0x...          \
-///           COLOR_REGISTRY_SALT=0x...   \
 ///           forge script script/Deploy.s.sol \
 ///             --rpc-url $OP_RPC_URL \
 ///             --broadcast \
@@ -51,7 +47,6 @@ import {ColorRegistry} from "../src/ColorRegistry.sol";
 ///           WRITER_DEPLOYER_SALT=0x...  \
 ///           STORAGE_DEPLOYER_SALT=0x... \
 ///           FACTORY_SALT=0x...          \
-///           COLOR_REGISTRY_SALT=0x...   \
 ///           forge script script/Deploy.s.sol \
 ///             --rpc-url $OP_RPC_URL \
 ///             -vvv
@@ -75,14 +70,12 @@ contract Deploy is Script {
         bytes32 writerDeployerSalt = vm.envBytes32("WRITER_DEPLOYER_SALT");
         bytes32 storageDeployerSalt = vm.envBytes32("STORAGE_DEPLOYER_SALT");
         bytes32 factorySalt = vm.envBytes32("FACTORY_SALT");
-        bytes32 colorRegistrySalt = vm.envBytes32("COLOR_REGISTRY_SALT");
 
         // -------------------------------------------------------------------
         // Compute init codes
         // -------------------------------------------------------------------
         bytes memory writerDeployerInitCode = type(WriterDeployer).creationCode;
         bytes memory storageDeployerInitCode = type(WriterStorageDeployer).creationCode;
-        bytes memory colorRegistryInitCode = type(ColorRegistry).creationCode;
 
         // Predict sub-deployer addresses first (needed for factory constructor)
         address predictedWriterDeployer = _predictCreate2(ARACHNID, writerDeployerSalt, writerDeployerInitCode);
@@ -93,14 +86,12 @@ contract Deploy is Script {
             type(WriterFactory).creationCode, abi.encode(predictedWriterDeployer, predictedStorageDeployer)
         );
         address predictedFactory = _predictCreate2(ARACHNID, factorySalt, factoryInitCode);
-        address predictedColorRegistry = _predictCreate2(ARACHNID, colorRegistrySalt, colorRegistryInitCode);
 
         console.log("=== Pre-flight ===");
         console.log("Arachnid deployer:           ", ARACHNID);
         console.log("Predicted WriterDeployer:     ", predictedWriterDeployer);
         console.log("Predicted StorageDeployer:    ", predictedStorageDeployer);
         console.log("Predicted WriterFactory:      ", predictedFactory);
-        console.log("Predicted ColorRegistry:      ", predictedColorRegistry);
 
         // -------------------------------------------------------------------
         // Verify the Arachnid deployer exists
@@ -117,15 +108,12 @@ contract Deploy is Script {
         _requireEmpty(predictedWriterDeployer, "WriterDeployer");
         _requireEmpty(predictedStorageDeployer, "WriterStorageDeployer");
         _requireEmpty(predictedFactory, "WriterFactory");
-        _requireEmpty(predictedColorRegistry, "ColorRegistry");
 
         // -------------------------------------------------------------------
-        // Deploy all 4 contracts. Order matters:
+        // Deploy all 3 contracts. Order matters:
         //   1. WriterDeployer        (no dependencies)
         //   2. WriterStorageDeployer (no dependencies)
         //   3. WriterFactory         (constructor takes 1 & 2 addresses)
-        //   4. ColorRegistry         (no dependencies)
-        // -------------------------------------------------------------------
         vm.startBroadcast();
 
         // 1. WriterDeployer
@@ -140,9 +128,6 @@ contract Deploy is Script {
         (bool ok3,) = ARACHNID.call(abi.encodePacked(factorySalt, factoryInitCode));
         require(ok3, "WriterFactory deploy failed");
 
-        // 4. ColorRegistry
-        (bool ok4,) = ARACHNID.call(abi.encodePacked(colorRegistrySalt, colorRegistryInitCode));
-        require(ok4, "ColorRegistry deploy failed");
 
         vm.stopBroadcast();
 
@@ -152,36 +137,30 @@ contract Deploy is Script {
         _requireDeployed(predictedWriterDeployer, "WriterDeployer");
         _requireDeployed(predictedStorageDeployer, "WriterStorageDeployer");
         _requireDeployed(predictedFactory, "WriterFactory");
-        _requireDeployed(predictedColorRegistry, "ColorRegistry");
 
         // Verify the factory's sub-deployer references are correct
         WriterFactory f = WriterFactory(predictedFactory);
         require(address(f.writerDeployer()) == predictedWriterDeployer, "Factory writerDeployer mismatch");
         require(address(f.storageDeployer()) == predictedStorageDeployer, "Factory storageDeployer mismatch");
 
-        // Verify ColorRegistry domain
-        ColorRegistry cr = ColorRegistry(predictedColorRegistry);
-        require(keccak256(bytes(cr.DOMAIN_NAME())) == keccak256("ColorRegistry"), "ColorRegistry DOMAIN_NAME mismatch");
 
         console.log("");
         console.log("=== Deployed ===");
         console.log("WriterDeployer:      ", predictedWriterDeployer);
         console.log("StorageDeployer:     ", predictedStorageDeployer);
         console.log("WriterFactory:       ", predictedFactory);
-        console.log("ColorRegistry:       ", predictedColorRegistry);
 
         console.log("");
         console.log("=== Next steps ===");
         console.log("1. Record the addresses above.");
         console.log("2. Update env vars:");
         console.log("     FACTORY_ADDRESS=", predictedFactory);
-        console.log("     COLOR_REGISTRY_ADDRESS=", predictedColorRegistry);
         console.log("3. Record the deploy block number for START_BLOCK.");
         console.log("4. Follow DEPLOYMENT.md steps 3-5.");
         console.log("");
         console.log("=== For future chain deployments ===");
         console.log("Run this script with the SAME salts and SAME source code.");
-        console.log("All 4 addresses will be identical on any chain with the");
+        console.log("All 3 addresses will be identical on any chain with the");
         console.log("Arachnid deployer at:", ARACHNID);
     }
 

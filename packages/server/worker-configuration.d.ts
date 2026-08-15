@@ -5,7 +5,6 @@ interface __BaseEnv_Env {
 	HYPERDRIVE: Hyperdrive;
 	APP_ENV: "PRODUCTION";
 	BUN_VERSION: "1.2.0";
-	COLOR_REGISTRY_ADDRESS: "0xA083Ff0E24F616AfD12755d7169256334669d4DD";
 	FACTORY_ADDRESS: "0xF532F814a7A7291440Fc27AbB8CC845Ab86709c8";
 	RPC_URL: "https://optimism-mainnet.core.chainstack.com/84b63be8c6b3f521c01e95cc37a4a34d";
 	TARGET_CHAIN_ID: "10";
@@ -38,7 +37,6 @@ declare namespace NodeJS {
 				Cloudflare.Env,
 				| "APP_ENV"
 				| "BUN_VERSION"
-				| "COLOR_REGISTRY_ADDRESS"
 				| "FACTORY_ADDRESS"
 				| "RPC_URL"
 				| "TARGET_CHAIN_ID"

@@ -2,6 +2,7 @@
 
 import type { Entry, Writer } from "@/utils/api";
 import { createWithChunk, writerQueryKey } from "@/utils/api";
+import { buildEntryDraftId } from "@/utils/encryptedDrafts";
 import { useOPWallet } from "@/utils/hooks";
 import { getCachedDerivedKey } from "@/utils/keyCache";
 import {
@@ -62,6 +63,13 @@ export default function EntryListWithCreateInput({
 	// External wallets (MetaMask, WalletConnect, etc.) pop a signature prompt;
 	// Privy's embedded wallet signs silently, so we only show a loader for external.
 	const isExternalWallet = !!wallet && wallet.walletClientType !== "privy";
+	const createEntryDraftId = wallet
+		? buildEntryDraftId({
+				kind: "create-entry",
+				userAddress: wallet.address,
+				writerAddress: normalizedWriterAddress,
+			})
+		: undefined;
 
 	const queryKey = writerQueryKey(normalizedWriterAddress);
 	const { mutateAsync } = useMutation({
@@ -204,6 +212,7 @@ export default function EntryListWithCreateInput({
 							onSubmit={handleSubmit}
 							isLoading={isSigning}
 							unsavedChangesTitle="Discard Entry"
+							draftId={createEntryDraftId}
 						/>
 					</div>
 				)}

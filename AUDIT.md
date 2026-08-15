@@ -65,7 +65,7 @@ Writer Security Audit
   ---                                                                                                                                      
   ✅ C-2. Signature replay protection can be bypassed via ECDSA malleability                                                                  
                                                                                                                                            
-  Files: packages/chain/src/Writer.sol:50-54, packages/chain/src/VerifyTypedData.sol:32-52, packages/chain/src/ColorRegistry.sol:23-32     
+  Files: packages/chain/src/Writer.sol:50-54, packages/chain/src/VerifyTypedData.sol:32-52
                                                                                                                                            
   function _validateAndMarkSignature(bytes memory signature) internal {                                                                    
       bytes32 signatureHash = keccak256(signature);                                                                                        
@@ -87,7 +87,6 @@ Writer Security Audit
   - createWithChunkWithSig → duplicate entry created with the same content under the original author (most concerning; pollutes a user's   
   timeline with content they didn't intend to write twice).                                                                                
   - removeWithSig, updateWithSig → idempotent in practice but still wasteful.                                                              
-  - setHexWithSig → idempotent.                                                                                                            
   - addChunkWithSig → can attempt re-add but the chunk-already-filled check (WriterStorage.sol:110) blocks it.                             
                                                                                                                                            
   This is exploitable by anyone — including your own relay operator — without the user's consent.                                          
@@ -133,20 +132,18 @@ Writer Security Audit
                                                                                                                                            
   ---                                                                                                                                      
   ✅ H-3. All sig-relayed write endpoints are unauthenticated — relay funds can be ground down
-  ℹ️: Fixed by adding `requireWalletAuth` middleware to /color-registry/set,
+  ℹ️: Fixed by adding `requireWalletAuth` middleware to
      /writer/:address/entry/createWithChunk, /writer/:address/entry/:id/update,
      and /writer/:address/entry/:id/delete. Each route handler asserts
      `getAddress(recoveredSigner) === c.var.walletAddress` after recovering
      the EIP-712 signer — so even if an attacker captures someone else's
      signature, they can't authenticate as that wallet to submit it. The
-     four frontend write API helpers (setColor, createWithChunk, editEntry,
-     deleteEntry) and the factoryCreate helper now all forward a Privy
-     bearer token; all 8 call sites updated. The endpoints were also stripped
-     from /docs and DOCS.md. Per-IP rate limiting is still a follow-up but
-     the captured-signature replay + anonymous relay-drain attack class is
-     closed.
+     frontend write API helpers (createWithChunk, editEntry, deleteEntry) and
+     the factoryCreate helper now all forward a Privy bearer token. Per-IP
+     rate limiting is still a follow-up but the captured-signature replay +
+     anonymous relay-drain attack class is closed.
 
-  Files: packages/server/src/routes/writer.ts:241,348,433 (createWithChunk, update, delete), :127 (color-registry/set)                     
+  Files: packages/server/src/routes/writer.ts (createWithChunk, update, delete)
                                                                                                                                            
   These endpoints accept a signature, recover the signer, and submit to the chain via the relay. There is no Privy auth and no rate        
   limiting. Several attack patterns:                                                                                                    
@@ -410,11 +407,11 @@ Writer Security Audit
   ✅ L-1. DOMAIN_NAME/DOMAIN_VERSION are mutable storage variables
   ℹ️: Fixed during the L-1/L-2/M-9 cleanup. DOMAIN_NAME, DOMAIN_VERSION,
      and WRITER_ROLE are now `string public constant` / `bytes32 public
-     constant` in both Writer.sol and ColorRegistry.sol. The fragile
-     "child state vars must initialize before the parent constructor reads
-     them" pattern is gone — constants are baked into bytecode.
+     constant` in Writer.sol. The fragile "child state vars must initialize
+     before the parent constructor reads them" pattern is gone — constants
+     are baked into bytecode.
 
-  File: packages/chain/src/Writer.sol:20-22, packages/chain/src/ColorRegistry.sol:7-8                                                   
+  File: packages/chain/src/Writer.sol:20-22
                               
   bytes public DOMAIN_NAME = "Writer";   
   bytes public DOMAIN_VERSION = "1";
@@ -513,13 +510,6 @@ Writer Security Audit
   hard delete of the entry struct and removes it from entryIds. Only events preserve history. Either fix the docs or implement a deletedAt 
   flag in the struct.                                                                                                                      
                                                                                                                                            
-  ✅ L-10. ColorRegistry has the same malleability replay weakness as Writer
-  ℹ️: Fixed alongside C-2. ColorRegistry.setHexWithSig now uses the
-     digest-keyed `digestWasExecuted` map and OZ ECDSA's low-S enforcement
-     via the shared VerifyTypedData._recover helper. Same fix, same
-     guarantees as Writer.
-
-  Already covered by C-2; lower impact (only changes a user's color preference).                                                           
                                                                                                                                            
   ❌ L-11. getEntryContent is unbounded gas                                                                                                   
   ℹ️: simple helper generally not used                                                                                                                                    
@@ -628,7 +618,7 @@ Writer Security Audit
   keccak256(signature), but ECDSA (r, n−s, v') is also valid and has a different hash. Enforce low-S and key the replay map off the digest,
    not the signature bytes.                                                                                                                
                                                                                                                                            
-  Plus a serious operational risk: every relay-paying endpoint is unauthenticated (/factory/create, createWithChunk, update, delete,       
-  color-registry/set). An attacker can drain your relay wallet without ever owning a Writer.                                               
+  Plus a serious operational risk: every relay-paying endpoint is unauthenticated (/factory/create, createWithChunk, update, delete).
+  An attacker can drain your relay wallet without ever owning a Writer.
                                                                                                                                            
   Full report above covers 2 critical, 4 high, 9 medium, and 18 low/info findings, with file:line references and concrete fixes.

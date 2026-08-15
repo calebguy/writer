@@ -470,18 +470,6 @@ export default function DocsPage() {
 							</Link>
 							<CopyButton value="0xF532F814a7A7291440Fc27AbB8CC845Ab86709c8" />
 						</p>
-						<p className={`${secondaryGray} flex items-center gap-2 flex-wrap`}>
-							<span>ColorRegistry:</span>
-							<Link
-								href="https://optimistic.etherscan.io/address/0xA083Ff0E24F616AfD12755d7169256334669d4DD"
-								target="_blank"
-								rel="noopener noreferrer"
-								className="font-mono text-primary break-all hover:underline"
-							>
-								0xA083Ff0E24F616AfD12755d7169256334669d4DD
-							</Link>
-							<CopyButton value="0xA083Ff0E24F616AfD12755d7169256334669d4DD" />
-						</p>
 					</div>
 					<RelicDivider seed="smart-contracts" />
 
@@ -905,57 +893,7 @@ export default function DocsPage() {
 							]}
 						/>
 					</Section>
-					<RelicDivider seed="storage-color" />
-					<Section
-						title="ColorRegistry"
-						description="Simple registry mapping user addresses to their chosen hex color."
-					>
-						<ContractFunction
-							name="setHex(hexColor)"
-							description="Set your color directly."
-							params={[
-								{
-									name: "hexColor",
-									type: "bytes32",
-									description: "Color in bytes32 format",
-								},
-							]}
-							events={["HexSet(user, hexColor)"]}
-						/>
-
-						<ContractFunction
-							name="setHexWithSig(signature, nonce, hexColor)"
-							description="Set your color via EIP-712 signature."
-							params={[
-								{
-									name: "signature",
-									type: "bytes",
-									description: "EIP-712 signature",
-								},
-								{
-									name: "nonce",
-									type: "uint256",
-									description: "Unique nonce for replay protection",
-								},
-								{
-									name: "hexColor",
-									type: "bytes32",
-									description: "Color in bytes32 format",
-								},
-							]}
-							events={["HexSet(user, hexColor)"]}
-						/>
-
-						<ContractFunction
-							name="getPrimary(user)"
-							description="Get a user's hex color."
-							params={[
-								{ name: "user", type: "address", description: "User address" },
-							]}
-							returns="bytes32"
-							access="View"
-						/>
-					</Section>
+					<RelicDivider seed="storage-api" />
 				</div>
 
 				{/* API */}

@@ -232,40 +232,6 @@ export function recoverRemoveEntrySigner({
 	});
 }
 
-export function recoverSetColorSigner({
-	signature,
-	nonce,
-	hexColor,
-	address,
-}: {
-	signature: Hex;
-	nonce: bigint;
-	hexColor: Hex;
-	address: Hex;
-}) {
-	assertLowS(signature);
-	return recoverTypedDataAddress({
-		// chainId omitted — see getDomain() above and VerifyTypedData.sol
-		domain: {
-			name: "ColorRegistry",
-			version: "1",
-			verifyingContract: getAddress(address),
-		},
-		message: {
-			nonce,
-			hexColor,
-		},
-		primaryType: "SetHex",
-		types: {
-			SetHex: [
-				{ name: "nonce", type: "uint256" },
-				{ name: "hexColor", type: "bytes32" },
-			],
-		},
-		signature,
-	});
-}
-
 export function recoverSetTitleSigner({
 	signature,
 	nonce,

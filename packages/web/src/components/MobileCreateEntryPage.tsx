@@ -5,6 +5,7 @@ import { Lock } from "@/components/icons/Lock";
 import { Unlock } from "@/components/icons/Unlock";
 import { MarkdownHelpLink } from "@/components/markdown/MarkdownGuide";
 import { useComposeHeaderActions } from "@/components/writer/ComposeHeaderActionsContext";
+import { useEncryptedDraftAutosave } from "@/hooks/useEncryptedDraftAutosave";
 import {
 	useUnsavedChangesNavigation,
 	useUnsavedChangesWarning,
@@ -17,6 +18,7 @@ import {
 	getWriter,
 	writerQueryKey,
 } from "@/utils/api";
+import { buildEntryDraftId } from "@/utils/encryptedDrafts";
 import { cn } from "@/utils/cn";
 import { useOPWallet } from "@/utils/hooks";
 import { getCachedDerivedKey } from "@/utils/keyCache";
@@ -46,6 +48,26 @@ export function MobileCreateEntryPage({ address }: { address: string }) {
 	const hasUnsavedChanges = markdown.trim() !== "";
 	useUnsavedChangesWarning(hasUnsavedChanges, "Discard Entry");
 	const confirmNavigation = useUnsavedChangesNavigation();
+	const createEntryDraftId = wallet
+		? buildEntryDraftId({
+				kind: "create-entry",
+				userAddress: wallet.address,
+				writerAddress: normalizedAddress,
+			})
+		: undefined;
+	const restoreDraft = useCallback(
+		(draft: { markdown: string; encrypted: boolean }) => {
+			setMarkdown(draft.markdown);
+			setEncrypted(draft.encrypted);
+		},
+		[],
+	);
+	const { clearDraft } = useEncryptedDraftAutosave({
+		draftId: createEntryDraftId,
+		markdown,
+		encrypted,
+		onRestore: restoreDraft,
+	});
 
 	const queryKey = writerQueryKey(normalizedAddress);
 	const { data: writer } = useQuery<Writer>({
@@ -171,6 +193,9 @@ export function MobileCreateEntryPage({ address }: { address: string }) {
 					onError: (err) => {
 						console.error("Create entry failed:", err);
 					},
+					onSuccess: () => {
+						void clearDraft();
+					},
 				},
 			);
 			router.push(`/writer/${address}`);
@@ -182,6 +207,7 @@ export function MobileCreateEntryPage({ address }: { address: string }) {
 		}
 	}, [
 		address,
+		clearDraft,
 		encrypted,
 		getAccessToken,
 		isExternalWallet,

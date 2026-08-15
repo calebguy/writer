@@ -6,7 +6,6 @@ import {
 	CREATE_FUNCTION_SIGNATURE,
 	CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
 	DELETE_ENTRY_FUNCTION_SIGNATURE,
-	SET_HEX_FUNCTION_SIGNATURE,
 	SET_TITLE_WITH_SIG_FUNCTION_SIGNATURE,
 	UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE,
 	db,
@@ -20,7 +19,6 @@ import {
 	reconcileWriterByAddress,
 	recoverCreateWithChunkSigner,
 	recoverRemoveEntrySigner,
-	recoverSetColorSigner,
 	recoverSetTitleSigner,
 	recoverUpdateEntryWithChunkSigner,
 	simulateContractOrThrow,
@@ -28,7 +26,6 @@ import {
 import {
 	addressAndIDParamSchema,
 	addressParamSchema,
-	colorRegistrySetJsonValidator,
 	createWithChunkJsonValidator,
 	deleteEntryJsonValidator,
 	factoryCreateJsonValidator,
@@ -216,10 +213,13 @@ const writerRoutes = new Hono()
 				);
 			}
 
-			const { customBackgroundColor } = c.req.valid("json");
+			const { color, customBackgroundColor } = c.req.valid("json");
 			const [user] = await db.upsertUser({
 				address,
-				customBackgroundColor,
+				...(color !== undefined ? { color } : {}),
+				...(customBackgroundColor !== undefined
+					? { customBackgroundColor }
+					: {}),
 			});
 			return c.json({ user });
 		},
@@ -253,75 +253,6 @@ const writerRoutes = new Hono()
 		}
 		return c.json({ writer });
 	})
-	.post(
-		"/color-registry/set",
-		requireWalletAuth,
-		colorRegistrySetJsonValidator,
-		async (c) => {
-			const { signature, nonce, hexColor } = c.req.valid("json");
-
-			const address = await recoverSetColorSigner({
-				signature: signature as Hex,
-				nonce,
-				hexColor: hexColor as Hex,
-				address: env.COLOR_REGISTRY_ADDRESS as Hex,
-			});
-
-			// Audit fix for H-3: the EIP-712 signer must match the authenticated
-			// wallet. Prevents an attacker from replaying a captured signature
-			// against the relay (and prevents anonymous relay-drain entirely).
-			if (!c.var.walletAddresses.has(getAddress(address))) {
-				return c.json(
-					{ error: "signer does not match authenticated wallet" },
-					403,
-				);
-			}
-
-			const args = {
-				signature,
-				nonce: Number(nonce),
-				hexColor,
-			};
-			try {
-				const { wallet, nonce: relayNonce } = await relay.sendTransaction({
-					to: env.COLOR_REGISTRY_ADDRESS,
-					abi: SET_HEX_FUNCTION_SIGNATURE,
-					args: [signature, Number(nonce), hexColor],
-				});
-				const transactionId = makeRelayTxId(wallet, relayNonce);
-				await db.createTx({
-					id: transactionId,
-					wallet,
-					nonce: relayNonce,
-					chainId: BigInt(env.TARGET_CHAIN_ID),
-					functionSignature: SET_HEX_FUNCTION_SIGNATURE,
-					args,
-					status: "PENDING",
-					source: "ui",
-				});
-				c.executionCtx.waitUntil(
-					watchRelayReceipt({
-						txId: transactionId,
-						wallet,
-						nonce: relayNonce,
-						chainId: BigInt(env.TARGET_CHAIN_ID),
-						functionSignature: SET_HEX_FUNCTION_SIGNATURE,
-						args,
-					}),
-				);
-				const [user] = await db.upsertUser({
-					address: address,
-					color: hexColor,
-				});
-				return c.json({ user });
-			} catch (err) {
-				console.error("color-registry/set db error:", err);
-				// Audit fix L-14: don't leak the underlying DB error message in
-				// the response. Logs above retain the full error for debugging.
-				return c.json({ error: "database error during color set" }, 500);
-			}
-		},
-	)
 	.post(
 		"/factory/create",
 		requireWalletAuth,

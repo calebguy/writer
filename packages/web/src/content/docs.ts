@@ -32,7 +32,6 @@ export const tocItems = [
 	{ id: "writing", label: "Writing", depth: 2 },
 	{ id: "administration", label: "Administration", depth: 2 },
 	{ id: "writerstorage", label: "WriterStorage", depth: 1 },
-	{ id: "colorregistry", label: "ColorRegistry", depth: 1 },
 	{ id: "api", label: "API", depth: 0 },
 	{ id: "writers", label: "Writers", depth: 1 },
 	{ id: "entries", label: "Entries", depth: 1 },
@@ -460,14 +459,6 @@ struct Entry {
     address author;
 }
 \`\`\`
-
-### ColorRegistry
-
-Simple registry mapping user addresses to their chosen hex color.
-
-- \`setHex(hexColor)\`
-- \`setHexWithSig(signature, nonce, hexColor)\`
-- \`getPrimary(user)\` → \`bytes32\` [view]
 `;
 
 const contentEncodingMarkdown = `## Content Encoding

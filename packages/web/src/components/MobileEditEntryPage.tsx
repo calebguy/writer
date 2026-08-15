@@ -6,6 +6,7 @@ import { Lock } from "@/components/icons/Lock";
 import { Unlock } from "@/components/icons/Unlock";
 import { MarkdownHelpLink } from "@/components/markdown/MarkdownGuide";
 import { useComposeHeaderActions } from "@/components/writer/ComposeHeaderActionsContext";
+import { useEncryptedDraftAutosave } from "@/hooks/useEncryptedDraftAutosave";
 import {
 	useUnsavedChangesNavigation,
 	useUnsavedChangesWarning,
@@ -22,6 +23,7 @@ import {
 	getWriter,
 	writerQueryKey,
 } from "@/utils/api";
+import { buildEntryDraftId } from "@/utils/encryptedDrafts";
 import { cn } from "@/utils/cn";
 import {
 	clearPrivateCachedEntry,
@@ -287,6 +289,36 @@ export function MobileEditEntryPage({
 	}, [entry, wallet, markdown, initialMarkdown, encrypted]);
 	const confirmNavigation = useUnsavedChangesNavigation();
 	useUnsavedChangesWarning(canSave, "Discard Entry");
+	const editEntryDraftId =
+		wallet && entry
+			? buildEntryDraftId({
+					kind: "edit-entry",
+					userAddress: wallet.address,
+					writerAddress: normalizedAddress,
+					entryId: id,
+				})
+			: undefined;
+	const restoreDraft = useCallback(
+		(draft: { markdown: string; encrypted: boolean }) => {
+			editorRef.current?.setMarkdown(draft.markdown);
+			setMarkdown(draft.markdown);
+			setEncrypted(draft.encrypted);
+		},
+		[],
+	);
+	const shouldRestoreDraft = useCallback(
+		(currentMarkdown: string, draft: { markdown: string }) =>
+			draft.markdown.trim().length > 0 && draft.markdown !== currentMarkdown,
+		[],
+	);
+	const { clearDraft } = useEncryptedDraftAutosave({
+		draftId: editEntryDraftId,
+		markdown,
+		encrypted,
+		enabled: canSave,
+		onRestore: restoreDraft,
+		shouldRestore: shouldRestoreDraft,
+	});
 
 	const handleExit = useCallback(async () => {
 		if (canSave && !(await confirmNavigation())) return;
@@ -363,6 +395,9 @@ export function MobileEditEntryPage({
 					onError: (err) => {
 						console.error("Edit entry failed:", err);
 					},
+					onSuccess: () => {
+						void clearDraft();
+					},
 				},
 			);
 			router.push(`/writer/${address}/${id}`);
@@ -375,6 +410,7 @@ export function MobileEditEntryPage({
 	}, [
 		address,
 		canSave,
+		clearDraft,
 		encrypted,
 		entry,
 		getAccessToken,

@@ -3,6 +3,7 @@
 import { Arrow } from "@/components/icons/Arrow";
 import { Lock } from "@/components/icons/Lock";
 import { Unlock } from "@/components/icons/Unlock";
+import { useEncryptedDraftAutosave } from "@/hooks/useEncryptedDraftAutosave";
 import {
 	useUnsavedChangesNavigation,
 	useUnsavedChangesWarning,
@@ -39,6 +40,7 @@ interface CreateInputProps {
 	onCancel?: () => void;
 	hidePrivacyControls?: boolean;
 	unsavedChangesTitle?: string;
+	draftId?: string;
 }
 
 export default function CreateInput({
@@ -54,6 +56,7 @@ export default function CreateInput({
 	onCancel,
 	hidePrivacyControls = false,
 	unsavedChangesTitle,
+	draftId,
 }: CreateInputProps) {
 	const isMac = useIsMac();
 	const [hasFocus, setHasFocus] = useState(false);
@@ -71,6 +74,18 @@ export default function CreateInput({
 		: markdown.trim() !== "";
 	const confirmNavigation = useUnsavedChangesNavigation();
 	useUnsavedChangesWarning(hasUnsavedChanges, unsavedChangesTitle);
+	const restoreDraft = useCallback((draft: CreateInputData) => {
+		editorRef.current?.setMarkdown(draft.markdown);
+		setMarkdown(draft.markdown);
+		setEncrypted(draft.encrypted);
+		setHasFocus(true);
+	}, []);
+	const { clearDraft } = useEncryptedDraftAutosave({
+		draftId,
+		markdown,
+		encrypted,
+		onRestore: restoreDraft,
+	});
 
 	const submitVerb = submitLabel ?? "create";
 	// Handle clicks inside or outside the container
@@ -120,9 +135,11 @@ export default function CreateInput({
 		setHasFocus(Boolean(forceOpen));
 		setIsExpanded(false);
 		setEncrypted(false);
+		await clearDraft();
 		onExpand?.(false);
 		onCancel?.();
 	}, [
+		clearDraft,
 		confirmNavigation,
 		forceOpen,
 		hasUnsavedChanges,
@@ -145,15 +162,25 @@ export default function CreateInput({
 		setIsExpanded(false);
 		setEncrypted(false);
 		onExpand?.(false);
-		Promise.resolve(onSubmit(data)).catch((err) => {
-			console.error("Submit failed:", err);
-			// Restore the content so the user can retry
-			editorRef.current?.setMarkdown(prevMarkdown);
-			setMarkdown(prevMarkdown);
-			setEncrypted(prevEncrypted);
-			setHasFocus(true);
-		});
-	}, [encrypted, forceOpen, isLoading, markdown, onExpand, onSubmit]);
+		Promise.resolve(onSubmit(data))
+			.then(() => clearDraft())
+			.catch((err) => {
+				console.error("Submit failed:", err);
+				// Restore the content so the user can retry
+				editorRef.current?.setMarkdown(prevMarkdown);
+				setMarkdown(prevMarkdown);
+				setEncrypted(prevEncrypted);
+				setHasFocus(true);
+			});
+	}, [
+		clearDraft,
+		encrypted,
+		forceOpen,
+		isLoading,
+		markdown,
+		onExpand,
+		onSubmit,
+	]);
 
 	// Handle keyboard shortcuts. The submit shortcut runs in capture phase so
 	// Lexical never sees Cmd/Ctrl+Enter as a plain Enter and inserts a newline.
