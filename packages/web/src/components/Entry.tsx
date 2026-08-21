@@ -10,11 +10,11 @@ import {
 	writerQueryKey,
 } from "@/utils/api";
 import { cn } from "@/utils/cn";
+import { buildEntryDraftId } from "@/utils/encryptedDrafts";
 import {
 	clearPrivateCachedEntry,
 	clearPublicCachedEntry,
 } from "@/utils/entryCache";
-import { buildEntryDraftId } from "@/utils/encryptedDrafts";
 import { useOPWallet } from "@/utils/hooks";
 import { getCachedDerivedKey } from "@/utils/keyCache";
 import {
@@ -37,8 +37,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { MdModeEdit } from "react-icons/md";
 import type { Hex } from "viem";
@@ -111,6 +111,11 @@ export default function Entry({
 	//      chunks under a confirmed `updatedAtHash` once the pending
 	//      overlay has dropped off.
 	const pendingSavedContentRef = useRef<string | null>(null);
+	const editSessionRef = useRef(0);
+	const startEditing = useCallback(() => {
+		editSessionRef.current += 1;
+		setIsEditing(true);
+	}, []);
 	// Signal to header that entry is ready to display
 	useEffect(() => {
 		if (processedEntry) {
@@ -393,9 +398,9 @@ export default function Entry({
 		(draft: { markdown: string; encrypted: boolean }) => {
 			setEditedContent(draft.markdown);
 			setEncrypted(draft.encrypted);
-			setIsEditing(true);
+			startEditing();
 		},
-		[],
+		[startEditing],
 	);
 	const shouldRestoreDraft = useCallback(
 		(currentMarkdown: string, draft: { markdown: string }) =>
@@ -464,7 +469,7 @@ export default function Entry({
 	]);
 
 	const handleSave = async () => {
-		if (!editedContent || !wallet) return;
+		if (!editedContent || !wallet || isEditPending) return;
 
 		// Embedded (Privy) wallets sign silently — we can drop out of edit
 		// mode the instant the user clicks save and roll back if anything in
@@ -474,6 +479,7 @@ export default function Entry({
 		const isEmbeddedWallet = wallet.walletClientType === "privy";
 		const priorProcessed = processedEntry;
 		const intendedContent = editedContent;
+		const saveSessionId = editSessionRef.current;
 
 		setEditSubmitted(true);
 		if (isEmbeddedWallet) {
@@ -488,12 +494,9 @@ export default function Entry({
 			const compressedContent = await compress(intendedContent);
 			let versionedCompressedContent = `br:${compressedContent}`;
 			if (encrypted) {
-				// Edits always re-encrypt with v4. Even if the original entry was
-				// stored as v1/v2/v3, the updated content is written as v4 — the
-				// edit produces a new ciphertext anyway, so we may as well lift it
-				// to the secure format. The previous storage_id is preserved on
-				// the entry row, so the v4 key is the same one the user would
-				// derive for any other entry on this writer.
+				// Edits always re-encrypt with v5. Even if the original entry used
+				// an older format, this write produces new ciphertext and keeps the
+				// previous storage_id so future decrypts derive the same writer key.
 				const key = await getCachedDerivedKey(
 					wallet,
 					"v5",
@@ -533,16 +536,18 @@ export default function Entry({
 						}
 					: prev,
 			);
-			setIsEditing(false);
+			if (editSessionRef.current === saveSessionId) {
+				setIsEditing(false);
+			}
 			setEditSubmitted(false);
 			await clearDraft();
 		} catch (err) {
 			console.error("Edit failed", err);
-			if (isEmbeddedWallet) {
+			pendingSavedContentRef.current = null;
+			if (isEmbeddedWallet && editSessionRef.current === saveSessionId) {
 				// Optimistic exit failed — restore the prior entry state and
 				// bounce the user back into the editor with their draft
 				// intact so they can retry without re-typing.
-				pendingSavedContentRef.current = null;
 				setProcessedEntry(priorProcessed);
 				setEditedContent(intendedContent);
 				setIsEditing(true);
@@ -575,7 +580,7 @@ export default function Entry({
 				}
 
 				void import("./markdown/MDX");
-				setIsEditing(true);
+				startEditing();
 				return;
 			}
 
@@ -606,6 +611,7 @@ export default function Entry({
 		processedContent,
 		router,
 		editHref,
+		startEditing,
 	]);
 
 	const canView = useMemo(() => {
@@ -752,14 +758,16 @@ export default function Entry({
 					"justify-start": !canEdit,
 				})}
 			>
-				<div>
-					{isConfirmingEdit || editSubmitted ? (
-						<span className="pending-entry-spinner inline-flex">
+				<div className="flex items-center gap-2">
+					<span className="text-muted bold">{createdAt}</span>
+					{(isConfirmingEdit || editSubmitted) && (
+						<span
+							aria-label="Confirming edit"
+							className="pending-entry-spinner inline-flex"
+						>
 							<span className="pending-entry-spinner-track" />
 							<AiOutlineLoading3Quarters className="pending-entry-spinner-icon w-3 h-3 rotating" />
 						</span>
-					) : (
-						<span className="text-muted bold">{createdAt}</span>
 					)}
 				</div>
 				{canEdit && (
@@ -779,7 +787,7 @@ export default function Entry({
 											setIsDeleting(false);
 											void clearDraft();
 										} else {
-											setIsEditing(true);
+											startEditing();
 										}
 									}}
 								>
@@ -788,11 +796,11 @@ export default function Entry({
 								{isEditing && (
 									<button
 										type="button"
-										disabled={!isContentChanged}
+										disabled={!isContentChanged || isEditPending}
 										onClick={handleSave}
 										className={cn(
 											"text-green-400 hover:text-green-600 disabled:text-neutral-400 dark:disabled:text-neutral-600",
-											{ "cursor-pointer": isContentChanged },
+											{ "cursor-pointer": isContentChanged && !isEditPending },
 										)}
 									>
 										save
