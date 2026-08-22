@@ -732,7 +732,7 @@ export function WriterList({ loginLogo }: { loginLogo: number }) {
 	};
 
 	if (!isLoggedIn) {
-		return <LoginPrompt toWhat="write" logo={loginLogo} />;
+		return <LoginPrompt label="Start writing" logo={loginLogo} />;
 	}
 	const isCheckingHiddenWritersForEmptyHome =
 		!isLoading && writers?.length === 0 && isLoadingHiddenWriters;

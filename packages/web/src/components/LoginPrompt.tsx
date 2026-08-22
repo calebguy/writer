@@ -4,12 +4,14 @@ import { useLogin } from "@privy-io/react-auth";
 import Image from "next/image";
 
 interface LoginPromptProps {
+	label?: string;
 	toWhat?: string;
 	logo: number;
 }
 
-export function LoginPrompt({ toWhat, logo }: LoginPromptProps) {
+export function LoginPrompt({ label, toWhat, logo }: LoginPromptProps) {
 	const { login } = useLogin();
+	const promptLabel = label ?? `Sign in${toWhat ? ` to ${toWhat}` : ""}`;
 
 	return (
 		<div className="grow flex flex-col items-center justify-center min-h-[60vh] gap-4">
@@ -18,7 +20,7 @@ export function LoginPrompt({ toWhat, logo }: LoginPromptProps) {
 				className="font-serif italic text-xl text-primary cursor-pointer transition-opacity duration-200 hover:text-secondary"
 				onClick={() => login()}
 			>
-				Sign in {toWhat ? `to ${toWhat}` : ""}
+				{promptLabel}
 			</button>
 			<Image
 				src={`/images/human/logo-${logo}.webp`}
