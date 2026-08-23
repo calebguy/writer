@@ -28,10 +28,12 @@ export const UnsavedChangesContext = createContext<UnsavedChangesContextType>({
 });
 
 export interface NavigationContextType {
+	previousPathname: string | null;
 	writerCameFromExplore: Record<string, boolean>;
 }
 
 export const NavigationContext = createContext<NavigationContextType>({
+	previousPathname: null,
 	writerCameFromExplore: {},
 });
 

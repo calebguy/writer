@@ -12,7 +12,8 @@ export function BackButton({ writerAddress }: { writerAddress: string }) {
 	const pathname = usePathname();
 	const router = useRouter();
 	const isLoggedIn = useIsLoggedIn();
-	const { writerCameFromExplore } = useContext(NavigationContext);
+	const { previousPathname, writerCameFromExplore } =
+		useContext(NavigationContext);
 	const confirmNavigation = useUnsavedChangesNavigation();
 	const segments = pathname.split("/").filter(Boolean);
 
@@ -29,6 +30,7 @@ export function BackButton({ writerAddress }: { writerAddress: string }) {
 			: !isLoggedIn || writerCameFromExplore[normalizedWriterAddress]
 				? "/explore"
 				: "/home";
+	const shouldRestorePreviousScroll = previousPathname === backHref;
 
 	const prefetchBackTarget = useCallback(() => {
 		router.prefetch(backHref);
@@ -38,9 +40,14 @@ export function BackButton({ writerAddress }: { writerAddress: string }) {
 		prefetchBackTarget();
 	}, [prefetchBackTarget]);
 
-
 	const handleBack = async () => {
 		if (!(await confirmNavigation())) return;
+
+		if (shouldRestorePreviousScroll) {
+			router.back();
+			return;
+		}
+
 		router.push(backHref);
 	};
 

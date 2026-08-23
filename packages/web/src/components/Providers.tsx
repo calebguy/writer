@@ -98,6 +98,7 @@ export function Providers({
 	const [writer, setWriter] = useState<WriterContextType["writer"]>(null);
 	const pathname = usePathname();
 	const previousPathnameRef = useRef<string | null>(null);
+	const [previousPathname, setPreviousPathname] = useState<string | null>(null);
 	const [writerCameFromExplore, setWriterCameFromExplore] = useState<
 		Record<string, boolean>
 	>({});
@@ -129,20 +130,20 @@ export function Providers({
 	);
 
 	useEffect(() => {
-		const previousPathname = previousPathnameRef.current;
-		if (previousPathname === pathname) {
+		const previousRoute = previousPathnameRef.current;
+		if (previousRoute === pathname) {
 			return;
 		}
-
+		setPreviousPathname(previousRoute);
 		const writerAddress = getBaseWriterAddress(pathname);
 		if (writerAddress) {
 			const cameFromWriterEntry =
-				getEntryWriterAddress(previousPathname ?? "") === writerAddress;
+				getEntryWriterAddress(previousRoute ?? "") === writerAddress;
 
 			if (!cameFromWriterEntry) {
 				setWriterCameFromExplore((current) => ({
 					...current,
-					[writerAddress]: previousPathname === "/explore",
+					[writerAddress]: previousRoute === "/explore",
 				}));
 			}
 		}
@@ -512,7 +513,7 @@ export function Providers({
 			>
 				<AuthHintContext value={initialLoggedIn}>
 					<UnsavedChangesContext value={unsavedChangesContextValue}>
-						<NavigationContext value={{ writerCameFromExplore }}>
+						<NavigationContext value={{ previousPathname, writerCameFromExplore }}>
 							<WriterContext
 								value={{
 									writer,
