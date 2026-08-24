@@ -16,7 +16,6 @@ import { useEntryLoading } from "@/utils/EntryLoadingContext";
 import { useOPWallet } from "@/utils/hooks";
 import { canRenderEntryImmediately } from "@/utils/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
 import type { Hex } from "viem";
 
@@ -26,7 +25,6 @@ export default function EntryPage({
 	params: Promise<{ address: string; id: string }>;
 }) {
 	const { address, id } = use(params);
-	const router = useRouter();
 	const queryClient = useQueryClient();
 	const [wallet] = useOPWallet();
 	const { setEntryLoading } = useEntryLoading();
@@ -160,7 +158,6 @@ export default function EntryPage({
 				onEntryUpdate={() => {
 					queryClient.invalidateQueries({ queryKey: entryKey });
 					refetch();
-					router.refresh();
 				}}
 			/>
 		</div>

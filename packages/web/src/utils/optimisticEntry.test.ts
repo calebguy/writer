@@ -4,6 +4,7 @@ import {
 	PENDING_PRIVATE_ENTRY_RAW,
 	PENDING_PUBLIC_ENTRY_RAW,
 	buildOptimisticEntry,
+	mergeEntriesForDisplay,
 	prependOptimisticEntry,
 	removeOptimisticEntry,
 	replaceOptimisticEntryRaw,
@@ -20,6 +21,16 @@ function writerWithEntries(entries: Entry[] = []): Writer {
 
 function entry(id: number): Entry {
 	return { id, chunks: [], raw: `br:${id}` } as unknown as Entry;
+}
+
+function pendingUpdateEntry(id: number): Entry {
+	return {
+		...entry(id),
+		raw: `br:updated-${id}`,
+		decompressed: `updated ${id}`,
+		updatedAtTransactionId: `tx-${id}`,
+		updatedAtHash: null,
+	} as unknown as Entry;
 }
 
 describe("optimistic entry helpers", () => {
@@ -74,5 +85,43 @@ describe("optimistic entry helpers", () => {
 
 		const removed = removeOptimisticEntry(updated, -1);
 		expect(removed.entries.map((item) => item.id)).toEqual([1]);
+	});
+
+	test("keeps optimistic update while server still returns stale content", () => {
+		const optimistic = pendingUpdateEntry(1);
+		const staleServerEntry = {
+			...entry(1),
+			raw: "br:old",
+			decompressed: "old",
+			updatedAtHash: null,
+		} as unknown as Entry;
+
+		const merged = mergeEntriesForDisplay([optimistic], [staleServerEntry]);
+
+		expect(merged[0]).toBe(optimistic);
+	});
+
+	test("accepts confirmed server update with matching content", () => {
+		const optimistic = pendingUpdateEntry(1);
+		const confirmedServerEntry = {
+			...optimistic,
+			updatedAtTransactionId: "tx-1",
+			updatedAtHash: "0xhash",
+		} as unknown as Entry;
+
+		const merged = mergeEntriesForDisplay([optimistic], [confirmedServerEntry]);
+
+		expect(merged[0]).toBe(confirmedServerEntry);
+	});
+
+	test("reuses previous entry array when visible content is unchanged", () => {
+		const current = [entry(1), entry(2)];
+
+		const merged = mergeEntriesForDisplay(current, [
+			{ ...current[0] } as Entry,
+			{ ...current[1] } as Entry,
+		]);
+
+		expect(merged).toBe(current);
 	});
 });

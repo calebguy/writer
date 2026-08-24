@@ -17,6 +17,35 @@ function versionForRaw(raw: string): string {
 	return "br:";
 }
 
+function shouldKeepPreviousEntry(previous: Entry, next: Entry) {
+	if (previous.updatedAtTransactionId && !previous.updatedAtHash) {
+		const updateConfirmed =
+			previous.raw === next.raw && Boolean(next.updatedAtHash);
+		return !updateConfirmed;
+	}
+
+	return previous.raw === next.raw && previous.decompressed === next.decompressed;
+}
+
+export function mergeEntriesForDisplay(
+	previousEntries: Entry[],
+	visibleEntries: Entry[],
+) {
+	const previousById = new Map(
+		previousEntries.map((entry) => [entry.id, entry]),
+	);
+	const nextEntries = visibleEntries.map((entry) => {
+		const previous = previousById.get(entry.id);
+		if (previous && shouldKeepPreviousEntry(previous, entry)) return previous;
+		return entry;
+	});
+
+	return previousEntries.length === nextEntries.length &&
+		previousEntries.every((entry, index) => entry === nextEntries[index])
+		? previousEntries
+		: nextEntries;
+}
+
 export function buildOptimisticEntry(
 	writer: Writer,
 	{ id, markdown, raw, author = "", createdAt }: OptimisticEntryInput,

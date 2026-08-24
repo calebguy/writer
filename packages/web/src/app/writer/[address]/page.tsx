@@ -36,23 +36,33 @@ export default function WriterPage() {
 	const isCreatingEntry =
 		useIsMutating({ mutationKey: ["create-with-chunk", normalizedAddress] }) >
 		0;
+	const isEditingEntry =
+		useIsMutating({ mutationKey: ["edit-entry", normalizedAddress] }) > 0;
+	const isDeletingEntry =
+		useIsMutating({ mutationKey: ["delete-entry", normalizedAddress] }) > 0;
+	const isWritingEntry = isCreatingEntry || isEditingEntry || isDeletingEntry;
 
 	const { data: writer, isLoading } = useQuery<Writer>({
 		queryKey: writerQueryKey(normalizedAddress),
 		queryFn: ({ signal }) => getWriter(normalizedAddress as Hex, signal),
 		staleTime: WRITER_QUERY_STALE_TIME,
-		// Poll every 3 seconds when there are pending entries, but pause while a
-		// create mutation is in flight so the refetch can't clobber the
-		// optimistic entry before the server has persisted it.
-		refetchInterval: shouldPoll && !isCreatingEntry ? 3000 : false,
+		// Poll while any entry write is waiting on the indexer, but pause while a
+		// mutation request is still in flight so stale server data can't clobber
+		// the optimistic cache before the server has recorded the pending tx.
+		refetchInterval: shouldPoll && !isWritingEntry ? 3000 : false,
 	});
 
-	// Update polling state when pending entries change
-	const hasPendingEntries =
-		writer?.entries?.some((entry) => entry.onChainId == null) ?? false;
+	const hasPendingEntryWrites =
+		writer?.entries?.some(
+			(entry) =>
+				entry.onChainId == null ||
+				!entry.createdAtHash ||
+				(!!entry.updatedAtTransactionId && !entry.updatedAtHash) ||
+				(!!entry.deletedAtTransactionId && !entry.deletedAtHash),
+		) ?? false;
 	useEffect(() => {
-		setShouldPoll(hasPendingEntries);
-	}, [hasPendingEntries]);
+		setShouldPoll(hasPendingEntryWrites);
+	}, [hasPendingEntryWrites]);
 
 	// Process entries as soon as they arrive - shows immediately, processes private entries in background
 	const handleDecryptError = useCallback((error: unknown) => {

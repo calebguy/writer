@@ -10,6 +10,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { type Entry, reconcileManager } from "./api";
 import { getCachedEntry, setCachedEntry } from "./entryCache";
 import { getCachedDerivedKey } from "./keyCache";
+import { mergeEntriesForDisplay } from "./optimisticEntry";
 import { isEntryPrivate, isWalletAuthor, processPrivateEntry } from "./utils";
 
 export function useIsMac() {
@@ -157,15 +158,9 @@ export function useProcessedEntries(
 			return;
 		}
 
-		setProcessedEntries((previousEntries) => {
-			const previousById = new Map(
-				previousEntries.map((entry) => [entry.id, entry]),
-			);
-			return visibleEntries.map((entry) => {
-				const previous = previousById.get(entry.id);
-				return previous?.raw === entry.raw ? previous : entry;
-			});
-		});
+		setProcessedEntries((previousEntries) =>
+			mergeEntriesForDisplay(previousEntries, visibleEntries),
+		);
 		setProcessedOnce(true);
 
 		// Process private entries in background (non-blocking)

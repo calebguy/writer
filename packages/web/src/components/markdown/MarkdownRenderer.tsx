@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/utils/cn";
-import { Children, type ReactNode } from "react";
+import { Children, memo, type ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import remarkGfm from "remark-gfm";
@@ -104,7 +104,7 @@ function isPreservedBlankLine(children: ReactNode) {
 	return childArray.length === 1 && childArray[0] === PRESERVED_BLANK_LINE;
 }
 
-export function MarkdownRenderer({
+export const MarkdownRenderer = memo(function MarkdownRenderer({
 	markdown,
 	className,
 	links = true,
@@ -180,4 +180,4 @@ export function MarkdownRenderer({
 			</div>
 		</div>
 	);
-}
+});
