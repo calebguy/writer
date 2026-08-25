@@ -1,6 +1,10 @@
 "use client";
 
 import { cn } from "@/utils/cn";
+import {
+	preserveMarkdownBlankLines,
+	RENDERED_BLANK_LINE,
+} from "@/utils/markdownBlankLines";
 import { Children, memo, type ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
@@ -18,7 +22,6 @@ interface MarkdownRendererProps {
 const HTML_IMAGE_TAG_PATTERN = /<img\b[^>]*>/gi;
 const HTML_ATTRIBUTE_PATTERN =
 	/([a-zA-Z_:][-a-zA-Z0-9_:.]*)\s*=\s*("([^"]*)"|'([^']*)'|([^\s"'>/=`]+))/g;
-const PRESERVED_BLANK_LINE = "\u00A0";
 
 function escapeMarkdownImageAlt(value: string) {
 	return value.replace(/([\\[\]])/g, "\\$1");
@@ -55,53 +58,9 @@ function convertHtmlImagesToMarkdown(input: string) {
 	});
 }
 
-function markdownFenceDelimiter(line: string) {
-	const trimmed = line.trimStart();
-	if (trimmed.startsWith("```")) return "```";
-	if (trimmed.startsWith("~~~")) return "~~~";
-	return null;
-}
-
-function preserveMarkdownBlankLines(input: string) {
-	const output: string[] = [];
-	const lines = input.split("\n");
-	let pendingBlankLines = 0;
-	let activeFence: string | null = null;
-
-	const flushBlankLines = () => {
-		if (pendingBlankLines === 0) return;
-		output.push("");
-		for (let index = 1; index < pendingBlankLines; index += 1) {
-			output.push(PRESERVED_BLANK_LINE, "");
-		}
-		pendingBlankLines = 0;
-	};
-
-	for (const line of lines) {
-		const fenceDelimiter = markdownFenceDelimiter(line);
-		if (!activeFence && line.trim().length === 0) {
-			pendingBlankLines += 1;
-			continue;
-		}
-
-		flushBlankLines();
-		output.push(line);
-
-		if (!fenceDelimiter) continue;
-		if (!activeFence) {
-			activeFence = fenceDelimiter;
-			continue;
-		}
-		if (activeFence === fenceDelimiter) activeFence = null;
-	}
-
-	flushBlankLines();
-	return output.join("\n");
-}
-
 function isPreservedBlankLine(children: ReactNode) {
 	const childArray = Children.toArray(children);
-	return childArray.length === 1 && childArray[0] === PRESERVED_BLANK_LINE;
+	return childArray.length === 1 && childArray[0] === RENDERED_BLANK_LINE;
 }
 
 export const MarkdownRenderer = memo(function MarkdownRenderer({

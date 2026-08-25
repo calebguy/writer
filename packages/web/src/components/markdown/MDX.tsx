@@ -5,6 +5,10 @@ import { customLinkDialogPlugin } from "@/plugins/customLinkDialogPlugin";
 import { pasteLinkPlugin } from "@/plugins/pasteLinkPlugin";
 import { cn } from "@/utils/cn";
 import {
+	encodeMarkdownBlankLinesForEditor,
+	restoreMarkdownBlankLinesFromEditor,
+} from "@/utils/markdownBlankLines";
+import {
 	HighlightStyle,
 	LanguageDescription,
 	LanguageSupport,
@@ -51,7 +55,14 @@ import {
 	KEY_DOWN_COMMAND,
 } from "lexical";
 import "@mdxeditor/editor/style.css";
-import { type FC, useCallback, useEffect, useRef, useState } from "react";
+import {
+	type FC,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 import { createPortal } from "react-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -549,6 +560,7 @@ const MDX: FC<EditorProps> = ({
 	aspectSquare = true,
 }) => {
 	const containerRef = useRef<HTMLDivElement>(null);
+	const editorRef = useRef<MDXEditorMethods>(null);
 	const [overlayContainer, setOverlayContainer] =
 		useState<HTMLDivElement | null>(null);
 	const showMarkdownPlaceholder =
@@ -558,9 +570,46 @@ const MDX: FC<EditorProps> = ({
 		setOverlayContainer(containerRef.current);
 	}, []);
 
+	const editorMarkdown = useMemo(
+		() => encodeMarkdownBlankLinesForEditor(markdown),
+		[markdown],
+	);
+
+	useEffect(() => {
+		if (!ref) return;
+		ref.current = {
+			getMarkdown: () =>
+				restoreMarkdownBlankLinesFromEditor(
+					editorRef.current?.getMarkdown() ?? "",
+				),
+			setMarkdown: (value) => {
+				editorRef.current?.setMarkdown(
+					encodeMarkdownBlankLinesForEditor(value),
+				);
+			},
+			insertMarkdown: (value) => {
+				editorRef.current?.insertMarkdown(
+					encodeMarkdownBlankLinesForEditor(value),
+				);
+			},
+			focus: (callbackFn, opts) => {
+				editorRef.current?.focus(callbackFn, opts);
+			},
+			getContentEditableHTML: () =>
+				editorRef.current?.getContentEditableHTML() ?? "",
+			getSelectionMarkdown: () =>
+				restoreMarkdownBlankLinesFromEditor(
+					editorRef.current?.getSelectionMarkdown() ?? "",
+				),
+		};
+		return () => {
+			ref.current = null;
+		};
+	}, [ref]);
+
 	const handleChange = useCallback(
 		(nextMarkdown: string) => {
-			onChange?.(nextMarkdown);
+			onChange?.(restoreMarkdownBlankLinesFromEditor(nextMarkdown));
 		},
 		[onChange],
 	);
@@ -613,8 +662,8 @@ const MDX: FC<EditorProps> = ({
 					customLinkDialogPlugin(),
 				]}
 				onChange={handleChange}
-				ref={ref}
-				markdown={markdown}
+				ref={editorRef}
+				markdown={editorMarkdown}
 				overlayContainer={overlayContainer}
 				readOnly={readOnly}
 				placeholder={renderPlaceholderAsMarkdown ? undefined : placeholder}
