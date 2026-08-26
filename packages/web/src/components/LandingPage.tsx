@@ -310,7 +310,7 @@ export function LandingPage({ forLines }: { forLines: string[] }) {
 										className="font-serif italic text-xl md:text-2xl bg-transparent border-none cursor-pointer transition-opacity duration-200 hover:text-brand"
 										onClick={() => login()}
 									>
-										sign in,
+										write,
 									</button>
 								)}
 								<Link
