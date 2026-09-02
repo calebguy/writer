@@ -65,6 +65,9 @@ export default function CreateInput({
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [markdown, setMarkdown] = useState<string>("");
 	const editorRef = useRef<MDXEditorMethods>(null);
+	const editorShellRef = useRef<HTMLDivElement>(null);
+	const hintRef = useRef<HTMLDivElement>(null);
+	const [showHint, setShowHint] = useState(true);
 	const [loadingContent, setLoadingContent] = useState<string>("");
 	const [encrypted, setEncrypted] = useState(false);
 	const hasUnsavedChanges = forceOpen
@@ -227,7 +230,62 @@ export default function CreateInput({
 		};
 	}, [forceOpen, handleReset, hasFocus, isExpanded]);
 
-	const showHint = markdown.trim() === "";
+	const updateHintVisibility = useCallback(() => {
+		if (!markdown.trim()) {
+			setShowHint(true);
+			return;
+		}
+
+		const shell = editorShellRef.current;
+		const hint = hintRef.current;
+		if (!shell || !hint) {
+			setShowHint(true);
+			return;
+		}
+
+		const content = shell.querySelector<HTMLElement>(".prose");
+		if (!content) {
+			setShowHint(true);
+			return;
+		}
+
+		const hintRect = hint.getBoundingClientRect();
+		const textRects: DOMRect[] = [];
+		const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
+		let node = walker.nextNode();
+		while (node) {
+			if (node.textContent?.trim()) {
+				const range = document.createRange();
+				range.selectNodeContents(node);
+				for (const rect of Array.from(range.getClientRects())) {
+					if (rect.width > 0 && rect.height > 0) {
+						textRects.push(rect);
+					}
+				}
+				range.detach();
+			}
+			node = walker.nextNode();
+		}
+		const overlapsHint = textRects.some(
+			(rect) =>
+				rect.left < hintRect.right &&
+				rect.right > hintRect.left &&
+				rect.top < hintRect.bottom &&
+				rect.bottom > hintRect.top,
+		);
+		setShowHint(!overlapsHint);
+	}, [markdown]);
+
+	useEffect(() => {
+		const frame = requestAnimationFrame(updateHintVisibility);
+		return () => cancelAnimationFrame(frame);
+	}, [updateHintVisibility]);
+
+	useEffect(() => {
+		if (!hasFocus && !isExpanded) return;
+		window.addEventListener("resize", updateHintVisibility);
+		return () => window.removeEventListener("resize", updateHintVisibility);
+	}, [hasFocus, isExpanded, updateHintVisibility]);
 
 	return (
 		<div
@@ -267,6 +325,7 @@ export default function CreateInput({
 				<span>+</span>
 			</div>
 			<div
+				ref={editorShellRef}
 				className={cn("h-full relative min-h-0 overflow-hidden rounded-xs", {
 					hidden: !forceOpen && !hasFocus && !isExpanded,
 					flex: forceOpen || hasFocus || isExpanded,
@@ -286,6 +345,7 @@ export default function CreateInput({
 					onChange={setMarkdown}
 				/>
 				<div
+					ref={hintRef}
 					aria-hidden="true"
 					className={cn(
 						"create-input-hint text-muted text-base leading-[16px] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-opacity",
@@ -296,14 +356,11 @@ export default function CreateInput({
 					<div>to {submitVerb}</div>
 				</div>
 				{hasFocus && canExpand && !hidePrivacyControls && (
-					<div className="create-input-toolbar absolute inset-x-0 bottom-0 z-20 grid h-11 grid-cols-[1fr_auto_1fr] items-end px-2 pb-1.5 pt-4">
+					<div className="absolute bottom-1 flex justify-between w-full z-20 px-2 pb-0.5">
 						<button
 							type="button"
-							aria-label={
-								encrypted ? "Make entry public" : "Make entry private"
-							}
 							onClick={() => setEncrypted?.(!encrypted)}
-							className="create-input-control justify-self-start text-muted hover:text-primary cursor-pointer"
+							className="create-input-control hover:text-primary text-muted cursor-pointer"
 						>
 							{encrypted ? (
 								<Lock className="h-3.5 w-3.5" />
@@ -311,11 +368,10 @@ export default function CreateInput({
 								<Unlock className="h-3.5 w-3.5 ml-0.5" />
 							)}
 						</button>
-						<MarkdownHelpLink className="justify-self-center pb-0.5" />
+						<MarkdownHelpLink className="mt-1" />
 						<button
 							type="button"
-							aria-label={isExpanded ? "Collapse editor" : "Expand editor"}
-							className="create-input-control justify-self-end text-muted hover:text-primary cursor-pointer"
+							className="create-input-control hover:text-primary text-muted mt-1 cursor-pointer"
 							onClick={() => {
 								setIsExpanded(!isExpanded);
 								onExpand?.(!isExpanded);
@@ -336,7 +392,7 @@ export default function CreateInput({
 				)}
 				{(forceOpen || hasFocus || isExpanded) &&
 					(!hasFocus || !canExpand || hidePrivacyControls) && (
-						<MarkdownHelpLink className="create-input-floating-help absolute right-2 bottom-2 z-20" />
+						<MarkdownHelpLink className="absolute right-2 bottom-2 z-20" />
 					)}
 			</div>
 		</div>

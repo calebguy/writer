@@ -4,8 +4,8 @@ import CreateInput from "@/components/CreateInput";
 import { LoadingRelic } from "@/components/LoadingRelic";
 import { LoginPrompt } from "@/components/LoginPrompt";
 import { NavDropdown } from "@/components/NavDropdown";
-import { ThemeModal } from "@/components/ThemeModal";
 import { Dropdown, DropdownItem } from "@/components/dsl/Dropdown";
+import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
 import { Arrow } from "@/components/icons/Arrow";
 import { Check } from "@/components/icons/Check";
 import { Close } from "@/components/icons/Close";
@@ -21,9 +21,7 @@ import { Save } from "@/components/icons/Save";
 import { Undo } from "@/components/icons/Undo";
 import { Unlock } from "@/components/icons/Unlock";
 import { VerticalEllipses } from "@/components/icons/VerticalEllipses";
-import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
 import Image from "next/image";
-import { useState } from "react";
 
 const secondaryGray = "dark:text-neutral-200 text-neutral-800";
 
@@ -152,23 +150,6 @@ function ImageGrid({
 	);
 }
 
-function ThemeModalDemo() {
-	const [open, setOpen] = useState(false);
-
-	return (
-		<>
-			<button
-				type="button"
-				className="rounded-xs border border-surface-raised px-3 py-1.5 text-primary hover:bg-surface-raised"
-				onClick={() => setOpen(true)}
-			>
-				Open color modal
-			</button>
-			<ThemeModal open={open} onClose={() => setOpen(false)} />
-		</>
-	);
-}
-
 export default function ComponentsPage() {
 	return (
 		<div className="max-w-5xl w-full mx-auto">
@@ -222,7 +203,7 @@ export default function ComponentsPage() {
 
 			<Section
 				title="NavDropdown"
-				description="The app's main nav dropdown. Trigger is a relic image; contents adapt to auth state (sign in/out, migrate, color)."
+				description="The app's main nav dropdown. Trigger is a relic image; contents adapt to auth state (sign in/out, theme toggles, migrate, color)."
 			>
 				<div className="flex items-center gap-6">
 					<NavDropdown />
@@ -233,20 +214,12 @@ export default function ComponentsPage() {
 			</Section>
 
 			<Section
-				title="ThemeModal"
-				description="Simplified color picker with only front/back color controls."
-			>
-				<ThemeModalDemo />
-			</Section>
-
-			<Section
 				title="CreateInput"
 				description="MDX markdown editor used for creating writers and entries. Click the + to expand. onSubmit is a no-op here."
 			>
 				<div className="grid gap-2 grid-cols-1 min-[321px]:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))]">
 					<CreateInput
 						placeholder="Demo input"
-						canExpand
 						onSubmit={async ({ markdown }) => {
 							console.log("demo submit", markdown);
 						}}

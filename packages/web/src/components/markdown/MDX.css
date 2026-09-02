@@ -10,35 +10,6 @@
 }
 
 /* CreateInput MDX overrides */
-.create-input-mdx {
-  --create-input-toolbar-safe-area: 2.75rem;
-}
-
-.create-input-mdx .prose {
-  padding-bottom: var(--create-input-toolbar-safe-area) !important;
-  scroll-padding-bottom: var(--create-input-toolbar-safe-area);
-}
-
-.create-input-toolbar {
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    var(--color-surface) 45%,
-    var(--color-surface)
-  );
-}
-
-.create-input-floating-help {
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    var(--color-surface) 35%,
-    var(--color-surface)
-  );
-  padding-block: 1rem 0.375rem;
-  padding-inline-start: 1rem;
-}
-
 :root[data-theme="light"] .create-input-mdx [class*="_placeholder_"] p {
   color: var(--color-muted) !important;
 }

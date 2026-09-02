@@ -1,16 +1,16 @@
 "use client";
 
-import { UnsavedChangesConfirmModal } from "@/components/UnsavedChangesConfirmModal";
 import { useAuthTheme } from "@/hooks/useAuthTheme";
+import { UnsavedChangesConfirmModal } from "@/components/UnsavedChangesConfirmModal";
 import {
 	AuthHintContext,
 	NavigationContext,
 	UNSAVED_CHANGES_TITLE,
 	UnsavedChangesContext,
-	type UnsavedChangesPrompt,
-	type UnsavedChangesRegistration,
 	WriterContext,
 	type WriterContextType,
+	type UnsavedChangesPrompt,
+	type UnsavedChangesRegistration,
 	defaultColor,
 } from "@/utils/context";
 import {
@@ -19,10 +19,10 @@ import {
 	clearStoredPrimaryColor,
 	getStoredCustomBackgroundColor,
 	getStoredPrimaryColor,
+	getStoredThemeMode,
 	onThemeChange,
 	setStoredCustomBackgroundColor,
 	setStoredPrimaryColor,
-	setStoredThemeMode,
 	subscribeSystemThemeChange,
 } from "@/utils/theme";
 import {
@@ -162,10 +162,9 @@ export function Providers({
 
 	useEffect(() => {
 		if (typeof window === "undefined") return;
-		const mode = getStoredCustomBackgroundColor() ? "custom" : "system";
-		setStoredThemeMode(mode);
+		const mode = getStoredThemeMode();
 		applyThemeMode(mode);
-		if (mode === "custom") return;
+		if (mode !== "system") return;
 		return subscribeSystemThemeChange(() => {
 			applyThemeMode("system");
 		});
@@ -214,13 +213,13 @@ export function Providers({
 			setCustomBackgroundColor(rgb);
 			if (rgb) {
 				setStoredCustomBackgroundColor(rgb);
-				setStoredThemeMode("custom");
-				applyThemeMode("custom");
-				return;
 			}
-			clearStoredCustomBackgroundColor();
-			setStoredThemeMode("system");
-			applyThemeMode("system");
+			if (!rgb) {
+				clearStoredCustomBackgroundColor();
+			}
+			if (getStoredThemeMode() === "custom") {
+				applyThemeMode("custom");
+			}
 		},
 		[],
 	);
@@ -230,15 +229,17 @@ export function Providers({
 			if (!hex) {
 				setCustomBackgroundColor(null);
 				clearStoredCustomBackgroundColor();
-				setStoredThemeMode("system");
-				applyThemeMode("system");
+				if (getStoredThemeMode() === "custom") {
+					applyThemeMode("custom");
+				}
 				return;
 			}
 			const rgb = hexToRGB(bytes32ToHexColor(hex));
 			setCustomBackgroundColor(rgb);
 			setStoredCustomBackgroundColor(rgb);
-			setStoredThemeMode("custom");
-			applyThemeMode("custom");
+			if (getStoredThemeMode() === "custom") {
+				applyThemeMode("custom");
+			}
 		},
 		[],
 	);
@@ -248,8 +249,6 @@ export function Providers({
 		setHasUserColor(false);
 		clearInlinePrimaryAndSecondary();
 		clearStoredPrimaryColor();
-		setStoredThemeMode("system");
-		applyThemeMode("system");
 		const rgb = readCSSRgbVariable("--color-primary-default");
 		if (rgb) setPrimaryColor(rgb);
 	}, []);
@@ -514,9 +513,7 @@ export function Providers({
 			>
 				<AuthHintContext value={initialLoggedIn}>
 					<UnsavedChangesContext value={unsavedChangesContextValue}>
-						<NavigationContext
-							value={{ previousPathname, writerCameFromExplore }}
-						>
+						<NavigationContext value={{ previousPathname, writerCameFromExplore }}>
 							<WriterContext
 								value={{
 									writer,
