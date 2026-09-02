@@ -1,16 +1,16 @@
 "use client";
 
-import { useAuthTheme } from "@/hooks/useAuthTheme";
 import { UnsavedChangesConfirmModal } from "@/components/UnsavedChangesConfirmModal";
+import { useAuthTheme } from "@/hooks/useAuthTheme";
 import {
 	AuthHintContext,
 	NavigationContext,
 	UNSAVED_CHANGES_TITLE,
 	UnsavedChangesContext,
-	WriterContext,
-	type WriterContextType,
 	type UnsavedChangesPrompt,
 	type UnsavedChangesRegistration,
+	WriterContext,
+	type WriterContextType,
 	defaultColor,
 } from "@/utils/context";
 import {
@@ -19,10 +19,10 @@ import {
 	clearStoredPrimaryColor,
 	getStoredCustomBackgroundColor,
 	getStoredPrimaryColor,
-	getStoredThemeMode,
 	onThemeChange,
 	setStoredCustomBackgroundColor,
 	setStoredPrimaryColor,
+	setStoredThemeMode,
 	subscribeSystemThemeChange,
 } from "@/utils/theme";
 import {
@@ -162,9 +162,10 @@ export function Providers({
 
 	useEffect(() => {
 		if (typeof window === "undefined") return;
-		const mode = getStoredThemeMode();
+		const mode = getStoredCustomBackgroundColor() ? "custom" : "system";
+		setStoredThemeMode(mode);
 		applyThemeMode(mode);
-		if (mode !== "system") return;
+		if (mode === "custom") return;
 		return subscribeSystemThemeChange(() => {
 			applyThemeMode("system");
 		});
@@ -213,13 +214,13 @@ export function Providers({
 			setCustomBackgroundColor(rgb);
 			if (rgb) {
 				setStoredCustomBackgroundColor(rgb);
-			}
-			if (!rgb) {
-				clearStoredCustomBackgroundColor();
-			}
-			if (getStoredThemeMode() === "custom") {
+				setStoredThemeMode("custom");
 				applyThemeMode("custom");
+				return;
 			}
+			clearStoredCustomBackgroundColor();
+			setStoredThemeMode("system");
+			applyThemeMode("system");
 		},
 		[],
 	);
@@ -229,17 +230,15 @@ export function Providers({
 			if (!hex) {
 				setCustomBackgroundColor(null);
 				clearStoredCustomBackgroundColor();
-				if (getStoredThemeMode() === "custom") {
-					applyThemeMode("custom");
-				}
+				setStoredThemeMode("system");
+				applyThemeMode("system");
 				return;
 			}
 			const rgb = hexToRGB(bytes32ToHexColor(hex));
 			setCustomBackgroundColor(rgb);
 			setStoredCustomBackgroundColor(rgb);
-			if (getStoredThemeMode() === "custom") {
-				applyThemeMode("custom");
-			}
+			setStoredThemeMode("custom");
+			applyThemeMode("custom");
 		},
 		[],
 	);
@@ -249,6 +248,8 @@ export function Providers({
 		setHasUserColor(false);
 		clearInlinePrimaryAndSecondary();
 		clearStoredPrimaryColor();
+		setStoredThemeMode("system");
+		applyThemeMode("system");
 		const rgb = readCSSRgbVariable("--color-primary-default");
 		if (rgb) setPrimaryColor(rgb);
 	}, []);
@@ -513,7 +514,9 @@ export function Providers({
 			>
 				<AuthHintContext value={initialLoggedIn}>
 					<UnsavedChangesContext value={unsavedChangesContextValue}>
-						<NavigationContext value={{ previousPathname, writerCameFromExplore }}>
+						<NavigationContext
+							value={{ previousPathname, writerCameFromExplore }}
+						>
 							<WriterContext
 								value={{
 									writer,
