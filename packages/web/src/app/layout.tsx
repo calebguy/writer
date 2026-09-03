@@ -33,12 +33,14 @@ export const metadata: Metadata = {
 	},
 };
 
-const THEME_BOOTSTRAP_SCRIPT = `(() => {
+const getThemeBootstrapScript = (canUseStoredColors: boolean) => `(() => {
 	try {
-		const theme = localStorage.getItem("writer-theme");
-		const mode = ["light", "dark", "system", "custom"].includes(theme ?? "")
-			? theme
-			: "system";
+		const background = ${
+			canUseStoredColors
+				? 'localStorage.getItem("writer-custom-background-color")'
+				: "null"
+		};
+		const mode = background ? "custom" : "system";
 		const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
 		const root = document.documentElement;
 		root.dataset.themeBootstrapping = "true";
@@ -59,7 +61,11 @@ const THEME_BOOTSTRAP_SCRIPT = `(() => {
 		};
 		const setRgbChannels = (name, value) =>
 			root.style.setProperty(name, value.join(" "));
-		const primary = parseHexColor(localStorage.getItem("writer-primary-color"));
+		const primary = ${
+			canUseStoredColors
+				? 'parseHexColor(localStorage.getItem("writer-primary-color"))'
+				: "null"
+		};
 		if (primary) {
 			setRgbChannels("--color-primary", primary);
 			const primaryLuminance =
@@ -74,7 +80,6 @@ const THEME_BOOTSTRAP_SCRIPT = `(() => {
 		}
 
 		if (mode === "custom") {
-			const background = localStorage.getItem("writer-custom-background-color");
 			const match = background?.match(/^#?([a-fA-F0-9]{6})$/);
 			if (match) {
 				const hex = match[1];
@@ -115,16 +120,9 @@ const THEME_BOOTSTRAP_SCRIPT = `(() => {
 				return;
 			}
 		}
-		const resolved =
-			mode === "system"
-				? prefersDark
-					? "dark"
-					: "light"
-				: mode === "custom"
-					? "light"
-					: mode;
+		const resolved = prefersDark ? "dark" : "light";
 		root.dataset.theme = resolved;
-		root.dataset.themeMode = mode;
+		root.dataset.themeMode = "system";
 		clearThemeBootstrapping();
 	} catch {}
 })();`;
@@ -161,7 +159,7 @@ export default async function RootLayout({
 					nonce={nonce}
 					suppressHydrationWarning
 					dangerouslySetInnerHTML={{
-						__html: THEME_BOOTSTRAP_SCRIPT,
+						__html: getThemeBootstrapScript(initialLoggedIn),
 					}}
 				/>
 				<style

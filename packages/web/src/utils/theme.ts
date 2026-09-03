@@ -7,33 +7,21 @@ import {
 	setCustomBackgroundCSSVariables,
 } from "./utils";
 
-export type ThemeMode = "light" | "dark" | "system" | "custom";
+export type ThemeMode = "system" | "custom";
 export type ResolvedTheme = "light" | "dark";
 
-const THEME_STORAGE_KEY = "writer-theme";
 const PRIMARY_COLOR_STORAGE_KEY = "writer-primary-color";
 const CUSTOM_BACKGROUND_STORAGE_KEY = "writer-custom-background-color";
 const DARK_MEDIA_QUERY = "(prefers-color-scheme: dark)";
 const THEME_CHANGE_EVENT = "writer:theme-changed";
 
-function isThemeMode(value: string | null): value is ThemeMode {
-	return (
-		value === "light" ||
-		value === "dark" ||
-		value === "system" ||
-		value === "custom"
-	);
+function resolveSystemTheme(): ResolvedTheme {
+	if (typeof window === "undefined") return "dark";
+	return window.matchMedia(DARK_MEDIA_QUERY).matches ? "dark" : "light";
 }
 
 export function getStoredThemeMode(): ThemeMode {
-	if (typeof window === "undefined") return "system";
-	const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
-	return isThemeMode(stored) ? stored : "system";
-}
-
-export function setStoredThemeMode(mode: ThemeMode) {
-	if (typeof window === "undefined") return;
-	window.localStorage.setItem(THEME_STORAGE_KEY, mode);
+	return getStoredCustomBackgroundColor() ? "custom" : "system";
 }
 
 export function getStoredPrimaryColor(): RGB | null {
@@ -79,29 +67,27 @@ export function clearStoredCustomBackgroundColor() {
 }
 
 export function resolveThemeMode(mode: ThemeMode): ResolvedTheme {
-	if (mode === "light" || mode === "dark") return mode;
 	if (mode === "custom") {
 		const customBackground = getStoredCustomBackgroundColor();
 		return customBackground
 			? getCustomBackgroundResolvedTheme(customBackground)
-			: "light";
+			: resolveSystemTheme();
 	}
-	if (typeof window === "undefined") return "dark";
-	return window.matchMedia(DARK_MEDIA_QUERY).matches ? "dark" : "light";
+	return resolveSystemTheme();
 }
 
 export function applyThemeMode(mode: ThemeMode): ResolvedTheme {
-	const resolved = resolveThemeMode(mode);
+	const customBackground =
+		mode === "custom" ? getStoredCustomBackgroundColor() : null;
+	const effectiveMode: ThemeMode = customBackground ? "custom" : "system";
+	const resolved = customBackground
+		? getCustomBackgroundResolvedTheme(customBackground)
+		: resolveSystemTheme();
 	if (typeof document !== "undefined") {
 		document.documentElement.dataset.theme = resolved;
-		document.documentElement.dataset.themeMode = mode;
-		if (mode === "custom") {
-			const customBackground = getStoredCustomBackgroundColor();
-			if (customBackground) {
-				setCustomBackgroundCSSVariables(customBackground, resolved);
-			} else {
-				clearInlineCustomBackgroundCSSVariables();
-			}
+		document.documentElement.dataset.themeMode = effectiveMode;
+		if (customBackground) {
+			setCustomBackgroundCSSVariables(customBackground, resolved);
 		} else {
 			clearInlineCustomBackgroundCSSVariables();
 		}

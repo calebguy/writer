@@ -103,6 +103,7 @@ export function Providers({
 	>({});
 
 	const getInitialColor = () => {
+		if (!initialLoggedIn) return defaultColor;
 		const storedPrimaryColor = getStoredPrimaryColor();
 		if (storedPrimaryColor) return storedPrimaryColor;
 		if (initialColor) {
@@ -120,12 +121,12 @@ export function Providers({
 	>(getInitialColor());
 	const [customBackgroundColor, setCustomBackgroundColor] = useState<
 		WriterContextType["customBackgroundColor"]
-	>(() => getStoredCustomBackgroundColor());
+	>(() => (initialLoggedIn ? getStoredCustomBackgroundColor() : null));
 	const [hasUserColor, setHasUserColor] = useState<boolean>(
-		() => !!initialColor || !!getStoredPrimaryColor(),
+		() => initialLoggedIn && (!!initialColor || !!getStoredPrimaryColor()),
 	);
 	const hasUserColorRef = useRef<boolean>(
-		!!initialColor || !!getStoredPrimaryColor(),
+		initialLoggedIn && (!!initialColor || !!getStoredPrimaryColor()),
 	);
 
 	useEffect(() => {
@@ -210,15 +211,13 @@ export function Providers({
 	const handleSetCustomBackgroundColor = useCallback(
 		(rgb: WriterContextType["customBackgroundColor"]) => {
 			setCustomBackgroundColor(rgb);
-			if (rgb) {
-				setStoredCustomBackgroundColor(rgb);
-			}
 			if (!rgb) {
 				clearStoredCustomBackgroundColor();
+				applyThemeMode("system");
+				return;
 			}
-			if (getStoredThemeMode() === "custom") {
-				applyThemeMode("custom");
-			}
+			setStoredCustomBackgroundColor(rgb);
+			applyThemeMode("custom");
 		},
 		[],
 	);
@@ -228,17 +227,13 @@ export function Providers({
 			if (!hex) {
 				setCustomBackgroundColor(null);
 				clearStoredCustomBackgroundColor();
-				if (getStoredThemeMode() === "custom") {
-					applyThemeMode("custom");
-				}
+				applyThemeMode("system");
 				return;
 			}
 			const rgb = hexToRGB(bytes32ToHexColor(hex));
 			setCustomBackgroundColor(rgb);
 			setStoredCustomBackgroundColor(rgb);
-			if (getStoredThemeMode() === "custom") {
-				applyThemeMode("custom");
-			}
+			applyThemeMode("custom");
 		},
 		[],
 	);

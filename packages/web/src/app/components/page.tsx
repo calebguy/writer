@@ -203,7 +203,7 @@ export default function ComponentsPage() {
 
 			<Section
 				title="NavDropdown"
-				description="The app's main nav dropdown. Trigger is a relic image; contents adapt to auth state (sign in/out, theme toggles, migrate, color)."
+				description="The app's main nav dropdown. Trigger is a relic image; contents adapt to auth state (sign in/out, migrate, hidden places, color)."
 			>
 				<div className="flex items-center gap-6">
 					<NavDropdown />
@@ -255,7 +255,7 @@ export default function ComponentsPage() {
 
 			<Section
 				title="MobileBottomNav"
-				description="The floating nav bar shown on small viewports for /home, /explore, /saved, and /writer routes. Long-press the home icon to reveal theme + account controls. Previewed here with preview prop — live behavior uses fixed positioning."
+				description="The floating nav bar shown on small viewports for /home, /explore, /saved, and /writer routes. Long-press the home icon to reveal color + account controls. Previewed here with preview prop — live behavior uses fixed positioning."
 			>
 				<div className="border border-surface-raised bg-background py-8">
 					<MobileBottomNav preview />
@@ -280,7 +280,7 @@ export default function ComponentsPage() {
 
 			<Section
 				title="Images — Relics"
-				description="public/images/relics — object glyphs used in the nav dropdown trigger and theme toggles."
+				description="public/images/relics — object glyphs used in nav and account controls."
 			>
 				<ImageGrid srcs={relicImages} size={56} />
 			</Section>

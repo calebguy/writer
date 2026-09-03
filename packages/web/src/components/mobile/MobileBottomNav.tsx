@@ -3,14 +3,6 @@
 import { useUnsavedChangesNavigation } from "@/hooks/useUnsavedChangesWarning";
 import { useHiddenWriters } from "@/hooks/useHiddenWriters";
 import { clearAllCachedKeys } from "@/utils/keyCache";
-import {
-	type ThemeMode,
-	applyThemeMode,
-	getStoredThemeMode,
-	onThemeChange,
-	setStoredThemeMode,
-	subscribeSystemThemeChange,
-} from "@/utils/theme";
 import { usePrivy } from "@privy-io/react-auth";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -40,61 +32,6 @@ function navIconClass(active: boolean) {
 		: "cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary";
 }
 
-const THEME_OPTIONS = [
-	{
-		mode: "light",
-		title: "Light",
-		src: "/images/relics/relic-10.webp",
-		width: 100,
-		height: 100,
-		className: "h-7 w-7 shrink-0 object-contain dark:invert",
-	},
-	{
-		mode: "dark",
-		title: "Dark",
-		src: "/images/relics/moon-3.webp",
-		width: 96.4,
-		height: 100,
-		className: "h-7 w-7 shrink-0 object-contain dark:invert",
-	},
-	{
-		mode: "system",
-		title: "System",
-		src: "/images/relics/computer-1.webp",
-		width: 100,
-		height: 100,
-		className: "h-7 w-7 shrink-0 object-contain dark:invert",
-	},
-	{
-		mode: "custom",
-		title: "Custom",
-		src: "/images/relics/splat-1.webp",
-		width: 100,
-		height: 100,
-		className: "h-7 w-7 shrink-0 object-contain dark:invert",
-	},
-] satisfies readonly {
-	mode: ThemeMode;
-	title: string;
-	src: string;
-	width: number;
-	height: number;
-	className: string;
-}[];
-
-function getThemeOption(mode: ThemeMode) {
-	switch (mode) {
-		case "light":
-			return THEME_OPTIONS[0];
-		case "dark":
-			return THEME_OPTIONS[1];
-		case "system":
-			return THEME_OPTIONS[2];
-		case "custom":
-			return THEME_OPTIONS[3];
-	}
-}
-
 export function MobileBottomNav({
 	preview = false,
 }: { preview?: boolean } = {}) {
@@ -103,10 +40,8 @@ export function MobileBottomNav({
 	const { logout, authenticated, ready } = usePrivy();
 	const isLoggedIn = ready && authenticated;
 	const [showSubMenu, setShowSubMenu] = useState(false);
-	const [showThemeMenu, setShowThemeMenu] = useState(false);
 	const [showThemeModal, setShowThemeModal] = useState(false);
 	const [showHiddenPlacesModal, setShowHiddenPlacesModal] = useState(false);
-	const [themeMode, setThemeMode] = useState<ThemeMode>("system");
 	const [hidden, setHidden] = useState(false);
 	const lastScrollY = useRef(0);
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -125,33 +60,13 @@ export function MobileBottomNav({
 		}
 		return false;
 	}, [isLoggedIn, pathname]);
+	const showColorControl = isLoggedIn || preview;
 
 	useEffect(() => {
 		setShowSubMenu(false);
-		setShowThemeMenu(false);
 		setShowThemeModal(false);
 		setShowHiddenPlacesModal(false);
 	}, [pathname]);
-
-	useEffect(() => {
-		if (typeof window === "undefined") return;
-		const initialMode = getStoredThemeMode();
-		setThemeMode(initialMode);
-		applyThemeMode(initialMode);
-	}, []);
-
-	useEffect(() => {
-		if (themeMode !== "system") return;
-		return subscribeSystemThemeChange(() => {
-			applyThemeMode("system");
-		});
-	}, [themeMode]);
-
-	useEffect(() => {
-		return onThemeChange(() => {
-			setThemeMode(getStoredThemeMode());
-		});
-	}, []);
 
 	useEffect(() => {
 		if (!showSubMenu) return;
@@ -159,7 +74,6 @@ export function MobileBottomNav({
 			if (!containerRef.current) return;
 			if (!containerRef.current.contains(event.target as Node)) {
 				setShowSubMenu(false);
-				setShowThemeMenu(false);
 			}
 		};
 		document.addEventListener("mousedown", handleClickOutside);
@@ -193,7 +107,6 @@ export function MobileBottomNav({
 			if (dir === "down" && currentY > 50) {
 				setHidden(true);
 				setShowSubMenu(false);
-				setShowThemeMenu(false);
 			} else if (dir === "up") {
 				const atBottom =
 					window.innerHeight + window.scrollY >=
@@ -214,7 +127,6 @@ export function MobileBottomNav({
 			if (delta > threshold) {
 				setHidden(true);
 				setShowSubMenu(false);
-				setShowThemeMenu(false);
 			} else if (delta < -threshold) {
 				// Don't show on overscroll bounce at the bottom
 				const atBottom =
@@ -247,29 +159,20 @@ export function MobileBottomNav({
 		};
 	}, []);
 
-	const setTheme = (mode: ThemeMode) => {
-		setThemeMode(mode);
-		setStoredThemeMode(mode);
-		applyThemeMode(mode);
-	};
-	const activeThemeOption = getThemeOption(themeMode);
-	const themeMenuVisible = showSubMenu && showThemeMenu;
-
-	const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const longPressTimer = useRef<number | null>(null);
 	const didLongPress = useRef(false);
 
 	const onHomePressStart = useCallback(() => {
 		didLongPress.current = false;
-		longPressTimer.current = setTimeout(() => {
+		longPressTimer.current = window.setTimeout(() => {
 			didLongPress.current = true;
 			setShowSubMenu(true);
-			setShowThemeMenu(false);
 		}, 500);
 	}, []);
 
 	const onHomePressEnd = useCallback(() => {
 		if (longPressTimer.current) {
-			clearTimeout(longPressTimer.current);
+			window.clearTimeout(longPressTimer.current);
 			longPressTimer.current = null;
 		}
 	}, []);
@@ -277,13 +180,11 @@ export function MobileBottomNav({
 	const onHomeTap = async () => {
 		if (didLongPress.current) return;
 		if (isRouteActive(pathname, "/home")) {
-			setShowThemeMenu(false);
 			setShowSubMenu((prev) => !prev);
 			return;
 		}
 		if (!(await confirmNavigation())) return;
 		setShowSubMenu(false);
-		setShowThemeMenu(false);
 		router.push("/home");
 	};
 
@@ -310,35 +211,6 @@ export function MobileBottomNav({
 			>
 				<div className="relative flex items-center justify-center">
 					<div
-						aria-hidden={!themeMenuVisible}
-						className={`absolute bottom-[calc(100%+72px)] flex origin-bottom items-center gap-1.5 rounded-full bg-background/85 backdrop-blur-[2px] px-3 py-1.5 transition-[opacity,transform] duration-150 ${
-							themeMenuVisible
-								? "pointer-events-auto translate-y-0 scale-100 opacity-100"
-								: "pointer-events-none translate-y-0 scale-100 opacity-0"
-						}`}
-					>
-						{THEME_OPTIONS.map((option) => (
-							<button
-								key={option.mode}
-								type="button"
-								title={option.title}
-								tabIndex={themeMenuVisible ? 0 : -1}
-								className={`h-10 w-10 inline-flex items-center justify-center rounded-full transition-colors ${navIconClass(
-									themeMode === option.mode,
-								)}`}
-								onClick={() => setTheme(option.mode)}
-							>
-								<Image
-									src={option.src}
-									alt={option.title}
-									width={option.width}
-									height={option.height}
-									className={option.className}
-								/>
-							</button>
-						))}
-					</div>
-					<div
 						aria-hidden={!showSubMenu}
 						className={`absolute bottom-[calc(100%+10px)] flex origin-bottom items-center gap-1.5 rounded-full bg-background/85 backdrop-blur-[2px] px-3 py-1.5 transition-[opacity,transform] duration-150 ${
 							showSubMenu
@@ -346,7 +218,7 @@ export function MobileBottomNav({
 								: "pointer-events-none translate-y-0 scale-100 opacity-0"
 						}`}
 					>
-						{isLoggedIn && (
+						{showColorControl && (
 							<button
 								type="button"
 								title="Color"
@@ -354,35 +226,12 @@ export function MobileBottomNav({
 								className="h-10 w-10 inline-flex items-center justify-center rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
 								onClick={() => {
 									setShowSubMenu(false);
-									setShowThemeMenu(false);
 									setShowThemeModal(true);
 								}}
 							>
 								<span className="block h-5 w-5 rounded-sm bg-primary" />
 							</button>
 						)}
-						<button
-							type="button"
-							title="Theme"
-							tabIndex={showSubMenu ? 0 : -1}
-							aria-expanded={showThemeMenu}
-							className={`h-10 w-10 inline-flex items-center justify-center rounded-full transition-colors ${navIconClass(
-								showThemeMenu,
-							)}`}
-							onClick={() => setShowThemeMenu((prev) => !prev)}
-						>
-							<Image
-								src={activeThemeOption.src}
-								alt={`Theme: ${activeThemeOption.title.toLowerCase()}`}
-								width={activeThemeOption.width}
-								height={activeThemeOption.height}
-								className={`${
-									activeThemeOption.className
-								} transition-transform duration-300 ${
-									showThemeMenu ? "rotate-24" : ""
-								}`}
-							/>
-						</button>
 						{isLoggedIn && hasHiddenWriters && (
 							<button
 								type="button"
@@ -391,7 +240,6 @@ export function MobileBottomNav({
 								className="h-10 w-10 inline-flex items-center justify-center rounded-full cursor-pointer text-neutral-700 dark:text-neutral-300 hover:text-primary"
 								onClick={() => {
 									setShowSubMenu(false);
-									setShowThemeMenu(false);
 									setShowHiddenPlacesModal(true);
 								}}
 							>

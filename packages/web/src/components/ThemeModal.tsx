@@ -3,25 +3,18 @@
 import { updateTheme as updateThemeApi } from "@/utils/api";
 import { WriterContext } from "@/utils/context";
 import { useTargetWallet } from "@/utils/hooks";
-import {
-	type ThemeMode,
-	applyThemeMode,
-	getStoredThemeMode,
-	setStoredThemeMode,
-	subscribeSystemThemeChange,
-} from "@/utils/theme";
+import { type ThemeMode, applyThemeMode } from "@/utils/theme";
 import {
 	type RGB,
 	RGBToHex,
 	hexColorToBytes32,
-	readDocumentBackgroundColor,
 	getCustomBackgroundResolvedTheme,
-	setPrimaryAndSecondaryCSSVariables,
+	readDocumentBackgroundColor,
 	setCustomBackgroundCSSVariables,
+	setPrimaryAndSecondaryCSSVariables,
 } from "@/utils/utils";
 import { usePrivy } from "@privy-io/react-auth";
 import { useMutation } from "@tanstack/react-query";
-import Image from "next/image";
 import { VisuallyHidden } from "radix-ui";
 import { useContext, useEffect, useState } from "react";
 import { type RgbColor, RgbColorPicker } from "react-colorful";
@@ -31,18 +24,6 @@ import { Close } from "./icons/Close";
 import { Undo } from "./icons/Undo";
 
 type ThemeColorTarget = "primary" | "background";
-type ThemePreset = {
-	mode: ThemeMode;
-	label: string;
-	src: string;
-};
-
-const THEME_PRESETS: ThemePreset[] = [
-	{ mode: "light", label: "Light", src: "/images/relics/relic-10.webp" },
-	{ mode: "dark", label: "Dark", src: "/images/relics/moon-3.webp" },
-	{ mode: "system", label: "System", src: "/images/relics/computer-1.webp" },
-	{ mode: "custom", label: "Custom", src: "/images/relics/splat-1.webp" },
-];
 
 interface ModalProps {
 	open: boolean;
@@ -65,34 +46,6 @@ function colorsMatch(left: RGB | null, right: RGB | null) {
 function getDefaultCustomBackground(): RGB {
 	return readDocumentBackgroundColor() ?? [255, 255, 255];
 }
-function ThemePresetButton({
-	preset,
-	active,
-	onSelect,
-}: {
-	preset: ThemePreset;
-	active: boolean;
-	onSelect: () => void;
-}) {
-	return (
-		<button
-			type="button"
-			aria-label={`Use ${preset.label.toLowerCase()} theme`}
-			title={preset.label}
-			className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-background/20 bg-background/10 px-4 py-1 text-background transition-[background-color,transform,opacity] duration-150 hover:bg-background/15 active:scale-[0.98] data-[active=true]:bg-background/90 data-[active=true]:text-primary"
-			data-active={active}
-			onClick={onSelect}
-		>
-			<Image
-				src={preset.src}
-				alt={preset.label}
-				width={100}
-				height={100}
-				className="h-5 w-5 min-w-5 shrink-0"
-			/>
-		</button>
-	);
-}
 
 export function ThemeModal({ open, onClose }: ModalProps) {
 	const [wallet] = useTargetWallet();
@@ -110,9 +63,7 @@ export function ThemeModal({ open, onClose }: ModalProps) {
 	} = useContext(WriterContext);
 
 	const [activeTarget, setActiveTarget] = useState<ThemeColorTarget>("primary");
-	const [initialThemeMode, setInitialThemeMode] = useState<ThemeMode>("system");
-	const [selectedThemeMode, setSelectedThemeMode] =
-		useState<ThemeMode>("system");
+	const [initialHasBackground, setInitialHasBackground] = useState(false);
 	const [primaryPickerColor, setPrimaryPickerColor] = useState<RgbColor>(
 		rgbToPickerColor(primaryColor),
 	);
@@ -124,9 +75,7 @@ export function ThemeModal({ open, onClose }: ModalProps) {
 
 	useEffect(() => {
 		if (!open) return;
-		const storedThemeMode = getStoredThemeMode();
-		setInitialThemeMode(storedThemeMode);
-		setSelectedThemeMode(storedThemeMode);
+		setInitialHasBackground(customBackgroundColor !== null);
 		setActiveTarget("primary");
 		setPrimaryPickerColor(rgbToPickerColor(primaryColor));
 		setBackgroundPickerColor(
@@ -135,26 +84,17 @@ export function ThemeModal({ open, onClose }: ModalProps) {
 		setBackgroundWasEdited(false);
 	}, [customBackgroundColor, primaryColor, open]);
 
-	useEffect(() => {
-		if (selectedThemeMode !== "system") return;
-		return subscribeSystemThemeChange(() => {
-			applyThemeMode("system");
-		});
-	}, [selectedThemeMode]);
-
-	const isBackgroundPickerVisible = selectedThemeMode === "custom";
 	const selectedColor =
-		activeTarget === "background" && isBackgroundPickerVisible
-			? backgroundPickerColor
-			: primaryPickerColor;
+		activeTarget === "background" ? backgroundPickerColor : primaryPickerColor;
 	const nextPrimaryColor = pickerColorToRGB(primaryPickerColor);
 	const nextBackgroundColor = pickerColorToRGB(backgroundPickerColor);
 	const primaryHex = RGBToHex(nextPrimaryColor);
 	const backgroundHex = RGBToHex(nextBackgroundColor);
-	const hasThemeModeChanged = selectedThemeMode !== initialThemeMode;
+	const hasThemeModeChanged =
+		(customBackgroundColor !== null || backgroundWasEdited) !==
+		initialHasBackground;
 	const hasPrimaryColorChanged = !colorsMatch(nextPrimaryColor, primaryColor);
 	const hasBackgroundChanged =
-		isBackgroundPickerVisible &&
 		backgroundWasEdited &&
 		!colorsMatch(nextBackgroundColor, customBackgroundColor);
 	const hasChanges =
@@ -168,24 +108,7 @@ export function ThemeModal({ open, onClose }: ModalProps) {
 		setCustomBackgroundCSSVariables(background, resolvedTheme);
 	};
 
-	const previewThemeMode = (mode: ThemeMode) => {
-		if (mode === "custom") {
-			previewCustomBackground(nextBackgroundColor);
-			return;
-		}
-		applyThemeMode(mode);
-	};
-
-	const selectThemeMode = (mode: ThemeMode) => {
-		setSelectedThemeMode(mode);
-		if (mode !== "custom" && activeTarget === "background") {
-			setActiveTarget("primary");
-		}
-		previewThemeMode(mode);
-	};
-
 	const selectColorTarget = (target: ThemeColorTarget) => {
-		if (target === "background" && !isBackgroundPickerVisible) return;
 		setActiveTarget(target);
 		if (target === "background") {
 			previewCustomBackground(nextBackgroundColor);
@@ -193,7 +116,7 @@ export function ThemeModal({ open, onClose }: ModalProps) {
 	};
 
 	const resetPreview = () => {
-		setSelectedThemeMode(initialThemeMode);
+		setInitialHasBackground(customBackgroundColor !== null);
 		setActiveTarget("primary");
 		setPrimaryPickerColor(rgbToPickerColor(primaryColor));
 		setBackgroundPickerColor(
@@ -201,11 +124,11 @@ export function ThemeModal({ open, onClose }: ModalProps) {
 		);
 		setBackgroundWasEdited(false);
 		setPrimaryAndSecondaryCSSVariables(primaryColor);
-		applyThemeMode(initialThemeMode);
+		applyThemeMode(customBackgroundColor ? "custom" : "system");
 	};
 
 	const updateSelectedColor = (color: RgbColor) => {
-		if (activeTarget === "primary" || !isBackgroundPickerVisible) {
+		if (activeTarget === "primary") {
 			setPrimaryPickerColor(color);
 			setPrimaryAndSecondaryCSSVariables(pickerColorToRGB(color));
 			return;
@@ -224,10 +147,13 @@ export function ThemeModal({ open, onClose }: ModalProps) {
 		setSaveClicked(true);
 		const previousPrimaryColor = primaryColor;
 		const previousBackgroundColor = customBackgroundColor;
-		const previousThemeMode = initialThemeMode;
+		const previousThemeMode: ThemeMode = previousBackgroundColor
+			? "custom"
+			: "system";
+		const nextThemeMode: ThemeMode =
+			customBackgroundColor || backgroundWasEdited ? "custom" : "system";
 		const shouldSaveRemoteTheme =
 			hasPrimaryColorChanged || hasBackgroundChanged;
-
 		try {
 			if (hasPrimaryColorChanged) {
 				setPrimaryColor(nextPrimaryColor);
@@ -235,8 +161,7 @@ export function ThemeModal({ open, onClose }: ModalProps) {
 			if (hasBackgroundChanged) {
 				setCustomBackgroundColor(nextBackgroundColor);
 			}
-			setStoredThemeMode(selectedThemeMode);
-			applyThemeMode(selectedThemeMode);
+			applyThemeMode(nextThemeMode);
 			onClose();
 
 			if (!shouldSaveRemoteTheme) return;
@@ -261,7 +186,6 @@ export function ThemeModal({ open, onClose }: ModalProps) {
 			console.error("Failed to save theme", error);
 			setPrimaryColor(previousPrimaryColor);
 			setCustomBackgroundColor(previousBackgroundColor);
-			setStoredThemeMode(previousThemeMode);
 			applyThemeMode(previousThemeMode);
 		} finally {
 			setSaveClicked(false);
@@ -272,51 +196,37 @@ export function ThemeModal({ open, onClose }: ModalProps) {
 		<Modal open={open} className="bg-primary!" onClose={closeAndReset}>
 			<VisuallyHidden.Root>
 				<ModalTitle>Customize Theme</ModalTitle>
-				<ModalDescription>
-					Set color, background, and theme presets
-				</ModalDescription>
+				<ModalDescription>Set front and back colors</ModalDescription>
 			</VisuallyHidden.Root>
 			<div className="mt-4 flex items-center justify-center">
 				<RgbColorPicker color={selectedColor} onChange={updateSelectedColor} />
 			</div>
-			<div className="mt-4 grid grid-cols-4 gap-2">
-				{THEME_PRESETS.map((preset) => (
-					<ThemePresetButton
-						key={preset.mode}
-						preset={preset}
-						active={selectedThemeMode === preset.mode}
-						onSelect={() => selectThemeMode(preset.mode)}
+			<div className="mt-4 grid grid-cols-2 rounded-full bg-background/10 p-1 text-sm ring-1 ring-background/30 backdrop-blur-[1px]">
+				<button
+					type="button"
+					className="flex cursor-pointer items-center justify-center gap-2 rounded-full px-3 py-2 text-background transition-[background-color,color,transform,opacity] duration-150 hover:bg-background/15 active:scale-[0.98] data-[active=true]:bg-background/95 data-[active=true]:text-primary"
+					data-active={activeTarget === "primary"}
+					onClick={() => selectColorTarget("primary")}
+				>
+					<span
+						className="h-3 w-3 rounded-full ring-1 ring-primary/40"
+						style={{ backgroundColor: primaryHex }}
 					/>
-				))}
+					<span>Front</span>
+				</button>
+				<button
+					type="button"
+					className="flex cursor-pointer items-center justify-center gap-2 rounded-full px-3 py-2 text-background transition-[background-color,color,transform,opacity] duration-150 hover:bg-background/15 active:scale-[0.98] data-[active=true]:bg-background/95 data-[active=true]:text-primary"
+					data-active={activeTarget === "background"}
+					onClick={() => selectColorTarget("background")}
+				>
+					<span
+						className="h-3 w-3 rounded-full ring-1 ring-primary/40"
+						style={{ backgroundColor: backgroundHex }}
+					/>
+					<span>Back</span>
+				</button>
 			</div>
-			{isBackgroundPickerVisible && (
-				<div className="mt-4 grid grid-cols-2 rounded-full bg-background/10 p-1 text-sm ring-1 ring-background/30 backdrop-blur-[1px]">
-					<button
-						type="button"
-						className="flex cursor-pointer items-center justify-center gap-2 rounded-full px-3 py-2 text-background transition-[background-color,color,transform,opacity] duration-150 hover:bg-background/15 active:scale-[0.98] data-[active=true]:bg-background/95 data-[active=true]:text-primary"
-						data-active={activeTarget === "primary"}
-						onClick={() => selectColorTarget("primary")}
-					>
-						<span
-							className="h-3 w-3 rounded-full ring-1 ring-primary/40"
-							style={{ backgroundColor: primaryHex }}
-						/>
-						<span>Front</span>
-					</button>
-					<button
-						type="button"
-						className="flex cursor-pointer items-center justify-center gap-2 rounded-full px-3 py-2 text-background transition-[background-color,color,transform,opacity] duration-150 hover:bg-background/15 active:scale-[0.98] data-[active=true]:bg-background/95 data-[active=true]:text-primary"
-						data-active={activeTarget === "background"}
-						onClick={() => selectColorTarget("background")}
-					>
-						<span
-							className="h-3 w-3 rounded-full ring-1 ring-primary/40"
-							style={{ backgroundColor: backgroundHex }}
-						/>
-						<span>Back</span>
-					</button>
-				</div>
-			)}
 			<div className="mt-4 flex items-center justify-center gap-2">
 				<button
 					type="button"
