@@ -199,33 +199,34 @@ export function ThemeModal({ open, onClose }: ModalProps) {
 				<ModalDescription>Set text and page colors</ModalDescription>
 			</VisuallyHidden.Root>
 			<div className="mt-4 flex items-center justify-center">
-				<RgbColorPicker color={selectedColor} onChange={updateSelectedColor} />
-			</div>
-			<div className="mt-4 grid grid-cols-2 rounded-full bg-background/10 p-1 text-sm ring-1 ring-background/30 backdrop-blur-[1px]">
-				<button
-					type="button"
-					className="flex cursor-pointer items-center justify-center gap-2 rounded-full px-3 py-1 text-background transition-[background-color,color,transform,opacity] duration-150 hover:bg-background/15 active:scale-[0.98] data-[active=true]:bg-background/95 data-[active=true]:text-primary"
-					data-active={activeTarget === "primary"}
-					onClick={() => selectColorTarget("primary")}
-				>
-					<span
-						className="h-3 w-3 rounded-full ring-1 ring-primary/40"
-						style={{ backgroundColor: primaryHex }}
+				<div className="relative">
+					<div className="absolute top-4 -left-3 z-10 flex flex-col gap-2">
+						<button
+							type="button"
+							aria-label="Edit text color"
+							aria-pressed={activeTarget === "primary"}
+							title="Text"
+							className="h-6 w-6 cursor-pointer rounded-full border border-white/55 shadow-sm transition-[opacity,transform,box-shadow] duration-150 hover:opacity-100 active:scale-95 data-[active=false]:opacity-80 data-[active=true]:scale-110 data-[active=true]:ring-2 data-[active=true]:ring-white"
+							data-active={activeTarget === "primary"}
+							style={{ backgroundColor: primaryHex }}
+							onClick={() => selectColorTarget("primary")}
+						/>
+						<button
+							type="button"
+							aria-label="Edit page color"
+							aria-pressed={activeTarget === "background"}
+							title="Page"
+							className="h-6 w-6 cursor-pointer rounded-full border border-white/55 shadow-sm transition-[opacity,transform,box-shadow] duration-150 hover:opacity-100 active:scale-95 data-[active=false]:opacity-80 data-[active=true]:scale-110 data-[active=true]:ring-2 data-[active=true]:ring-white"
+							data-active={activeTarget === "background"}
+							style={{ backgroundColor: backgroundHex }}
+							onClick={() => selectColorTarget("background")}
+						/>
+					</div>
+					<RgbColorPicker
+						color={selectedColor}
+						onChange={updateSelectedColor}
 					/>
-					<span>Text</span>
-				</button>
-				<button
-					type="button"
-					className="flex cursor-pointer items-center justify-center gap-2 rounded-full px-3 py-1 text-background transition-[background-color,color,transform,opacity] duration-150 hover:bg-background/15 active:scale-[0.98] data-[active=true]:bg-background/95 data-[active=true]:text-primary"
-					data-active={activeTarget === "background"}
-					onClick={() => selectColorTarget("background")}
-				>
-					<span
-						className="h-3 w-3 rounded-full ring-1 ring-primary/40"
-						style={{ backgroundColor: backgroundHex }}
-					/>
-					<span>Page</span>
-				</button>
+				</div>
 			</div>
 			<div className="mt-4 flex items-center justify-center gap-2">
 				<button
