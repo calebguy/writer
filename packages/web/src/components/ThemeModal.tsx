@@ -196,7 +196,7 @@ export function ThemeModal({ open, onClose }: ModalProps) {
 		<Modal open={open} className="bg-primary!" onClose={closeAndReset}>
 			<VisuallyHidden.Root>
 				<ModalTitle>Customize Theme</ModalTitle>
-				<ModalDescription>Set front and back colors</ModalDescription>
+				<ModalDescription>Set text and page colors</ModalDescription>
 			</VisuallyHidden.Root>
 			<div className="mt-4 flex items-center justify-center">
 				<RgbColorPicker color={selectedColor} onChange={updateSelectedColor} />
@@ -204,7 +204,7 @@ export function ThemeModal({ open, onClose }: ModalProps) {
 			<div className="mt-4 grid grid-cols-2 rounded-full bg-background/10 p-1 text-sm ring-1 ring-background/30 backdrop-blur-[1px]">
 				<button
 					type="button"
-					className="flex cursor-pointer items-center justify-center gap-2 rounded-full px-3 py-2 text-background transition-[background-color,color,transform,opacity] duration-150 hover:bg-background/15 active:scale-[0.98] data-[active=true]:bg-background/95 data-[active=true]:text-primary"
+					className="flex cursor-pointer items-center justify-center gap-2 rounded-full px-3 py-1 text-background transition-[background-color,color,transform,opacity] duration-150 hover:bg-background/15 active:scale-[0.98] data-[active=true]:bg-background/95 data-[active=true]:text-primary"
 					data-active={activeTarget === "primary"}
 					onClick={() => selectColorTarget("primary")}
 				>
@@ -212,11 +212,11 @@ export function ThemeModal({ open, onClose }: ModalProps) {
 						className="h-3 w-3 rounded-full ring-1 ring-primary/40"
 						style={{ backgroundColor: primaryHex }}
 					/>
-					<span>Front</span>
+					<span>Text</span>
 				</button>
 				<button
 					type="button"
-					className="flex cursor-pointer items-center justify-center gap-2 rounded-full px-3 py-2 text-background transition-[background-color,color,transform,opacity] duration-150 hover:bg-background/15 active:scale-[0.98] data-[active=true]:bg-background/95 data-[active=true]:text-primary"
+					className="flex cursor-pointer items-center justify-center gap-2 rounded-full px-3 py-1 text-background transition-[background-color,color,transform,opacity] duration-150 hover:bg-background/15 active:scale-[0.98] data-[active=true]:bg-background/95 data-[active=true]:text-primary"
 					data-active={activeTarget === "background"}
 					onClick={() => selectColorTarget("background")}
 				>
@@ -224,7 +224,7 @@ export function ThemeModal({ open, onClose }: ModalProps) {
 						className="h-3 w-3 rounded-full ring-1 ring-primary/40"
 						style={{ backgroundColor: backgroundHex }}
 					/>
-					<span>Back</span>
+					<span>Page</span>
 				</button>
 			</div>
 			<div className="mt-4 flex items-center justify-center gap-2">
