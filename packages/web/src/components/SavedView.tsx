@@ -7,7 +7,7 @@ import { Unlock } from "@/components/icons/Unlock";
 import { useIsLoggedIn } from "@/hooks/useIsLoggedIn";
 import { type SavedEntry, type SavedWriter, getSaved } from "@/utils/api";
 import { cn } from "@/utils/cn";
-import { useOPWallet } from "@/utils/hooks";
+import { useTargetWallet } from "@/utils/hooks";
 import { getCachedDerivedKey, hasCachedDerivedKey } from "@/utils/keyCache";
 import {
 	isEntryPrivate,
@@ -117,7 +117,7 @@ function MixedSavedGrid({
 	entries: SavedEntry[];
 	items: MixedSavedItem[];
 }) {
-	const [wallet] = useOPWallet();
+	const [wallet] = useTargetWallet();
 	const [allowDecryption, setAllowDecryption] = useState(false);
 	const [unlockError, setUnlockError] = useState<string | null>(null);
 	const [processedEntries, setProcessedEntries] = useState<

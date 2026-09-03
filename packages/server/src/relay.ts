@@ -1,4 +1,14 @@
 import { AsyncLocalStorage } from "node:async_hooks";
+import {
+	createPublicClient,
+	createWalletClient,
+	getAddress,
+	http,
+	parseAbi,
+	type Hex,
+} from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+import { getTargetChain } from "./chain";
 import { env } from "./env";
 
 type SendTransactionParams = {
@@ -27,6 +37,14 @@ type TransactionStatus = {
 	error?: string;
 };
 
+type Relay = {
+	sendTransaction(
+		params: SendTransactionParams,
+	): Promise<SendTransactionResponse>;
+	getWallets(): Promise<{ wallets: string[] }>;
+	getTransaction(wallet: string, nonce: number): Promise<TransactionStatus>;
+};
+
 interface RelayServiceBinding {
 	fetch(request: Request): Promise<Response>;
 }
@@ -40,7 +58,116 @@ export function runWithRelayBinding<T>(
 	return relayBinding.run(binding, callback);
 }
 
-class DurableWalletRelay {
+function relayKey(wallet: string, nonce: number): string {
+	return `${wallet.toLowerCase()}:${nonce}`;
+}
+
+class LocalWalletRelay implements Relay {
+	private readonly account;
+	private readonly publicClient;
+	private readonly walletClient;
+	private readonly transactions = new Map<string, TransactionStatus>();
+	private nextNonce: Promise<number> | null = null;
+
+	constructor(privateKey: Hex) {
+		const chain = getTargetChain();
+		this.account = privateKeyToAccount(privateKey);
+		this.publicClient = createPublicClient({
+			chain,
+			transport: http(env.RPC_URL),
+		});
+		this.walletClient = createWalletClient({
+			account: this.account,
+			chain,
+			transport: http(env.RPC_URL),
+		});
+	}
+
+	async sendTransaction(
+		params: SendTransactionParams,
+	): Promise<SendTransactionResponse> {
+		const nonce = await this.reserveNonce();
+		const transaction: TransactionStatus = {
+			wallet: this.account.address,
+			nonce,
+			status: "pending",
+			params: { to: getAddress(params.to) },
+			createdAt: Date.now(),
+		};
+		this.transactions.set(relayKey(this.account.address, nonce), transaction);
+
+		try {
+			const hash = await this.walletClient.writeContract({
+				address: getAddress(params.to),
+				abi: parseAbi([`function ${params.abi}`] as readonly string[]),
+				functionName: params.abi.slice(0, params.abi.indexOf("(")),
+				args: params.args,
+				nonce,
+			});
+			transaction.hash = hash;
+			transaction.status = "submitted";
+			return {
+				wallet: this.account.address,
+				nonce,
+				status: transaction.status,
+			};
+		} catch (error) {
+			transaction.status = "error";
+			transaction.error =
+				error instanceof Error ? error.message : String(error);
+			throw error;
+		}
+	}
+
+	async getWallets(): Promise<{ wallets: string[] }> {
+		return { wallets: [this.account.address] };
+	}
+
+	async getTransaction(
+		wallet: string,
+		nonce: number,
+	): Promise<TransactionStatus> {
+		const transaction = this.transactions.get(relayKey(wallet, nonce));
+		if (!transaction) {
+			throw new Error(`Local relay transaction not found: ${wallet}:${nonce}`);
+		}
+		if (!transaction.hash || transaction.status === "error") {
+			return transaction;
+		}
+
+		try {
+			const receipt = await this.publicClient.getTransactionReceipt({
+				hash: transaction.hash as Hex,
+			});
+			transaction.status = receipt.status === "success" ? "confirmed" : "error";
+			if (receipt.status === "reverted") {
+				transaction.error = "onchain revert";
+			}
+		} catch {
+			transaction.status = "submitted";
+		}
+		return transaction;
+	}
+
+	private reserveNonce(): Promise<number> {
+		const currentNonce =
+			this.nextNonce ??
+			this.publicClient.getTransactionCount({
+				address: this.account.address,
+				blockTag: "pending",
+			});
+		const reservedNonce = currentNonce.catch(() =>
+			this.publicClient.getTransactionCount({
+				address: this.account.address,
+				blockTag: "pending",
+			}),
+		);
+		this.nextNonce = reservedNonce.then((nonce) => nonce + 1);
+		return reservedNonce;
+	}
+}
+
+class DurableWalletRelay implements Relay {
 	constructor(
 		private baseUrl: string,
 		private apiKey: string,
@@ -106,10 +233,12 @@ class DurableWalletRelay {
 	}
 }
 
-export const relay = new DurableWalletRelay(env.RELAY_URL, env.RELAY_API_KEY);
+export const relay: Relay = env.LOCAL_RELAY_PRIVATE_KEY
+	? new LocalWalletRelay(env.LOCAL_RELAY_PRIVATE_KEY as Hex)
+	: new DurableWalletRelay(env.RELAY_URL, env.RELAY_API_KEY);
 
 export function makeRelayTxId(wallet: string, nonce: number): string {
-	return `dw:${wallet}:${nonce}`;
+	return `dw:${wallet.toLowerCase()}:${nonce}`;
 }
 
 export function parseRelayTxId(

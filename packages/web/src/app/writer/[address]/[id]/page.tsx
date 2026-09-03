@@ -11,9 +11,12 @@ import {
 	getWriter,
 	writerQueryKey,
 } from "@/utils/api";
-import { getPrivateCachedEntry, getPublicCachedEntry } from "@/utils/entryCache";
+import {
+	getPrivateCachedEntry,
+	getPublicCachedEntry,
+} from "@/utils/entryCache";
 import { useEntryLoading } from "@/utils/EntryLoadingContext";
-import { useOPWallet } from "@/utils/hooks";
+import { useTargetWallet } from "@/utils/hooks";
 import { canRenderEntryImmediately } from "@/utils/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { use, useEffect, useState } from "react";
@@ -26,12 +29,13 @@ export default function EntryPage({
 }) {
 	const { address, id } = use(params);
 	const queryClient = useQueryClient();
-	const [wallet] = useOPWallet();
+	const [wallet] = useTargetWallet();
 	const { setEntryLoading } = useEntryLoading();
 	const normalizedAddress = address.toLowerCase();
 	const entryKey = entryQueryKey(normalizedAddress, id);
 	const writerKey = writerQueryKey(normalizedAddress);
-	const cachedQueryEntry = queryClient.getQueryData<EntryType>(entryKey) ?? null;
+	const cachedQueryEntry =
+		queryClient.getQueryData<EntryType>(entryKey) ?? null;
 	const cachedWriterEntry =
 		queryClient
 			.getQueryData<Writer>(writerKey)
@@ -72,7 +76,11 @@ export default function EntryPage({
 
 			// Try private cache (memory) if we have a wallet
 			if (wallet?.address) {
-				const privateCached = getPrivateCachedEntry(wallet.address, address, id);
+				const privateCached = getPrivateCachedEntry(
+					wallet.address,
+					address,
+					id,
+				);
 				if (privateCached) {
 					setCachedEntry(privateCached);
 					setCacheChecked(true);
@@ -100,7 +108,8 @@ export default function EntryPage({
 	}, [hasInstantEntry, setEntryLoading]);
 	const { data: entry, refetch } = useQuery<EntryType>({
 		queryKey: entryKey,
-		queryFn: ({ signal }) => getEntry(normalizedAddress as Hex, Number(id), signal),
+		queryFn: ({ signal }) =>
+			getEntry(normalizedAddress as Hex, Number(id), signal),
 		initialData: initialEntry,
 		initialDataUpdatedAt: initialEntry ? Date.now() : undefined,
 		enabled: cacheChecked || Boolean(warmEntry),
@@ -111,8 +120,7 @@ export default function EntryPage({
 		// as the indexer catches up.
 		refetchInterval: (query) => {
 			const data = query.state.data;
-			const pending =
-				!!data?.updatedAtTransactionId && !data?.updatedAtHash;
+			const pending = !!data?.updatedAtTransactionId && !data?.updatedAtHash;
 			return pending ? 3000 : false;
 		},
 	});

@@ -7,6 +7,7 @@ import {
 	useWallets,
 } from "@privy-io/react-auth";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { targetChainCaip2Id } from "./chain";
 import { type Entry, reconcileManager } from "./api";
 import { getCachedEntry, setCachedEntry } from "./entryCache";
 import { getCachedDerivedKey } from "./keyCache";
@@ -41,10 +42,12 @@ export function useIsMobile() {
 	return isMobile;
 }
 
-export function useOPWallet() {
+export function useTargetWallet() {
 	const { wallets, ready } = useWallets();
 	const { user } = usePrivy();
-	const opWallets = wallets.filter((wallet) => wallet.chainId === "eip155:10");
+	const targetChainWallets = wallets.filter(
+		(wallet) => wallet.chainId === targetChainCaip2Id,
+	);
 
 	function isEthereumWallet(
 		wallet: BaseConnectedWalletType | undefined,
@@ -53,7 +56,7 @@ export function useOPWallet() {
 	}
 
 	const ethereumWallets = wallets.filter(isEthereumWallet);
-	const opEthereumWallet = opWallets.find(isEthereumWallet);
+	const targetChainEthereumWallet = targetChainWallets.find(isEthereumWallet);
 	const userWalletAddress = user?.wallet?.address?.toLowerCase();
 	const userWallet = userWalletAddress
 		? ethereumWallets.find(
@@ -65,7 +68,7 @@ export function useOPWallet() {
 	// to another connected account.
 	const wallet = userWalletAddress
 		? userWallet
-		: opEthereumWallet ?? ethereumWallets[0];
+		: targetChainEthereumWallet ?? ethereumWallets[0];
 
 	return [wallet, ready] as const;
 }
@@ -123,7 +126,7 @@ export function useProcessedEntries(
 		onDecryptError?: (error: unknown) => void;
 	},
 ) {
-	const [wallet, walletReady] = useOPWallet();
+	const [wallet, walletReady] = useTargetWallet();
 	const [processedEntries, setProcessedEntries] = useState<Entry[]>([]);
 	const [processedOnce, setProcessedOnce] = useState(false);
 	const allowDecryption = options?.allowDecryption ?? false;
@@ -151,7 +154,6 @@ export function useProcessedEntries(
 		);
 		return visibleEntries.map((entry) => processedById.get(entry.id) ?? entry);
 	}, [processedEntries, visibleEntries]);
-
 
 	useEffect(() => {
 		if (!entries || !walletReady) {

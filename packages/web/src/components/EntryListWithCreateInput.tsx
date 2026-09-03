@@ -3,7 +3,7 @@
 import type { Entry, Writer } from "@/utils/api";
 import { createWithChunk, writerQueryKey } from "@/utils/api";
 import { buildEntryDraftId } from "@/utils/encryptedDrafts";
-import { useOPWallet } from "@/utils/hooks";
+import { useTargetWallet } from "@/utils/hooks";
 import { getCachedDerivedKey } from "@/utils/keyCache";
 import {
 	PENDING_PRIVATE_ENTRY_RAW,
@@ -55,7 +55,7 @@ export default function EntryListWithCreateInput({
 	const [isExpanded, setIsExpanded] = useState(false);
 	const [isSigning, setIsSigning] = useState(false);
 	const nextOptimisticEntryIdRef = useRef(-1);
-	const [wallet] = useOPWallet();
+	const [wallet] = useTargetWallet();
 	const { getAccessToken } = usePrivy();
 	const router = useRouter();
 	const queryClient = useQueryClient();

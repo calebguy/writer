@@ -3,7 +3,7 @@
 import { useUnsavedChangesNavigation } from "@/hooks/useUnsavedChangesWarning";
 import { useHiddenWriters } from "@/hooks/useHiddenWriters";
 import { getWritersByManager } from "@/utils/api";
-import { useOPWallet } from "@/utils/hooks";
+import { useTargetWallet } from "@/utils/hooks";
 import { clearAllCachedKeys } from "@/utils/keyCache";
 import { isEntryPrivate, isWalletAuthor } from "@/utils/utils";
 import { usePrivy } from "@privy-io/react-auth";
@@ -33,7 +33,7 @@ function isLegacyEncrypted(raw: string | undefined | null): boolean {
 
 export function NavDropdown() {
 	const { logout, authenticated, login, user } = usePrivy();
-	const [wallet] = useOPWallet();
+	const [wallet] = useTargetWallet();
 	const router = useRouter();
 	const pathname = usePathname();
 	const confirmNavigation = useUnsavedChangesNavigation();

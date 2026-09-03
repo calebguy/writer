@@ -2,7 +2,7 @@
 
 import { updateTheme as updateThemeApi } from "@/utils/api";
 import { WriterContext } from "@/utils/context";
-import { useOPWallet } from "@/utils/hooks";
+import { useTargetWallet } from "@/utils/hooks";
 import {
 	type ThemeMode,
 	applyThemeMode,
@@ -95,7 +95,7 @@ function ThemePresetButton({
 }
 
 export function ThemeModal({ open, onClose }: ModalProps) {
-	const [wallet] = useOPWallet();
+	const [wallet] = useTargetWallet();
 	const { getAccessToken } = usePrivy();
 	const { mutateAsync: saveThemeSettings, isPending: themeIsPending } =
 		useMutation({

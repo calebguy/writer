@@ -36,8 +36,7 @@ import {
 import { PrivyProvider } from "@privy-io/react-auth";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { optimism } from "viem/chains";
-
+import { targetChain } from "@/utils/chain";
 import { env } from "@/utils/env";
 import { usePathname, useRouter } from "next/navigation";
 const UNSAVED_CHANGES_HISTORY_MARKER = "__writerUnsavedGuard";
@@ -485,8 +484,8 @@ export function Providers({
 				appId={env.NEXT_PUBLIC_PRIVY_APP_ID}
 				config={{
 					loginMethods: ["sms", "email", "wallet", "passkey"],
-					defaultChain: optimism,
-					supportedChains: [optimism],
+					defaultChain: targetChain,
+					supportedChains: [targetChain],
 					walletConnectCloudProjectId:
 						env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID,
 					appearance: {
@@ -505,6 +504,7 @@ export function Providers({
 						ethereum: {
 							createOnLogin: "users-without-wallets",
 						},
+						showWalletUIs: false,
 					},
 					externalWallets: {
 						walletConnect: { enabled: true },
@@ -513,7 +513,9 @@ export function Providers({
 			>
 				<AuthHintContext value={initialLoggedIn}>
 					<UnsavedChangesContext value={unsavedChangesContextValue}>
-						<NavigationContext value={{ previousPathname, writerCameFromExplore }}>
+						<NavigationContext
+							value={{ previousPathname, writerCameFromExplore }}
+						>
 							<WriterContext
 								value={{
 									writer,

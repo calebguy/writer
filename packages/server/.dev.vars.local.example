@@ -1,0 +1,4 @@
+DATABASE_URL=postgresql://writer:writer@localhost:5432/writer?schema=public
+PRIVY_APP_ID=replace-with-dev-privy-app-id
+PRIVY_SECRET=replace-with-dev-privy-secret
+LOCAL_RELAY_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80

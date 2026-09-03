@@ -9,7 +9,7 @@ import {
 	writerQueryKey,
 } from "@/utils/api";
 import { GRID_SKELETON_COUNT } from "@/utils/constants";
-import { useOPWallet, useProcessedEntries } from "@/utils/hooks";
+import { useTargetWallet, useProcessedEntries } from "@/utils/hooks";
 import { hasCachedDerivedKey } from "@/utils/keyCache";
 import { isEntryPrivate } from "@/utils/utils";
 import { usePrivy } from "@privy-io/react-auth";
@@ -26,7 +26,7 @@ const LOADING_SKELETON_KEYS = Array.from(
 export default function WriterPage() {
 	const { address } = useParams<{ address: string }>();
 	const normalizedAddress = address.toLowerCase();
-	const [wallet] = useOPWallet();
+	const [wallet] = useTargetWallet();
 	const { authenticated, ready } = usePrivy();
 	const isLoggedIn = ready && authenticated;
 	const [shouldPoll, setShouldPoll] = useState(false);

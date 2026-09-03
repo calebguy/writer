@@ -1,6 +1,6 @@
 import { getMe } from "@/utils/api";
 import { WriterContext } from "@/utils/context";
-import { useOPWallet } from "@/utils/hooks";
+import { useTargetWallet } from "@/utils/hooks";
 import { usePrivy } from "@privy-io/react-auth";
 import { useQuery } from "@tanstack/react-query";
 import { useContext, useEffect, useMemo } from "react";
@@ -19,7 +19,7 @@ export function useAuthTheme() {
 		[ready, authenticated],
 	);
 
-	const [wallet] = useOPWallet();
+	const [wallet] = useTargetWallet();
 	const walletAddress = wallet?.address as Hex | undefined;
 	const { data } = useQuery({
 		queryKey: ["me", walletAddress?.toLowerCase()],

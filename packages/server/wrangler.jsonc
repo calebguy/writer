@@ -33,6 +33,42 @@
 		"X402_FACILITATOR_URL": "https://api.cdp.coinbase.com/platform/v2/x402",
 		"RELAY_URL": "https://writer-durable-wallet.calebgcarithers.workers.dev"
 	},
+	"env": {
+		"local": {
+			"name": "writer-api-local",
+			"services": [
+				{
+					"binding": "RELAY",
+					"service": "writer-durable-wallet"
+				}
+			],
+			"hyperdrive": [
+				{
+					"binding": "HYPERDRIVE",
+					"id": "f46916a6c115468189f486f2dde3f3d7",
+					"localConnectionString": "postgresql://writer:writer@localhost:5432/writer?schema=public"
+				}
+			],
+			"vars": {
+				"APP_ENV": "DEVELOPMENT",
+				"BUN_VERSION": "1.2.0",
+				"FACTORY_ADDRESS": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+				"RPC_URL": "http://127.0.0.1:8545",
+				"TARGET_CHAIN_ID": "31337",
+				"X402_PAY_TO_ADDRESS": "0x0000000000000000000000000000000000000000",
+				"X402_FACILITATOR_URL": "http://127.0.0.1:4021",
+				"RELAY_URL": ""
+			},
+			"secrets": {
+				"required": [
+					"DATABASE_URL",
+					"PRIVY_APP_ID",
+					"PRIVY_SECRET",
+					"LOCAL_RELAY_PRIVATE_KEY"
+				]
+			}
+		}
+	},
 	"secrets": {
 		"required": [
 			"DATABASE_URL",

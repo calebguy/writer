@@ -2,10 +2,10 @@ import { AsyncLocalStorage } from "node:async_hooks";
 
 import { Client } from "pg";
 import { createPublicClient, http } from "viem";
+import { getTargetChain } from "./chain";
 import { env } from "./env";
 
 import { Db } from "db";
-import { optimism } from "viem/chains";
 
 export const CREATE_FUNCTION_SIGNATURE =
 	"create(string title, address admin, address[] managers, bool publicWritable, bytes32 salt)";
@@ -42,6 +42,6 @@ export const db = new Proxy(fallbackDb, {
 	},
 }) as Db;
 export const publicClient = createPublicClient({
-	chain: optimism,
+	chain: getTargetChain(),
 	transport: http(env.RPC_URL),
 });

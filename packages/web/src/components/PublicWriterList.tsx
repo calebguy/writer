@@ -6,7 +6,7 @@ import {
 	getWriter,
 	writerQueryKey,
 } from "@/utils/api";
-import { useOPWallet } from "@/utils/hooks";
+import { useTargetWallet } from "@/utils/hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -21,7 +21,7 @@ interface PublicWriterListProps {
 export default function PublicWriterList({ writers }: PublicWriterListProps) {
 	const queryClient = useQueryClient();
 	const router = useRouter();
-	const [wallet] = useOPWallet();
+	const [wallet] = useTargetWallet();
 	const viewerAddress = wallet?.address.toLowerCase();
 
 	const prefetchWriter = useCallback(

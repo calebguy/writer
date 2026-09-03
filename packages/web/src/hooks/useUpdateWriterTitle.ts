@@ -1,6 +1,11 @@
 import { hiddenWritersQueryKey } from "@/hooks/useHiddenWriters";
-import { type Writer, type WriterSummary, updateWriterTitle, writerQueryKey } from "@/utils/api";
-import { useOPWallet } from "@/utils/hooks";
+import {
+	type Writer,
+	type WriterSummary,
+	updateWriterTitle,
+	writerQueryKey,
+} from "@/utils/api";
+import { useTargetWallet } from "@/utils/hooks";
 import { signSetTitle } from "@/utils/signer";
 import { usePrivy } from "@privy-io/react-auth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -22,7 +27,7 @@ function patchWriterTitle<T extends { address: string; title: string }>(
 }
 
 export function useUpdateWriterTitle() {
-	const [wallet] = useOPWallet();
+	const [wallet] = useTargetWallet();
 	const { getAccessToken, user } = usePrivy();
 	const queryClient = useQueryClient();
 	const userAddress = user?.wallet?.address;
@@ -68,22 +73,24 @@ export function useUpdateWriterTitle() {
 				queryKey: ["hidden-writers"],
 			});
 
-			queryClient.setQueryData<Writer>(
-				writerKey,
-				(current) =>
-					current
-						? { ...current, title, updatedAt: new Date().toISOString() }
-						: current,
+			queryClient.setQueryData<Writer>(writerKey, (current) =>
+				current
+					? { ...current, title, updatedAt: new Date().toISOString() }
+					: current,
 			);
 			queryClient.setQueriesData<WriterSummary[]>(
 				{ queryKey: ["get-writer-summaries"] },
 				(current) =>
-					current?.map((item) => patchWriterTitle(item, normalizedAddress, title)),
+					current?.map((item) =>
+						patchWriterTitle(item, normalizedAddress, title),
+					),
 			);
 			queryClient.setQueriesData<Writer[]>(
 				{ queryKey: ["hidden-writers"] },
 				(current) =>
-					current?.map((item) => patchWriterTitle(item, normalizedAddress, title)),
+					current?.map((item) =>
+						patchWriterTitle(item, normalizedAddress, title),
+					),
 			);
 
 			return { previousWriter, previousWriterSummaries, previousHiddenLists };
@@ -106,10 +113,14 @@ export function useUpdateWriterTitle() {
 		onSettled: (_data, _error, vars) => {
 			const normalizedAddress = vars?.writer.address.toLowerCase();
 			if (normalizedAddress) {
-				queryClient.invalidateQueries({ queryKey: writerQueryKey(normalizedAddress) });
+				queryClient.invalidateQueries({
+					queryKey: writerQueryKey(normalizedAddress),
+				});
 			}
 			queryClient.invalidateQueries({ queryKey: ["get-writer-summaries"] });
-			queryClient.invalidateQueries({ queryKey: hiddenWritersQueryKey(userAddress) });
+			queryClient.invalidateQueries({
+				queryKey: hiddenWritersQueryKey(userAddress),
+			});
 		},
 	});
 

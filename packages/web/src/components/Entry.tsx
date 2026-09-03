@@ -15,7 +15,7 @@ import {
 	clearPrivateCachedEntry,
 	clearPublicCachedEntry,
 } from "@/utils/entryCache";
-import { useOPWallet } from "@/utils/hooks";
+import { useTargetWallet } from "@/utils/hooks";
 import { getCachedDerivedKey } from "@/utils/keyCache";
 import {
 	isEscapeKey,
@@ -71,7 +71,7 @@ export default function Entry({
 	/** Whether this entry's writer uses the legacy EIP-712 domain (with chainId). */
 	legacyDomain?: boolean;
 }) {
-	const [wallet] = useOPWallet();
+	const [wallet] = useTargetWallet();
 	const { getAccessToken } = usePrivy();
 	const router = useRouter();
 	const queryClient = useQueryClient();

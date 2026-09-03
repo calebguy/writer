@@ -159,12 +159,14 @@ export default async function RootLayout({
 			>
 				<script
 					nonce={nonce}
+					suppressHydrationWarning
 					dangerouslySetInnerHTML={{
 						__html: THEME_BOOTSTRAP_SCRIPT,
 					}}
 				/>
 				<style
 					nonce={nonce}
+					suppressHydrationWarning
 					dangerouslySetInnerHTML={{
 						__html: THEME_BOOTSTRAP_STYLE,
 					}}

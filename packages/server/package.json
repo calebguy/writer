@@ -3,7 +3,9 @@
 	"version": "0.0.0",
 	"type": "module",
 	"scripts": {
-		"dev": "wrangler dev --remote",
+		"dev": "bun run dev:local",
+		"dev:local": "wrangler dev --env local --local --port 8787",
+		"dev:remote": "wrangler dev --remote",
 		"deploy": "wrangler deploy",
 		"start": "wrangler dev --remote",
 		"typecheck": "tsc --noEmit",

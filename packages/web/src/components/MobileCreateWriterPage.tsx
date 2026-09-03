@@ -10,7 +10,7 @@ import {
 import { type WriterSummary, factoryCreate } from "@/utils/api";
 import { cn } from "@/utils/cn";
 import { buildCreatePlaceDraftId } from "@/utils/encryptedDrafts";
-import { useOPWallet } from "@/utils/hooks";
+import { useTargetWallet } from "@/utils/hooks";
 import { usePrivy } from "@privy-io/react-auth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
@@ -24,7 +24,7 @@ export function MobileCreateWriterPage() {
 	const router = useRouter();
 	const queryClient = useQueryClient();
 	const { getAccessToken } = usePrivy();
-	const [wallet] = useOPWallet();
+	const [wallet] = useTargetWallet();
 	const [markdown, setMarkdown] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const hasUnsavedChanges = markdown.trim() !== "";

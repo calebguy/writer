@@ -20,7 +20,7 @@ import {
 } from "@/utils/api";
 import { buildEntryDraftId } from "@/utils/encryptedDrafts";
 import { cn } from "@/utils/cn";
-import { useOPWallet } from "@/utils/hooks";
+import { useTargetWallet } from "@/utils/hooks";
 import { getCachedDerivedKey } from "@/utils/keyCache";
 import { signCreateWithChunk } from "@/utils/signer";
 import { compress, encrypt } from "@/utils/utils";
@@ -37,7 +37,7 @@ export function MobileCreateEntryPage({ address }: { address: string }) {
 	const router = useRouter();
 	const queryClient = useQueryClient();
 	const normalizedAddress = address.toLowerCase();
-	const [wallet] = useOPWallet();
+	const [wallet] = useTargetWallet();
 	const { getAccessToken } = usePrivy();
 	const { setActions } = useComposeHeaderActions();
 	const [markdown, setMarkdown] = useState("");

@@ -1,7 +1,7 @@
 "use client";
 
 import { type Entry, editEntry } from "@/utils/api";
-import { useOPWallet } from "@/utils/hooks";
+import { useTargetWallet } from "@/utils/hooks";
 import { getCachedDerivedKey } from "@/utils/keyCache";
 import { signUpdate } from "@/utils/signer";
 import { compress, decompress, decrypt, encrypt } from "@/utils/utils";
@@ -31,7 +31,7 @@ export function MigrateModal({
 	onClose: () => void;
 	entriesToMigrate: MigrateEntry[];
 }) {
-	const [wallet] = useOPWallet();
+	const [wallet] = useTargetWallet();
 	const { getAccessToken } = usePrivy();
 	const queryClient = useQueryClient();
 	const [status, setStatus] = useState<MigrationStatus>("idle");
@@ -70,7 +70,11 @@ export function MigrateModal({
 				// Decrypt with old key (v1/v2/v3/v4 → v5).
 				let decrypted: string;
 				if (entry.raw?.startsWith("enc:v4:br:")) {
-					const keyV4 = await getCachedDerivedKey(wallet, "v4", entry.storageId);
+					const keyV4 = await getCachedDerivedKey(
+						wallet,
+						"v4",
+						entry.storageId,
+					);
 					decrypted = await decrypt(keyV4, entry.raw.slice(10));
 				} else if (entry.raw?.startsWith("enc:v3:br:")) {
 					const keyV3 = await getCachedDerivedKey(wallet, "v3");
@@ -89,9 +93,7 @@ export function MigrateModal({
 				// re-encrypt with the v5 key for this entry's writer.
 				const keyV5 = v5KeysByStorageId.get(entry.storageId.toLowerCase());
 				if (!keyV5) {
-					throw new Error(
-						`Missing v5 key for storage_id ${entry.storageId}`,
-					);
+					throw new Error(`Missing v5 key for storage_id ${entry.storageId}`);
 				}
 				const markdown = await decompress(decrypted);
 				const compressed = await compress(markdown);

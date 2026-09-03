@@ -6,8 +6,10 @@ dist
 assets/
 lib
 assets
-.env
-.dev.vars
+.env*
+.dev.vars*
+!.env*.example
+!.dev.vars*.example
 dev
 !packages/web/src/app/dev
 notes.md

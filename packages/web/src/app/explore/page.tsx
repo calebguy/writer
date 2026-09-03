@@ -2,8 +2,8 @@
 
 import PublicWriterList from "@/components/PublicWriterList";
 import { WriterCardSkeleton } from "@/components/WriterCardSkeleton";
-import { GRID_SKELETON_COUNT } from "@/utils/constants";
 import { getPublicWriters } from "@/utils/api";
+import { GRID_SKELETON_COUNT } from "@/utils/constants";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 
@@ -48,7 +48,7 @@ export default function ExplorePage() {
 	if (writers.length === 0) {
 		return (
 			<div className="flex items-center justify-center h-full text-neutral-500">
-				No public writers yet
+				No public Places yet
 			</div>
 		);
 	}

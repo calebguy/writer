@@ -31,7 +31,7 @@ import {
 	getPrivateCachedEntry,
 	getPublicCachedEntry,
 } from "@/utils/entryCache";
-import { useOPWallet } from "@/utils/hooks";
+import { useTargetWallet } from "@/utils/hooks";
 import { getCachedDerivedKey } from "@/utils/keyCache";
 import { signRemove, signUpdate } from "@/utils/signer";
 import {
@@ -54,7 +54,7 @@ const MDX = dynamic(() => import("./markdown/MDX"), { ssr: false });
 
 async function hydrateEditableEntry(
 	entry: Entry,
-	wallet: ReturnType<typeof useOPWallet>[0],
+	wallet: ReturnType<typeof useTargetWallet>[0],
 ) {
 	if (!isEntryPrivate(entry) || entry.decompressed) return entry;
 	if (!wallet || !isWalletAuthor(wallet, entry)) return entry;
@@ -89,7 +89,7 @@ export function MobileEditEntryPage({
 }) {
 	const router = useRouter();
 	const queryClient = useQueryClient();
-	const [wallet, walletReady] = useOPWallet();
+	const [wallet, walletReady] = useTargetWallet();
 	const editorRef = useRef<MDXEditorMethods>(null);
 	const { getAccessToken } = usePrivy();
 	const { setActions } = useComposeHeaderActions();

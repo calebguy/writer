@@ -85,6 +85,7 @@ type PendingTx = {
 	args: unknown;
 	targetAddress: string | null;
 	createdAt: Date;
+	status?: string;
 };
 
 // ---------------------------------------------------------------------------
@@ -339,9 +340,16 @@ function applyPendingEntryOps(
 				const args = tx.args as { chunkContent?: string } | null;
 				if (!args?.chunkContent) break;
 				// Append only if we don't already have a confirmed entry tied to
-				// this same tx. The indexer sets `createdAtTransactionId` when
-				// it writes the row; once that happens we drop the overlay.
+				// this same tx. The ingestor should set `createdAtTransactionId`
+				// when it writes the row; once that happens we drop the overlay.
 				if (result.some((e) => e.createdAtTransactionId === tx.id)) {
+					break;
+				}
+				// Older local relay rows used checksum-cased tx IDs while the
+				// ingestor looked up lowercase IDs, so confirmed entries could be
+				// written without `createdAtTransactionId`. Drop the confirmed
+				// overlay when the indexed entry plainly matches the same create.
+				if (isConfirmedCreateIndexed(result, tx, args.chunkContent)) {
 					break;
 				}
 				result.push(synthesizePendingEntry(tx, writer, args.chunkContent));
@@ -380,6 +388,26 @@ function applyPendingEntryOps(
 	}
 
 	return result;
+}
+
+function isConfirmedCreateIndexed(
+	entries: EntryJson[],
+	tx: PendingTx,
+	chunkContent: string,
+): boolean {
+	if (tx.status !== "CONFIRMED") return false;
+	const args = tx.args as { author?: string } | null;
+	const author = args?.author?.toLowerCase();
+	const txCreatedAt = new Date(tx.createdAt).getTime();
+	const matchingEntryWindowMs = 2 * 60 * 1000;
+
+	return entries.some((entry) => {
+		if (!entry.createdAtHash) return false;
+		if (entry.raw !== chunkContent) return false;
+		if (author && entry.author.toLowerCase() !== author) return false;
+		const entryCreatedAt = new Date(entry.createdAt).getTime();
+		return Math.abs(entryCreatedAt - txCreatedAt) <= matchingEntryWindowMs;
+	});
 }
 
 function applyPendingTitleOps(
