@@ -59,9 +59,8 @@
 }
 
 .mdx.markdown-renderer .prose p.preserved-blank-line {
-  height: 1em;
   margin: 0;
-  line-height: 1;
+  line-height: inherit;
 }
 
 .mdx {
