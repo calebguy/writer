@@ -116,6 +116,30 @@ const MUTED_MIX = 0.28;
 const STRONG_MUTED_MIX = 0.16;
 const WHITE_RGB: RGB = [255, 255, 255];
 const BLACK_RGB: RGB = [0, 0, 0];
+const THEME_COLOR_META_SELECTOR = 'meta[name="theme-color"]';
+const THEME_COLOR_META_NAME = "theme-color";
+
+function getThemeColorMetaElement(): HTMLMetaElement | null {
+	if (typeof document === "undefined") return null;
+	const existing = document.querySelector<HTMLMetaElement>(
+		THEME_COLOR_META_SELECTOR,
+	);
+	if (existing) return existing;
+
+	const meta = document.createElement("meta");
+	meta.name = THEME_COLOR_META_NAME;
+	document.head.append(meta);
+	return meta;
+}
+
+function setThemeColorMeta(rgb: RGB) {
+	getThemeColorMetaElement()?.setAttribute("content", RGBToHex(rgb));
+}
+
+function syncThemeColorMetaWithDocumentBackground() {
+	const background = readDocumentBackgroundColor();
+	if (background) setThemeColorMeta(background);
+}
 
 function clampChannel(value: number) {
 	return Math.min(255, Math.max(0, Math.round(value)));
@@ -265,6 +289,7 @@ export function setCustomBackgroundCSSVariables(
 		"--color-border-strong",
 		mixRGB(background, surfaceTarget, strongBorderMix),
 	);
+	setThemeColorMeta(background);
 }
 
 export function clearInlineCustomBackgroundCSSVariables() {
@@ -278,6 +303,7 @@ export function clearInlineCustomBackgroundCSSVariables() {
 	document.documentElement.style.removeProperty("--color-muted-strong");
 	document.documentElement.style.removeProperty("--color-border");
 	document.documentElement.style.removeProperty("--color-border-strong");
+	syncThemeColorMetaWithDocumentBackground();
 }
 
 export function readCSSRgbVariable(name: string): RGB | null {

@@ -59,6 +59,16 @@ const getThemeBootstrapScript = (canUseStoredColors: boolean) => `(() => {
 				Number.parseInt(hex.slice(offset, offset + 2), 16),
 			);
 		};
+		const setThemeColor = (color) => {
+			const selector = 'meta[name="theme-color"]';
+			let meta = document.querySelector(selector);
+			if (!meta) {
+				meta = document.createElement("meta");
+				meta.name = "theme-color";
+				document.head.append(meta);
+			}
+			meta.setAttribute("content", color);
+		};
 		const setRgbChannels = (name, value) =>
 			root.style.setProperty(name, value.join(" "));
 		const primary = ${
@@ -108,6 +118,7 @@ const getThemeBootstrapScript = (canUseStoredColors: boolean) => `(() => {
 				root.dataset.theme = resolved;
 				root.dataset.themeMode = "custom";
 				setColor("--color-background", rgb);
+				setThemeColor("#" + hex);
 				setColor("--color-surface", mix(rgb, foreground, dark ? 0.08 : 0.06));
 				setColor("--color-surface-raised", mix(rgb, foreground, dark ? 0.18 : 0.12));
 				setColor("--color-surface-overlay", mix(rgb, foreground, dark ? 0.12 : 0.08));
@@ -123,6 +134,7 @@ const getThemeBootstrapScript = (canUseStoredColors: boolean) => `(() => {
 		const resolved = prefersDark ? "dark" : "light";
 		root.dataset.theme = resolved;
 		root.dataset.themeMode = "system";
+		setThemeColor(resolved === "dark" ? "#262626" : "#ffffff");
 		clearThemeBootstrapping();
 	} catch {}
 })();`;
@@ -158,6 +170,7 @@ export default async function RootLayout({
 				<script
 					nonce={nonce}
 					suppressHydrationWarning
+					// biome-ignore lint/security/noDangerouslySetInnerHtml: static bootstrap string applies stored theme before hydration.
 					dangerouslySetInnerHTML={{
 						__html: getThemeBootstrapScript(initialLoggedIn),
 					}}
@@ -165,6 +178,7 @@ export default async function RootLayout({
 				<style
 					nonce={nonce}
 					suppressHydrationWarning
+					// biome-ignore lint/security/noDangerouslySetInnerHtml: static CSS disables bootstrap-only color transitions.
 					dangerouslySetInnerHTML={{
 						__html: THEME_BOOTSTRAP_STYLE,
 					}}
