@@ -4,7 +4,7 @@ import { EntryCardSkeleton } from "@/components/EntryCardSkeleton";
 import { Lock } from "@/components/icons/Lock";
 import { Unlock } from "@/components/icons/Unlock";
 import { MarkdownRenderer } from "@/components/markdown/MarkdownRenderer";
-import { entryQueryKey, type Entry } from "@/utils/api";
+import { type Entry, entryQueryKey } from "@/utils/api";
 import { cn } from "@/utils/cn";
 import { isEntryPrivate } from "@/utils/utils";
 import { useQueryClient } from "@tanstack/react-query";
@@ -94,15 +94,6 @@ export default function EntryList({
 										</span>
 									</>
 								)}
-								{/* <span className="text-sm">Private entry</span>
-								<span className="text-xs">
-									{isUnlocking ? "Unlocking..." : "Unlock to view"}
-								</span> */}
-								{/* {unlockError && (
-									<span className="text-[10px] text-red-500">
-										Signature rejected
-									</span>
-								)} */}
 							</div>
 							<div className="writer-card-meta private-entry-meta text-muted flex items-end text-sm leading-3 pt-2 shrink-0 pb-2 justify-end">
 								<span>{createdAt}</span>
@@ -117,29 +108,18 @@ export default function EntryList({
 					: format(new Date(entry.createdAt), dateFmt);
 
 				const isPending = entry.onChainId == null;
+				const entryId = entry.onChainId?.toString() ?? entry.id.toString();
+				const entryHref = `/writer/${normalizedWriterAddress}/${entryId}`;
 
 				return (
 					<Link
-						href={
-							isPending
-								? "#"
-								: `/writer/${normalizedWriterAddress}/${entry.onChainId?.toString()}`
-						}
+						href={entryHref}
 						key={entry.id}
-						className={cn(
-							"relative aspect-square bg-surface flex flex-col px-2 pt-2 pb-0.5 overflow-hidden rounded-xs",
-							isPending ? "cursor-loading" : "cursor-zoom-in",
-						)}
-						onClick={(event) => {
-							if (isPending) {
-								event.preventDefault();
-								return;
-							}
-							prefetchEntry(entry);
-						}}
-						onFocus={isPending ? undefined : () => prefetchEntry(entry)}
-						onPointerDown={isPending ? undefined : () => prefetchEntry(entry)}
-						onPointerEnter={isPending ? undefined : () => prefetchEntry(entry)}
+						className="relative aspect-square bg-surface flex flex-col px-2 pt-2 pb-0.5 overflow-hidden rounded-xs cursor-zoom-in"
+						onClick={() => prefetchEntry(entry)}
+						onFocus={() => prefetchEntry(entry)}
+						onPointerDown={() => prefetchEntry(entry)}
+						onPointerEnter={() => prefetchEntry(entry)}
 					>
 						<div className="overflow-y-auto grow min-h-0 rounded-xs">
 							<MarkdownRenderer

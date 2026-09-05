@@ -126,6 +126,7 @@ export default function Entry({
 
 	const normalizedAddress = address.toLowerCase();
 	const writerKey = writerQueryKey(normalizedAddress);
+	const isPendingCreate = isPending === true || initialEntry.onChainId == null;
 	const entryKey = entryQueryKey(normalizedAddress, id);
 
 	const { mutateAsync: mutateAsyncDelete, isPending: isPendingDelete } =
@@ -281,11 +282,9 @@ export default function Entry({
 				}
 			}
 
-			// Already initialized — only re-sync if something actually
-			// changed. Without these guards, any local setProcessedEntry
-			// (e.g. the optimistic patch in handleSave) used to retrigger
-			// this effect via a stale `processedEntry` dep and clobber the
-			// optimistic content back to `initialEntry`'s previous value.
+			// Already initialized — only re-sync when content or chain identity
+			// changed. This keeps local optimistic edits from being clobbered while
+			// still letting a pending create adopt its confirmed onchain metadata.
 			if (initializedRef.current && currentProcessed) {
 				const needsDecryption =
 					isEntryPrivate(currentProcessed) &&
@@ -294,7 +293,18 @@ export default function Entry({
 				const contentMatchesInitial =
 					currentProcessed.raw === initialEntry.raw &&
 					currentProcessed.decompressed === initialEntry.decompressed;
-				if (!needsDecryption && contentMatchesInitial) return;
+				const chainStateMatchesInitial =
+					currentProcessed.onChainId === initialEntry.onChainId &&
+					currentProcessed.createdAtHash === initialEntry.createdAtHash &&
+					currentProcessed.createdAtBlockDatetime ===
+						initialEntry.createdAtBlockDatetime;
+				if (
+					!needsDecryption &&
+					contentMatchesInitial &&
+					chainStateMatchesInitial
+				) {
+					return;
+				}
 			}
 
 			if (initialEntry.decompressed) {
@@ -368,9 +378,9 @@ export default function Entry({
 			initialEntry &&
 			wallet &&
 			isWalletAuthor(wallet, initialEntry) &&
-			!isPending
+			!isPendingCreate
 		);
-	}, [initialEntry, wallet, isPending]);
+	}, [initialEntry, wallet, isPendingCreate]);
 
 	const processedContent =
 		processedEntry?.decompressed ?? processedEntry?.raw ?? "";
@@ -652,10 +662,8 @@ export default function Entry({
 		? format(new Date(processedEntry.createdAtBlockDatetime), dateFmt)
 		: format(new Date(processedEntry.createdAt), dateFmt);
 
-	// An edit is awaiting on-chain confirmation when the pending-overlay has
-	// stamped the entry with a tx id but the indexer hasn't populated
-	// updatedAtHash yet. Mirrors EntryList's `!onChainId` pending-new-entry
-	// signal.
+	const isConfirmingCreate =
+		isPending === true || initialEntry.onChainId == null;
 	const isConfirmingEdit =
 		!!initialEntry.updatedAtTransactionId && !initialEntry.updatedAtHash;
 
@@ -690,12 +698,6 @@ export default function Entry({
 					{isEntryPrivate(processedEntry) && (
 						<div className="absolute bottom-0 left-0 hidden md:block">
 							<Lock className="w-3.5 h-3.5 text-muted" />
-						</div>
-					)}
-					{isPending && (
-						<div className="absolute bottom-0 right-0 flex items-center gap-1.5 text-muted">
-							<span className="text-xs">confirming</span>
-							<LoadingRelic size={14} />
 						</div>
 					)}
 				</div>
@@ -760,9 +762,11 @@ export default function Entry({
 			>
 				<div className="flex items-center gap-2">
 					<span className="text-muted bold">{createdAt}</span>
-					{(isConfirmingEdit || editSubmitted) && (
+					{(isConfirmingCreate || isConfirmingEdit || editSubmitted) && (
 						<span
-							aria-label="Confirming edit"
+							aria-label={
+								isConfirmingCreate ? "Entry pending" : "Confirming edit"
+							}
 							className="pending-entry-spinner inline-flex"
 						>
 							<span className="pending-entry-spinner-track" />

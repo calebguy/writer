@@ -1,10 +1,11 @@
 "use client";
 
 import Entry from "@/components/Entry";
+import { useEntryLoading } from "@/utils/EntryLoadingContext";
 import {
 	ENTRY_QUERY_STALE_TIME,
-	WRITER_QUERY_STALE_TIME,
 	type Entry as EntryType,
+	WRITER_QUERY_STALE_TIME,
 	type Writer,
 	entryQueryKey,
 	getEntry,
@@ -15,12 +16,45 @@ import {
 	getPrivateCachedEntry,
 	getPublicCachedEntry,
 } from "@/utils/entryCache";
-import { useEntryLoading } from "@/utils/EntryLoadingContext";
 import { useTargetWallet } from "@/utils/hooks";
 import { canRenderEntryImmediately } from "@/utils/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { use, useEffect, useState } from "react";
 import type { Hex } from "viem";
+
+const PENDING_ENTRY_REFETCH_INTERVAL = 3000;
+
+function getEntryRouteId(entry: EntryType) {
+	return entry.onChainId?.toString() ?? entry.id.toString();
+}
+
+function findEntryByRouteId(entries: EntryType[] | undefined, id: string) {
+	return entries?.find((entry) => getEntryRouteId(entry) === id) ?? null;
+}
+
+function samePendingCreate(source: EntryType | null, candidate: EntryType) {
+	if (!source || source.onChainId != null) return false;
+	if (source.raw !== candidate.raw) return false;
+	if (source.storageId.toLowerCase() !== candidate.storageId.toLowerCase()) {
+		return false;
+	}
+	return source.author.toLowerCase() === candidate.author.toLowerCase();
+}
+
+function findPendingCreateReplacement(
+	entries: EntryType[] | undefined,
+	source: EntryType | null,
+) {
+	return entries?.find((entry) => samePendingCreate(source, entry)) ?? null;
+}
+function entryHasPendingWrite(entry: EntryType) {
+	return (
+		entry.onChainId == null ||
+		!entry.createdAtHash ||
+		(!!entry.updatedAtTransactionId && !entry.updatedAtHash) ||
+		(!!entry.deletedAtTransactionId && !entry.deletedAtHash)
+	);
+}
 
 export default function EntryPage({
 	params,
@@ -36,10 +70,11 @@ export default function EntryPage({
 	const writerKey = writerQueryKey(normalizedAddress);
 	const cachedQueryEntry =
 		queryClient.getQueryData<EntryType>(entryKey) ?? null;
+	const cachedWriterEntries =
+		queryClient.getQueryData<Writer>(writerKey)?.entries ?? [];
 	const cachedWriterEntry =
-		queryClient
-			.getQueryData<Writer>(writerKey)
-			?.entries.find((entry) => entry.onChainId?.toString() === id) ?? null;
+		findEntryByRouteId(cachedWriterEntries, id) ??
+		findPendingCreateReplacement(cachedWriterEntries, cachedQueryEntry);
 	const warmEntry = cachedQueryEntry ?? cachedWriterEntry;
 
 	useEffect(() => {
@@ -63,6 +98,7 @@ export default function EntryPage({
 	// Check cache on mount (async for IndexedDB)
 	const [cachedEntry, setCachedEntry] = useState<EntryType | null>(null);
 	const [cacheChecked, setCacheChecked] = useState(false);
+	const [confirmedEntryId, setConfirmedEntryId] = useState<string | null>(null);
 
 	useEffect(() => {
 		async function checkCache() {
@@ -99,6 +135,7 @@ export default function EntryPage({
 	// /writer -> /writer/:id transitions after the writer page already has
 	// this entry in memory.
 	const initialEntry = cachedEntry ?? warmEntry ?? undefined;
+	const routeIsPendingEntry = Number(id) < 0;
 	const hasInstantEntry = Boolean(
 		initialEntry && canRenderEntryImmediately(initialEntry),
 	);
@@ -112,26 +149,57 @@ export default function EntryPage({
 			getEntry(normalizedAddress as Hex, Number(id), signal),
 		initialData: initialEntry,
 		initialDataUpdatedAt: initialEntry ? Date.now() : undefined,
-		enabled: cacheChecked || Boolean(warmEntry),
+		enabled: !routeIsPendingEntry && (cacheChecked || Boolean(warmEntry)),
 		staleTime: ENTRY_QUERY_STALE_TIME,
-		// While an edit is pending on-chain confirmation (overlay stamped
-		// updatedAtTransactionId but indexer hasn't filled updatedAtHash yet),
-		// poll every 3s so the Entry's inline "saving" spinner clears as soon
-		// as the indexer catches up.
 		refetchInterval: (query) => {
 			const data = query.state.data;
 			const pending = !!data?.updatedAtTransactionId && !data?.updatedAtHash;
-			return pending ? 3000 : false;
+			return pending ? PENDING_ENTRY_REFETCH_INTERVAL : false;
 		},
 	});
+
+	const pendingEntrySource = entry ?? cachedEntry ?? warmEntry ?? null;
 
 	const { data: writer } = useQuery({
 		queryKey: writerKey,
 		queryFn: ({ signal }) => getWriter(normalizedAddress as Hex, signal),
 		staleTime: WRITER_QUERY_STALE_TIME,
+		refetchInterval: (query) => {
+			if (confirmedEntryId) {
+				const confirmedEntry = findEntryByRouteId(
+					query.state.data?.entries,
+					confirmedEntryId,
+				);
+				return confirmedEntry && entryHasPendingWrite(confirmedEntry)
+					? PENDING_ENTRY_REFETCH_INTERVAL
+					: false;
+			}
+			if (!pendingEntrySource || pendingEntrySource.onChainId != null) {
+				return false;
+			}
+			const replacement = findPendingCreateReplacement(
+				query.state.data?.entries,
+				pendingEntrySource,
+			);
+			if (!replacement || entryHasPendingWrite(replacement)) {
+				return PENDING_ENTRY_REFETCH_INTERVAL;
+			}
+			return false;
+		},
 	});
 
-	const displayEntry = entry ?? cachedEntry;
+	const writerEntry =
+		(confirmedEntryId
+			? findEntryByRouteId(writer?.entries, confirmedEntryId)
+			: null) ??
+		findEntryByRouteId(writer?.entries, id) ??
+		findPendingCreateReplacement(writer?.entries, pendingEntrySource);
+	useEffect(() => {
+		if (writerEntry?.onChainId != null) {
+			setConfirmedEntryId(writerEntry.onChainId.toString());
+		}
+	}, [writerEntry?.onChainId]);
+	const displayEntry = writerEntry ?? entry ?? cachedEntry ?? warmEntry;
 
 	if (!displayEntry) {
 		return (
@@ -156,15 +224,20 @@ export default function EntryPage({
 		);
 	}
 
+	const displayEntryId = displayEntry.onChainId?.toString() ?? id;
+	const displayEntryKey = entryQueryKey(normalizedAddress, displayEntryId);
+
 	return (
 		<div className="grow flex flex-col">
 			<Entry
 				initialEntry={displayEntry}
 				address={address}
-				id={id}
+				id={displayEntryId}
+				isPending={displayEntry.onChainId == null}
 				legacyDomain={writer?.legacyDomain ?? true}
 				onEntryUpdate={() => {
 					queryClient.invalidateQueries({ queryKey: entryKey });
+					queryClient.invalidateQueries({ queryKey: displayEntryKey });
 					refetch();
 				}}
 			/>
