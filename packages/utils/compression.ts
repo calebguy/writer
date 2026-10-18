@@ -10,6 +10,12 @@ export function decompressBrotli(input: string) {
 	return decoded;
 }
 
+export function orderContentChunks<T extends { index: number }>(
+	chunks: readonly T[],
+) {
+	return chunks.toSorted((left, right) => left.index - right.index);
+}
+
 function tryDecompressBrotli(input: string): string | null {
 	try {
 		return decompressBrotli(input);

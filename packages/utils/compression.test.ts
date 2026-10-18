@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { brotliCompressSync } from "node:zlib";
-import { processRawContent } from "./compression";
+import { orderContentChunks, processRawContent } from "./compression";
 
 describe("processRawContent", () => {
 	test("returns an undecoded Brotli entry for an incomplete base64 chunk", () => {
@@ -27,5 +27,20 @@ describe("processRawContent", () => {
 		expect(processRawContent(`br:${encoded}`).decompressed).toBe(
 			"complete entry",
 		);
+	});
+});
+
+describe("orderContentChunks", () => {
+	test("orders indexed chunks before content reconstruction", () => {
+		const chunks = [
+			{ index: 2, content: "third" },
+			{ index: 0, content: "first" },
+			{ index: 1, content: "second" },
+		];
+		expect(orderContentChunks(chunks).map((chunk) => chunk.content)).toEqual([
+			"first",
+			"second",
+			"third",
+		]);
 	});
 });

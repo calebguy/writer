@@ -8,7 +8,7 @@ import {
 	UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE,
 	db,
 } from "./constants";
-import { processRawContent } from "utils";
+import { orderContentChunks, processRawContent } from "utils";
 
 // Loose JSON shapes returned by the server for a writer with entries. The
 // overlay lives on the hot read path so we deliberately don't import from
@@ -644,7 +644,8 @@ function writerToJson(
 		deletedAt: data.deletedAt,
 		transactionId: data.transactionId,
 		entries: data.entries.map((e) => {
-			const raw = e.chunks.map((c) => c.content).join("");
+			const chunks = orderContentChunks(e.chunks);
+			const raw = chunks.map((chunk) => chunk.content).join("");
 			const { version, decompressed } = processRawContent(raw);
 			return {
 				id: e.id,
@@ -668,7 +669,7 @@ function writerToJson(
 				createdAtTransactionId: e.createdAtTransactionId,
 				deletedAtTransactionId: e.deletedAtTransactionId,
 				updatedAtTransactionId: e.updatedAtTransactionId,
-				chunks: e.chunks,
+				chunks,
 				raw,
 				version,
 				decompressed,
