@@ -11,6 +11,8 @@ export const CREATE_FUNCTION_SIGNATURE =
 	"create(string title, address admin, address[] managers, bool publicWritable, bytes32 salt)";
 export const CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE =
 	"createWithChunkWithSig(bytes signature, uint256 nonce, uint256 chunkCount, string chunkContent)";
+export const ADD_CHUNK_WITH_SIG_FUNCTION_SIGNATURE =
+	"addChunkWithSig(bytes signature, uint256 nonce, uint256 id, uint256 index, string content)";
 export const UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE =
 	"updateWithSig(bytes signature, uint256 nonce, uint256 id, uint256 totalChunks, string content)";
 export const SET_TITLE_WITH_SIG_FUNCTION_SIGNATURE =

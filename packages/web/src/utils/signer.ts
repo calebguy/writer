@@ -179,17 +179,19 @@ export async function signUpdate(
 export async function signCreateWithChunk(
 	wallet: ConnectedWallet,
 	{
-		content,
+		chunkContent,
+		chunkCount,
 		address,
 		legacyDomain = false,
-	}: { content: string; address: string; legacyDomain?: boolean },
+	}: {
+		chunkContent: string;
+		chunkCount: number;
+		address: string;
+		legacyDomain?: boolean;
+	},
 ) {
-	const chunkCount = 1;
 	const nonce = getRandomNonce();
-	const chunkContent = content;
-
 	const provider = await wallet.getEthereumProvider();
-	const method = "eth_signTypedData_v4";
 	const { domain, domainTypes } = writerDomain(address, legacyDomain);
 	const payload = {
 		domain,
@@ -210,7 +212,7 @@ export async function signCreateWithChunk(
 	};
 
 	const signature = await provider.request({
-		method,
+		method: "eth_signTypedData_v4",
 		params: [wallet.address, JSON.stringify(payload)],
 	});
 
@@ -219,6 +221,67 @@ export async function signCreateWithChunk(
 		nonce,
 		chunkCount,
 		chunkContent,
+	};
+}
+
+export type SignedEntryChunk = {
+	signature: string;
+	nonce: number;
+	entryId: number;
+	index: number;
+	content: string;
+};
+
+export async function signAddChunk(
+	wallet: ConnectedWallet,
+	{
+		entryId,
+		index,
+		content,
+		address,
+		legacyDomain = false,
+	}: {
+		entryId: number;
+		index: number;
+		content: string;
+		address: string;
+		legacyDomain?: boolean;
+	},
+): Promise<SignedEntryChunk> {
+	const nonce = getRandomNonce();
+	const provider = await wallet.getEthereumProvider();
+	const { domain, domainTypes } = writerDomain(address, legacyDomain);
+	const payload = {
+		domain,
+		message: {
+			nonce,
+			entryId,
+			chunkIndex: index,
+			chunkContent: content,
+		},
+		primaryType: "AddChunk",
+		types: {
+			EIP712Domain: domainTypes,
+			AddChunk: [
+				{ name: "nonce", type: "uint256" },
+				{ name: "entryId", type: "uint256" },
+				{ name: "chunkIndex", type: "uint256" },
+				{ name: "chunkContent", type: "string" },
+			],
+		},
+	};
+
+	const signature = await provider.request({
+		method: "eth_signTypedData_v4",
+		params: [wallet.address, JSON.stringify(payload)],
+	});
+
+	return {
+		signature: signature as string,
+		nonce,
+		entryId,
+		index,
+		content,
 	};
 }
 

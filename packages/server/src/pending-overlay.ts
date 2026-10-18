@@ -1,5 +1,6 @@
 import type { Hex } from "viem";
 import {
+	ADD_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
 	CREATE_FUNCTION_SIGNATURE,
 	CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
 	DELETE_ENTRY_FUNCTION_SIGNATURE,
@@ -333,6 +334,7 @@ function applyPendingEntryOps(
 	const result = [...confirmed];
 	const appliedUpdate = new Set<string>();
 	const appliedDelete = new Set<string>();
+	const appliedChunk = new Set<string>();
 
 	for (const tx of pending) {
 		switch (tx.functionSignature) {
@@ -353,6 +355,35 @@ function applyPendingEntryOps(
 					break;
 				}
 				result.push(synthesizePendingEntry(tx, writer, args.chunkContent));
+				break;
+			}
+			case ADD_CHUNK_WITH_SIG_FUNCTION_SIGNATURE: {
+				const args = tx.args as {
+					id?: number;
+					index?: number;
+					content?: string;
+				} | null;
+				if (
+					args?.id == null ||
+					args.index == null ||
+					typeof args.content !== "string"
+				) {
+					break;
+				}
+				const operationKey = `${args.id}:${args.index}`;
+				if (appliedChunk.has(operationKey)) break;
+				const onChainId = String(args.id);
+				const resultIndex = result.findIndex(
+					(entry) => entry.onChainId === onChainId,
+				);
+				if (resultIndex < 0) break;
+				appliedChunk.add(operationKey);
+				result[resultIndex] = patchEntryChunk(
+					result[resultIndex],
+					args.index,
+					args.content,
+					tx,
+				);
 				break;
 			}
 			case UPDATE_ENTRY_WITH_SIG_FUNCTION_SIGNATURE: {
@@ -522,6 +553,36 @@ function synthesizePendingEntry(
 		raw,
 		version,
 		decompressed,
+	};
+}
+
+function patchEntryChunk(
+	entry: EntryJson,
+	index: number,
+	content: string,
+	tx: PendingTx,
+): EntryJson {
+	const pendingChunk = {
+		id: -Math.abs(new Date(tx.createdAt).getTime() + index),
+		entryId: entry.id,
+		index,
+		content,
+		createdAt: tx.createdAt,
+		createdAtTransactionId: tx.id,
+	};
+	const chunks = [
+		...entry.chunks.filter((chunk) => chunk.index !== index),
+		pendingChunk,
+	].sort((left, right) => left.index - right.index);
+	const raw = chunks.map((chunk) => chunk.content).join("");
+	const { version, decompressed } = processRawContent(raw);
+	return {
+		...entry,
+		chunks,
+		raw,
+		version,
+		decompressed,
+		updatedAt: tx.createdAt,
 	};
 }
 

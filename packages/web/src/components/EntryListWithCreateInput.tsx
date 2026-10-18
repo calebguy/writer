@@ -1,7 +1,11 @@
 "use client";
 
 import type { Entry, Writer } from "@/utils/api";
-import { createWithChunk, writerQueryKey } from "@/utils/api";
+import { writerQueryKey } from "@/utils/api";
+import {
+	PartialEntryCreationError,
+	createChunkedEntry,
+} from "@/utils/chunkedEntry";
 import { buildEntryDraftId } from "@/utils/encryptedDrafts";
 import { useTargetWallet } from "@/utils/hooks";
 import { getCachedDerivedKey } from "@/utils/keyCache";
@@ -13,7 +17,6 @@ import {
 	removeOptimisticEntry,
 	replaceOptimisticEntryRaw,
 } from "@/utils/optimisticEntry";
-import { signCreateWithChunk } from "@/utils/signer";
 import { compress, encrypt } from "@/utils/utils";
 import { usePrivy } from "@privy-io/react-auth";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -73,7 +76,7 @@ export default function EntryListWithCreateInput({
 
 	const queryKey = writerQueryKey(normalizedWriterAddress);
 	const { mutateAsync } = useMutation({
-		mutationFn: createWithChunk,
+		mutationFn: createChunkedEntry,
 		mutationKey: ["create-with-chunk", normalizedWriterAddress],
 		onSuccess: () => {
 			router.refresh();
@@ -133,40 +136,29 @@ export default function EntryListWithCreateInput({
 			);
 		}
 
-		if (isExternalWallet) setIsSigning(true);
-		let signed: Awaited<ReturnType<typeof signCreateWithChunk>>;
+		let versionedCompressedContent: string;
 		try {
 			const compressedContent = await compress(markdown);
-			let versionedCompressedContent = `br:${compressedContent}`;
+			versionedCompressedContent = `br:${compressedContent}`;
 			if (encrypted) {
-				// New private writes always use v5 (per-writer EIP-712 + HKDF +
-				// AES-256-GCM with writer.place branded domain).
 				const key = await getCachedDerivedKey(wallet, "v5", writerStorageId);
 				const encryptedContent = await encrypt(key, compressedContent);
 				versionedCompressedContent = `enc:v5:br:${encryptedContent}`;
 			}
-
-			signed = await signCreateWithChunk(wallet, {
-				content: versionedCompressedContent,
-				address: writerAddress,
-				legacyDomain: writerLegacyDomain,
-			});
 		} catch (error) {
 			removePendingEntry();
 			throw error;
-		} finally {
-			if (isExternalWallet) setIsSigning(false);
 		}
 
 		if (!insertedOptimisticEntry) {
-			insertOptimisticEntry(signed.chunkContent);
+			insertOptimisticEntry(versionedCompressedContent);
 		} else {
 			queryClient.setQueryData<Writer>(queryKey, (current) =>
 				current
 					? replaceOptimisticEntryRaw(
 							current,
 							optimisticEntryId,
-							signed.chunkContent,
+							versionedCompressedContent,
 						)
 					: current,
 			);
@@ -179,17 +171,19 @@ export default function EntryListWithCreateInput({
 			}
 
 			await mutateAsync({
+				wallet,
 				address: writerAddress as Hex,
-				signature: signed.signature,
-				nonce: signed.nonce,
-				chunkCount: signed.chunkCount,
-				chunkContent: signed.chunkContent,
+				legacyDomain: writerLegacyDomain,
+				encodedContent: versionedCompressedContent,
 				authToken,
+				onSigningChange: isExternalWallet ? setIsSigning : undefined,
 				decompressed: markdown,
 				author: wallet.address,
 			});
 		} catch (error) {
-			removePendingEntry();
+			if (!(error instanceof PartialEntryCreationError)) {
+				removePendingEntry();
+			}
 			throw error;
 		}
 	};

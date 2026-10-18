@@ -1,12 +1,21 @@
 import { db } from "./constants";
-import { parseRelayTxId, relay } from "./relay";
+import { parseRelayTxId, relay, RelayTransactionNotFoundError } from "./relay";
 
 export async function pollPendingTransactions() {
 	try {
-		const pending = await db.getPendingTxs(20);
+		const pending = await db.getPendingTxs(100);
 		for (const tx of pending) {
 			const parsed = parseRelayTxId(tx.id);
 			if (!parsed) continue;
+
+			const transactionRecord = {
+				id: tx.id,
+				wallet: tx.wallet,
+				nonce: tx.nonce,
+				chainId: tx.chainId,
+				functionSignature: tx.functionSignature,
+				args: tx.args,
+			};
 
 			try {
 				const status = await relay.getTransaction(parsed.wallet, parsed.nonce);
@@ -15,36 +24,33 @@ export async function pollPendingTransactions() {
 				// pending overlay drops it.
 				if (status.status === "error") {
 					await db.upsertTx({
-						id: tx.id,
-						wallet: tx.wallet,
-						nonce: tx.nonce,
-						chainId: tx.chainId,
-						functionSignature: tx.functionSignature,
-						args: tx.args,
+						...transactionRecord,
 						hash: status.hash ?? tx.hash,
 						status: "ABANDONED",
 						error: status.error ?? "relay error",
 					});
 					continue;
 				}
-				if (status.hash || status.status !== "pending") {
-					await db.upsertTx({
-						id: tx.id,
-						wallet: tx.wallet,
-						nonce: tx.nonce,
-						chainId: tx.chainId,
-						functionSignature: tx.functionSignature,
-						args: tx.args,
-						hash: status.hash ?? tx.hash,
-						status:
-							status.status === "confirmed"
-								? "CONFIRMED"
-								: status.status === "submitted"
-									? "SUBMITTED"
-									: "PENDING",
-					});
-				}
+				await db.upsertTx({
+					...transactionRecord,
+					hash: status.hash ?? tx.hash,
+					status:
+						status.status === "confirmed"
+							? "CONFIRMED"
+							: status.status === "submitted"
+								? "SUBMITTED"
+								: "PENDING",
+				});
 			} catch (error) {
+				if (error instanceof RelayTransactionNotFoundError) {
+					await db.upsertTx({
+						...transactionRecord,
+						hash: tx.hash,
+						status: "ABANDONED",
+						error: error.message,
+					});
+					continue;
+				}
 				console.error(`Failed to poll relay tx ${tx.id}:`, error);
 			}
 		}

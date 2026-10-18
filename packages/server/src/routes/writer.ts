@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { computeWriterAddress, computeWriterStorageAddress } from "utils";
 import { type Hex, getAddress, toHex } from "viem";
 import {
+	ADD_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
 	CREATE_FUNCTION_SIGNATURE,
 	CREATE_WITH_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
 	DELETE_ENTRY_FUNCTION_SIGNATURE,
@@ -17,6 +18,7 @@ import {
 	humanizeSimulateError,
 	reconcileEntryByDbId,
 	reconcileWriterByAddress,
+	recoverAddChunkSigner,
 	recoverCreateWithChunkSigner,
 	recoverRemoveEntrySigner,
 	recoverSetTitleSigner,
@@ -24,6 +26,7 @@ import {
 	simulateContractOrThrow,
 } from "../helpers";
 import {
+	addChunkJsonValidator,
 	addressAndIDParamSchema,
 	addressParamSchema,
 	createWithChunkJsonValidator,
@@ -623,6 +626,106 @@ const writerRoutes = new Hono()
 		}
 		return c.json({ entry });
 	})
+	.post(
+		"/writer/:address/entry/:id/addChunk",
+		requireWalletAuth,
+		addressAndIDParamSchema,
+		addChunkJsonValidator,
+		async (c) => {
+			const { address, id } = c.req.valid("param");
+			const { signature, nonce, index, content } = c.req.valid("json");
+			const contractAddress = getAddress(address);
+			const writer = await db.getWriter(contractAddress);
+			if (!writer) {
+				return c.json({ error: "writer not found" }, 404);
+			}
+
+			const entry = await db.getEntryByOnchainId(
+				writer.storageAddress as Hex,
+				id,
+			);
+			if (!entry) {
+				return c.json({ error: "entry not found" }, 404);
+			}
+
+			const author = await recoverAddChunkSigner({
+				signature: signature as Hex,
+				nonce,
+				entryId: id,
+				index,
+				content,
+				address: contractAddress,
+				legacyDomain: writer.legacyDomain,
+			});
+			if (!c.var.walletAddresses.has(getAddress(author))) {
+				return c.json(
+					{ error: "signer does not match authenticated wallet" },
+					403,
+				);
+			}
+			if (entry.author.toLowerCase() !== author.toLowerCase()) {
+				return c.json({ error: "previous author does not match" }, 400);
+			}
+
+			const relayArgs = [
+				signature,
+				Number(nonce),
+				Number(id),
+				Number(index),
+				content,
+			];
+			try {
+				await simulateContractOrThrow({
+					to: contractAddress,
+					functionSignature: ADD_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
+					args: relayArgs,
+				});
+			} catch (error) {
+				console.error("Simulation failed:", error);
+				return c.json(
+					{ error: `simulation failed: ${humanizeSimulateError(error)}` },
+					400,
+				);
+			}
+
+			const { wallet, nonce: relayNonce } = await relay.sendTransaction({
+				to: contractAddress,
+				abi: ADD_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
+				args: relayArgs,
+			});
+			const transactionId = makeRelayTxId(wallet, relayNonce);
+			const args = {
+				signature,
+				nonce: Number(nonce),
+				id: Number(id),
+				index: Number(index),
+				content,
+				author,
+			};
+			await db.createTx({
+				id: transactionId,
+				wallet,
+				nonce: relayNonce,
+				chainId: BigInt(env.TARGET_CHAIN_ID),
+				functionSignature: ADD_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
+				args,
+				status: "PENDING",
+				source: "ui",
+				targetAddress: contractAddress,
+			});
+			c.executionCtx.waitUntil(
+				watchRelayReceipt({
+					txId: transactionId,
+					wallet,
+					nonce: relayNonce,
+					chainId: BigInt(env.TARGET_CHAIN_ID),
+					functionSignature: ADD_CHUNK_WITH_SIG_FUNCTION_SIGNATURE,
+					args,
+				}),
+			);
+			return c.json({ pending: { transactionId } }, 202);
+		},
+	)
 	.post(
 		"/writer/:address/entry/:id/update",
 		requireWalletAuth,

@@ -1,6 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import type { ConnectedWallet } from "@privy-io/react-auth";
-import { getDerivedSigningKeyV4 } from "./signer";
+import {
+	getDerivedSigningKeyV4,
+	signAddChunk,
+	signCreateWithChunk,
+} from "./signer";
 import { decrypt, encrypt } from "./utils";
 
 // -----------------------------------------------------------------------------
@@ -204,3 +208,58 @@ describe("encrypt + decrypt round trip with v4 keys", () => {
 		expect(recovered).toBe(plaintext);
 	});
 });
+
+describe("entry chunk signatures", () => {
+	test("signs create payloads with the actual chunk count", async () => {
+		const captured: { message?: Record<string, unknown> } = {};
+		const wallet = capturingWallet(captured);
+
+		await signCreateWithChunk(wallet, {
+			address: STORAGE_ID_A,
+			chunkCount: 4,
+			chunkContent: "first",
+		});
+
+		expect(captured.message).toEqual({
+			nonce: expect.any(Number),
+			chunkCount: 4,
+			chunkContent: "first",
+		});
+	});
+
+	test("signs add-chunk payloads with the entry id and chunk index", async () => {
+		const captured: { message?: Record<string, unknown> } = {};
+		const wallet = capturingWallet(captured);
+
+		await signAddChunk(wallet, {
+			address: STORAGE_ID_A,
+			entryId: 42,
+			index: 3,
+			content: "fourth",
+		});
+
+		expect(captured.message).toEqual({
+			nonce: expect.any(Number),
+			entryId: 42,
+			chunkIndex: 3,
+			chunkContent: "fourth",
+		});
+	});
+});
+
+function capturingWallet(captured: {
+	message?: Record<string, unknown>;
+}): ConnectedWallet {
+	return {
+		address: WALLET_ADDRESS,
+		getEthereumProvider: async () => ({
+			request: async (params: { params: unknown[] }) => {
+				const payload = JSON.parse(params.params[1] as string) as {
+					message: Record<string, unknown>;
+				};
+				captured.message = payload.message;
+				return FIXED_SIG;
+			},
+		}),
+	} as unknown as ConnectedWallet;
+}

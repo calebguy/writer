@@ -100,6 +100,16 @@ export const createWithChunkJsonValidator = zValidator(
 	}),
 );
 
+export const addChunkJsonValidator = zValidator(
+	"json",
+	z.object({
+		signature: z.string(),
+		nonce: bigIntSafe,
+		index: bigIntSafe,
+		content: z.string().min(1).max(MAX_CONTENT_LENGTH),
+	}),
+);
+
 export const updateEntryJsonValidator = zValidator(
 	"json",
 	z.object({

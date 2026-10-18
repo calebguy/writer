@@ -36,6 +36,7 @@ type TransactionStatus = {
 	createdAt: number;
 	error?: string;
 };
+export class RelayTransactionNotFoundError extends Error {}
 
 type Relay = {
 	sendTransaction(
@@ -225,6 +226,11 @@ class DurableWalletRelay implements Relay {
 		const res = await this.request(`/wallets/${wallet}/tx/${nonce}`, {
 			headers: this.headers(),
 		});
+		if (res.status === 404) {
+			throw new RelayTransactionNotFoundError(
+				`Relay transaction not found: ${wallet}:${nonce}`,
+			);
+		}
 		if (!res.ok) {
 			const text = await res.text();
 			throw new Error(`Relay getTransaction failed (${res.status}): ${text}`);

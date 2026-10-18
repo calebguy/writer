@@ -164,6 +164,16 @@ export async function getWriterSummary(
 	return (await res.json()).writer;
 }
 
+export async function getTransactionStatus(id: string) {
+	const res = await client.tx[":id"].$get({
+		param: { id },
+	});
+	if (!res.ok) {
+		throw new Error(res.statusText);
+	}
+	return (await res.json()).transaction;
+}
+
 export async function getEntry(
 	address: Hex,
 	id: number,
@@ -207,6 +217,38 @@ export async function editEntry({
 		{
 			param: { address, id: String(id) },
 			json: { signature, nonce, totalChunks, content },
+		},
+		{
+			headers: { Authorization: `Bearer ${authToken}` },
+		},
+	);
+	if (!res.ok) {
+		throw new Error(res.statusText);
+	}
+	return res.json();
+}
+
+export async function addEntryChunk({
+	address,
+	id,
+	signature,
+	nonce,
+	index,
+	content,
+	authToken,
+}: {
+	address: string;
+	id: number;
+	signature: string;
+	nonce: number;
+	index: number;
+	content: string;
+	authToken: string;
+}) {
+	const res = await client.writer[":address"].entry[":id"].addChunk.$post(
+		{
+			param: { address, id: String(id) },
+			json: { signature, nonce, index, content },
 		},
 		{
 			headers: { Authorization: `Bearer ${authToken}` },

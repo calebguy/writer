@@ -11,18 +11,23 @@ import {
 	useUnsavedChangesWarning,
 } from "@/hooks/useUnsavedChangesWarning";
 import {
-	type Entry,
 	WRITER_QUERY_STALE_TIME,
 	type Writer,
-	createWithChunk,
 	getWriter,
 	writerQueryKey,
 } from "@/utils/api";
+import {
+	PartialEntryCreationError,
+	createChunkedEntry,
+} from "@/utils/chunkedEntry";
 import { buildEntryDraftId } from "@/utils/encryptedDrafts";
 import { cn } from "@/utils/cn";
 import { useTargetWallet } from "@/utils/hooks";
 import { getCachedDerivedKey } from "@/utils/keyCache";
-import { signCreateWithChunk } from "@/utils/signer";
+import {
+	buildOptimisticEntry,
+	prependOptimisticEntry,
+} from "@/utils/optimisticEntry";
 import { compress, encrypt } from "@/utils/utils";
 import { usePrivy } from "@privy-io/react-auth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -84,67 +89,28 @@ export function MobileCreateEntryPage({ address }: { address: string }) {
 		staleTime: WRITER_QUERY_STALE_TIME,
 	});
 
-	const { mutate } = useMutation({
-		mutationFn: createWithChunk,
+	const { mutateAsync } = useMutation({
+		mutationFn: createChunkedEntry,
 		mutationKey: ["create-with-chunk", normalizedAddress],
 		onMutate: async (vars) => {
 			await queryClient.cancelQueries({ queryKey });
 			const previous = queryClient.getQueryData<Writer>(queryKey);
 			if (!previous) return { previous };
 
-			const now = new Date().toISOString();
-			const tempId = -Date.now();
-			const optimisticEntry = {
-				id: tempId,
-				exists: true,
-				onChainId: null,
+			const optimisticEntry = buildOptimisticEntry(previous, {
+				id: -Date.now(),
+				markdown: vars.decompressed ?? "",
+				raw: vars.encodedContent,
 				author: vars.author ?? "",
-				createdAtHash: null,
-				createdAtBlock: null,
-				createdAtBlockDatetime: null,
-				deletedAtHash: null,
-				deletedAtBlock: null,
-				deletedAtBlockDatetime: null,
-				updatedAtHash: null,
-				updatedAtBlock: null,
-				updatedAtBlockDatetime: null,
-				createdAt: now,
-				updatedAt: now,
-				deletedAt: null,
-				storageAddress: previous.storageAddress,
-				storageId: previous.storageId,
-				createdAtTransactionId: null,
-				deletedAtTransactionId: null,
-				updatedAtTransactionId: null,
-				chunks: [
-					{
-						id: tempId,
-						entryId: tempId,
-						index: 0,
-						content: vars.chunkContent,
-						createdAt: now,
-						createdAtTransactionId: null,
-					},
-				],
-				raw: vars.chunkContent,
-				version: vars.chunkContent.startsWith("enc:v5:br:")
-					? "enc:v5:br:"
-					: vars.chunkContent.startsWith("enc:v4:br:")
-						? "enc:v4:br:"
-						: "br:",
-				decompressed: vars.decompressed ?? "",
-			} as unknown as Entry;
-
+			});
 			queryClient.setQueryData<Writer>(queryKey, (current) =>
-				current
-					? { ...current, entries: [optimisticEntry, ...current.entries] }
-					: current,
+				current ? prependOptimisticEntry(current, optimisticEntry) : current,
 			);
 			return { previous };
 		},
-		onError: (_err, _vars, ctx) => {
-			if (ctx?.previous) {
-				queryClient.setQueryData(queryKey, ctx.previous);
+		onError: (error, _vars, context) => {
+			if (!(error instanceof PartialEntryCreationError) && context?.previous) {
+				queryClient.setQueryData(queryKey, context.previous);
 			}
 		},
 		onSuccess: () => {
@@ -164,7 +130,6 @@ export function MobileCreateEntryPage({ address }: { address: string }) {
 		if (!markdown.trim() || !writer || !wallet || isSubmitting) return;
 		setIsSubmitting(true);
 		try {
-			if (isExternalWallet) setIsSigning(true);
 			const compressedContent = await compress(markdown);
 			let versionedCompressedContent = `br:${compressedContent}`;
 			if (encrypted) {
@@ -173,45 +138,26 @@ export function MobileCreateEntryPage({ address }: { address: string }) {
 				versionedCompressedContent = `enc:v5:br:${encryptedContent}`;
 			}
 
-			const signed = await signCreateWithChunk(wallet, {
-				content: versionedCompressedContent,
-				address: writer.address,
-				legacyDomain: writer.legacyDomain,
-			});
-
 			const authToken = await getAccessToken();
 			if (!authToken) {
-				console.error("No auth token found");
-				setIsSubmitting(false);
-				return;
+				throw new Error("No auth token found");
 			}
 
-			mutate(
-				{
-					address: writer.address as Hex,
-					signature: signed.signature,
-					nonce: signed.nonce,
-					chunkCount: signed.chunkCount,
-					chunkContent: signed.chunkContent,
-					authToken,
-					decompressed: markdown,
-					author: wallet.address,
-				},
-				{
-					onError: (err) => {
-						console.error("Create entry failed:", err);
-					},
-					onSuccess: () => {
-						void clearDraft();
-					},
-				},
-			);
+			await mutateAsync({
+				wallet,
+				address: writer.address as Hex,
+				legacyDomain: writer.legacyDomain,
+				encodedContent: versionedCompressedContent,
+				authToken,
+				onSigningChange: isExternalWallet ? setIsSigning : undefined,
+				decompressed: markdown,
+				author: wallet.address,
+			});
+			await clearDraft();
 			router.push(`/writer/${address}`);
-		} catch (err) {
-			console.error("Create entry failed:", err);
+		} catch (error) {
+			console.error("Create entry failed:", error);
 			setIsSubmitting(false);
-		} finally {
-			if (isExternalWallet) setIsSigning(false);
 		}
 	}, [
 		address,
@@ -221,7 +167,7 @@ export function MobileCreateEntryPage({ address }: { address: string }) {
 		isExternalWallet,
 		isSubmitting,
 		markdown,
-		mutate,
+		mutateAsync,
 		router,
 		wallet,
 		writer,

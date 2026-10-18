@@ -207,7 +207,7 @@ class Db {
 		return writers.map((w) => ({
 			...w,
 			entryCount: w.storageAddress
-				? (countByStorageAddress.get(w.storageAddress.toLowerCase()) ?? 0)
+				? countByStorageAddress.get(w.storageAddress.toLowerCase()) ?? 0
 				: 0,
 		}));
 	}
@@ -306,7 +306,10 @@ class Db {
 
 	async getWriterSummary(address: Hex) {
 		const data = await this.pg.query.writer.findFirst({
-			where: and(eq(writer.address, address.toLowerCase()), isNull(writer.deletedAt)),
+			where: and(
+				eq(writer.address, address.toLowerCase()),
+				isNull(writer.deletedAt),
+			),
 		});
 		if (!data) {
 			return null;
@@ -584,7 +587,7 @@ class Db {
 	async getPendingTxs(limit = 50) {
 		return this.pg.query.relayTx.findMany({
 			where: and(eq(relayTx.status, "PENDING"), isNull(relayTx.hash)),
-			orderBy: (tx, { asc }) => [asc(tx.createdAt)],
+			orderBy: (tx, { asc }) => [asc(tx.updatedAt)],
 			limit,
 		});
 	}

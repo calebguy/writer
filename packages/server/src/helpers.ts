@@ -161,6 +161,45 @@ export function recoverCreateWithChunkSigner({
 	});
 }
 
+export function recoverAddChunkSigner({
+	signature,
+	nonce,
+	entryId,
+	index,
+	content,
+	address,
+	legacyDomain,
+}: {
+	signature: Hex;
+	nonce: bigint;
+	entryId: bigint;
+	index: bigint;
+	content: string;
+	address: Hex;
+	legacyDomain?: boolean;
+}) {
+	assertLowS(signature);
+	return recoverTypedDataAddress({
+		domain: getDomain(address, legacyDomain),
+		message: {
+			nonce,
+			entryId,
+			chunkIndex: index,
+			chunkContent: content,
+		},
+		primaryType: "AddChunk",
+		types: {
+			AddChunk: [
+				{ name: "nonce", type: "uint256" },
+				{ name: "entryId", type: "uint256" },
+				{ name: "chunkIndex", type: "uint256" },
+				{ name: "chunkContent", type: "string" },
+			],
+		},
+		signature,
+	});
+}
+
 export function recoverUpdateEntryWithChunkSigner({
 	signature,
 	nonce,
