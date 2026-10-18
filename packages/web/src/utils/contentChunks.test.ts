@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+	findResumableEntry,
 	ONCHAIN_CHUNK_CHARACTER_LIMIT,
 	splitEncodedContent,
 } from "./contentChunks";
@@ -33,5 +34,43 @@ describe("splitEncodedContent", () => {
 		expect(() => splitEncodedContent("content", 0)).toThrow(
 			"Chunk size must be a positive safe integer",
 		);
+	});
+});
+
+describe("findResumableEntry", () => {
+	const author = "0x1111111111111111111111111111111111111111";
+	const chunks = ["br:first", "second", "third"];
+
+	test("finds an interrupted entry whose chunks match the content prefix", () => {
+		const entry = {
+			author,
+			onChainId: "7",
+			raw: "br:firstsecond",
+			chunks: [{ index: 0 }, { index: 1 }],
+		};
+		expect(findResumableEntry([entry], chunks, author)).toEqual({
+			entry,
+			nextChunkIndex: 2,
+		});
+	});
+
+	test("does not resume an entry with different encoded content", () => {
+		const entry = {
+			author,
+			onChainId: "7",
+			raw: "br:different",
+			chunks: [{ index: 0 }],
+		};
+		expect(findResumableEntry([entry], chunks, author)).toBeNull();
+	});
+
+	test("does not resume a complete entry", () => {
+		const entry = {
+			author,
+			onChainId: "7",
+			raw: chunks.join(""),
+			chunks: [{ index: 0 }, { index: 1 }, { index: 2 }],
+		};
+		expect(findResumableEntry([entry], chunks, author)).toBeNull();
 	});
 });

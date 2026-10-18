@@ -6,7 +6,7 @@ import {
 	getTransactionStatus,
 	getWriter,
 } from "./api";
-import { splitEncodedContent } from "./contentChunks";
+import { findResumableEntry, splitEncodedContent } from "./contentChunks";
 import {
 	type SignedEntryChunk,
 	signAddChunk,
@@ -36,6 +36,23 @@ type CreateChunkedEntryInput = {
 
 export async function createChunkedEntry(input: CreateChunkedEntryInput) {
 	const chunks = splitEncodedContent(input.encodedContent);
+	const writer = await getWriter(input.address);
+	const resumable = findResumableEntry(
+		writer.entries,
+		chunks,
+		input.author ?? input.wallet.address,
+	);
+	if (resumable) {
+		const entryId = Number(resumable.entry.onChainId);
+		await completeEntry({
+			input,
+			entryId,
+			chunks,
+			startIndex: resumable.nextChunkIndex,
+		});
+		return { resumedEntryId: entryId };
+	}
+
 	const createSignature = await signCreateChunk(input, chunks);
 	const created = await createWithChunk({
 		address: input.address,
@@ -46,29 +63,12 @@ export async function createChunkedEntry(input: CreateChunkedEntryInput) {
 	});
 	if (chunks.length === 1) return created;
 
-	try {
-		const entryId = await waitForCreatedEntryId(
-			input.address,
-			created.pending.transactionId,
-		);
-		const chunkSignatures = await signRemainingChunks(input, entryId, chunks);
-		await Promise.all(
-			chunkSignatures.map((signedChunk) =>
-				addEntryChunk({
-					address: input.address,
-					id: entryId,
-					authToken: input.authToken,
-					...signedChunk,
-				}),
-			),
-		);
-		return created;
-	} catch (error) {
-		throw new PartialEntryCreationError(
-			"The first chunk was created, but the remaining chunks could not be submitted",
-			{ cause: error },
-		);
-	}
+	const entryId = await waitForCreatedEntryId(
+		input.address,
+		created.pending.transactionId,
+	);
+	await completeEntry({ input, entryId, chunks, startIndex: 1 });
+	return created;
 }
 
 async function signCreateChunk(
@@ -88,28 +88,47 @@ async function signCreateChunk(
 	}
 }
 
-async function signRemainingChunks(
-	input: CreateChunkedEntryInput,
-	entryId: number,
-	chunks: readonly string[],
-) {
-	input.onSigningChange?.(true);
+type CompleteEntryInput = {
+	input: CreateChunkedEntryInput;
+	entryId: number;
+	chunks: readonly string[];
+	startIndex: number;
+};
+
+async function completeEntry({
+	input,
+	entryId,
+	chunks,
+	startIndex,
+}: CompleteEntryInput) {
 	try {
-		const signedChunks: SignedEntryChunk[] = [];
-		for (const [offset, content] of chunks.slice(1).entries()) {
-			signedChunks.push(
-				await signAddChunk(input.wallet, {
+		for (let index = startIndex; index < chunks.length; index++) {
+			input.onSigningChange?.(true);
+			let signedChunk: SignedEntryChunk;
+			try {
+				signedChunk = await signAddChunk(input.wallet, {
 					address: input.address,
 					legacyDomain: input.legacyDomain,
 					entryId,
-					index: offset + 1,
-					content,
-				}),
-			);
+					index,
+					content: chunks[index],
+				});
+			} finally {
+				input.onSigningChange?.(false);
+			}
+			const submitted = await addEntryChunk({
+				address: input.address,
+				id: entryId,
+				authToken: input.authToken,
+				...signedChunk,
+			});
+			await waitForConfirmedTransaction(submitted.pending.transactionId);
 		}
-		return signedChunks;
-	} finally {
-		input.onSigningChange?.(false);
+	} catch (error) {
+		throw new PartialEntryCreationError(
+			"The entry exists, but the remaining chunks could not be submitted",
+			{ cause: error },
+		);
 	}
 }
 
@@ -142,6 +161,21 @@ async function waitForCreatedEntryId(
 		await delay(ENTRY_INDEX_POLL_INTERVAL_MS);
 	}
 	throw new Error("Timed out waiting for the first chunk to be indexed");
+}
+
+async function waitForConfirmedTransaction(transactionId: string) {
+	const deadline = Date.now() + ENTRY_INDEX_TIMEOUT_MS;
+	while (Date.now() < deadline) {
+		const transaction = await getTransactionStatus(transactionId).catch(
+			() => null,
+		);
+		if (transaction?.status === "CONFIRMED") return;
+		if (transaction?.status === "ABANDONED") {
+			throw new Error(transaction.error ?? "Chunk transaction was abandoned");
+		}
+		await delay(ENTRY_INDEX_POLL_INTERVAL_MS);
+	}
+	throw new Error("Timed out waiting for a chunk transaction to confirm");
 }
 
 function delay(milliseconds: number) {

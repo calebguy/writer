@@ -10,14 +10,20 @@ export function decompressBrotli(input: string) {
 	return decoded;
 }
 
-// Attempts to decompress the content if not encrypted
-// Returns the version and the decompressed content
-export const processRawContent = (raw: string) => {
+function tryDecompressBrotli(input: string): string | null {
+	try {
+		return decompressBrotli(input);
+	} catch {
+		return null;
+	}
+}
+
+export function processRawContent(raw: string) {
 	let version = null;
 	let decompressed = null;
 	if (raw.startsWith("br:")) {
 		version = "br";
-		decompressed = decompressBrotli(raw.slice(3));
+		decompressed = tryDecompressBrotli(raw.slice(3));
 	} else if (raw.startsWith("enc:v5:br:")) {
 		version = "enc:v5:br:";
 	} else if (raw.startsWith("enc:v4:br:")) {
@@ -33,4 +39,4 @@ export const processRawContent = (raw: string) => {
 		decompressed = raw;
 	}
 	return { version, decompressed };
-};
+}

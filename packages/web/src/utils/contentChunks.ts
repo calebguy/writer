@@ -17,3 +17,34 @@ export function splitEncodedContent(
 	}
 	return chunks;
 }
+
+type ChunkedEntryCandidate = {
+	author: string;
+	onChainId?: string | null;
+	raw: string;
+	chunks: readonly { index: number }[];
+};
+
+export function findResumableEntry<T extends ChunkedEntryCandidate>(
+	entries: readonly T[],
+	chunks: readonly string[],
+	author: string,
+): { entry: T; nextChunkIndex: number } | null {
+	for (const entry of entries) {
+		const storedChunkCount = entry.chunks.length;
+		if (
+			entry.onChainId == null ||
+			entry.author.toLowerCase() !== author.toLowerCase() ||
+			storedChunkCount === 0 ||
+			storedChunkCount >= chunks.length ||
+			!entry.chunks.every((chunk, index) => chunk.index === index)
+		) {
+			continue;
+		}
+		const expectedPrefix = chunks.slice(0, storedChunkCount).join("");
+		if (entry.raw === expectedPrefix) {
+			return { entry, nextChunkIndex: storedChunkCount };
+		}
+	}
+	return null;
+}
