@@ -1,6 +1,5 @@
 import { Footer } from "@/components/Footer";
 import { WriterHeader } from "@/components/header/WriterHeader";
-import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
 import { ComposeHeaderActionsProvider } from "@/components/writer/ComposeHeaderActionsContext";
 import { EntryLoadingProvider } from "@/utils/EntryLoadingContext";
 import type { Metadata } from "next";
@@ -67,7 +66,6 @@ export default function Layout({
 					</div>
 				</div>
 				<Footer />
-				<MobileBottomNav />
 			</ComposeHeaderActionsProvider>
 		</EntryLoadingProvider>
 	);

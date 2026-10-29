@@ -1,4 +1,5 @@
 import { Providers } from "@/components/Providers";
+import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
 import { getAuthHint } from "@/utils/auth";
 import { cn } from "@/utils/cn";
 import type { Metadata } from "next";
@@ -184,7 +185,10 @@ export default async function RootLayout({
 					}}
 				/>
 				<div className="antialiased w-full grow flex flex-col px-4 pt-4 pb-2 font-serif max-w-7xl">
-					<Providers initialLoggedIn={initialLoggedIn}>{children}</Providers>
+					<Providers initialLoggedIn={initialLoggedIn}>
+						{children}
+						<MobileBottomNav />
+					</Providers>
 				</div>
 			</body>
 		</html>

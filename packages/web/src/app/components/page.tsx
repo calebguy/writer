@@ -255,7 +255,7 @@ export default function ComponentsPage() {
 
 			<Section
 				title="MobileBottomNav"
-				description="The floating nav bar shown on small viewports for /home, /explore, /saved, and /writer routes. Long-press the home icon to reveal color + account controls. Previewed here with preview prop — live behavior uses fixed positioning."
+				description="The floating nav bar shown on small viewports for /home, /explore, and /writer routes. Long-press the home icon to reveal color + account controls. Previewed here with preview prop — live behavior uses fixed positioning."
 			>
 				<div className="border border-surface-raised bg-background py-8">
 					<MobileBottomNav preview />

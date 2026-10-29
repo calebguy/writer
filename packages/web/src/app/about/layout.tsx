@@ -1,6 +1,5 @@
 import { Footer } from "@/components/Footer";
 import { AboutHeader } from "@/components/header/AboutHeader";
-import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
 
 export default function Layout({
 	children,
@@ -14,7 +13,6 @@ export default function Layout({
 			</div>
 			<div className="grow flex flex-col">{children}</div>
 			<Footer />
-			<MobileBottomNav />
 		</div>
 	);
 }

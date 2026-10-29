@@ -2,6 +2,7 @@
 
 import { useUnsavedChangesNavigation } from "@/hooks/useUnsavedChangesWarning";
 import { useHiddenWriters } from "@/hooks/useHiddenWriters";
+import { useIsLoggedIn } from "@/hooks/useIsLoggedIn";
 import { clearAllCachedKeys } from "@/utils/keyCache";
 import { usePrivy } from "@privy-io/react-auth";
 import Image from "next/image";
@@ -37,8 +38,8 @@ export function MobileBottomNav({
 }: { preview?: boolean } = {}) {
 	const pathname = usePathname();
 	const router = useRouter();
-	const { logout, authenticated, ready } = usePrivy();
-	const isLoggedIn = ready && authenticated;
+	const { logout } = usePrivy();
+	const isLoggedIn = useIsLoggedIn();
 	const [showSubMenu, setShowSubMenu] = useState(false);
 	const [showThemeModal, setShowThemeModal] = useState(false);
 	const [showHiddenPlacesModal, setShowHiddenPlacesModal] = useState(false);
@@ -66,6 +67,7 @@ export function MobileBottomNav({
 		setShowSubMenu(false);
 		setShowThemeModal(false);
 		setShowHiddenPlacesModal(false);
+		setHidden(false);
 	}, [pathname]);
 
 	useEffect(() => {
@@ -297,6 +299,7 @@ export function MobileBottomNav({
 								alt="Home"
 								width={100}
 								height={100}
+								priority
 								className={`w-8 h-8 dark:invert transition-transform duration-300 ${
 									showSubMenu ? "rotate-24" : ""
 								}`}
@@ -319,6 +322,7 @@ export function MobileBottomNav({
 								alt="Explore"
 								width={100}
 								height={100}
+								priority
 								className="w-8 h-8 dark:invert"
 							/>
 						</button>
