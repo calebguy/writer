@@ -208,7 +208,7 @@ export function MobileBottomNav({
 				style={
 					preview
 						? undefined
-						: { bottom: "calc(env(safe-area-inset-bottom, 0px) + 14px)" }
+						: { bottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)" }
 				}
 			>
 				<div className="relative flex items-center justify-center">
