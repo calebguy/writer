@@ -98,12 +98,14 @@ export function MarkdownHelpLink({ className }: { className?: string }) {
 			href="/docs#markdown"
 			target="_blank"
 			rel="noreferrer"
+			aria-label="Markdown help"
+			title="Markdown help"
 			className={cn(
-				"font-mono text-xs text-muted transition-colors hover:text-primary",
+				"inline-flex h-5 w-5 shrink-0 items-center justify-center font-mono text-sm leading-none text-muted transition-colors hover:text-primary focus-visible:text-primary",
 				className,
 			)}
 		>
-			Markdown help
+			<span aria-hidden="true">?</span>
 		</a>
 	);
 }

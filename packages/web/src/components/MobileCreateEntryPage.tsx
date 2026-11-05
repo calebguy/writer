@@ -240,7 +240,7 @@ export function MobileCreateEntryPage({ address }: { address: string }) {
 					markdown={markdown}
 					autoFocus
 					aspectSquare={false}
-					placeholder={writer ? `Write in ${writer.title}` : "Write"}
+					placeholder={writer ? `Write in\n\n${writer.title}` : "Write"}
 					renderPlaceholderAsMarkdown={!!writer}
 					onChange={setMarkdown}
 					className="bg-transparent text-black dark:text-white h-full flex w-full p-2! create-input-mdx"

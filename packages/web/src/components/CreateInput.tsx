@@ -356,7 +356,7 @@ export default function CreateInput({
 					<div>to {submitVerb}</div>
 				</div>
 				{hasFocus && canExpand && !hidePrivacyControls && (
-					<div className="absolute bottom-1 flex justify-between w-full z-20 px-2 pb-0.5">
+					<div className="absolute bottom-1 flex w-full items-center justify-between px-2 pb-0.5 z-20">
 						<button
 							type="button"
 							onClick={() => setEncrypted?.(!encrypted)}
@@ -368,31 +368,33 @@ export default function CreateInput({
 								<Unlock className="h-3.5 w-3.5 ml-0.5" />
 							)}
 						</button>
-						<MarkdownHelpLink className="mt-1" />
-						<button
-							type="button"
-							className="create-input-control hover:text-primary text-muted mt-1 cursor-pointer"
-							onClick={() => {
-								setIsExpanded(!isExpanded);
-								onExpand?.(!isExpanded);
-							}}
-							onMouseDown={(e) => {
-								e.preventDefault();
-							}}
-						>
-							<Arrow
-								title={isExpanded ? "collapse" : "expand"}
-								className={cn("w-4 h-4", {
-									"rotate-90": !isExpanded,
-									"-rotate-90": isExpanded,
-								})}
-							/>
-						</button>
+						<div className="flex items-center gap-0">
+							<MarkdownHelpLink />
+							<button
+								type="button"
+								className="create-input-control hover:text-primary text-muted cursor-pointer"
+								onClick={() => {
+									setIsExpanded(!isExpanded);
+									onExpand?.(!isExpanded);
+								}}
+								onMouseDown={(e) => {
+									e.preventDefault();
+								}}
+							>
+								<Arrow
+									title={isExpanded ? "collapse" : "expand"}
+									className={cn("w-4 h-4", {
+										"rotate-90": !isExpanded,
+										"-rotate-90": isExpanded,
+									})}
+								/>
+							</button>
+						</div>
 					</div>
 				)}
 				{(forceOpen || hasFocus || isExpanded) &&
 					(!hasFocus || !canExpand || hidePrivacyControls) && (
-						<MarkdownHelpLink className="absolute right-2 bottom-2 z-20" />
+						<MarkdownHelpLink className="absolute right-1.5 bottom-1.5 z-20" />
 					)}
 			</div>
 		</div>
